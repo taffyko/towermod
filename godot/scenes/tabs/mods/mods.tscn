@@ -1,0 +1,89 @@
+[gd_scene load_steps=5 format=3 uid="uid://6p3ido4lslms"]
+
+[ext_resource type="PackedScene" uid="uid://c28nqb4ksdt7b" path="res://scenes/tabs/tab_container.tscn" id="1_r1jj4"]
+[ext_resource type="Script" path="res://scenes/tabs/mods/mods.gd" id="2_rkccl"]
+[ext_resource type="PackedScene" uid="uid://b1rji2vnly6h4" path="res://scenes/tabs/mods/mod_details.tscn" id="3_evprm"]
+[ext_resource type="PackedScene" uid="uid://noghnmycodbu" path="res://scenes/tabs/mods/mod_list_item.tscn" id="3_j02ke"]
+
+[node name="Mods" node_paths=PackedStringArray("play_button", "list", "list2", "mod_details") instance=ExtResource("1_r1jj4")]
+script = ExtResource("2_rkccl")
+play_button = NodePath("ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2/StartButton")
+list = NodePath("ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer/ItemList")
+list2 = NodePath("ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer/PanelContainer/MarginContainer/NewItemList/VBoxContainer")
+mod_details = NodePath("ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer/ModDetails")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/MarginContainer" index="0"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer/MarginContainer/HBoxContainer" index="0"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer" index="0"]
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2" index="0"]
+visible = false
+layout_mode = 2
+text = "Play"
+metadata/_edit_use_anchors_ = true
+
+[node name="PlayVanillaButton" type="Button" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2" index="1"]
+layout_mode = 2
+text = "Play unmodified"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2" index="2"]
+layout_mode = 2
+size_flags_horizontal = 10
+
+[node name="BrowseButton" type="Button" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2/HBoxContainer" index="0"]
+layout_mode = 2
+text = "Browse"
+
+[node name="RefreshButton" type="Button" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2/HBoxContainer" index="1"]
+layout_mode = 2
+text = "Refresh"
+metadata/_edit_use_anchors_ = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer" index="1"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PanelContainer" type="PanelContainer" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer" index="0"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer/PanelContainer" index="0"]
+layout_mode = 2
+
+[node name="NewItemList" type="ScrollContainer" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer/PanelContainer/MarginContainer" index="0"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer/PanelContainer/MarginContainer/NewItemList" index="0"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+
+[node name="PanelContainer" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer/PanelContainer/MarginContainer/NewItemList/VBoxContainer" index="0" instance=ExtResource("3_j02ke")]
+layout_mode = 2
+
+[node name="ItemList" type="ItemList" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer" index="1"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+item_count = 4
+item_0/text = " "
+item_1/text = " "
+item_2/text = " "
+item_3/text = " "
+
+[node name="ModDetails" parent="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer" index="2" instance=ExtResource("3_evprm")]
+layout_mode = 2
+size_flags_vertical = 1
+
+[connection signal="pressed" from="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2/PlayVanillaButton" to="." method="_on_play_vanilla_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2/HBoxContainer/BrowseButton" to="." method="_on_browse_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer2/HBoxContainer/RefreshButton" to="." method="_on_refresh_button_pressed"]
+[connection signal="item_selected" from="ScrollContainer/MarginContainer/HBoxContainer/VBoxContainer/HBoxContainer/ItemList" to="." method="_on_item_list_item_selected"]

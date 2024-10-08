@@ -1,0 +1,140 @@
+[gd_scene load_steps=11 format=3 uid="uid://noghnmycodbu"]
+
+[ext_resource type="Script" path="res://scenes/tabs/mods/mod_list_item.gd" id="1_k5uq2"]
+[ext_resource type="Theme" uid="uid://0wgv04mqiynd" path="res://resources/theme.tres" id="1_vhblq"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_pnp1n"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hywa2"]
+bg_color = Color(1, 1, 1, 0.0823529)
+border_color = Color(0.813258, 0.813258, 0.813257, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u6moc"]
+bg_color = Color(1, 1, 1, 0.313726)
+border_color = Color(0.811765, 0.811765, 0.811765, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+anti_aliasing = false
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bnwm7"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fcdys"]
+
+[sub_resource type="SystemFont" id="SystemFont_i37rk"]
+font_names = PackedStringArray("Times New Roman")
+font_italic = true
+antialiasing = 0
+hinting = 2
+subpixel_positioning = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7oxq3"]
+bg_color = Color(0.7, 0.5383, 0.238, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+anti_aliasing = false
+
+[sub_resource type="SystemFont" id="SystemFont_4h4vu"]
+font_names = PackedStringArray("Times New Roman")
+font_italic = true
+antialiasing = 0
+hinting = 2
+subpixel_positioning = 2
+
+[node name="ModListItem" type="Button" node_paths=PackedStringArray("display_name", "legacy_badge", "author_name", "icon_rect")]
+custom_minimum_size = Vector2(32, 22)
+offset_right = 480.0
+offset_bottom = 22.0
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_pnp1n")
+theme_override_styles/hover = SubResource("StyleBoxFlat_hywa2")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_u6moc")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_bnwm7")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_fcdys")
+toggle_mode = true
+action_mode = 0
+alignment = 0
+text_overrun_behavior = 3
+clip_text = true
+expand_icon = true
+script = ExtResource("1_k5uq2")
+display_name = NodePath("PanelContainer/HBoxContainer/Name")
+legacy_badge = NodePath("PanelContainer/HBoxContainer/LegacyBadge")
+author_name = NodePath("PanelContainer/HBoxContainer/Author")
+icon_rect = NodePath("PanelContainer/HBoxContainer/Icon")
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 0
+mouse_filter = 2
+theme = ExtResource("1_vhblq")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Icon" type="TextureRect" parent="PanelContainer/HBoxContainer"]
+texture_filter = 1
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+expand_mode = 2
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="PanelContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "eqwioeuqwoipeiwqopiewqopieqwopieqwopieqwopieqwopieqwopieqwopieqwopieqwopieqwopieqwoppeiqwopeqwiopeqwi"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="Author" type="Label" parent="PanelContainer/HBoxContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.28485, 0.28485, 0.28485, 1)
+theme_override_fonts/font = SubResource("SystemFont_i37rk")
+text = "by Matten"
+horizontal_alignment = 2
+text_overrun_behavior = 3
+
+[node name="LegacyBadge" type="PanelContainer" parent="PanelContainer/HBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_7oxq3")
+
+[node name="Label" type="Label" parent="PanelContainer/HBoxContainer/LegacyBadge"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.53, 0.404567, 0.1537, 1)
+theme_override_fonts/font = SubResource("SystemFont_4h4vu")
+text = "• Legacy •"
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
+[connection signal="toggled" from="." to="." method="_on_toggled"]

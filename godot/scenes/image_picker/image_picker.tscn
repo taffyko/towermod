@@ -1,0 +1,84 @@
+[gd_scene load_steps=9 format=3 uid="uid://cfey31dmfw6ad"]
+
+[ext_resource type="Script" path="res://scenes/image_picker/image_picker.gd" id="1_o4fwq"]
+[ext_resource type="FontFile" uid="uid://cfvv86aqhbt5r" path="res://resources/times12_72dpi.fnt" id="2_360lm"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oe6qq"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.252028, 0.252028, 0.252027, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_f0qdr"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gv8ss"]
+bg_color = Color(0.858824, 0.858824, 0.858824, 0.156863)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ns4vx"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_hkmem"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cbpau"]
+
+[node name="ImagePicker" type="TextureRect"]
+texture_filter = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+script = ExtResource("1_o4fwq")
+
+[node name="Panel" type="Panel" parent="."]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_oe6qq")
+
+[node name="Label" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -9.5
+offset_right = 20.0
+offset_bottom = 9.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.501407, 0.501406, 0.501406, 1)
+theme_override_fonts/font = ExtResource("2_360lm")
+text = "No image"
+horizontal_alignment = 1
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_f0qdr")
+theme_override_styles/hover = SubResource("StyleBoxFlat_gv8ss")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_ns4vx")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_hkmem")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_cbpau")
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

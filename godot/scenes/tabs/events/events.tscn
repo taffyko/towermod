@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://fqbgimujmdfu"]
+
+[ext_resource type="PackedScene" uid="uid://c28nqb4ksdt7b" path="res://scenes/tabs/tab_container.tscn" id="1_agt36"]
+
+[node name="Events" instance=ExtResource("1_agt36")]
+
+[node name="Label" type="Label" parent="ScrollContainer/MarginContainer" index="0"]
+layout_mode = 2
+text = "WIP"

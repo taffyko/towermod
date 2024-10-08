@@ -1,0 +1,107 @@
+[gd_scene load_steps=2 format=3 uid="uid://b1fmw775h5h3g"]
+
+[ext_resource type="Script" path="res://scenes/window_resize_borders/window_resize_borders.gd" id="1_s4di1"]
+
+[node name="WindowResizeBorders" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_s4di1")
+metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
+
+[node name="Top" type="Control" parent="."]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+anchors_preset = 0
+anchor_right = 1.0
+grow_horizontal = 2
+mouse_filter = 1
+mouse_default_cursor_shape = 9
+
+[node name="Right" type="Control" parent="."]
+custom_minimum_size = Vector2(6, 0)
+layout_mode = 2
+anchors_preset = 0
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_default_cursor_shape = 10
+
+[node name="Bottom" type="Control" parent="."]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+anchors_preset = 0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_default_cursor_shape = 9
+
+[node name="Left" type="Control" parent="."]
+custom_minimum_size = Vector2(6, 0)
+layout_mode = 2
+anchors_preset = 0
+anchor_bottom = 1.0
+grow_vertical = 2
+mouse_default_cursor_shape = 10
+
+[node name="TopRight" type="Control" parent="."]
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -4.0
+offset_bottom = 4.0
+grow_horizontal = 0
+mouse_default_cursor_shape = 11
+
+[node name="BottomRight" type="Control" parent="."]
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -4.0
+offset_top = -4.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_default_cursor_shape = 12
+
+[node name="BottomLeft" type="Control" parent="."]
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -4.0
+offset_right = 4.0
+grow_vertical = 0
+mouse_default_cursor_shape = 11
+
+[node name="TopLeft" type="Control" parent="."]
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 1
+anchors_preset = 0
+offset_right = 4.0
+offset_bottom = 4.0
+mouse_default_cursor_shape = 12
+
+[connection signal="gui_input" from="Top" to="." method="_on_edge_gui_input" binds= [1]]
+[connection signal="gui_input" from="Right" to="." method="_on_edge_gui_input" binds= [2]]
+[connection signal="gui_input" from="Bottom" to="." method="_on_edge_gui_input" binds= [4]]
+[connection signal="gui_input" from="Left" to="." method="_on_edge_gui_input" binds= [8]]
+[connection signal="gui_input" from="TopRight" to="." method="_on_edge_gui_input" binds= [3]]
+[connection signal="gui_input" from="BottomRight" to="." method="_on_edge_gui_input" binds= [6]]
+[connection signal="gui_input" from="BottomLeft" to="." method="_on_edge_gui_input" binds= [12]]
+[connection signal="gui_input" from="TopLeft" to="." method="_on_edge_gui_input" binds= [9]]

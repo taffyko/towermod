@@ -1,0 +1,55 @@
+[package]
+name = "towermod"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["lib"]
+name = "towermod"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dllreader"
+path = "src/dllreader.rs"
+
+[features]
+bundled-dllreader = []
+
+[dependencies]
+anyhow.workspace = true
+scopeguard.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rmp-serde.workspace = true
+libc.workspace = true
+num-traits.workspace = true
+num-derive.workspace = true
+enum-kinds.workspace = true
+derivative.workspace = true
+futures.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tracing.workspace = true
+log.workspace = true
+once_cell.workspace = true
+backtrace.workspace = true
+cached.workspace = true
+time.workspace = true
+indoc.workspace = true
+async-scoped.workspace = true
+zip-extract.workspace = true
+zip.workspace = true
+bidiff.workspace = true
+bipatch.workspace = true
+toml.workspace = true
+walkdir.workspace = true
+filetime.workspace = true
+async-walkdir.workspace = true
+zstd.workspace = true
+windows = { version = "0.51.1", features = ["Data_Xml_Dom", "Win32_Foundation", "Win32_Security", "Win32_System_Threading", "Win32_System_Shutdown", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_System_ProcessStatus", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Diagnostics_Debug", "Win32_System_Memory", "Win32_System_LibraryLoader", "Win32_Graphics_Gdi", "Win32_Storage_FileSystem"] }
+glob = "0.3.1"
+thiserror = "1.0.48"
+md5 = "0.7.0"
+reqwest = "0.12.5"
+fs-err.workspace = true

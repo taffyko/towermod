@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3 uid="uid://c540nihbdb16h"]
+
+[ext_resource type="Script" path="res://scenes/loading_spinner/loading_spinner.gd" id="1_2t7hm"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lll53"]
+bg_color = Color(0, 0, 0, 0.639216)
+
+[node name="LoadingSpinner" type="Panel" node_paths=PackedStringArray("label")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_lll53")
+script = ExtResource("1_2t7hm")
+label = NodePath("Label")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = 80.0
+offset_right = 240.0
+offset_bottom = 9.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Loading"
+horizontal_alignment = 1

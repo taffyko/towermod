@@ -1,0 +1,93 @@
+[gd_scene load_steps=8 format=3 uid="uid://b45l220vaqg64"]
+
+[ext_resource type="Script" path="res://scenes/title_bar/title_bar.gd" id="1_vx80q"]
+[ext_resource type="Texture2D" uid="uid://cxeshntx1k7sr" path="res://sprites/tc/00378.png" id="2_ygeqw"]
+[ext_resource type="FontFile" uid="uid://scdh1ok2w1tn" path="res://resources/times16_72dpi.fnt" id="3_k8qby"]
+[ext_resource type="Texture2D" uid="uid://bxhry3n3omrpv" path="res://sprites/minimize.png" id="4_njis8"]
+[ext_resource type="Texture2D" uid="uid://41r10lvk2dtl" path="res://sprites/exit.png" id="5_cahov"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_typ8o"]
+bg_color = Color(0.164706, 0.164706, 0.164706, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.0980392, 0.0862745, 0.0901961, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+anti_aliasing = false
+
+[sub_resource type="LabelSettings" id="LabelSettings_g4vou"]
+line_spacing = 0.0
+
+[node name="TitleBar" type="PanelContainer" node_paths=PackedStringArray("window_title_label")]
+custom_minimum_size = Vector2(0, 26)
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 19.0
+grow_horizontal = 2
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_typ8o")
+script = ExtResource("1_vx80q")
+window_title_label = NodePath("MarginContainer/MarginContainer/HBoxContainer/WindowTitle")
+metadata/_editor_only_ = false
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+metadata/_editor_only_ = false
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = -3
+theme_override_constants/margin_bottom = -4
+metadata/_editor_only_ = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/MarginContainer"]
+layout_mode = 2
+metadata/_editor_only_ = false
+
+[node name="Sprite2D" type="TextureRect" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("2_ygeqw")
+metadata/_editor_only_ = false
+
+[node name="WindowTitle" type="Label" parent="MarginContainer/MarginContainer/HBoxContainer"]
+clip_contents = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_k8qby")
+theme_override_font_sizes/font_size = 15
+text = "TowerMod"
+label_settings = SubResource("LabelSettings_g4vou")
+metadata/_editor_only_ = false
+
+[node name="TitleButtons" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+alignment = 2
+metadata/_editor_only_ = false
+
+[node name="Minimize" type="Button" parent="MarginContainer/TitleButtons"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+focus_mode = 0
+icon = ExtResource("4_njis8")
+icon_alignment = 1
+metadata/_editor_only_ = false
+
+[node name="Exit" type="Button" parent="MarginContainer/TitleButtons"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+focus_mode = 0
+icon = ExtResource("5_cahov")
+icon_alignment = 1
+metadata/_editor_only_ = false
+
+[connection signal="pressed" from="MarginContainer/TitleButtons/Minimize" to="." method="_on_minimize_pressed"]
+[connection signal="pressed" from="MarginContainer/TitleButtons/Exit" to="." method="_on_exit_pressed"]

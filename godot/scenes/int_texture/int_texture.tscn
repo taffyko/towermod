@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3 uid="uid://c2ntlsvx718bx"]
+
+[ext_resource type="Script" path="res://scenes/int_texture/int_texture.gd" id="1_rj11b"]
+
+[node name="Control" type="MarginContainer"]
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="Image" type="TextureRect" parent="."]
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+expand_mode = 1
+script = ExtResource("1_rj11b")
+max_size = Vector2(40, 40)

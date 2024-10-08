@@ -1,0 +1,27 @@
+[gd_scene load_steps=2 format=3 uid="uid://c28nqb4ksdt7b"]
+
+[ext_resource type="Theme" uid="uid://0wgv04mqiynd" path="res://resources/theme.tres" id="1_kmlai"]
+
+[node name="PanelContainer" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+theme = ExtResource("1_kmlai")
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 2
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="MarginContainer" type="MarginContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_top = 25
+metadata/_editor_only_ = false
+metadata/_disabled_ = false

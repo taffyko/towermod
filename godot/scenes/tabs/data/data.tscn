@@ -1,0 +1,100 @@
+[gd_scene load_steps=6 format=3 uid="uid://dkdoidmn0671h"]
+
+[ext_resource type="PackedScene" uid="uid://c28nqb4ksdt7b" path="res://scenes/tabs/tab_container.tscn" id="1_nxh3y"]
+[ext_resource type="Script" path="res://scenes/tabs/data/data.gd" id="2_vkby1"]
+[ext_resource type="PackedScene" uid="uid://drw5tyd2e0me4" path="res://scenes/outliner/outliner.tscn" id="3_legdc"]
+[ext_resource type="Script" path="res://inspector/inspector_object.gd" id="4_84hef"]
+[ext_resource type="Texture2D" uid="uid://x5k547a1qgon" path="res://sprites/test1.png" id="5_8p383"]
+
+[node name="Data" node_paths=PackedStringArray("outliner", "inspector", "debug_toggle", "run_button", "save_button", "browse_button") instance=ExtResource("1_nxh3y")]
+offset_right = 240.0
+offset_bottom = 160.0
+script = ExtResource("2_vkby1")
+outliner = NodePath("ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer/Outliner")
+inspector = NodePath("ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer/ScrollContainer/ObjectInspector")
+debug_toggle = NodePath("ScrollContainer/MarginContainer/VBoxContainer/Toolbar/DebugToggle")
+run_button = NodePath("ScrollContainer/MarginContainer/VBoxContainer/Toolbar/RunButton")
+save_button = NodePath("ScrollContainer/MarginContainer/VBoxContainer/Toolbar/SaveButton")
+browse_button = NodePath("ScrollContainer/MarginContainer/VBoxContainer/Toolbar/BrowseButton")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer/MarginContainer" index="0"]
+layout_mode = 2
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="Toolbar" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer" index="0"]
+layout_mode = 2
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="RunButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/Toolbar" index="0"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+disabled = true
+text = "Patch & run"
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="DebugToggle" type="CheckBox" parent="ScrollContainer/MarginContainer/VBoxContainer/Toolbar" index="1"]
+layout_mode = 2
+text = "Debug"
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="SaveButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/Toolbar" index="2"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+disabled = true
+text = "Save"
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="BrowseButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/Toolbar" index="3"]
+layout_mode = 2
+text = "Browse project"
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer" index="1"]
+layout_mode = 2
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer" index="2"]
+layout_mode = 2
+size_flags_vertical = 3
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="Outliner" parent="ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer" index="0" instance=ExtResource("3_legdc")]
+layout_mode = 2
+metadata/_disabled_ = false
+
+[node name="ScrollContainer" type="ScrollContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer" index="1"]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="ObjectInspector" type="MarginContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer/ScrollContainer" index="0"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+script = ExtResource("4_84hef")
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="Test1" type="Sprite2D" parent="." index="1"]
+visible = false
+position = Vector2(111, 73)
+texture = ExtResource("5_8p383")
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/Toolbar/RunButton" to="." method="_on_run_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/Toolbar/SaveButton" to="." method="_on_save_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/Toolbar/BrowseButton" to="." method="_on_browse_button_pressed"]

@@ -1,0 +1,16 @@
+[remap]
+
+importer="font_data_bmfont"
+type="FontFile"
+uid="uid://cfvv86aqhbt5r"
+path="res://.godot/imported/times12_72dpi.fnt-9967ac1ad813ebe68736b4fbb21b00a4.fontdata"
+
+[deps]
+
+source_file="res://resources/times12_72dpi.fnt"
+dest_files=["res://.godot/imported/times12_72dpi.fnt-9967ac1ad813ebe68736b4fbb21b00a4.fontdata"]
+
+[params]
+
+fallbacks=[Resource("res://resources/times.tres")]
+compress=true

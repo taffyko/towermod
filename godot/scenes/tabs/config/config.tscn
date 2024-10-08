@@ -1,0 +1,178 @@
+[gd_scene load_steps=6 format=3 uid="uid://bai1mn7pkejxd"]
+
+[ext_resource type="PackedScene" uid="uid://c28nqb4ksdt7b" path="res://scenes/tabs/tab_container.tscn" id="1_guvhs"]
+[ext_resource type="Script" path="res://scenes/tabs/config/config.gd" id="2_maqug"]
+[ext_resource type="Script" path="res://scenes/status_label.gd" id="6_8cekx"]
+
+[sub_resource type="SystemFont" id="SystemFont_blbf2"]
+subpixel_positioning = 0
+
+[sub_resource type="LabelSettings" id="LabelSettings_kqpaq"]
+font_color = Color(0.960784, 0.882353, 0.403922, 1)
+
+[node name="Config" node_paths=PackedStringArray("control_stack", "game_path_control", "game_path_status", "save_project", "browse_project", "new_project", "load_project", "export_project", "clear_game_cache", "export_legacy_project", "export_files_project") instance=ExtResource("1_guvhs")]
+script = ExtResource("2_maqug")
+control_stack = NodePath("ScrollContainer/MarginContainer/VBoxContainer")
+game_path_control = NodePath("ScrollContainer/MarginContainer/VBoxContainer/GamePath")
+game_path_status = NodePath("ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer2/PathStatus")
+save_project = NodePath("ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer/SaveProject")
+browse_project = NodePath("ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer/BrowseProject")
+new_project = NodePath("ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer2/NewProject")
+load_project = NodePath("ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer2/LoadProject")
+export_project = NodePath("ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/ExportProject")
+clear_game_cache = NodePath("ScrollContainer/MarginContainer/VBoxContainer/Cache/HBoxContainer/ClearGameCache")
+export_legacy_project = NodePath("ScrollContainer/MarginContainer/VBoxContainer/Export/ExportLegacyProject")
+export_files_project = NodePath("ScrollContainer/MarginContainer/VBoxContainer/Export/ExportFilesProject")
+
+[node name="MarginContainer" parent="ScrollContainer" index="0"]
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer/MarginContainer" index="0"]
+layout_mode = 2
+metadata/_editor_only_ = false
+metadata/_disabled_ = false
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer" index="0"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer2" index="0"]
+visible = false
+layout_mode = 2
+text = "Game path:"
+
+[node name="PathStatus" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer2" index="1"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_blbf2")
+text = "Please set a valid game path"
+label_settings = SubResource("LabelSettings_kqpaq")
+script = ExtResource("6_8cekx")
+status = 1
+
+[node name="SetGamePath" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer2" index="2"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 10
+text = "Set game path"
+
+[node name="GamePath" type="LineEdit" parent="ScrollContainer/MarginContainer/VBoxContainer" index="1"]
+layout_mode = 2
+text = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe"
+editable = false
+
+[node name="HSeparator2" type="HSeparator" parent="ScrollContainer/MarginContainer/VBoxContainer" index="2"]
+layout_mode = 2
+
+[node name="Export" type="VBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer" index="3"]
+layout_mode = 2
+
+[node name="Export" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer/Export" index="0"]
+layout_mode = 2
+text = "Package legacy projects as playable mods"
+
+[node name="ExportLegacyProject" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/Export" index="1"]
+layout_mode = 2
+disabled = true
+text = "Export mod from legacy TCRepainter data"
+
+[node name="ExportFilesProject" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/Export" index="2"]
+layout_mode = 2
+tooltip_text = "Select a folder containing a \"files\" and/or \"images\" directory"
+disabled = true
+text = "Export files/images-only mod"
+
+[node name="HSeparator" type="HSeparator" parent="ScrollContainer/MarginContainer/VBoxContainer" index="4"]
+layout_mode = 2
+
+[node name="TowermodProjectControls" type="VBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer" index="5"]
+layout_mode = 2
+
+[node name="Towermod" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls" index="0"]
+layout_mode = 2
+text = "Towermod (New projects only)"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls" index="1"]
+layout_mode = 2
+
+[node name="NewProject" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer2" index="0"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "New project"
+
+[node name="LoadProject" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer2" index="1"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Load project"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls" index="2"]
+layout_mode = 2
+
+[node name="SaveProject" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer" index="0"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Save project"
+
+[node name="BrowseProject" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer" index="1"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Browse project"
+
+[node name="ExportProject" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls" index="3"]
+layout_mode = 2
+disabled = true
+text = "Export Towermod project"
+
+[node name="HSeparator3" type="HSeparator" parent="ScrollContainer/MarginContainer/VBoxContainer" index="6"]
+layout_mode = 2
+
+[node name="Cache" type="VBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer" index="7"]
+layout_mode = 2
+
+[node name="Cache" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer/Cache" index="0"]
+layout_mode = 2
+text = "Cache"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/Cache" index="1"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/Cache" index="2"]
+layout_mode = 2
+
+[node name="SaveSettings" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/Cache/HBoxContainer" index="0"]
+visible = false
+layout_mode = 2
+disabled = true
+text = "Save config"
+
+[node name="ClearGameCache" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/Cache/HBoxContainer" index="1"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Clear game cache"
+
+[node name="NukeCache" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/Cache/HBoxContainer" index="2"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Nuke all cached data"
+
+[node name="BrowseCache" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/Cache" index="3"]
+layout_mode = 2
+text = "Browse cache"
+
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer2/SetGamePath" to="." method="_on_set_game_path_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/Export/ExportLegacyProject" to="." method="_on_export_legacy_project_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/Export/ExportFilesProject" to="." method="_on_export_files_project_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer2/NewProject" to="." method="_on_new_project_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer2/LoadProject" to="." method="_on_load_project_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer/SaveProject" to="." method="_on_save_project_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/HBoxContainer/BrowseProject" to="." method="_on_browse_project_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/TowermodProjectControls/ExportProject" to="." method="_on_export_project_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/Cache/HBoxContainer/SaveSettings" to="." method="save_config"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/Cache/HBoxContainer/ClearGameCache" to="." method="clear_cache"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/Cache/HBoxContainer/NukeCache" to="." method="_on_nuke_cache_pressed"]
+[connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/Cache/BrowseCache" to="." method="_on_browse_cache_pressed"]

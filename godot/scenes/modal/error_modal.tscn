@@ -1,0 +1,56 @@
+[gd_scene load_steps=4 format=3 uid="uid://cw6pnilupjlx1"]
+
+[ext_resource type="PackedScene" uid="uid://ccnvyceqro2dr" path="res://scenes/modal/modal.tscn" id="1_tfs7r"]
+[ext_resource type="Script" path="res://scenes/modal/error_modal.gd" id="2_n7a3k"]
+[ext_resource type="FontFile" uid="uid://cfvv86aqhbt5r" path="res://resources/times12_72dpi.fnt" id="2_y5mnb"]
+
+[node name="ErrorModal" node_paths=PackedStringArray("text_edit") instance=ExtResource("1_tfs7r")]
+title = "Error"
+script = ExtResource("2_n7a3k")
+text_edit = NodePath("VBoxContainer/MarginContainer/ScrollContainer/MarginContainer/VBoxContainer/TextEdit")
+message = ""
+hide_cancel = true
+
+[node name="TextEdit" type="TextEdit" parent="VBoxContainer/MarginContainer/ScrollContainer/MarginContainer/VBoxContainer" index="1"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_readonly_color = Color(0.94902, 0.2, 0.298039, 1)
+theme_override_fonts/font = ExtResource("2_y5mnb")
+text = "[Sample error] PANIC: Cannot start a runtime from within a runtime. This happens because a function (like `block_on`) attempted to block the current thread while the thread is being used to drive asynchronous tasks.
+backtrace:
+   0: backtrace::backtrace::dbghelp64::trace
+             at \\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\backtrace-0.3.73\\src\\backtrace\\dbghelp64.rs:91
+      backtrace::backtrace::trace_unsynchronized<backtrace::capture::impl$1::create::closure_env$0>
+             at \\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\backtrace-0.3.73\\src\\backtrace\\mod.rs:66
+   1: backtrace::backtrace::trace<backtrace::capture::impl$1::create::closure_env$0>
+             at \\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\backtrace-0.3.73\\src\\backtrace\\mod.rs:53
+   2: backtrace::capture::Backtrace::create
+             at \\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\backtrace-0.3.73\\src\\capture.rs:197
+   3: backtrace::capture::Backtrace::new
+             at \\.cargo\\registry\\src\\index.crates.io-6f17d22bba15001f\\backtrace-0.3.73\\src\\capture.rs:162
+   4: towermod_godot::app::impl$8::setup::closure$0::closure$0
+             at \\towermod\\rust\\towermod-godot\\src\\util.rs:37
+   5: std::thread::local::impl$6::with_borrow_mut::closure$0<enum2$<core::option::Option<backtrace::capture::Backtrace> >,towermod_godot::app::impl$8::setup::closure$0::closure_env$0,tuple$<> >
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da\\library\\std\\src\\thread\\local.rs:504
+   6: std::thread::local::LocalKey<core::cell::RefCell<enum2$<core::option::Option<backtrace::capture::Backtrace> > > >::try_with<core::cell::RefCell<enum2$<core::option::Option<backtrace::capture::Backtrace> > >,std::thread::local::impl$6::with_borrow_mut::clos
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da\\library\\std\\src\\thread\\local.rs:283
+   7: std::thread::local::LocalKey<core::cell::RefCell<enum2$<core::option::Option<backtrace::capture::Backtrace> > > >::with
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da\\library\\std\\src\\thread\\local.rs:260
+      std::thread::local::LocalKey<core::cell::RefCell<enum2$<core::option::Option<backtrace::capture::Backtrace> > > >::with_borrow_mut<enum2$<core::option::Option<backtrace::capture::Backtrace> >,towermod_godot::app::impl$8::setup::closure$0::closure_env$0,tup
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da\\library\\std\\src\\thread\\local.rs:504
+   8: towermod_godot::app::impl$8::setup::closure$0
+             at \\towermod\\rust\\towermod-godot\\src\\util.rs:36
+   9: alloc::boxed::impl$50::call
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da/library\\alloc\\src\\boxed.rs:2076
+      std::panicking::rust_panic_with_hook
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da/library\\std\\src\\panicking.rs:801
+  10: std::panicking::begin_panic_handler::closure$0
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da/library\\std\\src\\panicking.rs:660
+  11: std::sys_common::backtrace::__rust_end_short_backtrace<std::panicking::begin_panic_handler::closure_env$0,never$>
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da/library\\std\\src\\sys_common\\backtrace.rs:171
+  12: std::panicking::begin_panic_handler
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da/library\\std\\src\\panicking.rs:658
+  13: core::panicking::panic_fmt
+             at /rustc/f8e566053207b4ecbcbc7a7d6ded82c43061e3da/library\\core\\src\\panicking.rs:74
+  14:"
+editable = false

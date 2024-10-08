@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://cuny4yc3x3egx"]
+
+[ext_resource type="Script" path="res://scenes/file_picker/file_picker.gd" id="1_0501m"]
+[ext_resource type="Theme" uid="uid://0wgv04mqiynd" path="res://resources/theme.tres" id="1_ogwlx"]
+
+[node name="FilePicker" type="HBoxContainer"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 27.0
+grow_horizontal = 2
+size_flags_vertical = 0
+theme = ExtResource("1_ogwlx")
+script = ExtResource("1_0501m")
+
+[node name="Browse" type="Button" parent="."]
+layout_mode = 2
+text = "Browse"
+
+[node name="LineEdit" type="LineEdit" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[connection signal="pressed" from="Browse" to="." method="_on_browse_pressed"]

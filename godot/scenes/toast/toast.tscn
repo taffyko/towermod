@@ -1,0 +1,57 @@
+[gd_scene load_steps=3 format=3 uid="uid://c6m1h8txbuo5e"]
+
+[ext_resource type="Script" path="res://scenes/toast/toast.gd" id="1_djad1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_752mu"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.101961, 0.101961, 0.101961, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 5
+anti_aliasing = false
+
+[node name="CanvasGroup" type="CanvasGroup" node_paths=PackedStringArray("label")]
+position = Vector2(240, 40)
+script = ExtResource("1_djad1")
+label = NodePath("MarginContainer/Toast/MarginContainer/Label")
+text = "Game path set."
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Toast" type="PanelContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_752mu")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Toast"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Label" type="Label" parent="MarginContainer/Toast/MarginContainer"]
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+text = "Game path set."
+horizontal_alignment = 1

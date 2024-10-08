@@ -1,0 +1,51 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug towermod-cli",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceRoot}/rust/target/debug/towermod-cli.exe",
+			"args": ["run"],
+			"stopAtEntry": false,
+			"cwd": "${workspaceRoot}",
+			"environment": [
+				{"name": "RUST_BACKTRACE", "value": "1"},
+				{"name": "RUST_LOG", "value": "trace"},
+			],
+			"console": "integratedTerminal",
+			"preLaunchTask": "build-cli",
+		},
+		{
+			"name": "Debug towermod-godot",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"cwd": "${workspaceFolder}/godot",
+			"program": "godot.exe",
+			"args": [],
+			"console": "externalTerminal",
+		},
+		{
+			"name": "Build & debug towermod-godot",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"cwd": "${workspaceFolder}/godot",
+			"program": "godot.exe",
+			"args": [],
+			"preLaunchTask": "build-godot"
+		},
+		{
+			"name": "Debug scene in running editor",
+			"project": "${workspaceFolder}/godot",
+			"type": "godot",
+			"port": 6007,
+			"debugServer": 6006,
+			"address": "127.0.0.1",
+			"request": "launch",
+			"editor_path": "godot",
+		}
+	],
+}

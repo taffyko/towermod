@@ -1,0 +1,7 @@
+[gd_resource type="SystemFont" format=3 uid="uid://ctjiyqjmpgujp"]
+
+[resource]
+font_names = PackedStringArray("Times New Roman")
+antialiasing = 0
+hinting = 2
+subpixel_positioning = 2

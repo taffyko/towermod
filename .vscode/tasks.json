@@ -1,0 +1,96 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-godot",
+			"type": "shell",
+			"command": [
+				"cargo"
+			],
+			"args": [
+				"build",
+				"--package",
+				"towermod-godot",
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/rust"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build-cli",
+			"type": "shell",
+			"command": [
+				"cargo"
+			],
+			"args": [
+				"build",
+				"--package",
+				"towermod-cli",
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/rust"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build-dllreader",
+			"type": "shell",
+			"command": [
+				"cargo"
+			],
+			"args": [
+				"build",
+				"-Z", "unstable-options",
+				"--package", "towermod",
+				"--bin", "dllreader",
+				"--target", "i686-pc-windows-msvc",
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/rust"
+			},
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Run Editor",
+			"type": "process",
+			"isBackground": true,
+			"command": "godot",
+			"args": [
+				"-e",
+			],
+			"options": {
+				"env": {
+					"RUST_BACKTRACE": "full"
+				},
+				"cwd": "${workspaceFolder}/godot"
+			},
+			"problemMatcher": [],
+		},
+		{
+			"label": "Build & Run Editor",
+			"type": "process",
+			"isBackground": true,
+			"command": "powershell",
+			"args": [
+				"-Command",
+				"Start-Process pwsh @('-NoProfile','-NonInteractive','-Command','Start-Process -Wait godot @(''-e'')')",
+			],
+			"options": {
+				"env": {
+					"RUST_BACKTRACE": "1"
+				},
+				"cwd": "${workspaceFolder}/godot"
+			},
+			"dependsOn": "build-godot",
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+	]
+}
