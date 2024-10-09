@@ -47,6 +47,8 @@ func _init():
 func _ready():
 	for tab in tabs:
 		get_tab_button(tab.name).pressed.connect(func(): current_tab = tab.name)
+		if tab.has_method(&"_on_main_tab_switched"):
+			tab_switched.connect(tab._on_main_tab_switched)
 	enabled_tabs = enabled_tabs
 	if Engine.is_editor_hint(): return
 	get_window().size = Vector2(480, 480)

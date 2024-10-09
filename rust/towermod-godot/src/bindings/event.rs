@@ -142,12 +142,30 @@ GD_AUTOSTRUCT! {
 	pub struct CstcEventCondition {
 		#[allow(unused)]
 		owner: Gd<WeakRef>,
+		#[var(get)]
+		pub object_type: Option<Gd<CstcObjectType>>,
+		#[var(get)]
+		pub cond_info: Option<Gd<CstcAcesEntry>>,
+		#[var(get)]
+		pub plugin_data: Option<Gd<CstcPluginData>>,
 	}
 	impl CstcBinding for CstcEventCondition {
 		type Data = cstc::EventCondition;
 
 		fn from_data(data: &Self::Data, owner: Gd<WeakRef>) -> Gd<Self> {
 			FIELDS!(CstcEventCondition, data: cstc::EventCondition);
+
+			let cstc_data: Gd<CstcData> = owner.get_ref().to();
+			let cstc_data = cstc_data.bind();
+			let (plugin_data, object_type) = cstc_data.plugin_data_for_object_id(data.object_id);
+
+			let mut cond_info: Option<Gd<CstcAcesEntry>> = None;
+			if let Some(plugin_data) = &plugin_data {
+				if let Some(variant) = plugin_data.bind().conditions.get(data.cond_id) {
+					cond_info = variant.try_to::<Gd<CstcAcesEntry>>().ok();
+				}
+			}
+
 			Gd::from_object(INIT!(CstcEventCondition))
 		}
 
@@ -175,7 +193,7 @@ GD_AUTOSTRUCT! {
 		#[var(get)]
 		pub action_info: Option<Gd<CstcAcesEntry>>,
 		#[var(get)]
-		pub plugin_info: Option<Gd<CstcPluginData>>,
+		pub plugin_data: Option<Gd<CstcPluginData>>,
 	}
 	impl CstcBinding for CstcEventAction {
 		type Data = cstc::EventAction;
@@ -184,19 +202,11 @@ GD_AUTOSTRUCT! {
 			FIELDS!(CstcEventAction, data: cstc::EventAction);
 			let cstc_data: Gd<CstcData> = owner.get_ref().to();
 			let cstc_data = cstc_data.bind();
-			let mut plugin_info: Option<Gd<CstcPluginData>> = None;
-			let mut object_type: Option<Gd<CstcObjectType>> = None;
-			if data.object_id == -1 {
-				plugin_info = cstc_data.editor_plugins.get(-1).unwrap().try_to::<Gd<CstcPluginData>>().ok();
-			} else {
-				object_type = cstc_data.get_object_type(data.object_id);
-				if let Some(object_type) = &object_type {
-					plugin_info = cstc_data.editor_plugins.get(object_type.bind().plugin_id).unwrap().try_to::<Gd<CstcPluginData>>().ok();
-				};
-			}
+			let (plugin_data, object_type) = cstc_data.plugin_data_for_object_id(data.object_id);
+
 			let mut action_info: Option<Gd<CstcAcesEntry>> = None;
-			if let Some(plugin_info) = &plugin_info {
-				if let Some(variant) = plugin_info.bind().actions.get(data.action_id) {
+			if let Some(plugin_data) = &plugin_data {
+				if let Some(variant) = plugin_data.bind().actions.get(data.action_id) {
 					action_info = variant.try_to::<Gd<CstcAcesEntry>>().ok();
 				}
 			}

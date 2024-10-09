@@ -99,7 +99,7 @@ stretch = true
 [node name="Content" type="SubViewport" parent="Window/Body/ContentContainer"]
 transparent_bg = true
 handle_input_locally = false
-size = Vector2i(2, 2)
+size = Vector2i(476, 292)
 render_target_update_mode = 4
 
 [node name="FocusRing" parent="Window/Body/ContentContainer/Content" instance=ExtResource("10_xcut4")]

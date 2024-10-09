@@ -278,6 +278,10 @@ func tree_find(objects, get_children: Callable, predicate: Callable):
 		if result != null:
 			return result
 
+func clear_children(node: Node):
+	for child in node.get_children():
+		child.queue_free()
+
 ## Workaround for https://github.com/godotengine/godot/issues/73036
 func free_object(obj: Object):
 	obj.free()

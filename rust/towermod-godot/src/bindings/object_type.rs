@@ -45,12 +45,14 @@ impl CstcObjectType {
 		};
 		s
 	}
+
 	#[func]
 	pub fn get_plugin_data(&self) -> Gd<CstcPluginData> {
-		// let data: Gd<CstcData> = self.owner.get_ref().to();
-		todo!()
+		let cstc_data: Gd<CstcData> = self.owner.get_ref().to();
+		let cstc_data = cstc_data.bind();
+		cstc_data.get_plugin_data(self.plugin_id).unwrap()
 	}
-
+	
 	#[func]
 	pub fn custom_property_info(&self, property: GString) -> Dictionary {
 		let mut pinfo = Dictionary::new();

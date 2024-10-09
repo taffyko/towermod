@@ -1,9 +1,15 @@
-[gd_scene load_steps=2 format=3 uid="uid://fqbgimujmdfu"]
+[gd_scene load_steps=3 format=3 uid="uid://fqbgimujmdfu"]
 
 [ext_resource type="PackedScene" uid="uid://c28nqb4ksdt7b" path="res://scenes/tabs/tab_container.tscn" id="1_agt36"]
+[ext_resource type="Script" path="res://scenes/tabs/events/events.gd" id="2_1biqf"]
 
-[node name="Events" instance=ExtResource("1_agt36")]
+[node name="Events" node_paths=PackedStringArray("events_container") instance=ExtResource("1_agt36")]
+script = ExtResource("2_1biqf")
+events_container = NodePath("ScrollContainer/MarginContainer/VBoxContainer")
 
-[node name="Label" type="Label" parent="ScrollContainer/MarginContainer" index="0"]
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer/MarginContainer" index="0"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer" index="0"]
 layout_mode = 2
 text = "WIP"

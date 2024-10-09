@@ -268,4 +268,25 @@ impl CstcData {
 	pub fn get_type_of_object(&self, id: i32) -> Option<Gd<CstcObjectType>> {
 		self.get_object_type(self.get_object(id)?.bind().object_type_id)
 	}
+
+	
+	#[func]
+	pub fn get_plugin_data(&self, id: i32) -> Option<Gd<CstcPluginData>> {
+		self.editor_plugins.get(id).unwrap().try_to::<Gd<CstcPluginData>>().ok()
+	}
+
+	pub fn plugin_data_for_object_id(&self, object_id: i32) -> (Option<Gd<CstcPluginData>>, Option<Gd<CstcObjectType>>) {
+		let mut plugin_data: Option<Gd<CstcPluginData>> = None;
+		let mut object_type: Option<Gd<CstcObjectType>> = None;
+		if object_id == -1 {
+			plugin_data = self.get_plugin_data(-1);
+		} else {
+			object_type = self.get_object_type(object_id);
+			if let Some(object_type) = &object_type {
+				let object_type = object_type.bind();
+				plugin_data = Some(object_type.get_plugin_data());
+			};
+		}
+		(plugin_data, object_type)
+	}
 }

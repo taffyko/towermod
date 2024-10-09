@@ -17,6 +17,7 @@ func _ready():
 	Util.app_state_changed.connect(_on_app_state_changed)
 	outliner.item_selected.connect(_on_outliner_item_selected)
 	
+	
 	inspector.supply_custom_properties = InspectorTowermod.supply_custom_properties
 	inspector.custom_get_control_for_property = InspectorTowermod.custom_get_control_for_property
 	inspector.supply_custom_property_info = InspectorTowermod.supply_custom_property_info
