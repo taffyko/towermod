@@ -7,9 +7,8 @@ var image_dump_dir: String
 
 func _ready():
 	Util.app_state_changed.connect(_on_app_state_changed)
-	update_browse_images() 
-	
-		
+	update_browse_images()
+
 func _on_app_state_changed(prev_state: Util.AppState, state: Util.AppState):
 	dump_images.disabled = !state.game
 	if state.game != prev_state.game:

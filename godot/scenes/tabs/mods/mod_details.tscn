@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://b1rji2vnly6h4"]
+[gd_scene load_steps=7 format=3 uid="uid://b1rji2vnly6h4"]
 
 [ext_resource type="Script" path="res://scenes/tabs/mods/mod_details.gd" id="1_bgk7a"]
 [ext_resource type="Theme" uid="uid://0wgv04mqiynd" path="res://resources/theme.tres" id="1_kvnml"]
@@ -12,20 +12,6 @@ font_italic = true
 antialiasing = 0
 hinting = 2
 subpixel_positioning = 2
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jj4cl"]
-bg_color = Color(1, 1, 1, 0)
-draw_center = false
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(1, 1, 1, 1)
-expand_margin_left = 1.0
-expand_margin_top = 1.0
-expand_margin_right = 1.0
-expand_margin_bottom = 1.0
-shadow_color = Color(0, 0, 0, 0)
 
 [node name="ModDetails" type="VBoxContainer" node_paths=PackedStringArray("mod_name", "mod_author", "description", "version_selector", "cover_image", "icon_image", "no_mod_selected", "upper", "lower", "offset_container", "date_label")]
 clip_contents = true
@@ -42,8 +28,8 @@ mod_name = NodePath("MarginContainer/VBoxContainer/Upper/HBoxContainer2/MarginCo
 mod_author = NodePath("MarginContainer/VBoxContainer/Upper/HBoxContainer2/MarginContainer/Name/Author")
 description = NodePath("MarginContainer/VBoxContainer/Upper/ScrollContainer/Description")
 version_selector = NodePath("MarginContainer/VBoxContainer/Upper/HBoxContainer2/VersionSelector")
-cover_image = NodePath("MarginContainer/VBoxContainer/Upper/MarginContainer/Cover/Image")
-icon_image = NodePath("MarginContainer/VBoxContainer/Upper/HBoxContainer2/Icon/Image")
+cover_image = NodePath("MarginContainer/VBoxContainer/Upper/MarginContainer/Cover")
+icon_image = NodePath("MarginContainer/VBoxContainer/Upper/HBoxContainer2/Icon")
 no_mod_selected = NodePath("MarginContainer/VBoxContainer/NoModSelected")
 upper = NodePath("MarginContainer/VBoxContainer/Upper")
 lower = NodePath("MarginContainer/VBoxContainer/Lower")
@@ -74,9 +60,6 @@ layout_mode = 2
 
 [node name="Icon" parent="MarginContainer/VBoxContainer/Upper/HBoxContainer2" instance=ExtResource("3_pmqy7")]
 layout_mode = 2
-
-[node name="Image" parent="MarginContainer/VBoxContainer/Upper/HBoxContainer2/Icon" index="0"]
-max_size = Vector2(32, 32)
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/Upper/HBoxContainer2"]
 layout_mode = 2
@@ -141,21 +124,6 @@ layout_mode = 2
 
 [node name="Cover" parent="MarginContainer/VBoxContainer/Upper/MarginContainer" instance=ExtResource("3_pmqy7")]
 layout_mode = 2
-size_flags_vertical = 0
-
-[node name="Image" parent="MarginContainer/VBoxContainer/Upper/MarginContainer/Cover" index="0"]
-max_size = Vector2(240, 160)
-
-[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer/Upper/MarginContainer/Cover/Image" index="0"]
-visible = false
-show_behind_parent = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_jj4cl")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/Upper"]
 layout_mode = 2

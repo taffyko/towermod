@@ -18,7 +18,7 @@ static func get_animation_icon(animation: CstcAnimation):
 	if frame_count > 0:
 		var image = data.get_image(animation.frames[0].image_id)
 		if image != null:
-			icon = ImageTexture.create_from_image(image.data)
+			icon = ImageTexture.create_from_image(image)
 	if icon == null:
 		for sub_animation in animation.sub_animations:
 			icon = get_animation_icon(sub_animation)
@@ -158,7 +158,7 @@ static func animation_frame(value: CstcAnimationFrame, pinfo):
 		var update_image = func():
 			var new_image = data.get_image(value.image_id)
 			if new_image:
-				tex.texture = ImageTexture.create_from_image(new_image.data)
+				tex.texture = ImageTexture.create_from_image(new_image)
 			else:
 				tex.texture = null
 				
@@ -196,9 +196,6 @@ static func supply_custom_properties(obj):
 
 static func custom_get_control_for_property(obj, value, pinfo: PropertyInfo):
 	## Objects in the inspector that already exist in the outliner become buttons that link to the outliner item
-	if obj is CstcObjectInstance:
-		if pinfo.name == &'object_type_id':
-			return object_type_link(value, pinfo)
 	if obj is CstcObjectInstance:
 		if pinfo.name == &'object_type_id':
 			return object_type_link(value, pinfo)
@@ -247,7 +244,7 @@ static func supply_custom_property_info(obj, pinfo):
 		else:
 			# Animations only have a name and a tag, the angle (exported into the sub-animations array) contains the rest of the data
 			if !(prop_name in [&'name', &'tag']):
-				return { hidden = true}
+				return { hidden = true }
 
 	if obj is CstcEvent or obj is CstcEventGroup or obj is CstcEventSheet:
 		if prop_name == &'events':
@@ -258,7 +255,11 @@ static func supply_custom_property_info(obj, pinfo):
 	if obj is CstcLayoutLayer:
 		if prop_name == &'objects':
 			return { hidden = true }
-			
+	if obj is CstcImageMetadata:
+		if prop_name in [&'id', &'collision_width', &'collision_height', &'collision_pitch']:
+			return { usage = PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_READ_ONLY }
+		if prop_name == &'collision_mask':
+			return { hidden = true }
 	if obj is CstcSpriteObjectData:
 		if prop_name == &'animation':
 			return { usage = PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_READ_ONLY }

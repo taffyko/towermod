@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::path::{PathBuf};
 
 use anyhow::{Context, Result};
+use godot::engine::Image;
 use godot::prelude::*;
 use godot::engine::global::weakref;
 use tokio::sync::RwLock;
@@ -12,7 +13,7 @@ use crate::app::Towermod;
 use crate::util::{status};
 
 use super::*;
-use towermod::cstc;
+use towermod::cstc::{self};
 
 #[derive(Debug, GodotClass)]
 #[class(init)]
@@ -27,11 +28,11 @@ pub struct CstcData {
 	#[var] pub layouts: Array<Gd<CstcLayout>>,
 	#[var] pub containers: Array<Gd<CstcObjectContainer>>,
 	#[var] pub animations: Array<Gd<CstcAnimation>>,
-	#[var] pub images: Array<Gd<CstcImageResource>>,
 	#[var] pub app_block: Option<Gd<CstcAppBlock>>,
 	#[var] pub event_block: Option<Gd<CstcEventBlock>>,
+	#[var] pub images: Dictionary, // HashMap<i32, Gd<Image>>
+	#[var] pub image_block: Dictionary, // HashMap<i32, Gd<CstcImageMetadata>>
 	// Performant lookups by ID
-	pub images_by_id: HashMap<i32, Gd<CstcImageResource>>,
 	pub animations_by_id: HashMap<i32, Gd<CstcAnimation>>,
 	pub object_instances_by_id: HashMap<i32, Gd<CstcObjectInstance>>,
 	pub object_instances_by_type: HashMap<i32, Array<Gd<CstcObjectInstance>>>
@@ -79,39 +80,60 @@ impl CstcData {
 	
 	/// # Errors
 	/// - Game path not set
-	pub async fn patch_with_images(found_images_by_id: HashMap<i32, Vec<u8>>) -> Result<Vec<cstc::ImageResource>> {
+	pub async fn patch_with_images(mut found_images_by_id: HashMap<i32, Vec<u8>>, image_metadatas: Option<Vec<cstc::ImageMetadata>>) -> Result<Vec<cstc::ImageResource>> {
 		let state = Towermod::state();
-		let mut images = {
+
+		// read base imageblock from PE
+		let mut base_image_block = {
 			let state = state.read().await;
 			let game_path = state.game.as_ref().unwrap().game_path()?;
 			cstc::ImageBlock::read_from_pe(game_path)?
 		};
-
-		let images_by_id: RwLock<HashMap<i32, &mut cstc::ImageResource>> = RwLock::new(images.iter_mut().map(|image| {
-			let id = image.id;
-			(id, image)
-		}).collect());
 		
-		{
-			let mut images_by_id = images_by_id.write().await;
-			for (i, data) in found_images_by_id.into_iter() {
-				if let Some(image) = images_by_id.get_mut(&i) {
-					image.data = data;
-				};
+		if let Some(image_metadatas) = image_metadatas {
+			// add base images to found_images_by_id
+			for image_resource in base_image_block {
+				if !found_images_by_id.contains_key(&image_resource.id) {
+					found_images_by_id.insert(image_resource.id, image_resource.data);
+				}
 			}
+			
+			let mut image_block = Vec::with_capacity(image_metadatas.len());
+			for metadata in image_metadatas {
+				let id = metadata.id;
+				image_block.push(
+					cstc::ImageResource::new(metadata, found_images_by_id.remove(&id).ok_or_else(|| anyhow::anyhow!("Could not find image {id}"))?)
+				)
+			}
+			Ok(image_block)
+		} else {
+			let images_by_id: RwLock<HashMap<i32, &mut cstc::ImageResource>> = RwLock::new(base_image_block.iter_mut().map(|image| {
+				let id = image.id;
+				(id, image)
+			}).collect());
+			
+			{
+				let mut images_by_id = images_by_id.write().await;
+				for (i, data) in found_images_by_id.into_iter() {
+					if let Some(image) = images_by_id.get_mut(&i) {
+						image.data = data;
+					};
+				}
+			}
+
+			Ok(base_image_block)
 		}
-		Ok(images)
 	}
 
 	/// # Errors
 	/// - Game path not set
-	pub async fn patched_images(images_dir: Option<&PathBuf>) -> Result<Vec<cstc::ImageResource>> {
+	pub async fn patched_imageblock(images_dir: Option<&PathBuf>, image_metadatas: Option<Vec<cstc::ImageMetadata>>) -> Result<Vec<cstc::ImageResource>> {
 		let found_images_by_id = if let Some(images_dir) = images_dir { Self::images_from_dir(images_dir).await? } else { HashMap::new() };
-		Self::patch_with_images(found_images_by_id).await
+		Self::patch_with_images(found_images_by_id, image_metadatas).await
 	}
 
 	
-	pub fn get_data(&self) -> (cstc::LevelBlock, cstc::AppBlock, cstc::EventBlock) {
+	pub fn get_data(&self) -> (cstc::LevelBlock, cstc::AppBlock, cstc::EventBlock, Vec<cstc::ImageMetadata>) {
 		let object_types = gd_dict_to_data_vec::<CstcObjectType>(&self.object_types);
 		let behaviors = gd_to_data_vec(&self.behaviors);
 		let traits = gd_to_data_vec(&self.traits);
@@ -123,7 +145,8 @@ impl CstcData {
 		let level_block = cstc::LevelBlock { object_types, behaviors, traits, families, containers, layouts, animations };
 		let app_block = self.app_block.as_ref().unwrap().bind().to_data();
 		let event_block = self.event_block.as_ref().unwrap().bind().to_data();
-		(level_block, app_block, event_block)
+		let image_block = gd_dict_to_data_vec::<CstcImageMetadata>(&self.image_block);
+		(level_block, app_block, event_block, image_block)
 	}
 	
 	/// # Panics
@@ -230,12 +253,6 @@ impl CstcData {
 			}
 			recurse_animations(&mut self.animations_by_id, &mut self.animations);
 		}
-		
-		self.images_by_id.clear();
-		for image in self.images.iter_shared() {
-			let id = image.bind().id;
-			self.images_by_id.insert(id, image.clone());
-		}
 	}
 
 
@@ -260,8 +277,13 @@ impl CstcData {
 	}
 
 	#[func]
-	pub fn get_image(&self, id: i32) -> Option<Gd<CstcImageResource>> {
-		self.images_by_id.get(&id).cloned()
+	pub fn get_image(&self, id: i32) -> Option<Gd<Image>> {
+		self.images.get(id)?.try_to::<Gd<Image>>().ok()
+	}
+
+	#[func]
+	pub fn get_image_meta(&self, id: i32) -> Option<Gd<CstcImageMetadata>> {
+		self.image_block.get(id)?.try_to::<Gd<CstcImageMetadata>>().ok()
 	}
 
 	#[func]

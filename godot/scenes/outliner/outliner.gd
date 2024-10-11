@@ -130,7 +130,7 @@ func load_outliner_data(data: CstcData):
 
 		treeitem_parent = make_group("Object Types")
 		for object_type in data.object_types.values():
-			var item = make_item(treeitem_parent, object_type)
+			make_item(treeitem_parent, object_type)
 
 		treeitem_parent = make_group("Traits")
 		for idx in range(len(data.traits)):
@@ -254,7 +254,6 @@ func _on_search_bar_text_changed(search_text):
 		if prev_thread:
 			prev_thread.wait_to_finish()
 
-		var count = [0]
 		if search_text == "":
 			# Show all items
 			apply_filter(root, func(_data): return true)

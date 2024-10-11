@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://bc278mnvr06il"]
+[gd_scene load_steps=4 format=3 uid="uid://bc278mnvr06il"]
 
 [ext_resource type="PackedScene" uid="uid://c28nqb4ksdt7b" path="res://scenes/tabs/tab_container.tscn" id="1_ylxt7"]
 [ext_resource type="Script" path="res://scenes/tabs/images/images.gd" id="2_i8icv"]
+[ext_resource type="PackedScene" uid="uid://vae0n88jjxme" path="res://scenes/tabs/images/image_data_edit.tscn" id="3_rkxb3"]
 
 [node name="Images" node_paths=PackedStringArray("browse_images", "dump_images") instance=ExtResource("1_ylxt7")]
 script = ExtResource("2_i8icv")
@@ -23,6 +24,9 @@ text = "Dump images"
 layout_mode = 2
 disabled = true
 text = "Browse dumped images"
+
+[node name="ImageDataEdit" parent="ScrollContainer/MarginContainer/VBoxContainer" index="1" instance=ExtResource("3_rkxb3")]
+layout_mode = 2
 
 [connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer/DumpImages" to="." method="_on_dump_images_pressed"]
 [connection signal="pressed" from="ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer/BrowseImages" to="." method="_on_browse_images_pressed"]

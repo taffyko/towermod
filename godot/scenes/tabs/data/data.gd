@@ -9,9 +9,7 @@ extends PanelContainer
 var data: CstcData :
 	get: return Util.app_state.data
 
-
 const InspectorObject = preload('res://inspector/inspector_object.gd')
-const InspectorTowermod = preload('res://scenes/inspector_towermod.gd')
 
 func _ready():
 	Util.app_state_changed.connect(_on_app_state_changed)

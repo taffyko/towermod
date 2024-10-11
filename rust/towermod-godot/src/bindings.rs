@@ -68,7 +68,7 @@ pub mod macros {
 				#[map(Vec<FeatureDescriptor>, Dictionary, cstc_feature_descriptors_to_gd, gd_to_cstc_feature_descriptors)]
 				#[map(Vec<Vec<Token>>, Vec<Vec<cstc::Token>>, Clone::clone, Clone::clone)] // TODO
 				#[map(Vec<i32>, Array<i32>, vec_to_gd, gd_to_vec)]
-				#[map(Vec<u8>, Vec<u8>, Clone::clone, Clone::clone)]
+				#[map(Vec<u8>, PackedByteArray, slice_to_packed_byte_array, packed_byte_array_to_vec)]
 
 				#[map(HashMap<i32, AcesEntry>, Dictionary, |d| data_dict_to_gd::<i32, CstcAcesEntry>(d, &owner))]
 				#[map(AceCategories, Dictionary, ace_categories_to_gd)]

@@ -1,37 +1,32 @@
-use godot::{engine::Image, prelude::*};
+use godot::{prelude::*};
 use super::*;
 use towermod::cstc;
 
 GD_AUTOSTRUCT! {
 	#[var]
-	pub .. "towermod/src/cstc/stable/mod.rs" cstc::ImageResource {
-		#[map(vec_to_image, image_to_vec)]
-		#[var]
-		pub data: Gd<Image>,
-		pub collision_mask, // TODO
-	}
+	pub .. "towermod/src/cstc/stable/mod.rs" cstc::ImageMetadata {}
 	#[derive(Debug, GodotClass)]
 	#[class(init)]
-	pub struct CstcImageResource {
+	pub struct CstcImageMetadata {
 		#[allow(unused)]
 		owner: Gd<WeakRef>,
 	}
-	impl CstcBinding for CstcImageResource {
-		type Data = cstc::ImageResource;
+	impl CstcBinding for CstcImageMetadata {
+		type Data = cstc::ImageMetadata;
 
 		fn from_data(cstc_data: &Self::Data, owner: Gd<WeakRef>) -> Gd<Self> {
-			FIELDS!(CstcImageResource, cstc_data: cstc::ImageResource);
-			Gd::from_object(INIT!(CstcImageResource))
+			FIELDS!(CstcImageMetadata, cstc_data: cstc::ImageMetadata);
+			Gd::from_object(INIT!(CstcImageMetadata))
 		}
 
 		fn to_data(&self) -> Self::Data {
-			FIELDS!(cstc::ImageResource, self: CstcImageResource);
-			INIT!(cstc::ImageResource)
+			FIELDS!(cstc::ImageMetadata, self: CstcImageMetadata);
+			INIT!(cstc::ImageMetadata)
 		}
 	}
 }
 #[godot_api]
-impl CstcImageResource {
+impl CstcImageMetadata {
 
 }
 

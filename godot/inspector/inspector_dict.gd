@@ -71,6 +71,7 @@ func repopulate_ui():
 			heading.remove_pressed.connect(func():
 				if value: value.erase(key)
 				heading.queue_free()
+				value_changed.emit(value)
 			)
 			vbox.add_child(heading)
 
@@ -94,6 +95,7 @@ func repopulate_ui():
 					value[text] = Util.default(value_pinfo)
 				else:
 					value[text] = null
+				value_changed.emit(value)
 				repopulate_ui()
 			)
 

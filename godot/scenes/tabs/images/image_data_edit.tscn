@@ -1,0 +1,117 @@
+[gd_scene load_steps=7 format=3 uid="uid://vae0n88jjxme"]
+
+[ext_resource type="Script" path="res://scenes/tabs/images/image_data_edit.gd" id="1_2sdvk"]
+[ext_resource type="PackedScene" uid="uid://c2ntlsvx718bx" path="res://scenes/int_texture/int_texture.tscn" id="2_3vsp3"]
+[ext_resource type="Texture2D" uid="uid://dwi0nkyw5ylv8" path="res://sprites/transparent.png" id="3_37uvg"]
+[ext_resource type="Script" path="res://scenes/tabs/images/image_draw_overlay.gd" id="3_obkyj"]
+[ext_resource type="Script" path="res://inspector/inspector_object.gd" id="5_tl6s8"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2xomf"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+draw_center = false
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+
+[node name="ImageDataEdit" type="VBoxContainer" node_paths=PackedStringArray("image_picker", "texture_rect", "overlay", "collision_rect", "inspector")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_2sdvk")
+image_picker = NodePath("HBoxContainer2/ImageId")
+texture_rect = NodePath("HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image")
+overlay = NodePath("HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image/Overlay")
+collision_rect = NodePath("HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image/CollisionMask")
+inspector = NodePath("HBoxContainer/InspectorObject")
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="ImageId" type="SpinBox" parent="HBoxContainer2"]
+layout_mode = 2
+allow_greater = true
+
+[node name="ShowCollision" type="CheckBox" parent="HBoxContainer2"]
+layout_mode = 2
+button_pressed = true
+text = "Show collision"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/MarginContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Image" parent="HBoxContainer/MarginContainer/ScrollContainer/MarginContainer" instance=ExtResource("2_3vsp3")]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="TransparencyBackdrop" type="TextureRect" parent="HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image"]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_37uvg")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_2xomf")
+
+[node name="CollisionMask" type="TextureRect" parent="HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image"]
+self_modulate = Color(1, 0, 0, 0.498039)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Overlay" type="Control" parent="HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image" node_paths=PackedStringArray("mask_texture_rect")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_obkyj")
+mask_texture_rect = NodePath("../CollisionMask")
+
+[node name="InspectorObject" type="MarginContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("5_tl6s8")
+
+[connection signal="value_changed" from="HBoxContainer2/ImageId" to="." method="_on_selected_image_changed"]
+[connection signal="toggled" from="HBoxContainer2/ShowCollision" to="." method="_on_show_collision_toggled"]

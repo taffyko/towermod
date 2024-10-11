@@ -224,6 +224,13 @@ pub fn image_to_vec(image: &Gd<Image>) -> Vec<u8> {
 	buf.to_vec()
 }
 
+pub fn packed_byte_array_to_vec(arr: &PackedByteArray) -> Vec<u8> {
+	Vec::from(arr.as_slice())
+}
+pub fn slice_to_packed_byte_array(slice: &[u8]) -> PackedByteArray {
+	PackedByteArray::from(slice)
+}
+
 
 pub fn enum_to_i32<T: ToPrimitive>(e: T) -> i32 {
 	e.to_i32().unwrap()

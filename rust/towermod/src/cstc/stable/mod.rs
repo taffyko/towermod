@@ -337,6 +337,34 @@ pub struct ImageResource {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImageMetadata {
+	pub id: i32,
+	pub hotspot_x: i32,
+	pub hotspot_y: i32,
+	pub apoints: Vec<ActionPoint>,
+	// always the same as the image's width in pixels
+	pub collision_width: u32,
+	// always the same as the image's height in pixels
+	pub collision_height: u32,
+	pub collision_pitch: i32,
+	pub collision_mask: Vec<u8>,
+}
+
+impl From<ImageResource> for ImageMetadata {
+	fn from(o: ImageResource) -> Self {
+		let ImageResource { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask, .. } = o;
+		ImageMetadata { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask }
+	}
+}
+
+impl ImageResource {
+	pub fn new(metadata: ImageMetadata, data: Vec<u8>) -> Self {
+		let ImageMetadata { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask } = metadata;
+		ImageResource { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask, data }
+	}
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppBlock {
 	pub name: String,
 	pub window_width: i32,

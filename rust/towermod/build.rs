@@ -28,7 +28,9 @@ fn main() {
 			if profile == "release" {
 				command.arg("--release");
 			}
-			assert!(command.status().unwrap().success());
+			if !command.status().unwrap().success() {
+				println!("cargo::warning=FAILED to build dllreader.exe!");
+			}
 			println!("cargo:rustc-env=DLLREADER_EXE={}", out_dir.join("dllreader.exe").to_str().unwrap());
 		}
 		Err(VarError::NotPresent) => {}

@@ -46,6 +46,7 @@ func repopulate_ui():
 			var heading = Heading.new(control, str(i), !read_only)
 			heading.remove_pressed.connect(func():
 				if value: value.remove_at(i)
+				value_changed.emit(value)
 				# need to repopulate UI otherwise bound indices will become wrong
 				repopulate_ui()
 			)
@@ -72,6 +73,7 @@ func repopulate_ui():
 					value.push_back(Util.default(value_pinfo))
 				else:
 					value.push_back(null)
+				value_changed.emit(value)
 				repopulate_ui()
 			)
 			

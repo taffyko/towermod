@@ -18,6 +18,7 @@ use tokio::io::AsyncWriteExt;
 use tokio::sync::RwLock;
 use tokio_stream::wrappers::ReadDirStream;
 use towermod::async_cleanup;
+use towermod::cstc::ImageMetadata;
 use towermod::get_cache_dir_path;
 use towermod::get_default_project_dir_path;
 use async_scoped::TokioScope;
@@ -275,7 +276,7 @@ impl Towermod {
 					let original_level_block_bin = cstc::LevelBlock::read_bin(&game_path)?;
 					let original_app_block_bin = cstc::AppBlock::read_bin(&game_path)?;
 					let original_event_block_bin = cstc::EventBlock::read_bin(&game_path)?;
-					let (level_block, app_block, event_block) = {
+					let (level_block, app_block, event_block, image_block) = {
 						app!(this);
 						let data = this.data.bind();
 						data.get_data()
@@ -311,6 +312,7 @@ impl Towermod {
 					zip.write_all(&event_block_patch)?;
 					zip.start_file("appblock.patch", options)?;
 					zip.write_all(&app_block_patch)?;
+					// TODO: write imageblock.patch
 				}
 			}
 
@@ -348,13 +350,12 @@ impl Towermod {
 		}
 	}
 
-
 	/// # Panics
 	/// - Game not set
 	/// - Data not set
 	#[func]
 	fn play_project(debug: bool) -> Promise<()> {
-		let (level_block, app_block, mut event_block) = {
+		let (level_block, app_block, mut event_block, image_metadata) = {
 			app!(@block this);
 			let data = this.data.bind();
 			data.get_data()
@@ -370,7 +371,7 @@ impl Towermod {
 					}
 				}
 			}
-			let images = CstcData::patched_images(images_dir.as_ref()).await?;
+			let images = CstcData::patched_imageblock(images_dir.as_ref(), Some(image_metadata)).await?;
 			
 			let state = state.read().await;
 			let game = state.game.as_ref().unwrap();
@@ -552,6 +553,7 @@ impl Towermod {
 				let level_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
 				let event_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
 				let app_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+				let image_metadata_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
 
 				let src_exe_path = mod_info.game.get_release_build().await?;
 				fs::copy(&src_exe_path, &output_exe_path).await?;
@@ -574,12 +576,21 @@ impl Towermod {
 							file.read_to_end(&mut buf)?;
 							*event_block_patch.lock().unwrap() = Some(buf);
 						};
+						if let Ok(mut file) = zip.by_name("imageblock.patch") {
+							let mut buf = Vec::new();
+							file.read_to_end(&mut buf)?;
+							*image_metadata_patch.lock().unwrap() = Some(buf);
+						};
 					}
 
 					status!("Patching executable");
 					let images_by_id = images_by_id.into_inner()?;
 					if !images_by_id.is_empty() {
-						let patched_image_block = CstcData::patch_with_images(images_by_id).await?;
+						// TODO: read imageblock from game, convert to image metadata only
+						// apply patch
+						// then convert back to imageblock and load
+						let image_metadata = None;
+						let patched_image_block = CstcData::patch_with_images(images_by_id, image_metadata).await?;
 						patched_image_block.write_to_pe(&output_exe_path)?;
 					}
 					if let Some(level_block_patch) = level_block_patch.into_inner().unwrap() {
@@ -660,11 +671,11 @@ impl Towermod {
 						families: Array::new(),
 						containers: Array::new(),
 						animations: Array::new(),
-						images: Array::new(),
+						images: Dictionary::new(),
+						image_block: Dictionary::new(),
 						app_block: None,
 						event_block: None,
 						animations_by_id: HashMap::new(),
-						images_by_id: HashMap::new(),
 						object_instances_by_id: HashMap::new(),
 						object_instances_by_type: HashMap::new(),
 					}
@@ -692,10 +703,18 @@ impl Towermod {
 			let weak: Gd<WeakRef> = weakref(this.data.to_variant()).to();
 
 			// load editor_plugins, plugin_names, images, if not already present
-			if this.data.bind().images.is_empty() {
+			if this.data.bind().image_block.is_empty() {
 				status!("Initializing image data");
-				let images = cstc::ImageBlock::read_from_pe(&game.game_path()?).unwrap();
-				this.data.bind_mut().images = data_vec_to_gd(&images, &weak);
+				let image_resources = cstc::ImageBlock::read_from_pe(&game.game_path()?).unwrap();
+				let mut images: HashMap<i32, Gd<Image>> = HashMap::new();
+				let mut image_block: HashMap<i32, ImageMetadata> = HashMap::new();
+				for image_resource in image_resources {
+					let id = image_resource.id;
+					images.insert(id, vec_to_image(&image_resource.data));
+					image_block.insert(id, From::from(image_resource));
+				}
+				this.data.bind_mut().images = images.into_iter().collect();
+				this.data.bind_mut().image_block = data_dict_to_gd::<i32, CstcImageMetadata>(&image_block, &weak);
 			}
 			let no_data = this.data.bind().plugin_names.is_empty();
 			no_data
@@ -832,11 +851,11 @@ impl Towermod {
 					families: Array::new(),
 					containers: Array::new(),
 					animations: Array::new(),
-					images: Array::new(),
+					images: Dictionary::new(),
+					image_block: Dictionary::new(),
 					app_block: None,
 					event_block: None,
 					animations_by_id: HashMap::new(),
-					images_by_id: HashMap::new(),
 					object_instances_by_id: HashMap::new(),
 					object_instances_by_type: HashMap::new(),
 				}
@@ -928,7 +947,7 @@ impl Towermod {
 				project.save_to(&proj_dir.join("manifest.toml")).await?;
 			}
 			
-			let (level_block, app_block, event_block) = {
+			let (level_block, app_block, event_block, image_block) = {
 				app!(this);
 				let data = this.data.bind();
 				data.get_data()
@@ -936,6 +955,8 @@ impl Towermod {
 			let level_block_json = serde_json::to_vec(&level_block)?;
 			let app_block_json = serde_json::to_vec(&app_block)?;
 			let event_block_json = serde_json::to_vec(&event_block)?;
+			let image_block_json = serde_json::to_vec(&image_block)?;
+			fs::write(proj_dir.join("imageblock.json"), &image_block_json).await?;
 			fs::write(proj_dir.join("levelblock.json"), &level_block_json).await?;
 			fs::write(proj_dir.join("appblock.json"), &app_block_json).await?;
 			fs::write(proj_dir.join("eventblock.json"), &event_block_json).await?;

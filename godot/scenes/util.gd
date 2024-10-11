@@ -282,6 +282,11 @@ func clear_children(node: Node):
 	for child in node.get_children():
 		child.queue_free()
 
+## Translate coordinates from one local space to another
+func local_to_local(coord: Vector2, source: CanvasItem, dest: CanvasItem):
+	var global_coord := source.get_global_transform() * coord
+	return dest.get_global_transform().inverse() * global_coord
+
 ## Workaround for https://github.com/godotengine/godot/issues/73036
 func free_object(obj: Object):
 	obj.free()
@@ -350,6 +355,10 @@ func default_object(name: StringName):
 			return CstcGlobalVariable.new()
 		&'CstcBehaviorControl':
 			return CstcBehaviorControl.new()
+		&'CstcActionPoint':
+			var apoint = CstcActionPoint.new()
+			apoint.string = "point"
+			return apoint
 
 func default(input: Variant):
 	var ty: Variant.Type
