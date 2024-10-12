@@ -30,6 +30,7 @@ use towermod::ModType;
 use towermod::ProjectType;
 use towermod::{Game, Project, try_find_towerclimb};
 use towermod::PeResource;
+use tracing::instrument;
 use crate::bindings::*;
 use crate::util::{promise, Promise, app, status};
 use super::*;
@@ -84,6 +85,7 @@ impl Towermod {
 		}
 	}
 	
+	#[instrument]
 	async fn save_state() -> Result<()> {
 		let saved_state_path = towermod::get_cache_dir_path().join("towermod-gui.toml");
 		let state = Towermod::state();
@@ -92,6 +94,7 @@ impl Towermod {
 		Ok(())
 	}
 
+	#[instrument]
 	async fn load_state() -> Result<AppState> {
 		let saved_state_path = towermod::get_cache_dir_path().join("towermod-gui.toml");
 		let state: AppState = toml::from_str(&fs::read_to_string(saved_state_path).await?)?;
@@ -207,8 +210,6 @@ impl Towermod {
 	fn rust_error(message: GString);
 	#[signal]
 	fn rust_confirm_warning(message: GString, confirm_text: GString, base: Gd<Object>, callback_name: GString, args: Array<Variant>);
-	#[signal]
-	fn rust_status_update(message: GString);
 	
 	#[signal]
 	fn game_path_updated(path: GString, valid: bool);
@@ -216,15 +217,6 @@ impl Towermod {
 	fn active_project_updated(valid: bool);
 	#[signal]
 	fn callback(id: i64, args: VariantArray);
-
-	pub fn status(msg: &str) {
-		let msg = msg.to_owned();
-		messenger::get!(@block mut m);
-		m.queue.push_back(Callable::from_fn("update_status", move |_| {
-			Towermod::emit("rust_status_update", &[msg.to_variant()]);
-			Ok(Variant::nil())
-		}));
-	}
 	
 	#[func]
 	// Auto-select game based on saved config/etc.
@@ -249,10 +241,6 @@ impl Towermod {
 		let mod_type: ModType = From::from(mod_type);
 		promise! {
 			let state = Towermod::state();
-			// TODO: warn if version already exists / not incrementing version contained in Project
-			// TODO: require project to be saved, update towermod.toml with bumped version
-			// TODO: update description
-			// TODO: allow selecting new icon/cover
 			let (game_path, project_dir, images_path, files_path, savefiles_path);
 			{
 				let state = state.read().await;
@@ -692,7 +680,8 @@ impl Towermod {
 			Towermod::emit("active_project_updated", &[true.to_variant()]);
 		}
 	}
-	
+
+	#[instrument]
 	async fn ensure_base_data() -> Result<()> {
 		let state = Towermod::state();
 		let no_data = {
@@ -744,6 +733,7 @@ impl Towermod {
 			Towermod::_set_game_path(file_path).await;
 		}
 	}
+	#[instrument]
 	async fn _set_game_path(file_path: String) {
 		let path = PathBuf::from(file_path.to_string());
 		let state = Towermod::state();
@@ -816,6 +806,7 @@ impl Towermod {
 		}
 	}
 	
+	#[instrument]
 	pub async fn _load_project(file_path: String) -> Result<()> {
 		status!("Loading");
 		let state = Towermod::state();
@@ -986,9 +977,6 @@ impl Towermod {
 
 	#[func]
 	fn export_from_legacy(file_path: String, project: Gd<TowermodProject>) -> Promise<()> {
-		// TODO: select date from modification date of patch.json
-		// TODO: prompt for same info as in "first-time save modal" and other "export mod" modal
-		// FIXME: load existing manifest if any present
 		// take a path to a patch.zip or patch.json
 		// expect "files" dir in same directory
 		// treat directory of file path as a project dir (copy logo/etc. there)

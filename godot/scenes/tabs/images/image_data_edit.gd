@@ -28,7 +28,6 @@ func _ready():
 	inspector.supply_custom_property_info = InspectorTowermod.supply_custom_property_info
 	
 	inspector.value_changed.connect(func(value):
-		print("changed")
 		self.data = value
 	)
 

@@ -39,7 +39,7 @@ func _init():
 	if !Engine.is_editor_hint():
 		Util.modal_parent = self
 		Towermod.rust_error.connect(_on_rust_error, CONNECT_DEFERRED)
-		Towermod.rust_status_update.connect(_on_rust_status_update, CONNECT_DEFERRED)
+		Messenger.rust_status_update.connect(_on_rust_status_update, CONNECT_DEFERRED)
 		Towermod.rust_confirm_warning.connect(_on_rust_confirm_warning, CONNECT_DEFERRED)
 		Util.app_state_changed.connect(_on_app_state_changed)
 		Util.blocking_updated.connect(_on_blocking_updated)

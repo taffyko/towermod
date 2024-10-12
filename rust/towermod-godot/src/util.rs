@@ -1,4 +1,4 @@
-use std::{cell::RefCell, panic::PanicInfo, sync::Mutex};
+use std::{cell::RefCell, panic::PanicHookInfo, sync::Mutex};
 
 use futures::FutureExt;
 use godot::{builtin::{Array, GString, Variant}, log::godot_print, meta::ToGodot, obj::Gd};
@@ -19,7 +19,7 @@ pub static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
 });
 pub static HOOK_SET: Mutex<bool> = Mutex::new(false);
 lazy_static::lazy_static! {
-	pub static ref ORIGINAL_HOOK: Mutex<Option<Box<dyn Fn(&PanicInfo) + 'static + Sync + Send>>> = Mutex::new(None);
+	pub static ref ORIGINAL_HOOK: Mutex<Option<Box<dyn Fn(&PanicHookInfo) + 'static + Sync + Send>>> = Mutex::new(None);
 	pub static ref APP: tokio::sync::RwLock<godot::obj::InstanceId> = tokio::sync::RwLock::new(Towermod::singleton().instance_id());
 	pub static ref APP_CONTENTION_BACKTRACES: Mutex<Vec<(Uuid, bool, backtrace::Backtrace)>> = Mutex::new(Vec::new());
 	pub static ref LAST_BACKTRACE: Mutex<Option<backtrace::Backtrace>> = Mutex::new(None);
@@ -343,7 +343,7 @@ pub fn show_error(msg: impl std::fmt::Debug) {
 
 macro_rules! status {
 	($($arg:tt)*) => {
-		Towermod::status(&format!($($arg)*));
+		$crate::messenger::Messenger::status(&format!($($arg)*));
 	}
 }
 pub(crate) use status;

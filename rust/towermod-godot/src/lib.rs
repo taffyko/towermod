@@ -1,6 +1,7 @@
 #![feature(io_error_more)]
 #![feature(impl_trait_in_assoc_type)]
 #![feature(associated_type_defaults)]
+#![feature(stmt_expr_attributes)]
 #![feature(try_blocks)]
 #![feature(async_closure)]
 use godot::{engine::Engine, prelude::*};
@@ -12,7 +13,24 @@ struct MyExtension;
 unsafe impl ExtensionLibrary for MyExtension {
 	fn on_level_init(level: InitLevel) {
 		if level == InitLevel::Core {
-			// console_subscriber::init();
+			#[cfg(debug_assertions)]
+			{
+				use tracing_subscriber::prelude::*;
+				use tracing::level_filters::LevelFilter;
+				use tracing_subscriber::fmt::format::FmtSpan;
+
+				let console_layer = console_subscriber::spawn();
+
+				let fmt_layer = tracing_subscriber::fmt::Layer::default()
+					.with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
+					.with_filter(LevelFilter::INFO);
+
+				let subscriber = tracing_subscriber::Registry::default()
+					.with(fmt_layer)
+					.with(console_layer);
+				
+				tracing::subscriber::set_global_default(subscriber).unwrap();
+			}
 		}
 
 		if level == InitLevel::Scene {

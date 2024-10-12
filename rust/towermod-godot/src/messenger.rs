@@ -19,11 +19,15 @@ pub(crate) use get;
 #[derive(Debug, GodotClass)]
 #[class(base=Object)]
 pub struct Messenger {
+	pub base: Base<Object>,
 	pub queue: VecDeque<Callable>,
 }
 
 #[godot_api]
 impl Messenger {
+	#[signal]
+	fn rust_status_update(message: GString);
+
 	#[func]
 	fn singleton() -> Gd<Self> {
 		let engine = Engine::singleton();
@@ -34,12 +38,18 @@ impl Messenger {
 	pub fn poll_queue(&mut self) -> Variant {
 		self.queue.pop_front().map_or(Variant::nil(), |c| c.to_variant())
 	}
+
+	pub fn status(msg: &str) {
+		get!(@block mut m);
+		m.base_mut().emit_signal(StringName::from("rust_status_update"), &[msg.to_variant()]);
+	}
 }
 
 #[godot_api]
 impl IObject for Messenger {
-	fn init(_base: Base<Object>) -> Self {
+	fn init(base: Base<Object>) -> Self {
 		Self {
+			base,
 			queue: VecDeque::new(),
 		}
 	}

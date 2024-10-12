@@ -9,6 +9,7 @@ use tokio::sync::RwLock;
 use futures::stream::StreamExt;
 use tokio_stream::wrappers::ReadDirStream;
 use towermod::PeResource;
+use tracing::instrument;
 use crate::app::Towermod;
 use crate::util::{status};
 
@@ -40,6 +41,7 @@ pub struct CstcData {
 #[godot_api]
 impl CstcData {
 	
+	#[instrument]
 	pub async fn images_from_dir(images_dir: &PathBuf) -> Result<HashMap<i32, Vec<u8>>> {
 		let found_images_by_id: RwLock<HashMap<i32, Vec<u8>>> = RwLock::new(HashMap::new());
 
@@ -80,6 +82,7 @@ impl CstcData {
 	
 	/// # Errors
 	/// - Game path not set
+	#[instrument]
 	pub async fn patch_with_images(mut found_images_by_id: HashMap<i32, Vec<u8>>, image_metadatas: Option<Vec<cstc::ImageMetadata>>) -> Result<Vec<cstc::ImageResource>> {
 		let state = Towermod::state();
 
@@ -127,6 +130,7 @@ impl CstcData {
 
 	/// # Errors
 	/// - Game path not set
+	#[instrument]
 	pub async fn patched_imageblock(images_dir: Option<&PathBuf>, image_metadatas: Option<Vec<cstc::ImageMetadata>>) -> Result<Vec<cstc::ImageResource>> {
 		let found_images_by_id = if let Some(images_dir) = images_dir { Self::images_from_dir(images_dir).await? } else { HashMap::new() };
 		Self::patch_with_images(found_images_by_id, image_metadatas).await
@@ -180,6 +184,7 @@ impl CstcData {
 		}
 	}
 	
+	#[instrument]
 	pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_name: &str) -> Result<()> {
 		// FIXME make this less brittle
 		
