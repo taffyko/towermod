@@ -7,6 +7,7 @@ static var data: CstcData:
 		return Util.app_state.data
 
 const InspectorNumeric = preload("res://inspector/inspector_numeric.gd")
+const IntTexture = preload("res://scenes/int_texture/int_texture.tscn")
 
 static var outliner
 static func initialize(new_outliner):
@@ -152,7 +153,12 @@ static func get_first_instance_of_type(object_type_id: int):
 
 static func animation_frame(value: CstcAnimationFrame, pinfo):
 	return TowermodInspectorCustom.new(value, pinfo, func(node: TowermodInspectorCustom):
-		var tex = TextureRect.new()
+		var tex = IntTexture.instantiate()
+		tex.clickable = true
+		tex.pressed.connect(func():
+			var tab_manager = Util.get_context(tex, &"tab_manager")
+			tab_manager.jump_to_image(value.image_id)
+		)
 		tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
 		var update_image = func():
@@ -192,6 +198,18 @@ static func supply_custom_properties(obj):
 			name = &'instances',
 			getter = func(): return data.get_objects_by_type(obj.id),
 		}]
+	if obj is CstcImageMetadata:
+		return [
+			{
+				name = &'width',
+				getter = func(): return data.get_image(obj.id).get_width(),
+			},
+			{
+				name = &'height',
+				getter = func(): return data.get_image(obj.id).get_width(),
+			}
+		]
+		
 	return []
 
 static func custom_get_control_for_property(obj, value, pinfo: PropertyInfo):

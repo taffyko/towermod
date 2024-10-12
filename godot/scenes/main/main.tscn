@@ -54,7 +54,7 @@ void fragment() {
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_uic44"]
 shader = SubResource("Shader_3tvbt")
 
-[node name="Main" type="Control" node_paths=PackedStringArray("tabs_parent", "modal_background", "loading_spinner", "tab_buttons_parent")]
+[node name="Main" type="Control" node_paths=PackedStringArray("tabs_parent", "modal_background", "loading_spinner", "tab_buttons_parent", "images_tab")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -68,6 +68,7 @@ tabs_parent = NodePath("Window/Body/ContentContainer/Content/Control/Tabs")
 modal_background = NodePath("Window/Body/ContentContainer/Content/Control/ModalBackground")
 loading_spinner = NodePath("Window/Body/ContentContainer/Content/Control/LoadingSpinner")
 tab_buttons_parent = NodePath("Window/Body/ContentContainer/Content/Control/TabButtons")
+images_tab = NodePath("Window/Body/ContentContainer/Content/Control/Tabs/Images")
 metadata/_disabled_ = false
 
 [node name="Window" type="VBoxContainer" parent="."]

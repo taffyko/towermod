@@ -219,6 +219,16 @@ impl Towermod {
 	fn callback(id: i64, args: VariantArray);
 	
 	#[func]
+	pub fn load_image_overrides_from_disk() -> Promise<()> {
+		todo!()
+	}
+
+	#[func]
+	pub fn load_one_image_override_from_disk(id: i32) -> Promise<()> {
+		todo!()
+	}
+	
+	#[func]
 	// Auto-select game based on saved config/etc.
 	pub fn setup() -> Promise<()> {
 		promise! {
@@ -674,7 +684,7 @@ impl Towermod {
 			Towermod::ensure_base_data().await?;
 			{
 				app!(mut this);
-				CstcData::set_data(&mut this.data, (&level_block, &app_block, &event_block));
+				CstcData::set_data(&mut this.data, (&level_block, &app_block, &event_block, None));
 				this.data.bind_mut().update_access_maps();
 			}
 			Towermod::emit("active_project_updated", &[true.to_variant()]);
@@ -694,6 +704,7 @@ impl Towermod {
 			// load editor_plugins, plugin_names, images, if not already present
 			if this.data.bind().image_block.is_empty() {
 				status!("Initializing image data");
+				// TODO: rework image loading flow
 				let image_resources = cstc::ImageBlock::read_from_pe(&game.game_path()?).unwrap();
 				let mut images: HashMap<i32, Gd<Image>> = HashMap::new();
 				let mut image_block: HashMap<i32, ImageMetadata> = HashMap::new();
@@ -827,6 +838,7 @@ impl Towermod {
 		let level_block_json = fs::read(proj_dir.join("levelblock.json")).await?;
 		let app_block_json = fs::read(proj_dir.join("appblock.json")).await?;
 		let event_block_json = fs::read(proj_dir.join("eventblock.json")).await?;
+		let image_block_json = fs::read(proj_dir.join("imageblock.json")).await.ok();
 
 		{
 			app!(mut this);
@@ -859,9 +871,10 @@ impl Towermod {
 		let level_block: cstc::LevelBlock = serde_json::from_slice(&level_block_json).unwrap();
 		let app_block: cstc::AppBlock = serde_json::from_slice(&app_block_json).unwrap();
 		let event_block: cstc::EventBlock = serde_json::from_slice(&event_block_json).unwrap();
+		let image_block: Option<Vec<cstc::ImageMetadata>> = image_block_json.map(|o| serde_json::from_slice(&o).unwrap());
 		{
 			app!(mut this);
-			CstcData::set_data(&mut this.data, (&level_block, &app_block, &event_block));
+			CstcData::set_data(&mut this.data, (&level_block, &app_block, &event_block, image_block.as_ref()));
 			this.data.bind_mut().update_access_maps();
 		}
 		{

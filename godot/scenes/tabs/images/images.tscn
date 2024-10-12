@@ -4,10 +4,11 @@
 [ext_resource type="Script" path="res://scenes/tabs/images/images.gd" id="2_i8icv"]
 [ext_resource type="PackedScene" uid="uid://vae0n88jjxme" path="res://scenes/tabs/images/image_data_edit.tscn" id="3_rkxb3"]
 
-[node name="Images" node_paths=PackedStringArray("browse_images", "dump_images") instance=ExtResource("1_ylxt7")]
+[node name="Images" node_paths=PackedStringArray("browse_images", "dump_images", "image_data_edit") instance=ExtResource("1_ylxt7")]
 script = ExtResource("2_i8icv")
 browse_images = NodePath("ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer/BrowseImages")
 dump_images = NodePath("ScrollContainer/MarginContainer/VBoxContainer/HBoxContainer/DumpImages")
+image_data_edit = NodePath("ScrollContainer/MarginContainer/VBoxContainer/ImageDataEdit")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer/MarginContainer" index="0"]
 layout_mode = 2

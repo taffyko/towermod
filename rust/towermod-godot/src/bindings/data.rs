@@ -11,7 +11,7 @@ use tokio_stream::wrappers::ReadDirStream;
 use towermod::PeResource;
 use tracing::instrument;
 use crate::app::Towermod;
-use crate::util::{status};
+use crate::util::{app, status};
 
 use super::*;
 use towermod::cstc::{self};
@@ -155,9 +155,9 @@ impl CstcData {
 	
 	/// # Panics
 	/// - Base data not yet set
-	pub fn set_data(this: &mut Gd<CstcData>, data: (&cstc::LevelBlock, &cstc::AppBlock, &cstc::EventBlock)) {
+	pub fn set_data(this: &mut Gd<CstcData>, data: (&cstc::LevelBlock, &cstc::AppBlock, &cstc::EventBlock, Option<&Vec<cstc::ImageMetadata>>)) {
 		status!("Initializing data");
-		let (level_block, app_block, event_block) = data;
+		let (level_block, app_block, event_block, image_block) = data;
 		let weak: Gd<WeakRef> = weakref(this.to_variant()).to();
 		this.bind_mut().animations = data_vec_to_gd(&level_block.animations, &weak);
 		this.bind_mut().app_block = Some(CstcAppBlock::from_data(&app_block, weak.clone()));
@@ -168,6 +168,9 @@ impl CstcData {
 		this.bind_mut().families = data_vec_to_gd(&level_block.families, &weak);
 		this.bind_mut().containers = data_vec_to_gd(&level_block.containers, &weak);
 		this.bind_mut().event_block = Some(CstcEventBlock::from_data(&event_block, weak.clone()));
+		if let Some(image_block) = image_block { 
+			this.bind_mut().image_block = data_vec_to_dict_gd::<i32, CstcImageMetadata>(&image_block, &weak, |o| o.id);
+		}
 		
 		// FIXME set animations by ID
 	}
@@ -258,6 +261,15 @@ impl CstcData {
 			}
 			recurse_animations(&mut self.animations_by_id, &mut self.animations);
 		}
+	}
+
+	#[func]
+	pub fn load_image_overrides_from_disk(&mut self) {
+
+	}
+
+	#[func]
+	pub fn load_one_image_override_from_disk(&mut self, id: i32) {
 	}
 
 

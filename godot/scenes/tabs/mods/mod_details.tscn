@@ -59,7 +59,10 @@ custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 
 [node name="Icon" parent="MarginContainer/VBoxContainer/Upper/HBoxContainer2" instance=ExtResource("3_pmqy7")]
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
+expand_mode = 1
+max_size = Vector2(48, 48)
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/Upper/HBoxContainer2"]
 layout_mode = 2
@@ -123,7 +126,10 @@ size_flags_vertical = 0
 layout_mode = 2
 
 [node name="Cover" parent="MarginContainer/VBoxContainer/Upper/MarginContainer" instance=ExtResource("3_pmqy7")]
+custom_minimum_size = Vector2(128, 128)
 layout_mode = 2
+expand_mode = 1
+max_size = Vector2(240, 160)
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/Upper"]
 layout_mode = 2

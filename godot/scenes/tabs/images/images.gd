@@ -2,6 +2,7 @@ extends PanelContainer
 
 @export var browse_images: Button
 @export var dump_images: Button
+@export var image_data_edit: Control
 
 var image_dump_dir: String
 
@@ -11,6 +12,7 @@ func _ready():
 
 func _on_app_state_changed(prev_state: Util.AppState, state: Util.AppState):
 	dump_images.disabled = !state.game
+	image_data_edit.image_id = image_data_edit.image_id # refresh displayed data
 	if state.game != prev_state.game:
 		if state.game:
 			var dir = await Towermod.image_dump_dir()

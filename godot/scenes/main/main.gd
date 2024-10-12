@@ -24,10 +24,15 @@ extends Control
 @export var tab_buttons_parent: Control
 @onready var tab_buttons := tab_buttons_parent.get_children()
 
+@export var images_tab: Control
+
 signal close_request
 signal minimize_request
 signal tab_switched(name: StringName)
 
+func jump_to_image(id: int):
+	switch_tab(&"Images")
+	images_tab.image_data_edit.image_id = id
 func enable_tab(tab_name: StringName):
 	enabled_tabs[tab_name] = true
 	enabled_tabs = enabled_tabs
@@ -36,6 +41,7 @@ func disable_tab(tab_name: StringName):
 	enabled_tabs = enabled_tabs
 
 func _init():
+	Util.set_context(self, &"tab_manager", self)
 	if !Engine.is_editor_hint():
 		Util.modal_parent = self
 		Towermod.rust_error.connect(_on_rust_error, CONNECT_DEFERRED)
@@ -62,6 +68,8 @@ func _ready():
 		Util.new_project()
 
 func _on_files_dropped(files: PackedStringArray):
+	if current_tab == &'Images':
+		return
 	var mods_dir_path = Towermod.get_mods_dir_path()
 	var installed = []
 	for filepath in files:

@@ -18,7 +18,7 @@ border_width_right = 4
 border_width_bottom = 4
 border_color = Color(0, 0, 0, 1)
 
-[node name="ImageDataEdit" type="VBoxContainer" node_paths=PackedStringArray("image_picker", "texture_rect", "overlay", "collision_rect", "inspector")]
+[node name="ImageDataEdit" type="VBoxContainer" node_paths=PackedStringArray("image_picker", "texture_rect", "overlay", "collision_rect", "inspector", "mask_texture_rect")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -32,6 +32,7 @@ texture_rect = NodePath("HBoxContainer/MarginContainer/ScrollContainer/MarginCon
 overlay = NodePath("HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image/Overlay")
 collision_rect = NodePath("HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image/CollisionMask")
 inspector = NodePath("HBoxContainer/InspectorObject")
+mask_texture_rect = NodePath("HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image/CollisionMask")
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="."]
 layout_mode = 2
@@ -97,8 +98,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+expand_mode = 1
 
-[node name="Overlay" type="Control" parent="HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image" node_paths=PackedStringArray("mask_texture_rect")]
+[node name="Overlay" type="Control" parent="HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -106,7 +108,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("3_obkyj")
-mask_texture_rect = NodePath("../CollisionMask")
 
 [node name="InspectorObject" type="MarginContainer" parent="HBoxContainer"]
 layout_mode = 2

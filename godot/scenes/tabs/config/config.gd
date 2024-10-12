@@ -19,9 +19,6 @@ func _ready():
 	Towermod.game_path_updated.connect(_on_game_path_updated, CONNECT_DEFERRED)
 	Util.app_state_changed.connect(_on_app_state_changed)
 
-func _on_main_tab_switched(_new_tab_name):
-	pass
-
 func clear_cache():
 	await Util.spin(Towermod.clear_game_cache())
 	Util.toast("Cache cleared.")

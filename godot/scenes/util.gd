@@ -1,4 +1,4 @@
-extends Node
+extends "./towermod_util.gd"
 
 var app = Towermod
 var modal_parent: Node
@@ -241,6 +241,28 @@ func try(promise_resolve: Signal, try = null, catch = null):
 func settled(promise_resolve: Signal):
 	var promise_settled = Signal(promise_resolve.get_object(), "settled")
 	return promise_settled
+
+# context provider
+
+static func is_in_context(consumer: Node, meta_name: StringName) -> bool:
+	return _get_meta_owner_in_context(consumer, meta_name) != null
+
+static func set_context(context_provider: Node, meta_name: StringName, value: Variant):
+	context_provider.set_meta(meta_name, value)
+
+static func get_context(consumer: Node, meta_name: StringName, default_value = null):
+	var meta_owner: Node = _get_meta_owner_in_context(consumer, meta_name)
+	if meta_owner != null:
+		return meta_owner.get_meta(meta_name)
+	if default_value == null:
+		# As for Object's meta error only if no default value was provided (and treat `null` as an invalid value).
+		push_error('No meta named %s found in the context of node %s' % [meta_name, consumer.get_path()])
+	return default_value
+
+static func _get_meta_owner_in_context(context_provider: Node, meta_name: String) -> Node:
+	while context_provider and not context_provider.has_meta(meta_name):
+		context_provider = context_provider.get_parent()
+	return context_provider
 
 # time
 
