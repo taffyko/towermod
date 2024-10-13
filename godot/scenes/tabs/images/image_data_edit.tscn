@@ -34,6 +34,17 @@ collision_rect = NodePath("HBoxContainer/MarginContainer/ScrollContainer/MarginC
 inspector = NodePath("HBoxContainer/InspectorObject")
 mask_texture_rect = NodePath("HBoxContainer/MarginContainer/ScrollContainer/MarginContainer/Image/CollisionMask")
 
+[node name="HBoxContainer3" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="ReloadSelectedImage" type="Button" parent="HBoxContainer3"]
+layout_mode = 2
+text = "Reload selected image"
+
+[node name="ReloadAllImages" type="Button" parent="HBoxContainer3"]
+layout_mode = 2
+text = "Reload all images"
+
 [node name="HBoxContainer2" type="HBoxContainer" parent="."]
 layout_mode = 2
 
@@ -114,5 +125,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("5_tl6s8")
 
+[connection signal="pressed" from="HBoxContainer3/ReloadSelectedImage" to="." method="_on_reload_selected_image_pressed"]
+[connection signal="pressed" from="HBoxContainer3/ReloadAllImages" to="." method="_on_reload_all_images_pressed"]
 [connection signal="value_changed" from="HBoxContainer2/ImageId" to="." method="_on_selected_image_changed"]
 [connection signal="toggled" from="HBoxContainer2/ShowCollision" to="." method="_on_show_collision_toggled"]

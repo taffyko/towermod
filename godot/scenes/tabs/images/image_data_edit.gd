@@ -78,3 +78,11 @@ func _on_selected_image_changed(new_image_id):
 
 func _on_show_collision_toggled(toggled_on):
 	collision_rect.visible = toggled_on
+
+
+func _on_reload_selected_image_pressed():
+	pass
+
+
+func _on_reload_all_images_pressed():
+	pass # Replace with function body.

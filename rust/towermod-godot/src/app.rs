@@ -16,7 +16,6 @@ use godot::engine::global::weakref;
 use fs_err::tokio as fs;
 use tokio::io::AsyncWriteExt;
 use tokio::sync::RwLock;
-use tokio_stream::wrappers::ReadDirStream;
 use towermod::async_cleanup;
 use towermod::cstc::ImageMetadata;
 use towermod::get_cache_dir_path;
@@ -217,16 +216,6 @@ impl Towermod {
 	fn active_project_updated(valid: bool);
 	#[signal]
 	fn callback(id: i64, args: VariantArray);
-	
-	#[func]
-	pub fn load_image_overrides_from_disk() -> Promise<()> {
-		todo!()
-	}
-
-	#[func]
-	pub fn load_one_image_override_from_disk(id: i32) -> Promise<()> {
-		todo!()
-	}
 	
 	#[func]
 	// Auto-select game based on saved config/etc.

@@ -11,7 +11,8 @@ use tokio_stream::wrappers::ReadDirStream;
 use towermod::PeResource;
 use tracing::instrument;
 use crate::app::Towermod;
-use crate::util::{app, status};
+use crate::util::{app, promise, status, Promise, Gd2};
+use fs_err::tokio as fs;
 
 use super::*;
 use towermod::cstc::{self};
@@ -45,7 +46,6 @@ impl CstcData {
 	pub async fn images_from_dir(images_dir: &PathBuf) -> Result<HashMap<i32, Vec<u8>>> {
 		let found_images_by_id: RwLock<HashMap<i32, Vec<u8>>> = RwLock::new(HashMap::new());
 
-		// TODO: allow image metadata to be saved independently of binary data so that the actual images can continue to live as individual files on-disk
 		let entries = ReadDirStream::new(match tokio::fs::read_dir(&images_dir).await {
 			Ok(v) => v,
 			Err(e) => match e.kind() {
@@ -264,14 +264,40 @@ impl CstcData {
 	}
 
 	#[func]
-	pub fn load_image_overrides_from_disk(&mut self) {
+	pub fn load_image_overrides_from_disk(&mut self) -> Promise<()> {
+    	let mut this: Gd2<Self> = self.into();
+		promise! {
+			let image_path = {
+				let state = Towermod::state();
+				let state = state.read().await;
+				let project = state.project.as_ref().context("Project not set")?;
+				project.images_path()?
+			};
 
+			let images = Self::images_from_dir(&image_path).await?;
+			
+			for (id, png_data) in images {
+				this.load_image_from_png_data(&png_data, id)
+			}
+		}
 	}
 
 	#[func]
-	pub fn load_one_image_override_from_disk(&mut self, id: i32) {
+	pub fn load_one_image_override_from_disk(&self, id: i32) -> Promise<()> {
+    	let mut this: Gd2<Self> = self.into();
+		promise! {
+			let mut image_path = {
+				let state = Towermod::state();
+				let state = state.read().await;
+				let project = state.project.as_ref().context("Project not set")?;
+				project.images_path()?
+			};
+			image_path.push(format!("{}.png", id));
+			let bytes = fs::read(image_path).await?;
+			let mut this = this.bind_mut();
+			this.load_image_from_png_data(&bytes, id)
+		}
 	}
-
 
 	#[func]
 	pub fn get_object_type(&self, id: i32) -> Option<Gd<CstcObjectType>> {
@@ -327,5 +353,34 @@ impl CstcData {
 			};
 		}
 		(plugin_data, object_type)
+	}
+}
+impl CstcData {
+	pub fn load_image_from_png_data(&mut self, png_data: &[u8], id: i32) {
+		let image = vec_to_image(png_data);
+		let weak: Gd<WeakRef> = weakref(self.to_gd().to_variant()).to();
+		use crate::bindings::CstcImageMetadata;
+		
+		if !self.image_block.contains_key(id) {
+			let output = CstcImageMetadata::create_collision_mask(image.clone());
+			let width = output.get("width").unwrap().to();
+			let height = output.get("height").unwrap().to();
+			let mask = output.get("mask").unwrap().to();
+			let pitch = output.get("pitch").unwrap().to();
+			
+			let metadata = Gd::from_object(CstcImageMetadata {
+				id,
+				owner: weak,
+				hotspot_x: 0,
+				hotspot_y: 0,
+				apoints: Array::new(),
+				collision_width: width,
+				collision_height: height,
+				collision_mask: mask,
+				collision_pitch: pitch,
+			});
+			self.image_block.set(id, metadata);
+		}
+		self.images.set(id, image);
 	}
 }

@@ -211,9 +211,9 @@ pub fn option_image_to_vec(image: &Option<Gd<Image>>) -> Option<Vec<u8>> {
 	}
 	None
 }
-pub fn vec_to_image(vec: &Vec<u8>) -> Gd<Image> {
+pub fn vec_to_image(slice: &[u8]) -> Gd<Image> {
 	let mut image = Image::create(1, 1, false, godot::classes::image::Format::RGBA8).expect("unable to create image");
-	if image.load_png_from_buffer(PackedByteArray::from(vec.as_slice())) == godot::global::Error::OK {
+	if image.load_png_from_buffer(PackedByteArray::from(slice)) == godot::global::Error::OK {
 		return image
 	} else {
 		panic!("unable to load image")

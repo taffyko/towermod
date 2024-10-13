@@ -21,6 +21,7 @@ func _on_app_state_changed(prev_state: Util.AppState, state: Util.AppState):
 		else:
 			image_dump_dir = ""
 			update_browse_images()
+	image_data_edit.visible = !!state.data
 
 func _on_dump_images_pressed():
 	await Util.spin(Towermod.dump_images())

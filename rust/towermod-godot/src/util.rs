@@ -1,4 +1,4 @@
-use std::{cell::RefCell, panic::PanicHookInfo, sync::Mutex};
+use std::{cell::RefCell, ops::Deref, panic::PanicHookInfo, sync::Mutex};
 
 use futures::FutureExt;
 use godot::{builtin::{Array, GString, Variant}, log::godot_print, meta::ToGodot, obj::Gd};
@@ -9,6 +9,9 @@ use tokio::runtime::{Runtime, self};
 use once_cell::sync::Lazy;
 use uuid::Uuid;
 use crate::app::{Towermod};
+
+mod unsafe_gd;
+pub use unsafe_gd::*;
 
 /// tokio runtime provided by the library for its own use.
 pub static RUNTIME: Lazy<Runtime> = Lazy::new(|| {

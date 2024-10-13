@@ -4,6 +4,7 @@
 #![feature(stmt_expr_attributes)]
 #![feature(try_blocks)]
 #![feature(async_closure)]
+#![feature(arbitrary_self_types)]
 use godot::{engine::Engine, prelude::*};
 use app::Towermod;
 

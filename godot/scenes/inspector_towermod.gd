@@ -193,6 +193,8 @@ static func animation_frame(value: CstcAnimationFrame, pinfo):
 	)
 	
 static func supply_custom_properties(obj):
+	if !data:
+		return []
 	if obj is CstcObjectType:
 		return [{
 			name = &'instances',
