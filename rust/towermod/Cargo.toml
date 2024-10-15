@@ -53,8 +53,8 @@ thiserror = "1.0.48"
 md5 = "0.7.0"
 reqwest = "0.12.5"
 fs-err.workspace = true
-napi = "2"
-napi-derive = "2"
+napi = { version = "3.0.0-alpha.15", features = ["error_anyhow", "tokio_rt"] }
+napi-derive = "3.0.0-alpha.14"
 
 [build-dependencies]
 napi-build = "2"
