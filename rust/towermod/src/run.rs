@@ -7,6 +7,7 @@ use std::fmt::Debug;
 use std::io::{self, Cursor, Read, Write};
 use crate::util::ZipWriterExt;
 
+use napi_derive::napi;
 use ::time::OffsetDateTime;
 use zip;
 use std::path::{Path, PathBuf};
@@ -33,6 +34,7 @@ use crate::cstc::plugin::{PluginData, PluginStringTable};
 use crate::cstc::{self, plugin};
 use crate::{config::*, Game, ModInfo, ModType, Project};
 use crate::macros::*;
+use crate::newtype::Nt;
 
 pub struct OpenedHandle(pub HANDLE);
 
@@ -44,8 +46,9 @@ impl Drop for OpenedHandle {
 	}
 }
 
+#[napi(ts_return_type="Promise<string>")]
 #[instrument]
-pub async fn get_temp_file() -> Result<PathBuf> {
+pub async fn get_temp_file() -> Result<Nt<PathBuf>> {
 	unsafe {
 		let buffer = task::spawn_blocking(|| {
 			let mut buffer = [0u16; MAX_PATH as usize];
@@ -59,7 +62,7 @@ pub async fn get_temp_file() -> Result<PathBuf> {
 		}).await?;
 		let len = buffer.iter().position(|v| *v == 0).unwrap();
 		let s = String::from_utf16_lossy(&buffer[0..len]);
-		Ok(PathBuf::from(s))
+		Ok(Nt(s.into()))
 	}
 }
 
