@@ -1,7 +1,14 @@
 use std::{process::{Command}, env::{self, VarError}, path::PathBuf};
+use napi_build;
 
 
 fn main() {
+	if let Ok(bin_name) = env::var("CARGO_BIN_NAME") {
+		println!("Building a binary target: {}", bin_name);
+	} else {
+		println!("Building a library target");
+		napi_build::setup();
+	}
 	match env::var("CARGO_FEATURE_BUNDLED_DLLREADER") {
 		Ok(_) => 'bundle: {
 			// Build 32-bit dllreader.exe to bundle inside 64-bit towermod library

@@ -3,3 +3,6 @@ dist
 out
 .DS_Store
 *.log*
+
+# Native module builds
+src/towermod/*
