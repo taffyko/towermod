@@ -1,8 +1,13 @@
 import Versions from './components/Versions'
 import electronLogo from './assets/electron.svg'
+import { useDispatch, useStore } from './hooks'
+import { changeCount } from '@shared/reducers/slice'
 
-function App(): JSX.Element {
+const App = () => {
   const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+  const dispatch = useDispatch();
+  const count = useStore(state => state.main?.count);
+  console.log("count", count);
 
   return (
     <>
@@ -24,6 +29,14 @@ function App(): JSX.Element {
         <div className="action">
           <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
             Send IPC
+          </a>
+        </div>
+        <div className="action">
+          <a target="_blank" rel="noreferrer" onClick={() => {
+            console.log("dispatch")
+            dispatch(changeCount(5))
+          }}>
+            Button {count}
           </a>
         </div>
       </div>

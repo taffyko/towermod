@@ -6,14 +6,18 @@
     "src/main/**/*",
     "src/preload/**/*",
     "src/towermod/**/*",
+    "src/shared/**/*",
+    "src/shared/reduxtron/**/*"
   ],
   "compilerOptions": {
     "composite": true,
     "types": ["electron-vite/node"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@towermod": ["./src/towermod"],
+      "@shared/*": ["src/shared/*"],
     }
   }
 }

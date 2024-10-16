@@ -1,5 +1,8 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { preloadReduxBridge } from '@shared/reduxtron/preload';
+
+const { handlers } = preloadReduxBridge(ipcRenderer)
 
 // Custom APIs for renderer
 const api = {}
@@ -11,6 +14,7 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('reduxtron', handlers)
   } catch (error) {
     console.error(error)
   }
@@ -19,4 +23,6 @@ if (process.contextIsolated) {
   window.electron = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
+  // @ts-ignore (define in dts)
+  window.reduxtron = handlers
 }
