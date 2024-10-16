@@ -6,7 +6,7 @@ import { mainReduxBridge } from '@shared/reduxtron/main'
 import { store } from './store'
 
 
-function createWindow(): void {
+function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -36,6 +36,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow;
 }
 
 // This method will be called when Electron has finished
@@ -44,8 +46,6 @@ function createWindow(): void {
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.taffyko.towermod')
-
-  const { unsubscribe } = mainReduxBridge(ipcMain, store);
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -57,7 +57,8 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
-  createWindow()
+  const mainWindow = createWindow()
+  const { unsubscribe } = mainReduxBridge(ipcMain, mainWindow.webContents, store);
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

@@ -1,8 +1,8 @@
-import type { IpcMain, IpcRenderer } from "electron";
+import type { IpcMain, IpcRenderer, WebContents } from "electron";
 import type { Store, UnknownAction } from "redux";
 
 export type MainReduxBridge = {
-  <S extends Store>(ipcMain: IpcMain, store: S): { unsubscribe: () => void };
+  <S extends Store>(ipcMain: IpcMain, webContents: WebContents, store: S): { unsubscribe: () => void };
 };
 
 export type AnyState = Record<string, unknown>;

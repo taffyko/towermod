@@ -2,7 +2,7 @@ import type { MainReduxBridge } from "./types";
 
 // utility to plug redux functions onto main ipc
 // this adds the subscribe and dispatch messages
-export const mainReduxBridge: MainReduxBridge = (ipcMain, store) => {
+export const mainReduxBridge: MainReduxBridge = (ipcMain, webContents, store) => {
   ipcMain.handle("getState", () => store.getState());
   ipcMain.on(
     "dispatch",
@@ -10,8 +10,9 @@ export const mainReduxBridge: MainReduxBridge = (ipcMain, store) => {
       store.dispatch(action),
   );
   const unsubscribe: () => void = store.subscribe(() => {
-    console.log("subscription fired") // FIXME
-    ipcMain.emit("subscribe", store.getState())
+    // TODO: move selector implementation to the main process
+    // instead of serializing & transferring the *whole store* per-hook per-update :<
+    webContents.send("subscribe", store.getState())
   });
   return { unsubscribe };
 };
