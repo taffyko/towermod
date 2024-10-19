@@ -9,6 +9,6 @@ declare global {
     electron: ElectronAPI
     api: unknown
     reduxtron: PreloadReduxBridgeReturn<AppState, UnknownAction>
-    rpc: RpcModule
+    towermodRpcModule: RpcModule
   }
 }
