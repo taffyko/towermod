@@ -18,4 +18,4 @@ export const slice = createSlice({
   },
 });
 export const reducer = slice.reducer;
-export const { changeCount, setActiveGame, setActiveProject } = slice.actions;
+export const actions = slice.actions;

@@ -1,5 +1,6 @@
 import type { IpcRenderer } from "electron";
 import type { UnknownAction } from "redux";
+
 import {
   AnyState,
   PreloadReduxBridge,
