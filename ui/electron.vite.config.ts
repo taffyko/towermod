@@ -1,9 +1,9 @@
-import { resolve } from 'path'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import path from 'path';
 import { globSync } from 'glob';
+import tsconfigPathPlugin from 'vite-tsconfig-paths'
 
 export default defineConfig(() => {
   const projectRootDir = __dirname;
@@ -37,15 +37,11 @@ export default defineConfig(() => {
           targets: [
             { src: 'src/towermod/*.node', dest: './' }
           ]
-        })
+        }),
+        tsconfigPathPlugin(),
       ],
       resolve: {
         extensions: ['.mjs', '.js', '.cjs', '.mts', '.ts', '.jsx', '.tsx', '.json'],
-        alias: {
-          '@': resolve('src'),
-          '@shared': resolve('src/shared'),
-          '@towermod': resolve('src/towermod'),
-        }
       },
       build: {
         rollupOptions: {
@@ -58,32 +54,15 @@ export default defineConfig(() => {
     },
     preload: {
       plugins: [
-        // commonjsExternalsPlugin({
-        //   externals: ['path']
-        // }),
-        // nodePolyfills(),
-        externalizeDepsPlugin()
+        externalizeDepsPlugin(),
+        tsconfigPathPlugin(),
       ],
-      resolve: {
-        alias: {
-          '@shared': resolve('src/shared'),
-        }
-      }
     },
     renderer: {
       plugins: [
-        // commonjsExternalsPlugin({
-        //   externals: ['path']
-        // }),
-        // nodePolyfills(),
         react(),
+        tsconfigPathPlugin()
       ],
-      resolve: {
-        alias: {
-          '@renderer': resolve('src/renderer/src'),
-          '@shared': resolve('src/shared'),
-        }
-      },
     }
   }
 })
