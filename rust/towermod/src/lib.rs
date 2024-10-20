@@ -12,7 +12,7 @@ extern crate test;
 mod config;
 mod run;
 mod project;
-mod newtype;
+pub(in crate) mod newtype;
 pub mod tcr;
 pub mod util;
 pub mod cstc;

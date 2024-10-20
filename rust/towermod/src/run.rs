@@ -467,7 +467,7 @@ pub async fn export_from_legacy(file_path: PathBuf, project: &mut Project) -> Re
 					let mut buf = Vec::with_capacity(file.size() as usize);
 					if let Some(t) = file.last_modified() {
 						if let Ok(t) = OffsetDateTime::try_from(t) {
-							project.date = t;
+							project.date = Nt(t);
 						}
 					};
 					file.read_to_end(&mut buf)?;
@@ -485,7 +485,7 @@ pub async fn export_from_legacy(file_path: PathBuf, project: &mut Project) -> Re
 		out_zip.start_file("patch.json", options)?;
 		out_zip.write_all(&buf)?;
 		if let Ok(t) = meta.modified() {
-			project.date = OffsetDateTime::from(t);
+			project.date = OffsetDateTime::from(t).into();
 		};
 		// Add images from patch dir
 		let mut stream = fs::read_dir(&patch_dir).await?;

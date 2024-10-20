@@ -3,9 +3,12 @@ use indoc::formatdoc;
 use fs_err::tokio as fs;
 use serde::{Serialize, Deserialize};
 use anyhow::{anyhow, Result, Context};
-use crate::{convert_to_debug_build, convert_to_release_build, cstc::{plugin::PluginData, AppBlock, EventBlock, ImageBlock, LevelBlock}, get_cache_dir_path, mod_cache_dir_path, read_pe_file_resource, PeResource, ResId};
+use crate::{Nt, convert_to_debug_build, convert_to_release_build, cstc::{plugin::PluginData, AppBlock, EventBlock, ImageBlock, LevelBlock}, get_cache_dir_path, mod_cache_dir_path, read_pe_file_resource, PeResource, ResId};
+use napi_derive::napi;
 
 
+
+#[napi]
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
 pub enum GameType {
 	#[default]
@@ -13,6 +16,7 @@ pub enum GameType {
 	Towerclimb,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
 pub enum ProjectType {
 	#[default]
@@ -21,6 +25,7 @@ pub enum ProjectType {
 	Legacy,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
 pub enum ModType {
 	#[default]
@@ -30,6 +35,7 @@ pub enum ModType {
 }
 
 /// Metadata about a game
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Game {
 	pub file_hash: String,
@@ -38,7 +44,8 @@ pub struct Game {
 	pub data_hash: Option<String>,
 	/// Path to executable on-disk
 	#[serde(default)]
-	pub file_path: Option<PathBuf>,
+	#[napi(ts_type = "string")]
+	pub file_path: Option<Nt<PathBuf>>,
 	#[serde(default)]
 	pub game_type: GameType,
 }
@@ -58,7 +65,7 @@ impl Game {
 			file_hash,
 			file_name,
 			file_size: bytes.len() as i64,
-			file_path: Some(path),
+			file_path: Some(Nt(path)),
 			game_type,
 		})
 	}
@@ -141,7 +148,7 @@ impl Game {
 	}
 	
 	pub fn game_path(&self) -> Result<&PathBuf> {
-		self.file_path.as_ref().ok_or(anyhow!("Game file path not set"))
+		self.file_path.as_ref().map(|r| &r.0).ok_or(anyhow!("Game file path not set"))
 	}
 
 	pub async fn read_plugin_data_cached(&self) -> anyhow::Result<(HashMap<i32, String>, HashMap<i32, PluginData>)> {
@@ -212,6 +219,7 @@ impl Game {
 	}
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// Metadata about a project, found in its manifest.toml
 pub struct Project {
@@ -226,11 +234,13 @@ pub struct Project {
 	pub description: String,
 	pub towermod_version: String,
 	/// Date that the project was last saved/exported
-	#[serde(with = "time::serde::rfc3339")]
-	pub date: time::OffsetDateTime,
+	#[serde(with = "crate::newtype::serde::rfc3339")]
+	#[napi(ts_type = "Date")]
+	pub date: Nt<time::OffsetDateTime>,
 	/// Path to manifest.toml
 	#[serde(skip, default)]
-	pub dir_path: Option<PathBuf>,
+	#[napi(ts_type = "string")]
+	pub dir_path: Option<Nt<PathBuf>>,
 }
 impl Project {
 	pub fn new(author: String, name: String, display_name: String, version: String, game: Game) -> Self {
@@ -244,14 +254,14 @@ impl Project {
 			description: Default::default(),
 			towermod_version: crate::VERSION.to_string(),
 			dir_path: None,
-			date: time::OffsetDateTime::now_utc(),
+			date: Nt(time::OffsetDateTime::now_utc()),
 		}
 	}
 	pub async fn from_path(file_path: impl AsRef<Path>) -> Result<Self> {
 		let file_path = file_path.as_ref();
 		let s = fs::read_to_string(&file_path).await?;
 		let mut p: Self = toml::from_str::<Self>(&s)?;
-		p.dir_path = Some(file_path.parent().unwrap().to_owned());
+		p.dir_path = Some(Nt(file_path.parent().unwrap().to_owned()));
 		Ok(p)
 	}
 
@@ -290,7 +300,7 @@ impl Project {
 	}
 	
 	pub fn dir_path(&self) -> Result<&PathBuf> {
-		self.dir_path.as_ref().ok_or(anyhow!("Project directory path not set"))
+		self.dir_path.as_ref().map(|p| &p.0).ok_or(anyhow!("Project directory path not set"))
 	}
 	pub fn images_path(&self) -> Result<PathBuf> {
 		Ok(self.dir_path()?.join("images"))
@@ -303,6 +313,7 @@ impl Project {
 	}
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// Metadata about an exported mod, found in its manifest.toml
 pub struct ModInfo {
@@ -317,11 +328,13 @@ pub struct ModInfo {
 	pub description: String,
 	pub towermod_version: String,
 	/// Date that the mod was exported
-	#[serde(with = "time::serde::rfc3339")]
-	pub date: time::OffsetDateTime,
+	#[serde(with = "crate::newtype::serde::rfc3339")]
+	#[napi(ts_type = "Date")]
+	pub date: Nt<time::OffsetDateTime>,
 	/// Path to zip file that mod was loaded from
 	#[serde(skip, default)]
-	pub file_path: Option<PathBuf>,
+	#[napi(ts_type = "string")]
+	pub file_path: Option<Nt<PathBuf>>,
 	#[serde(skip, default)]
 	pub cover: Option<Vec<u8>>,
 	#[serde(skip, default)]
