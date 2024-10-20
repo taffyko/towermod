@@ -1,0 +1,28 @@
+@use './base.scss';
+
+:root {
+  --color-text: #efefef;
+  --color-root-bg: #010101;
+  --color-bg: #434343;
+  --color-bg-active: #838383;
+  --color-border: #020202;
+  --color-error: #ff3030;
+  color: var(--color-text);
+}
+
+
+body {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  user-select: none;
+}
+
+div#root {
+  background-color: var(--color-root-bg);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}

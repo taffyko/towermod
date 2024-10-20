@@ -12,6 +12,12 @@ fn status(_msg: &str) {
 	// TODO
 }
 
+#[napi(ts_args_type = "gamePath: string")]
+pub async fn run_game(Nt(ref game_path): Nt<PathBuf>) -> Result<()> {
+	crate::run_game(game_path).await?;
+	Ok(())
+}
+
 #[napi]
 pub async fn list_installed_mods() -> Result<Vec<ModInfo>> {
 	

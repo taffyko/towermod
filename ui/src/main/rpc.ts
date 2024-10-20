@@ -27,5 +27,8 @@ export async function playProject() {
 }
 
 export async function playVanilla() {
-  // TODO
+  const state = store.getState()
+  const gamePath = state.main.game?.filePath
+  if (!gamePath) { throw new Error("Game not set") }
+  await towermod.runGame(gamePath)
 }
