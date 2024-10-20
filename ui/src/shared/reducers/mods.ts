@@ -1,15 +1,20 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { ModInfo } from "@towermod";
 
 export interface SliceState {
-  count: number,
+  modList: ModInfo[],
+}
+
+const initialState: SliceState = {
+  modList: [],
 }
 
 export const slice = createSlice({
   name: "main",
-  initialState: { count: 0 } as SliceState,
+  initialState,
   reducers: {
-    changeCount(state, { payload }: PayloadAction<number>) {
-      state.count += payload;
+    setModList(state, { payload }: PayloadAction<ModInfo[]>) {
+      state.modList = payload;
     },
     setActiveGame(state) {
     },

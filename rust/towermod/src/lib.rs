@@ -17,6 +17,7 @@ pub mod tcr;
 pub mod util;
 pub mod cstc;
 pub mod macros;
+pub mod app;
 
 pub use project::*;
 pub use config::*;
