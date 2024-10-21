@@ -1,12 +1,13 @@
 .mods {
+  width: 100%;
 }
 
 .modList {
 }
 
 .modListItem {
-  border: solid 1px var(--color-border);
-  background-color: var(--color-bg);
+  border: solid var(--border-width) var(--color-border);
+  background-color: var(--color-bg-root);
   &.selected {
     background-color: var(--color-bg-active);
   }

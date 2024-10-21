@@ -13,7 +13,7 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "build-rust": "napi build --platform --manifest-path ../rust/towermod/Cargo.toml --js index.cjs -o ./src/towermod",
     "start": "electron-vite preview",
-    "dev": "npm run build-rust && electron-vite dev -w",
+    "dev": "npm run build-rust && electron-vite dev",
     "build": "npm run build-rust && npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
@@ -32,6 +32,7 @@
     "@reduxjs/toolkit": "^2.3.0",
     "electron-updater": "^6.1.7",
     "glob": "^11.0.0",
+    "react-custom-scrollbars-2": "^4.5.0",
     "react-redux": "^9.1.2",
     "react-toastify": "^10.0.6",
     "zustand": "^5.0.0"

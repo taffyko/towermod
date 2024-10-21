@@ -1,3 +1,4 @@
+import { BrowserWindow } from 'electron';
 import { dispatch, store } from './store';
 import { actions } from '@shared/reducers';
 import * as towermod from '@towermod';
@@ -32,3 +33,25 @@ export async function playVanilla() {
   if (!gamePath) { throw new Error("Game not set") }
   await towermod.runGame(gamePath)
 }
+
+
+export async function winMinimize() {
+  BrowserWindow.getFocusedWindow()?.minimize();
+}
+
+export async function winMaximize() {
+  const window = BrowserWindow.getFocusedWindow();
+  if (window) {
+    if (!window.isMaximized()) {
+      window.maximize()
+    } else {
+      window.unmaximize()
+    }
+  }
+}
+
+export async function winClose() {
+  BrowserWindow.getFocusedWindow()?.close();
+}
+
+

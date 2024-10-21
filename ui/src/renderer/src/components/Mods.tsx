@@ -32,6 +32,7 @@ export function ModList(props: {
   const { mods, selectedMod, setSelectedMod } = props;
   return <div className={Style.modList}>
     {mods.map((mod) => <ModListItem
+        key={`${mod.author}.${mod.name}`}
         mod={mod}
         selected={mod === selectedMod}
         onClick={() => {
@@ -44,17 +45,22 @@ export function ModList(props: {
 
 export default function Mods() {
   const modsList = useStore(s => s.main?.modList);
+  const game = useStore(s => s.main?.game);
+  const [selectedMod, setSelectedMod] = useState<ModInfo>();
   if (!modsList) { return null }
 
-  const [selectedMod, setSelectedMod] = useState<ModInfo>();
+  useEffect(() => {
+      if (game) {
+        rpc.loadModList();
+      }
+  }, [game])
 
   return <div className={Style.mods}>
     <div>
       <button onClick={async () => {
-        await rpc.setGamePath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe")
         await rpc.loadModList()
       }}>
-        load mods
+        reload mods
       </button>
       <button disabled={!modsList || !selectedMod} onClick={async () => {
         if (selectedMod?.filePath) {

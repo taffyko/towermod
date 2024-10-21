@@ -9,6 +9,8 @@ import electronRemote from '@electron/remote/main';
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
+    transparent: true,
+    titleBarStyle: 'hidden',
     width: 900,
     height: 670,
     show: false,
