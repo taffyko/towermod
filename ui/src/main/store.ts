@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { Tuple, configureStore } from '@reduxjs/toolkit';
 import { rootReducer } from '@shared/reducers';
 import {
   defaultOptions as serifyDefaultOptions,
@@ -8,7 +8,7 @@ const serifyMiddleware = createSerifyMiddleware(serifyDefaultOptions);
 
 export const store = configureStore({
   reducer: rootReducer,
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat([serifyMiddleware]),
+  middleware: (_getDefaultMiddleware) => new Tuple(serifyMiddleware),
 })
 
 export const dispatch = store.dispatch;

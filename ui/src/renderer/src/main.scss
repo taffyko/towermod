@@ -28,6 +28,7 @@ body {
 div#root {
   background-color: var(--color-root-bg);
   border-radius: var(--border-radius);
+  border: solid var(--border-width) var(--color-border);
   width: 100%;
   height: 100%;
   display: flex;
