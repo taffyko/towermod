@@ -1,28 +1,33 @@
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Mods from './components/Mods';
-import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 import Style from './App.module.scss';
-import { Tab, Tabs } from './components/Tabs/Tabs';
+import { Tab, Tabs } from './components/Tabs';
 import { useEffect, useMemo } from 'react';
-import { TitleBar } from './components/TitleBar/TitleBar';
+import { TitleBar } from './components/TitleBar';
 import { rpc } from './util';
+import { Data } from './components/Data';
+
+function initialize() {
+  // FIXME
+  rpc.setGamePath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe")
+  rpc.loadModList()
+}
 
 const App = () => {
   const tabs: Tab[] = useMemo(() => [
       { name: 'Config', children: <div /> },
       { name: 'Mods', children: <Mods /> },
       { name: 'Images', children: <div /> },
-      { name: 'Data', children: <div /> },
+      { name: 'Data', children: <Data /> },
       { name: 'Events', children: <div /> },
   ], [])
 
   useEffect(() => {
-    // FIXME
-    rpc.setGamePath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe")
+      initialize()
   }, [])
-
 
   return ( <>
       <ErrorBoundary>
