@@ -1,12 +1,10 @@
-import { createUseStore } from '@shared/reduxtron/zustand-store'
-import type { StoreApi, UseBoundStore } from "zustand";
-import { State, Action } from '@shared/reducers'
 import { useCallback, useEffect } from 'react';
+import { useDispatch, useSelector, useStore } from 'react-redux'
+import type { AppDispatch, AppStore, RootState } from './store'
 
-export const useDispatch = () => window.reduxtron.dispatch
-
-const _useStore = createUseStore<State, Action>(window.reduxtron)
-export const useStore: UseBoundStore<StoreApi<State>> = _useStore as any;
+export const useAppDispatch = useDispatch.withTypes<AppDispatch>()
+export const useAppSelector = useSelector.withTypes<RootState>()
+export const useAppStore = useStore.withTypes<AppStore>()
 
 export function useEventListener<K extends keyof WindowEventMap>(el: Window | null, type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
 export function useEventListener<K extends keyof DocumentEventMap>(el: Document | null, type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;

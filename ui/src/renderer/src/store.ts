@@ -5,7 +5,7 @@ import {
   createReduxMiddleware as createSerifyMiddleware
 } from '@karmaniverous/serify-deserify';
 const serifyMiddleware = createSerifyMiddleware(serifyDefaultOptions);
-import { stateSyncEnhancer } from 'electron-redux/main';
+import { stateSyncEnhancer } from 'electron-redux/renderer';
 
 export const store = configureStore({
   reducer: rootReducer,

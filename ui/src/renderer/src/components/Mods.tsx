@@ -1,5 +1,5 @@
 import { rpc } from '@renderer/util';
-import { useStore } from '@renderer/hooks';
+import { useAppSelector } from '@renderer/hooks';
 import { useEffect, useState } from 'react';
 import { ModInfo } from '@towermod';
 import Style from './Mods.module.scss'
@@ -44,16 +44,9 @@ export function ModList(props: {
 
 
 export default function Mods() {
-  const modsList = useStore(s => s.main?.modList);
-  const game = useStore(s => s.main?.game);
+  const modsList = useAppSelector(s => s.main?.modList);
   const [selectedMod, setSelectedMod] = useState<ModInfo>();
   if (!modsList) { return null }
-
-  useEffect(() => {
-      if (game) {
-        rpc.loadModList();
-      }
-  }, [game])
 
   return <div className={Style.mods}>
     <div>

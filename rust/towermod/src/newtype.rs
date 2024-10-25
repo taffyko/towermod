@@ -1,6 +1,6 @@
 //! monuments to the orphan rules
 use std::{ops::{Deref, DerefMut}, path::PathBuf};
-use napi::bindgen_prelude::*;
+use napi::{bindgen_prelude::*, NapiRaw};
 
 pub struct Nt<T>(pub T);
 
@@ -77,6 +77,14 @@ impl<T> ::serde::Serialize for Nt<T> where
 	where S: ::serde::Serializer
 	{
 		self.0.serialize(serializer)
+	}
+}
+
+// ClassInstance
+impl<'env, T: 'static> NapiRaw for Nt<ClassInstance<'env, T>> where
+{
+	unsafe fn raw(&self) -> napi::sys::napi_value {
+		self.0.raw()
 	}
 }
 

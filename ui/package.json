@@ -30,6 +30,7 @@
     "@electron/remote": "^2.1.2",
     "@karmaniverous/serify-deserify": "^2.0.11",
     "@reduxjs/toolkit": "^2.3.0",
+    "electron-redux": "^2.0.0",
     "electron-updater": "^6.1.7",
     "glob": "^11.0.0",
     "react-custom-scrollbars-2": "^4.5.0",

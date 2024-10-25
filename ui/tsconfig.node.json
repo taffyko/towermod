@@ -6,8 +6,7 @@
     "src/main/**/*",
     "src/preload/**/*",
     "src/towermod/**/*",
-    "src/shared/**/*",
-    "src/shared/reduxtron/**/*"
+    "src/shared/**/*"
   ],
   "compilerOptions": {
     "composite": true,

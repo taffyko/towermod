@@ -2,8 +2,6 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { mainReduxBridge } from '@shared/reduxtron/main'
-import { store } from './store'
 import electronRemote from '@electron/remote/main';
 
 function createWindow() {
@@ -62,7 +60,6 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
 
   const mainWindow = createWindow()
-  const { unsubscribe } = mainReduxBridge(ipcMain, mainWindow.webContents, store);
   electronRemote.enable(mainWindow.webContents);
 
   app.on('activate', function () {
@@ -70,8 +67,6 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
-
-  app.on('before-quit', unsubscribe)
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
