@@ -1,6 +1,8 @@
 use num_traits::{FromPrimitive};
 use anyhow::Result;
 
+use crate::Nt;
+
 use super::{block::{BlockReader, BlockWriter}, stable::*};
 
 pub fn deserialize_levelblock(buffer: &[u8]) -> Result<LevelBlock> {
@@ -126,17 +128,17 @@ impl BlockReader<'_> {
 		let name = self.read_string();
 		let layer_type = LayerType::from_u8(self.read_u8()).unwrap();
 		let filter_color = self.read_i32();
-		let opacity = self.read_f32();
-		let angle = self.read_f32();
-		let scroll_x_factor = self.read_f32();
-		let scroll_y_factor = self.read_f32();
-		let scroll_x = self.read_f32();
-		let scroll_y = self.read_f32();
+		let opacity = Nt(self.read_f32());
+		let angle = Nt(self.read_f32());
+		let scroll_x_factor = Nt(self.read_f32());
+		let scroll_y_factor = Nt(self.read_f32());
+		let scroll_x = Nt(self.read_f32());
+		let scroll_y = Nt(self.read_f32());
 
-		let zoom_x_factor = self.read_f32();
-		let zoom_y_factor = self.read_f32();
-		let zoom_x = self.read_f32();
-		let zoom_y = self.read_f32();
+		let zoom_x_factor = Nt(self.read_f32());
+		let zoom_y_factor = Nt(self.read_f32());
+		let zoom_x = Nt(self.read_f32());
+		let zoom_y = Nt(self.read_f32());
 		
 		let clear_background_color = self.read_u8() == 1;
 		let background_color = self.read_i32();
@@ -156,7 +158,7 @@ impl BlockReader<'_> {
 		let y = self.read_i32();
 		let width = self.read_i32();
 		let height = self.read_i32();
-		let angle = self.read_f32();
+		let angle = Nt(self.read_f32());
 		let filter = self.read_i32();
 
 		let object_type_id = self.read_i32();

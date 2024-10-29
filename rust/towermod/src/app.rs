@@ -1,6 +1,6 @@
 use std::{collections::HashMap, io::{Cursor, Read}, path::{Path, PathBuf}, sync::Mutex};
 
-use crate::{async_cleanup, convert_to_release_build, cstc, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource};
+use crate::{async_cleanup, convert_to_release_build, cstc::{self, *, plugin::PluginData}, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource};
 use anyhow::{Result, Context};
 use fs_err::tokio as fs;
 use futures::StreamExt;
@@ -345,4 +345,68 @@ pub async fn patch_with_images(game_path: &Path, mut found_images_by_id: HashMap
 #[instrument]
 async fn game_from_path(Nt(file_path): Nt<PathBuf>) -> Result<Game> {
 	Game::from_path(file_path).await
+}
+
+#[napi]
+#[derive(Default, Clone, Debug)]
+pub struct CstcData {
+	#[napi(ts_type = "Records<i32, PluginData>")]
+	pub editor_plugins: Nt<HashMap<i32, PluginData>>,
+	// pub object_types: Vec<ObjectType>,
+	// pub behaviors: Vec<Behavior>,
+	// pub traits: Vec<ObjectTrait>,
+	// pub families: Vec<Family>,
+	pub layouts: Vec<Layout>,
+	// pub containers: Vec<Container>,
+	// pub animations: Vec<Animation>,
+	// pub app_block: Option<AppBlock>,
+	// pub event_block: Option<EventBlock>,
+	pub image_block: Vec<ImageResource>,
+}
+
+#[napi]
+#[instrument]
+async fn new_project(game: Game) -> Result<CstcData> {
+	let game_path = game.game_path()?;
+	// FIXME: make async
+	status("Reading levelblock");
+	let level_block = LevelBlock::read_from_pe(&game_path)?;
+	status("Reading appblock");
+	let app_block = AppBlock::read_from_pe(&game_path)?;
+	status("Reading eventblock");
+	let event_block = EventBlock::read_from_pe(&game_path)?;
+
+	let mut data = CstcData::default();
+
+	data = ensure_base_data(data, &game).await?;
+	// data.app_block = Some(app_block);
+	// data.event_block = Some(event_block);
+	// data.animations = level_block.animations;
+	// data.object_types = level_block.object_types;
+	data.layouts = level_block.layouts;
+	// data.behaviors = level_block.behaviors;
+	// data.traits = level_block.traits;
+	// data.families = level_block.families;
+	// data.containers = level_block.containers;
+	
+	Ok(data)
+}
+
+async fn ensure_base_data(mut data: CstcData, game: &Game) -> Result<CstcData> {
+	if data.image_block.is_empty() {
+		status("Initializing image data");
+		// TODO: make async
+		let image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).unwrap();
+		data.image_block = image_block;
+	}
+	if data.editor_plugins.is_empty() {
+		status("Loading Construct Classic plugin data");
+		let (mut editor_plugins, _) = game.load_editor_plugins().await?;
+
+		editor_plugins.insert(-1, cstc::get_system_plugin());
+
+		status("Loading");
+		data.editor_plugins = editor_plugins.into_iter().map(|(k, v)| (k, v)).collect();
+	}
+	Ok(data)
 }

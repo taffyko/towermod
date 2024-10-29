@@ -29,23 +29,22 @@ const App = () => {
       initialize()
   }, [])
 
-  return ( <>
-      <ErrorBoundary>
-        <TitleBar />
-        <Scrollbars
-          autoHide className={Style.pageContainer}
-        >
-          <ErrorBoundary>
-            <Tabs tabs={tabs} />
-          </ErrorBoundary>
-          <ToastContainer
-            position="top-center"
-            theme="dark"
-          />
-        </Scrollbars>
-      </ErrorBoundary>
-    </>
-  );
+  return <>
+    <ErrorBoundary>
+      <TitleBar />
+      <Scrollbars
+        autoHide className={Style.pageContainer}
+      >
+        <ErrorBoundary>
+          <Tabs tabs={tabs} />
+        </ErrorBoundary>
+        <ToastContainer
+          position="top-center"
+          theme="dark"
+        />
+      </Scrollbars>
+    </ErrorBoundary>
+  </>
 };
 
 export default App;

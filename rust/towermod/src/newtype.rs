@@ -1,5 +1,5 @@
 //! monuments to the orphan rules
-use std::{ops::{Deref, DerefMut}, path::PathBuf};
+use std::{collections::{HashMap, HashSet}, ops::{Deref, DerefMut}, path::PathBuf};
 use napi::{bindgen_prelude::*, NapiRaw};
 
 pub struct Nt<T>(pub T);
@@ -36,6 +36,11 @@ impl<T: Copy> Copy for Nt<T> {}
 impl<T: std::fmt::Debug> std::fmt::Debug for Nt<T> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		self.0.fmt(f)
+	}
+}
+impl<V, T: FromIterator<V>> FromIterator<V> for Nt<T> where{
+	fn from_iter<U: IntoIterator<Item = V>>(iter: U) -> Self {
+		Nt(iter.into_iter().collect())
 	}
 }
 impl<T: PartialEq<Y>, Y> PartialEq<Y> for Nt<T> {
@@ -87,6 +92,83 @@ impl<'env, T: 'static> NapiRaw for Nt<ClassInstance<'env, T>> where
 		self.0.raw()
 	}
 }
+
+
+// f32
+impl From<Nt<f32>> for f32 {
+	fn from(Nt(value): Nt<f32>) -> Self {
+		value
+	}
+}
+impl FromNapiValue for Nt<f32> {
+	unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> Result<Self> {
+		let s: f64 = FromNapiValue::from_napi_value(env, napi_val)?;
+		Ok(Nt(s as f32))
+	}
+}
+impl ToNapiValue for Nt<f32> {
+	unsafe fn to_napi_value(env: napi::sys::napi_env, val: Self) -> napi::Result<napi::sys::napi_value> {
+		ToNapiValue::to_napi_value(env, val.0)
+	}
+}
+
+// HashMap<i32, V>
+impl<V> ToNapiValue for Nt<HashMap<i32, V>> where
+	V: ToNapiValue
+{
+	// convert to object with string keys (for compatibility with Redux)
+	unsafe fn to_napi_value(raw_env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
+		let env = Env::from(raw_env);
+		let mut obj = env.create_object()?;
+		for (k, v) in val.0.into_iter() {
+			obj.set(k.to_string(), v)?;
+		}
+
+		unsafe { Object::to_napi_value(raw_env, obj) }
+	}
+}
+impl<V, S> FromNapiValue for Nt<HashMap<i32, V, S>> where
+	V: FromNapiValue,
+	S: Default + std::hash::BuildHasher,
+{
+	unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> Result<Self> {
+		let obj = unsafe { Object::from_napi_value(env, napi_val)? };
+		let mut map = HashMap::default();
+		for key in Object::keys(&obj)?.into_iter() {
+			if let Some(val) = obj.get(&key)? {
+				if let Ok(key) = i32::from_str_radix(&key, 10) {
+					map.insert(key, val);
+				}
+			}
+		}
+
+		Ok(Nt(map))
+	}
+}
+
+// HashSet
+impl<V> ToNapiValue for Nt<HashSet<V>> where
+	V: ToNapiValue
+{
+	unsafe fn to_napi_value(env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
+		let vec: Vec<V> = val.0.into_iter().collect();
+		ToNapiValue::to_napi_value(env, vec)
+	}
+}
+impl<V> FromNapiValue for Nt<HashSet<V>> where
+	V: FromNapiValue + std::cmp::Eq + std::hash::Hash
+{
+	unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> Result<Self> {
+		let vec: Vec<V> = FromNapiValue::from_napi_value(env, napi_val)?;
+		Ok(Nt(vec.into_iter().collect()))
+	}
+}
+
+
+
+
+
+
 
 
 // PathBuf

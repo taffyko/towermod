@@ -15,8 +15,11 @@ pub const CAP_ENDEVENTLIST: u8 = 14;
 pub const CAP_BEGINGROUP: u8 = 15;
 pub const CAP_ENDGROUP: u8 = 16;
 
+use napi_derive::napi;
 use num_derive::{FromPrimitive, ToPrimitive};
 use serde::{Serialize, Deserialize};
+
+use crate::Nt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Token {
@@ -74,19 +77,21 @@ pub enum TokenKind {
 	Whitespace, Color,
 }
 
+#[napi]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DataKey {
 	Pointer(String, u32),
 	String(String, String),
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum TextureLoadingMode {
 	LoadOnAppStart,
 	LoadOnLayoutStart,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventBlock {
 	pub sheet_names: Vec<String>,
 	pub layout_sheets: Vec<Vec<SomeEvent>>,
@@ -106,7 +111,6 @@ pub struct EventGroup {
 	pub active: bool,
 	pub name: String,
 	pub events: Vec<SomeEvent>,
-
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -195,6 +199,7 @@ pub struct ObjectTrait {
 	pub object_type_ids: Vec<i32>,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Layout {
 	/// Unique name.
@@ -210,22 +215,33 @@ pub struct Layout {
 	pub texture_loading_mode: TextureLoadingMode,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LayoutLayer {
 	pub id: i32,
 	pub name: String,
 	pub layer_type: LayerType,
 	pub filter_color: i32,
-	pub opacity: f32,
-	pub angle: f32,
-	pub scroll_x_factor: f32,
-	pub scroll_y_factor: f32,
-	pub scroll_x: f32,
-	pub scroll_y: f32,
-	pub zoom_x_factor: f32,
-	pub zoom_y_factor: f32,
-	pub zoom_x: f32,
-	pub zoom_y: f32,
+	#[napi(ts_type = "number")]
+	pub opacity: Nt<f32>,
+	#[napi(ts_type = "number")]
+	pub angle: Nt<f32>,
+	#[napi(ts_type = "number")]
+	pub scroll_x_factor: Nt<f32>,
+	#[napi(ts_type = "number")]
+	pub scroll_y_factor: Nt<f32>,
+	#[napi(ts_type = "number")]
+	pub scroll_x: Nt<f32>,
+	#[napi(ts_type = "number")]
+	pub scroll_y: Nt<f32>,
+	#[napi(ts_type = "number")]
+	pub zoom_x_factor: Nt<f32>,
+	#[napi(ts_type = "number")]
+	pub zoom_y_factor: Nt<f32>,
+	#[napi(ts_type = "number")]
+	pub zoom_x: Nt<f32>,
+	#[napi(ts_type = "number")]
+	pub zoom_y: Nt<f32>,
 	pub clear_background_color: bool,
 	pub background_color: i32,
 	pub force_own_texture: bool,
@@ -235,6 +251,7 @@ pub struct LayoutLayer {
 	pub objects: Vec<ObjectInstance>,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum LayerSamplerMode {
 	Default,
@@ -242,6 +259,7 @@ pub enum LayerSamplerMode {
 	Linear,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObjectInstance {
 	pub id: i32,
@@ -250,7 +268,8 @@ pub struct ObjectInstance {
 	pub y: i32,
 	pub width: i32,
 	pub height: i32,
-	pub angle: f32,
+	#[napi(ts_type = "number")]
+	pub angle: Nt<f32>,
 	pub filter: i32,
 	pub private_variables: Vec<String>,
 	pub data: Vec<u8>,
@@ -258,13 +277,16 @@ pub struct ObjectInstance {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[napi(object)]
 pub struct Animation {
 	pub id: i32,
 	pub name: String,
 	pub tag: i32,
-	pub speed: f32,
+	#[napi(ts_type = "number")]
+	pub speed: Nt<f32>,
 	pub is_angle: bool,
-	pub angle: f32,
+	#[napi(ts_type = "number")]
+	pub angle: Nt<f32>,
 	/// -1 == forever
 	pub repeat_count: i32,
 	pub repeat_to: i32,
@@ -273,12 +295,15 @@ pub struct Animation {
 	pub sub_animations: Vec<Animation>,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnimationFrame {
-	pub duration: f32,
+	#[napi(ts_type = "number")]
+	pub duration: Nt<f32>,
 	pub image_id: i32,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
 pub enum LayerType {
 	Normal,
@@ -287,6 +312,7 @@ pub enum LayerType {
 	Include,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
 pub enum DisableShaderWhen {
 	NoSetting,
@@ -298,24 +324,28 @@ pub enum DisableShaderWhen {
 	Ps11Available,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
 pub enum PrivateVariableType {
 	Integer,
 	String,
 }
 
+#[napi]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrivateVariable {
 	pub name: String,
 	pub value_type: PrivateVariableType,
 }
 
+#[napi]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeatureDescriptor {
 	pub script_name: String,
 	pub param_count: u32,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionPoint {
 	pub x: i32,
@@ -323,6 +353,7 @@ pub struct ActionPoint {
 	pub string: String,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImageResource {
 	pub id: i32,
@@ -342,9 +373,9 @@ pub struct ImageMetadata {
 	pub hotspot_x: i32,
 	pub hotspot_y: i32,
 	pub apoints: Vec<ActionPoint>,
-	// always the same as the image's width in pixels
+	// typically the same as the image's width in pixels
 	pub collision_width: u32,
-	// always the same as the image's height in pixels
+	// typically the same as the image's height in pixels
 	pub collision_height: u32,
 	pub collision_pitch: i32,
 	pub collision_mask: Vec<u8>,

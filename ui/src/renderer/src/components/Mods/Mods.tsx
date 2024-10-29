@@ -32,7 +32,7 @@ export function ModList(props: {
   const { mods, selectedMod, setSelectedMod } = props;
   return <div className={Style.modList}>
     {mods.map((mod) => <ModListItem
-        key={`${mod.author}.${mod.name}`}
+        key={`${mod.author}.${mod.name}.${mod.version}`}
         mod={mod}
         selected={mod === selectedMod}
         onClick={() => {

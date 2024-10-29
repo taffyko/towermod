@@ -19,6 +19,10 @@ export async function playMod(filePath: string) {
   towermod.playMod(filePath, state.main.game)
 }
 
+export async function newProject() {
+  // TODO
+}
+
 export async function playProject() {
   // TODO
 }

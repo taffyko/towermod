@@ -1,9 +1,12 @@
 use std::{os::raw::c_void, mem, ffi::CStr, collections::{HashMap, HashSet}};
 use derivative::Derivative;
+use napi_derive::napi;
 use num_derive::FromPrimitive;
 use serde::{Serialize, Deserialize};
 use windows::{Win32::{Foundation::{HMODULE, FreeLibrary}, System::LibraryLoader::{LoadLibraryW, GetProcAddress}, UI::WindowsAndMessaging::LoadStringA, Graphics::Gdi::HBITMAP}, core::{PSTR, HSTRING, s}};
 use anyhow::Result;
+
+use crate::Nt;
 
 const OBJ_NAME: u32 = 1;
 const OBJ_AUTHOR: u32 = 2;
@@ -84,6 +87,7 @@ pub enum Property
 	PROPERTY_BUTTON,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginStringTable {
 	pub name: String,
@@ -94,18 +98,26 @@ pub struct PluginStringTable {
 	pub web: String,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginData {
-	pub conditions: HashMap<i32, AcesEntry>,
-	pub actions: HashMap<i32, AcesEntry>,
-	pub expressions: HashMap<i32, AcesEntry>,
+	#[napi(ts_type = "Record<number, AcesEntry>")]
+	pub conditions: Nt<HashMap<i32, AcesEntry>>,
+	#[napi(ts_type = "Record<number, AcesEntry>")]
+	pub actions: Nt<HashMap<i32, AcesEntry>>,
+	#[napi(ts_type = "Record<number, AcesEntry>")]
+	pub expressions: Nt<HashMap<i32, AcesEntry>>,
+	#[napi(ts_type = "Record<string, number[]>")]
 	pub cnd_categories: AceCategories,
+	#[napi(ts_type = "Record<string, number[]>")]
 	pub act_categories: AceCategories,
+	#[napi(ts_type = "Record<string, number[]>")]
 	pub exp_categories: AceCategories,
 	pub properties: Vec<CPropItem>,
 	pub string_table: PluginStringTable,
 }
 
+#[napi(object)]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Param {
 	pub param_type: u16,
@@ -114,6 +126,7 @@ pub struct Param {
 	pub init_str: String,
 }
 
+#[napi(object)]
 #[derive(Derivative, Debug, Clone, Serialize, Deserialize)]
 #[derivative(Default)]
 pub struct AcesEntry {
@@ -131,8 +144,9 @@ pub struct AcesEntry {
 }
 
 /// AceList entries grouped by Category name
-pub type AceCategories = HashMap<String, HashSet<i32>>;
+pub type AceCategories = HashMap<String, Nt<HashSet<i32>>>;
 
+#[napi(object)]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct CPropItem {
 	pub prop_type: i32,
@@ -145,7 +159,7 @@ fn sort_categories(aces: &HashMap<i32, AcesEntry>) -> AceCategories {
 	let mut cats = AceCategories::new();
 	for (id, ace) in aces {
 		match cats.get_mut(&ace.ace_category) {
-			None => { cats.insert(ace.ace_category.clone(), HashSet::from([*id])); }
+			None => { cats.insert(ace.ace_category.clone(), Nt(HashSet::from([*id]))); }
 			Some(set) => { set.insert(*id); }
 		};
 	}
@@ -414,9 +428,9 @@ pub mod x86_plugin_ffi {
 				cnd_categories: sort_categories(&cnds),
 				act_categories: sort_categories(&acts),
 				exp_categories: sort_categories(&exps),
-				conditions: cnds,
-				actions: acts,
-				expressions: exps,
+				conditions: Nt(cnds),
+				actions: Nt(acts),
+				expressions: Nt(exps),
 				properties,
 				string_table,
 			}) 

@@ -1,3 +1,5 @@
+use crate::Nt;
+
 use super::{stable::DataKey, Animation, AnimationFrame};
 
 pub struct BlockReader<'a> {
@@ -92,9 +94,9 @@ impl<'a> BlockReader<'a> {
 		let name = self.read_string();
 		let tag = self.read_i32();
 
-		let speed = self.read_f32();
+		let speed = Nt(self.read_f32());
 		let is_angle = self.read_u8() != 0;
-		let angle = self.read_f32();
+		let angle = Nt(self.read_f32());
 
 		let repeat_count = self.read_i32();
 		let repeat_to = self.read_i32();
@@ -108,7 +110,7 @@ impl<'a> BlockReader<'a> {
 	}
 
 	fn read_animation_frame(&mut self) -> AnimationFrame {
-		let duration = self.read_f32();
+		let duration = Nt(self.read_f32());
 		let image_id = self.read_i32();
 		AnimationFrame { duration, image_id }
 	}
@@ -161,7 +163,8 @@ impl BlockWriter {
 		self.buffer.extend(val.to_le_bytes());
 	}
 
-	pub fn write_f32(&mut self, val: f32) {
+	pub fn write_f32(&mut self, val: impl Into<f32>) {
+		let val = val.into();
 		self.buffer.extend(val.to_le_bytes());
 	}
 
