@@ -1,16 +1,16 @@
 import { Tuple, configureStore } from '@reduxjs/toolkit';
 import { rootReducer } from '@shared/reducers';
 import {
-  defaultOptions as serifyDefaultOptions,
-  createReduxMiddleware as createSerifyMiddleware
+	defaultOptions as serifyDefaultOptions,
+	createReduxMiddleware as createSerifyMiddleware
 } from '@karmaniverous/serify-deserify';
 const serifyMiddleware = createSerifyMiddleware(serifyDefaultOptions);
 import { stateSyncEnhancer } from 'electron-redux/main';
 
 export const store = configureStore({
-  reducer: rootReducer,
-  enhancers: (getDefaultEnhancers) => getDefaultEnhancers().concat(stateSyncEnhancer()),
-  middleware: (_getDefaultMiddleware) => new Tuple(serifyMiddleware),
+	reducer: rootReducer,
+	enhancers: (getDefaultEnhancers) => getDefaultEnhancers().concat(stateSyncEnhancer()),
+	middleware: (_getDefaultMiddleware) => new Tuple(serifyMiddleware),
 })
 
 export const dispatch = store.dispatch;

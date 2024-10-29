@@ -9,19 +9,19 @@ const initialState: SliceState = {
 }
 
 export const slice = createSlice({
-  name: "data",
-  initialState,
-  reducers: {
+	name: "data",
+	initialState,
+	reducers: {
 
-  },
-  extraReducers(builder) {
-    builder.addCase(mainActions.setActiveGame, (state) => {
-      // TODO clear data
-    })
-    builder.addCase(mainActions.setActiveProject, (state) => {
-      // TODO clear dta
-    })
-  },
+	},
+	extraReducers(builder) {
+		builder.addCase(mainActions.setActiveGame, (state) => {
+			// TODO clear data
+		})
+		builder.addCase(mainActions.setActiveProject, (state) => {
+			// TODO clear dta
+		})
+	},
 });
 export const reducer = slice.reducer;
 export const actions = slice.actions;

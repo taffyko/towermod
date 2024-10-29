@@ -11,16 +11,16 @@ export function useEventListener<K extends keyof DocumentEventMap>(el: Document 
 export function useEventListener<K extends keyof HTMLElementEventMap, E extends HTMLElement>(el: E | null, type: K, listener: (this: E, ev: HTMLElementEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
 export function useEventListener(el: any, type: string, listener: EventListener, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
 export function useEventListener(el: any, type: string, listener: EventListener, deps?: React.DependencyList, options?: any) {
-  let cb = listener;
-  if (deps) {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    cb = useCallback(listener, deps);
-  }
-  useEffect(() => {
-    el?.addEventListener(type, cb, options);
-    return () => {
-      el?.removeEventListener(type, cb);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [el, cb]);
+	let cb = listener;
+	if (deps) {
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		cb = useCallback(listener, deps);
+	}
+	useEffect(() => {
+		el?.addEventListener(type, cb, options);
+		return () => {
+			el?.removeEventListener(type, cb);
+		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [el, cb]);
 }

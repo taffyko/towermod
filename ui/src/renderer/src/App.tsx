@@ -11,40 +11,40 @@ import { rpc } from './util';
 import { Data } from './components/Data';
 
 function initialize() {
-  // FIXME
-  rpc.setGamePath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe")
-  rpc.loadModList()
+	// FIXME
+	rpc.setGamePath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe")
+	rpc.loadModList()
 }
 
 const App = () => {
-  const tabs: Tab[] = useMemo(() => [
-      { name: 'Config', children: <div /> },
-      { name: 'Mods', children: <Mods /> },
-      { name: 'Images', children: <div /> },
-      { name: 'Data', children: <Data /> },
-      { name: 'Events', children: <div /> },
-  ], [])
+	const tabs: Tab[] = useMemo(() => [
+			{ name: 'Config', children: <div /> },
+			{ name: 'Mods', children: <Mods /> },
+			{ name: 'Images', children: <div /> },
+			{ name: 'Data', children: <Data /> },
+			{ name: 'Events', children: <div /> },
+	], [])
 
-  useEffect(() => {
-      initialize()
-  }, [])
+	useEffect(() => {
+			initialize()
+	}, [])
 
-  return <>
-    <ErrorBoundary>
-      <TitleBar />
-      <Scrollbars
-        autoHide className={Style.pageContainer}
-      >
-        <ErrorBoundary>
-          <Tabs tabs={tabs} />
-        </ErrorBoundary>
-        <ToastContainer
-          position="top-center"
-          theme="dark"
-        />
-      </Scrollbars>
-    </ErrorBoundary>
-  </>
+	return <>
+		<ErrorBoundary>
+			<TitleBar />
+			<Scrollbars
+				autoHide className={Style.pageContainer}
+			>
+				<ErrorBoundary>
+					<Tabs tabs={tabs} />
+				</ErrorBoundary>
+				<ToastContainer
+					position="top-center"
+					theme="dark"
+				/>
+			</Scrollbars>
+		</ErrorBoundary>
+	</>
 };
 
 export default App;

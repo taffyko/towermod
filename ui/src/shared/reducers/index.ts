@@ -4,7 +4,7 @@ import { slice as mainSlice } from './main';
 
 export const rootReducer = combineSlices(mainSlice);
 export const actions = {
-  ...mainSlice.actions
+	...mainSlice.actions
 }
 
 export type Action = UnknownAction

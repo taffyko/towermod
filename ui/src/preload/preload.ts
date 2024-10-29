@@ -11,9 +11,9 @@ const api = {}
 const towermodRpcModule = remote.require('./rpc');
 
 try {
-  contextBridge.exposeInMainWorld('electron', electronAPI)
-  contextBridge.exposeInMainWorld('api', api)
-  contextBridge.exposeInMainWorld('towermodRpcModule', towermodRpcModule)
+	contextBridge.exposeInMainWorld('electron', electronAPI)
+	contextBridge.exposeInMainWorld('api', api)
+	contextBridge.exposeInMainWorld('towermodRpcModule', towermodRpcModule)
 } catch (error) {
-  console.error(error)
+	console.error(error)
 }

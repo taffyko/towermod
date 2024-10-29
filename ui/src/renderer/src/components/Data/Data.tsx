@@ -1,7 +1,7 @@
 import { useAppSelector } from "@renderer/hooks"
 
 export function Data() {
-  return <div></div>
+	return <div></div>
 }
 
 const Outliner = () => {

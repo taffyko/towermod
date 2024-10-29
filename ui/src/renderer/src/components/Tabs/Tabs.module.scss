@@ -1,58 +1,58 @@
 .tabs {
-  display: flex;
-  flex-flow: column nowrap;
+	display: flex;
+	flex-flow: column nowrap;
 
-  .tabBarOuter {
-    position: relative;
-    display: flex;
-    flex-flow: column nowrap;
-    height: calc(1.5rem + var(--gap) / 2);
+	.tabBarOuter {
+		position: relative;
+		display: flex;
+		flex-flow: column nowrap;
+		height: calc(1.5rem + var(--gap) / 2);
 
-    .tabBar {
-      position: absolute;
-      display: flex;
-      flex-flow: row nowrap;
-      gap: calc(var(--gap) / 2);
+		.tabBar {
+			position: absolute;
+			display: flex;
+			flex-flow: row nowrap;
+			gap: calc(var(--gap) / 2);
 
-      .tabOuter {
-        height: 100%;
-        display: flex;
-        flex-flow: column nowrap;
-        justify-content: flex-start;
+			.tabOuter {
+				height: 100%;
+				display: flex;
+				flex-flow: column nowrap;
+				justify-content: flex-start;
 
-        .tab {
-          padding: 0 var(--gap);
-          background-color: var(--color-root-bg);
-          border: solid var(--border-width) var(--color-border);
-          border-top: none;
+				.tab {
+					padding: 0 var(--gap);
+					background-color: var(--color-root-bg);
+					border: solid var(--border-width) var(--color-border);
+					border-top: none;
 
-          text-align: center;
-          border-radius: 0 0 5px 5px;
-          height: 1.5rem;
+					text-align: center;
+					border-radius: 0 0 5px 5px;
+					height: 1.5rem;
 
-          display: flex;
-          align-items: flex-end;
+					display: flex;
+					align-items: flex-end;
 
-          --a1: 0.25s height ease-out;
-          --a2: 0.25s background-color ease-out;
-          transition: var(--a1), var(--a2);
-        }
+					--a1: 0.25s height ease-out;
+					--a2: 0.25s background-color ease-out;
+					transition: var(--a1), var(--a2);
+				}
 
-        &.active .tab {
-          height: 2.5rem;
-          background-color: var(--color-bg-active);
-          --a1: 0.1s height ease-out;
-        }
+				&.active .tab {
+					height: 2.5rem;
+					background-color: var(--color-bg-active);
+					--a1: 0.1s height ease-out;
+				}
 
-        &:hover .tab {
-          background-color: var(--color-bg-hover);
-          --a2: 0.1s background-color ease-out;
-        }
-      }
-    }
-  }
+				&:hover .tab {
+					background-color: var(--color-bg-hover);
+					--a2: 0.1s background-color ease-out;
+				}
+			}
+		}
+	}
 
-  .tabContent {
-    padding: var(--gap);
-  }
+	.tabContent {
+		padding: var(--gap);
+	}
 }
