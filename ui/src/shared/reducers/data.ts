@@ -1,25 +1,29 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { Game, ModInfo, Project } from "@towermod";
+import { Game, ModInfo, Project, CstcData } from "@towermod";
 import { actions as mainActions } from './main'
 
-export interface SliceState {
-}
-
-const initialState: SliceState = {
+const initialState: CstcData = {
+	editorPlugins: {},
+	layouts: [],
+	imageBlock: [],
 }
 
 export const slice = createSlice({
 	name: "data",
 	initialState,
 	reducers: {
-
+		setData(state, { payload }: PayloadAction<CstcData>) {
+			Object.assign(state, payload)
+		}
 	},
 	extraReducers(builder) {
 		builder.addCase(mainActions.setActiveGame, (state) => {
-			// TODO clear data
+			// clear data
+			Object.assign(state, initialState)
 		})
 		builder.addCase(mainActions.setActiveProject, (state) => {
-			// TODO clear dta
+			// clear data
+			Object.assign(state, initialState)
 		})
 	},
 });

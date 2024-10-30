@@ -1,10 +1,15 @@
 import { Dispatch as BaseDispatch, UnknownAction, combineSlices, Observable, Reducer } from "@reduxjs/toolkit";
 
 import { slice as mainSlice } from './main';
+import { slice as dataSlice } from './data';
 
-export const rootReducer = combineSlices(mainSlice);
+export const rootReducer = combineSlices(
+	mainSlice,
+	dataSlice
+)
 export const actions = {
-	...mainSlice.actions
+	...dataSlice.actions,
+	...mainSlice.actions,
 }
 
 export type Action = UnknownAction

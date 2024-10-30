@@ -20,7 +20,7 @@ pub async fn run_game(Nt(ref game_path): Nt<PathBuf>) -> Result<()> {
 
 #[napi]
 pub async fn list_installed_mods() -> Result<Vec<ModInfo>> {
-	
+
 	let mut stream = fs::read_dir(get_mods_dir_path()).await?;
 	let mut mods: Vec<ModInfo> = Vec::new();
 	while let Some(entry) = stream.next_entry().await? {
@@ -92,7 +92,7 @@ pub async fn play_mod(Nt(zip_path): Nt<PathBuf>, game: Game) -> Result<()> {
 
 	status("Copying base game files");
 	crate::util::merge_copy_into(&game_path.parent().context("game_path.parent()")?, &runtime_dir, true, true).await?;
-	
+
 	let images_by_id: Mutex<HashMap<i32, Vec<u8>>> = Mutex::new(HashMap::new());
 
 	status("Writing custom images and files");
@@ -134,7 +134,7 @@ pub async fn play_mod(Nt(zip_path): Nt<PathBuf>, game: Game) -> Result<()> {
 		let towerclimb_savefiles_dir = PathBuf::from_iter([get_appdata_dir_path(), PathBuf::from_iter(["TowerClimb/Mods", &*mod_info.unique_name()])]);
 		zip_merge_copy_into(&mut zip, "savefiles/", &towerclimb_savefiles_dir, true).await?;
 	}
-	
+
 	let game_name = game_path.file_name().unwrap();
 	let output_exe_path = runtime_dir.join(game_name);
 
@@ -261,9 +261,9 @@ pub fn remove_mouse_cursor_hide_events(events: &mut cstc::EventBlock) {
 #[instrument]
 pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_name: &str) -> Result<()> {
 	// FIXME make this less brittle
-	
+
 	let appdata_suffix = format!("{}{}{}", r"TowerClimb\Mods\", unique_name, r"\");
-	
+
 	for event in events.layout_sheets[0].iter_mut() {
 		if let cstc::SomeEvent::Event(event) = event {
 			if let Some(cstc::SomeEvent::EventGroup(event)) = event.events.first_mut() {
@@ -295,7 +295,7 @@ pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_n
 	}
 	let settings_dir_path = PathBuf::from_iter([crate::get_appdata_dir_path(), PathBuf::from(r"Towerclimb\Settings")]);
 	let settings_dir_dest_path = PathBuf::from_iter([crate::get_appdata_dir_path(), PathBuf::from_iter([&*appdata_suffix, "Settings"])]);
-	
+
 	// Copy settings from vanilla game if none exists for the mod
 	crate::util::merge_copy_into(&settings_dir_path, &settings_dir_dest_path, false, false).await?;
 	Ok(())
@@ -305,7 +305,7 @@ pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_n
 pub async fn patch_with_images(game_path: &Path, mut found_images_by_id: HashMap<i32, Vec<u8>>, image_metadatas: Option<Vec<cstc::ImageMetadata>>) -> Result<Vec<cstc::ImageResource>> {
 	// read base imageblock from PE
 	let mut base_image_block = cstc::ImageBlock::read_from_pe(game_path)?;
-	
+
 	if let Some(image_metadatas) = image_metadatas {
 		// add base images to found_images_by_id
 		for image_resource in base_image_block {
@@ -313,7 +313,7 @@ pub async fn patch_with_images(game_path: &Path, mut found_images_by_id: HashMap
 				found_images_by_id.insert(image_resource.id, image_resource.data);
 			}
 		}
-		
+
 		let mut image_block = Vec::with_capacity(image_metadatas.len());
 		for metadata in image_metadatas {
 			let id = metadata.id;
@@ -327,7 +327,7 @@ pub async fn patch_with_images(game_path: &Path, mut found_images_by_id: HashMap
 			let id = image.id;
 			(id, image)
 		}).collect());
-		
+
 		{
 			let mut images_by_id = images_by_id.write().await;
 			for (i, data) in found_images_by_id.into_iter() {
@@ -347,10 +347,10 @@ async fn game_from_path(Nt(file_path): Nt<PathBuf>) -> Result<Game> {
 	Game::from_path(file_path).await
 }
 
-#[napi]
+#[napi(object)]
 #[derive(Default, Clone, Debug)]
 pub struct CstcData {
-	#[napi(ts_type = "Records<i32, PluginData>")]
+	#[napi(ts_type = "Record<number, PluginData>")]
 	pub editor_plugins: Nt<HashMap<i32, PluginData>>,
 	// pub object_types: Vec<ObjectType>,
 	// pub behaviors: Vec<Behavior>,
@@ -388,7 +388,7 @@ async fn new_project(game: Game) -> Result<CstcData> {
 	// data.traits = level_block.traits;
 	// data.families = level_block.families;
 	// data.containers = level_block.containers;
-	
+
 	Ok(data)
 }
 

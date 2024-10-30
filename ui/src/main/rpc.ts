@@ -20,7 +20,10 @@ export async function playMod(filePath: string) {
 }
 
 export async function newProject() {
-	// TODO
+	const { main } = store.getState()
+	if (!main.game) { throw new Error("Game not set"); }
+	const data = await towermod.newProject(main.game)
+	dispatch(actions.setData(data))
 }
 
 export async function playProject() {

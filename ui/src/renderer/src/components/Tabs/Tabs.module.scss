@@ -1,6 +1,7 @@
 .tabs {
 	display: flex;
 	flex-flow: column nowrap;
+	height: 100%;
 
 	.tabBarOuter {
 		position: relative;
@@ -53,6 +54,7 @@
 	}
 
 	.tabContent {
+		height: 100%;
 		padding: var(--gap);
 	}
 }

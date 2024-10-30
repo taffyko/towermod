@@ -2,13 +2,13 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Mods from './components/Mods';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { Scrollbars } from 'react-custom-scrollbars-2';
-import Style from './App.module.scss';
 import { Tab, Tabs } from './components/Tabs';
 import { useEffect, useMemo } from 'react';
 import { TitleBar } from './components/TitleBar';
 import { rpc } from './util';
 import { Data } from './components/Data';
+import Config from './components/Config';
+import Style from './App.module.scss';
 
 function initialize() {
 	// FIXME
@@ -18,7 +18,7 @@ function initialize() {
 
 const App = () => {
 	const tabs: Tab[] = useMemo(() => [
-			{ name: 'Config', children: <div /> },
+			{ name: 'Config', children: <Config /> },
 			{ name: 'Mods', children: <Mods /> },
 			{ name: 'Images', children: <div /> },
 			{ name: 'Data', children: <Data /> },
@@ -32,9 +32,7 @@ const App = () => {
 	return <>
 		<ErrorBoundary>
 			<TitleBar />
-			<Scrollbars
-				autoHide className={Style.pageContainer}
-			>
+			<div className={Style.pageContainer}>
 				<ErrorBoundary>
 					<Tabs tabs={tabs} />
 				</ErrorBoundary>
@@ -42,7 +40,7 @@ const App = () => {
 					position="top-center"
 					theme="dark"
 				/>
-			</Scrollbars>
+			</div>
 		</ErrorBoundary>
 	</>
 };
