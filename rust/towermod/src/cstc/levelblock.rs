@@ -49,7 +49,7 @@ impl BlockReader<'_> {
 		assert_eq!(self.read_i32(), 0);
 		let descriptors = self.read_feature_descriptors();
 
-		ObjectType { id: object_id, name: object_name, plugin_id, global, destroy_when, private_variables, descriptors }
+		ObjectType { id: object_id, name: object_name, plugin_id, global, destroy_when, private_variables, descriptors, _type: "ObjectType" }
 	}
 
 	fn read_feature_descriptors(&mut self) -> Option<FeatureDescriptors> {
@@ -81,7 +81,7 @@ impl BlockReader<'_> {
 		let data_len = self.read_i32();
 		let data = self.read_bytes(data_len as usize);
 		let descriptors = self.read_feature_descriptors();
-		Behavior { object_type_id: object_id, new_index, mov_index, name, data, descriptors }
+		Behavior { object_type_id: object_id, new_index, mov_index, name, data, descriptors, _type: "Behavior" }
 	}
 
 	fn read_private_variable(&mut self) -> PrivateVariable {
@@ -93,19 +93,19 @@ impl BlockReader<'_> {
 	fn read_trait(&mut self) -> ObjectTrait {
 		let name = self.read_string();
 		let object_ids = self.read_collection(|this| this.read_i32());
-		ObjectTrait { name, object_type_ids: object_ids }
+		ObjectTrait { name, object_type_ids: object_ids, _type: "ObjectTrait" }
 	}
 
 	fn read_family(&mut self) -> Family {
 		let name = self.read_string();
 		let object_type_ids = self.read_collection(|this| this.read_i32());
 		let private_variables = self.read_collection(Self::read_private_variable);
-		Family { name, object_type_ids, private_variables }
+		Family { name, object_type_ids, private_variables, _type: "Family" }
 	}
 
 	fn read_container(&mut self) -> Container {
 		let object_type_ids = self.read_collection(|this| this.read_i32());
-		Container { object_ids: object_type_ids }
+		Container { object_ids: object_type_ids, _type: "Container" }
 	}
 
 	fn read_layout(&mut self) -> Layout {
@@ -120,7 +120,7 @@ impl BlockReader<'_> {
 		let image_ids = self.read_collection(|this| this.read_i32());
 		let texture_loading_mode = TextureLoadingMode::from_i32(self.read_i32()).unwrap();
 
-		Layout { width, height, name, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode }
+		Layout { width, height, name, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode, _type: "Layout" }
 	}
 
 	fn read_layout_layer(&mut self) -> LayoutLayer {
@@ -139,7 +139,7 @@ impl BlockReader<'_> {
 		let zoom_y_factor = Nt(self.read_f32());
 		let zoom_x = Nt(self.read_f32());
 		let zoom_y = Nt(self.read_f32());
-		
+
 		let clear_background_color = self.read_u8() == 1;
 		let background_color = self.read_i32();
 		let force_own_texture = self.read_u8() == 1;
@@ -148,8 +148,8 @@ impl BlockReader<'_> {
 		let clear_depth_buffer = self.read_u8() == 1;
 
 		let objects = self.read_collection(Self::read_layout_object);
-		
-		LayoutLayer { id: layer_id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects }
+
+		LayoutLayer { id: layer_id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects, _type: "LayoutLayer" }
 	}
 
 	fn read_layout_object(&mut self) -> ObjectInstance {
@@ -170,7 +170,7 @@ impl BlockReader<'_> {
 		let data_size = self.read_u32() as usize;
 		let data = self.read_bytes(data_size);
 
-		ObjectInstance { key, x, y, width, height, angle, filter, object_type_id, id: instance_id, private_variables, data }
+		ObjectInstance { key, x, y, width, height, angle, filter, object_type_id, id: instance_id, private_variables, data, _type: "ObjectInstance" }
 	}
 }
 
@@ -279,7 +279,7 @@ impl BlockWriter {
 		self.write_f32(o.zoom_y_factor);
 		self.write_f32(o.zoom_x);
 		self.write_f32(o.zoom_y);
-		
+
 		self.write_u8(o.clear_background_color as u8);
 		self.write_i32(o.background_color);
 		self.write_u8(o.force_own_texture as u8);

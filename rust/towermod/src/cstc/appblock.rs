@@ -1,5 +1,7 @@
 use anyhow::Result;
 use num_traits::{FromPrimitive};
+use crate::Nt;
+
 use super::{block::{BlockReader, BlockWriter}, stable::{TextureLoadingMode}};
 use super::stable::*;
 
@@ -19,7 +21,7 @@ impl BlockReader<'_> {
 		let name = self.read_string();
 		let window_width = self.read_i32();
 		let window_height = self.read_i32();
-		let eye_distance = self.read_f32();
+		let eye_distance = Nt(self.read_f32());
 		let show_menu = self.read_i32() == 1;
 		let screensaver = self.read_u8() == 1;
 		let fps_mode = FpsMode::from_u8(self.read_u8()).unwrap();
@@ -37,30 +39,30 @@ impl BlockReader<'_> {
 		let motion_blur_steps = self.read_i32();
 		let text_rendering_mode = TextRenderingMode::from_i32(self.read_i32()).unwrap();
 		let override_timedelta = self.read_u8() == 1;
-		let time_delta_override = self.read_f32();
+		let time_delta_override = Nt(self.read_f32());
 		let caption = self.read_u8() == 1;
 		let minimize_box = self.read_u8() == 1;
 		let resize_mode = ResizeMode::from_i32(self.read_i32()).unwrap();
 		let maximize_box = self.read_u8() == 1;
-		let minimum_fps = self.read_f32();
+		let minimum_fps = Nt(self.read_f32());
 		let layout_index = self.read_i32();
 		let multisamples = self.read_u32();
 		let texture_loading_mode = TextureLoadingMode::from_i32(self.read_i32()).unwrap();
-		AppBlock { name, window_width, window_height, eye_distance, show_menu, screensaver, fps_mode, fps, fullscreen, sampler_mode, global_variables, behavior_controls, disable_windows_key, data_keys, simulate_shaders, original_project_path, fps_in_caption, use_motion_blur, motion_blur_steps, text_rendering_mode, override_timedelta, time_delta_override, caption, minimize_box, resize_mode, maximize_box, minimum_fps, layout_index, multisamples, texture_loading_mode }
+		AppBlock { name, window_width, window_height, eye_distance, show_menu, screensaver, fps_mode, fps, fullscreen, sampler_mode, global_variables, behavior_controls, disable_windows_key, data_keys, simulate_shaders, original_project_path, fps_in_caption, use_motion_blur, motion_blur_steps, text_rendering_mode, override_timedelta, time_delta_override, caption, minimize_box, resize_mode, maximize_box, minimum_fps, layout_index, multisamples, texture_loading_mode, _type: "AppBlock" }
 	}
 
 	fn read_global_variable(&mut self) -> GlobalVariable {
 		let name = self.read_string();
 		let var_type = self.read_i32();
 		let value = self.read_string();
-		GlobalVariable { name, var_type, value }
+		GlobalVariable { name, var_type, value, _type: "GlobalVariable" }
 	}
 
 	fn read_behavior_control(&mut self) -> BehaviorControl {
 		let name = self.read_string();
 		let vk = self.read_i32();
 		let player = self.read_i32();
-		BehaviorControl { name, vk, player }
+		BehaviorControl { name, vk, player, _type: "BehaviorControl" }
 	}
 }
 

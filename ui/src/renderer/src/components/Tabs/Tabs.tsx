@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react"
+import React, { useCallback, useState } from "react"
 import Style from './Tabs.module.scss'
 import { useEventListener } from "@renderer/hooks";
 import { posmod } from "@shared/util";
@@ -47,8 +47,8 @@ export const Tabs = (props: { tabs: Tab[] }) => {
 							<div
 								className={`
 									${Style.tab}
-									${tab === currentTab ? Style.active : ""}`
-								}
+									${tab === currentTab ? Style.active : ""}
+								`}
 							>
 								{tab.name}
 							</div>
@@ -56,7 +56,7 @@ export const Tabs = (props: { tabs: Tab[] }) => {
 				)}
 			</div>
 		</div>
-		<div className={Style.tabContent}>
+		<div className={`${Style.tabContent} stretchbox`}>
 			{currentTab.children}
 		</div>
 	</div>

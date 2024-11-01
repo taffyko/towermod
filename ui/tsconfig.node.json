@@ -10,6 +10,7 @@
   ],
   "compilerOptions": {
     "composite": true,
+    "strict": true,
     "types": ["electron-vite/node"],
     "moduleResolution": "bundler",
     "baseUrl": ".",

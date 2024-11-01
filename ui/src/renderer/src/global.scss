@@ -7,3 +7,14 @@
 	display: flex;
 	flex-flow: row nowrap;
 }
+
+.stretchbox {
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: stretch;
+}
+
+.grow {
+	flex-grow: 1;
+}

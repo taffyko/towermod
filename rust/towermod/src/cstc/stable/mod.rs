@@ -150,6 +150,7 @@ pub struct LevelBlock {
 	pub animations: Vec<Animation>,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObjectType {
 	pub id: i32,
@@ -160,8 +161,16 @@ pub struct ObjectType {
 	pub destroy_when: DisableShaderWhen,
 	pub private_variables: Vec<PrivateVariable>,
 	pub descriptors: Option<FeatureDescriptors>,
+
+	#[napi(ts_type = "'ObjectType'")]
+	#[serde(skip, default = "ObjectType::type_name")]
+	pub _type: &'static str,
+}
+impl ObjectType {
+	pub fn type_name() -> &'static str { "ObjectType" }
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeatureDescriptors {
 	pub actions: Vec<FeatureDescriptor>,
@@ -169,6 +178,7 @@ pub struct FeatureDescriptors {
 	pub expressions: Vec<FeatureDescriptor>,
 }
 
+#[napi(object)]
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Behavior {
@@ -178,25 +188,56 @@ pub struct Behavior {
 	pub name: String,
 	pub data: Vec<u8>,
 	pub descriptors: Option<FeatureDescriptors>,
+
+	#[napi(ts_type = "'Behavior'")]
+	#[serde(skip, default = "Behavior::type_name")]
+	pub _type: &'static str,
+}
+impl Behavior {
+	pub fn type_name() -> &'static str { "Behavior" }
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Container {
 	pub object_ids: Vec<i32>,
+
+	#[napi(ts_type = "'Container'")]
+	#[serde(skip, default = "Container::type_name")]
+	pub _type: &'static str,
+}
+impl Container {
+	pub fn type_name() -> &'static str { "Container" }
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Family {
 	// Unique name.
 	pub name: String,
 	pub object_type_ids: Vec<i32>,
 	pub private_variables: Vec<PrivateVariable>,
+
+	#[napi(ts_type = "'Family'")]
+	#[serde(skip, default = "Family::type_name")]
+	pub _type: &'static str,
+}
+impl Family {
+	pub fn type_name() -> &'static str { "Family" }
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObjectTrait {
 	pub name: String,
 	pub object_type_ids: Vec<i32>,
+
+	#[napi(ts_type = "'ObjectTrait'")]
+	#[serde(skip, default = "ObjectTrait::type_name")]
+	pub _type: &'static str,
+}
+impl ObjectTrait {
+	pub fn type_name() -> &'static str { "ObjectTrait" }
 }
 
 #[napi(object)]
@@ -213,7 +254,15 @@ pub struct Layout {
 	pub layers: Vec<LayoutLayer>,
 	pub image_ids: Vec<i32>,
 	pub texture_loading_mode: TextureLoadingMode,
+
+	#[napi(ts_type = "'Layout'")]
+	#[serde(skip, default = "Layout::type_name")]
+	pub _type: &'static str,
 }
+impl Layout {
+	pub fn type_name() -> &'static str { "Layout" }
+}
+
 
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -249,7 +298,15 @@ pub struct LayoutLayer {
 	pub enable_3d: bool,
 	pub clear_depth_buffer: bool,
 	pub objects: Vec<ObjectInstance>,
+
+	#[napi(ts_type = "'LayoutLayer'")]
+	#[serde(skip, default = "LayoutLayer::type_name")]
+	pub _type: &'static str,
 }
+impl LayoutLayer {
+	pub fn type_name() -> &'static str { "LayoutLayer" }
+}
+
 
 #[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
@@ -274,7 +331,15 @@ pub struct ObjectInstance {
 	pub private_variables: Vec<String>,
 	pub data: Vec<u8>,
 	pub key: i32,
+
+	#[napi(ts_type = "'ObjectInstance'")]
+	#[serde(skip, default = "ObjectInstance::type_name")]
+	pub _type: &'static str,
 }
+impl ObjectInstance {
+	pub fn type_name() -> &'static str { "ObjectInstance" }
+}
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[napi(object)]
@@ -293,6 +358,13 @@ pub struct Animation {
 	pub ping_pong: bool,
 	pub frames: Vec<AnimationFrame>,
 	pub sub_animations: Vec<Animation>,
+
+	#[napi(ts_type = "'Animation'")]
+	#[serde(skip, default = "Animation::type_name")]
+	pub _type: &'static str,
+}
+impl Animation {
+	pub fn type_name() -> &'static str { "Animation" }
 }
 
 #[napi(object)]
@@ -301,6 +373,14 @@ pub struct AnimationFrame {
 	#[napi(ts_type = "number")]
 	pub duration: Nt<f32>,
 	pub image_id: i32,
+
+	#[napi(ts_type = "'AnimationFrame'")]
+	#[serde(skip, default = "AnimationFrame::type_name")]
+	pub _type: &'static str,
+
+}
+impl AnimationFrame {
+	pub fn type_name() -> &'static str { "AnimationFrame" }
 }
 
 #[napi]
@@ -331,14 +411,14 @@ pub enum PrivateVariableType {
 	String,
 }
 
-#[napi]
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrivateVariable {
 	pub name: String,
 	pub value_type: PrivateVariableType,
 }
 
-#[napi]
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeatureDescriptor {
 	pub script_name: String,
@@ -395,12 +475,14 @@ impl ImageResource {
 	}
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppBlock {
 	pub name: String,
 	pub window_width: i32,
 	pub window_height: i32,
-	pub eye_distance: f32,
+	#[napi(ts_type = "number")]
+	pub eye_distance: Nt<f32>,
 	pub show_menu: bool,
 	pub screensaver: bool,
 	pub fps_mode: FpsMode,
@@ -418,31 +500,58 @@ pub struct AppBlock {
 	pub motion_blur_steps: i32,
 	pub text_rendering_mode: TextRenderingMode,
 	pub override_timedelta: bool,
-	pub time_delta_override: f32,
+	#[napi(ts_type = "number")]
+	pub time_delta_override: Nt<f32>,
 	pub caption: bool,
 	pub minimize_box: bool,
 	pub maximize_box: bool,
 	pub resize_mode: ResizeMode,
-	pub minimum_fps: f32,
+	#[napi(ts_type = "number")]
+	pub minimum_fps: Nt<f32>,
 	pub layout_index: i32,
 	pub multisamples: u32,
 	pub texture_loading_mode: TextureLoadingMode,
+
+
+	#[napi(ts_type = "'AppBlock'")]
+	#[serde(skip, default = "AppBlock::type_name")]
+	pub _type: &'static str,
+}
+impl AppBlock {
+	pub fn type_name() -> &'static str { "AppBlock" }
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalVariable {
 	pub name: String,
 	pub var_type: i32,
 	pub value: String,
+
+	#[napi(ts_type = "'GlobalVariable'")]
+	#[serde(skip, default = "GlobalVariable::type_name")]
+	pub _type: &'static str,
+}
+impl GlobalVariable {
+	pub fn type_name() -> &'static str { "GlobalVariable" }
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BehaviorControl {
 	pub name: String,
 	pub vk: i32,
 	pub player: i32,
+
+	#[napi(ts_type = "'BehaviorControl'")]
+	#[serde(skip, default = "BehaviorControl::type_name")]
+	pub _type: &'static str,
+}
+impl BehaviorControl {
+	pub fn type_name() -> &'static str { "BehaviorControl" }
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum FpsMode {
 	VSync,
@@ -450,12 +559,14 @@ pub enum FpsMode {
 	Fixed,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum SamplerMode {
 	Point,
 	Linear,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum TextRenderingMode {
 	Aliased,
@@ -463,6 +574,7 @@ pub enum TextRenderingMode {
 	ClearType,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum SimulateShadersMode {
 	NoSimulation,
@@ -471,6 +583,7 @@ pub enum SimulateShadersMode {
 	Ps00,
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum ResizeMode {
 	Disabled,

@@ -352,14 +352,14 @@ async fn game_from_path(Nt(file_path): Nt<PathBuf>) -> Result<Game> {
 pub struct CstcData {
 	#[napi(ts_type = "Record<number, PluginData>")]
 	pub editor_plugins: Nt<HashMap<i32, PluginData>>,
-	// pub object_types: Vec<ObjectType>,
-	// pub behaviors: Vec<Behavior>,
-	// pub traits: Vec<ObjectTrait>,
-	// pub families: Vec<Family>,
+	pub object_types: Vec<ObjectType>,
+	pub behaviors: Vec<Behavior>,
+	pub traits: Vec<ObjectTrait>,
+	pub families: Vec<Family>,
 	pub layouts: Vec<Layout>,
-	// pub containers: Vec<Container>,
-	// pub animations: Vec<Animation>,
-	// pub app_block: Option<AppBlock>,
+	pub containers: Vec<Container>,
+	pub animations: Vec<Animation>,
+	pub app_block: Option<AppBlock>,
 	// pub event_block: Option<EventBlock>,
 	pub image_block: Vec<ImageResource>,
 }
@@ -379,15 +379,15 @@ async fn new_project(game: Game) -> Result<CstcData> {
 	let mut data = CstcData::default();
 
 	data = ensure_base_data(data, &game).await?;
-	// data.app_block = Some(app_block);
+	data.app_block = Some(app_block);
 	// data.event_block = Some(event_block);
-	// data.animations = level_block.animations;
-	// data.object_types = level_block.object_types;
+	data.animations = level_block.animations;
+	data.object_types = level_block.object_types;
 	data.layouts = level_block.layouts;
-	// data.behaviors = level_block.behaviors;
-	// data.traits = level_block.traits;
-	// data.families = level_block.families;
-	// data.containers = level_block.containers;
+	data.behaviors = level_block.behaviors;
+	data.traits = level_block.traits;
+	data.families = level_block.families;
+	data.containers = level_block.containers;
 
 	Ok(data)
 }
