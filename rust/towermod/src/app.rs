@@ -8,6 +8,26 @@ use napi_derive::napi;
 use tokio::sync::RwLock;
 use tracing::instrument;
 
+#[napi]
+pub fn init() {
+	use tracing_subscriber::prelude::*;
+	use tracing::level_filters::LevelFilter;
+	use tracing_subscriber::fmt::format::FmtSpan;
+
+	// let console_layer = console_subscriber::spawn();
+
+	let fmt_layer = tracing_subscriber::fmt::Layer::default()
+		.with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
+		.with_filter(LevelFilter::INFO);
+
+	let subscriber = tracing_subscriber::Registry::default()
+		.with(fmt_layer);
+		// .with(console_layer);
+
+	// FIXME: tracing not working with napi-rs?
+	// tracing::subscriber::set_global_default(subscriber).unwrap();
+}
+
 fn status(_msg: &str) {
 	// TODO
 }
@@ -236,7 +256,7 @@ pub async fn play_mod(Nt(zip_path): Nt<PathBuf>, game: Game) -> Result<()> {
 
 	if is_towerclimb {
 		status("Editing save location");
-		let mut event_block = cstc::EventBlock::read_from_pe(&output_exe_path)?;
+		let mut event_block = cstc::EventBlock::read_from_pe(&output_exe_path).await?;
 		rebase_towerclimb_save_path(&mut event_block, &mod_info.unique_name()).await?;
 		event_block.write_to_pe(&output_exe_path)?;
 	}
@@ -304,7 +324,7 @@ pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_n
 #[instrument]
 pub async fn patch_with_images(game_path: &Path, mut found_images_by_id: HashMap<i32, Vec<u8>>, image_metadatas: Option<Vec<cstc::ImageMetadata>>) -> Result<Vec<cstc::ImageResource>> {
 	// read base imageblock from PE
-	let mut base_image_block = cstc::ImageBlock::read_from_pe(game_path)?;
+	let mut base_image_block = cstc::ImageBlock::read_from_pe(game_path).await?;
 
 	if let Some(image_metadatas) = image_metadatas {
 		// add base images to found_images_by_id
@@ -360,7 +380,7 @@ pub struct CstcData {
 	pub containers: Vec<Container>,
 	pub animations: Vec<Animation>,
 	pub app_block: Option<AppBlock>,
-	// pub event_block: Option<EventBlock>,
+	pub event_block: Option<EventBlock>,
 	pub image_block: Vec<ImageResource>,
 }
 
@@ -368,19 +388,17 @@ pub struct CstcData {
 #[instrument]
 async fn new_project(game: Game) -> Result<CstcData> {
 	let game_path = game.game_path()?;
-	// FIXME: make async
-	status("Reading levelblock");
-	let level_block = LevelBlock::read_from_pe(&game_path)?;
-	status("Reading appblock");
-	let app_block = AppBlock::read_from_pe(&game_path)?;
-	status("Reading eventblock");
-	let event_block = EventBlock::read_from_pe(&game_path)?;
+	let data = CstcData::default();
 
-	let mut data = CstcData::default();
+	let (level_block, app_block, event_block, mut data) = tokio::try_join!(
+		LevelBlock::read_from_pe(&game_path),
+		AppBlock::read_from_pe(&game_path),
+		EventBlock::read_from_pe(&game_path),
+		ensure_base_data(data, &game),
+	)?;
 
-	data = ensure_base_data(data, &game).await?;
 	data.app_block = Some(app_block);
-	// data.event_block = Some(event_block);
+	data.event_block = Some(event_block);
 	data.animations = level_block.animations;
 	data.object_types = level_block.object_types;
 	data.layouts = level_block.layouts;
@@ -395,8 +413,7 @@ async fn new_project(game: Game) -> Result<CstcData> {
 async fn ensure_base_data(mut data: CstcData, game: &Game) -> Result<CstcData> {
 	if data.image_block.is_empty() {
 		status("Initializing image data");
-		// TODO: make async
-		let image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).unwrap();
+		let image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;
 		data.image_block = image_block;
 	}
 	if data.editor_plugins.is_empty() {

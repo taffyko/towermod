@@ -3,6 +3,10 @@ import { dispatch, store } from './store';
 import { actions } from '@shared/reducers';
 import * as towermod from '@towermod';
 
+export async function initialize() {
+	towermod.init()
+}
+
 export async function loadModList() {
 	const modList = await towermod.listInstalledMods();
 	dispatch(actions.setModList(modList))
@@ -20,6 +24,7 @@ export async function playMod(filePath: string) {
 }
 
 export async function newProject() {
+	// TODO: try calling towermod.newProject on a separate worker thread
 	const { main } = store.getState()
 	if (!main.game) { throw new Error("Game not set"); }
 	const data = await towermod.newProject(main.game)

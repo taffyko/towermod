@@ -7,8 +7,10 @@ use std::fmt::Debug;
 use std::io::{self, Cursor, Read, Write};
 use crate::util::ZipWriterExt;
 
+use async_scoped::TokioScope;
 use napi_derive::napi;
 use ::time::OffsetDateTime;
+use tokio_stream::StreamExt;
 use zip;
 use std::path::{Path, PathBuf};
 use log::warn;
@@ -71,7 +73,7 @@ pub fn enable_debug_priv() -> Result<()> {
 	unsafe {
 		let mut htoken = MaybeUninit::<HANDLE>::uninit();
 		let mut luid = MaybeUninit::<LUID>::uninit();
-		
+
 		let process = GetCurrentProcess();
 
 		OpenProcessToken(process, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, htoken.as_mut_ptr())?;
@@ -339,24 +341,37 @@ pub async fn read_file_plugin_string_table(path: &Path) -> Result<PluginStringTa
 	}
 }
 
-pub trait PeResource: Sized {
-	type Error;
-	fn read_bin(pe_path: impl AsRef<Path>) -> Result<Vec<u8>, Self::Error>;
-	fn write_bin(pe_path: impl AsRef<Path>, bin: &[u8]) -> Result<(), Self::Error>;
-	fn to_bin(&self) -> Result<Vec<u8>, Self::Error>;
-	fn from_bin(bin: &[u8]) -> Result<Self, Self::Error>;
-	fn read_from_pe(pe_path: impl AsRef<Path>) -> Result<Self, Self::Error> {
-		let bin = Self::read_bin(pe_path)?;
-		Self::from_bin(&bin)
+pub trait PeResource: Sized + Send {
+	fn read_bin(pe_path: impl AsRef<Path>) -> Result<Vec<u8>, anyhow::Error>;
+	fn write_bin(pe_path: impl AsRef<Path>, bin: &[u8]) -> Result<(), anyhow::Error>;
+	fn to_bin(&self) -> Result<Vec<u8>, anyhow::Error>;
+	fn from_bin(bin: &[u8]) -> Result<Self, anyhow::Error>;
+	#[allow(async_fn_in_trait)]
+	#[instrument]
+	async fn read_from_pe(pe_path: impl AsRef<Path> + Send + std::fmt::Debug) -> Result<Self, anyhow::Error>
+		where Self: 'static
+	{
+		let (mut scope, ()) = unsafe {TokioScope::scope(|scope| {
+			scope.spawn_blocking(|| {
+				let bin = Self::read_bin(pe_path)?;
+				let data = Self::from_bin(&bin)?;
+				anyhow::Ok(data)
+			})
+		})};
+		while let Some(data) = scope.next().await {
+			let data = data?;
+			return data
+		}
+		panic!()
 	}
-	fn write_to_pe(&self, pe_path: impl AsRef<Path>) -> Result<(), Self::Error> {
+	// FIXME: make async
+	fn write_to_pe(&self, pe_path: impl AsRef<Path>) -> Result<(), anyhow::Error> {
 		let bin = self.to_bin()?;
 		Self::write_bin(pe_path, &bin)
 	}
 }
 
 impl PeResource for cstc::stable::AppBlock {
-	type Error = anyhow::Error;
 	fn read_bin(pe_path: impl AsRef<Path>) -> Result<Vec<u8>> {
 		read_pe_file_resource(pe_path.as_ref(), &ResId::from("APPBLOCK"), &ResId::from(997))
 	}
@@ -372,7 +387,6 @@ impl PeResource for cstc::stable::AppBlock {
 }
 
 impl PeResource for cstc::stable::LevelBlock {
-	type Error = anyhow::Error;
 	fn read_bin(pe_path: impl AsRef<Path>) -> Result<Vec<u8>> {
 		read_pe_file_resource(pe_path.as_ref(), &ResId::from("LEVELBLOCK"), &ResId::from(998))
 	}
@@ -388,7 +402,6 @@ impl PeResource for cstc::stable::LevelBlock {
 }
 
 impl PeResource for cstc::stable::EventBlock {
-	type Error = anyhow::Error;
 	fn read_bin(pe_path: impl AsRef<Path>) -> Result<Vec<u8>> {
 		read_pe_file_resource(pe_path.as_ref(), &ResId::from("EVENTBLOCK"), &ResId::from(999))
 	}
@@ -404,7 +417,6 @@ impl PeResource for cstc::stable::EventBlock {
 }
 
 impl PeResource for cstc::stable::ImageBlock {
-	type Error = anyhow::Error;
 	fn read_bin(pe_path: impl AsRef<Path>) -> Result<Vec<u8>> {
 		read_pe_file_resource(pe_path.as_ref(), &ResId::from("IMAGEBLOCK"), &ResId::from(995))
 	}
@@ -511,7 +523,7 @@ pub async fn export_from_legacy(file_path: PathBuf, project: &mut Project) -> Re
 	let s = toml::to_string_pretty(&mod_info)?;
 	out_zip.start_file("manifest.toml", options)?;
 	out_zip.write_all(s.as_bytes())?;
-	
+
 	out_zip.finish()?;
 	let mut file = fs::File::create(&mod_info.export_path()).await?;
 	file.write_all(&buffer).await?;

@@ -11,6 +11,7 @@ import Config from './components/Config';
 import Style from './App.module.scss';
 
 function initialize() {
+	rpc.initialize()
 	// FIXME
 	rpc.setGamePath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe")
 	rpc.loadModList()

@@ -21,6 +21,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::Nt;
 
+#[napi]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Token {
 	Integer(i64),
@@ -46,6 +47,7 @@ impl From<&Token> for TokenKind {
 	}
 }
 
+#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum TokenKind {
 	Null,
@@ -91,6 +93,7 @@ pub enum TextureLoadingMode {
 	LoadOnLayoutStart,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventBlock {
 	pub sheet_names: Vec<String>,
@@ -99,6 +102,7 @@ pub struct EventBlock {
 
 pub type ImageBlock = Vec<ImageResource>;
 
+#[napi]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SomeEvent {
 	Event(Event),
@@ -106,6 +110,7 @@ pub enum SomeEvent {
 	EventInclude(i32),
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventGroup {
 	pub active: bool,
@@ -113,6 +118,7 @@ pub struct EventGroup {
 	pub events: Vec<SomeEvent>,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
 	pub line_number: i32,
@@ -122,6 +128,7 @@ pub struct Event {
 	pub events: Vec<SomeEvent>,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventCondition {
 	pub object_id: i32,
@@ -131,6 +138,7 @@ pub struct EventCondition {
 	pub params: Vec<Vec<Token>>,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventAction {
 	pub object_id: i32,
