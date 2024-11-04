@@ -10,11 +10,11 @@ import { Data } from './components/Data';
 import Config from './components/Config';
 import Style from './App.module.scss';
 
-function initialize() {
-	rpc.initialize()
+async function initialize() {
+	await rpc.initialize()
 	// FIXME
-	rpc.setGamePath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe")
-	rpc.loadModList()
+	await rpc.setGamePath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe")
+	await rpc.loadModList()
 }
 
 const App = () => {

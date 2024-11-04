@@ -21,7 +21,6 @@ export const Tabs = (props: { tabs: Tab[] }) => {
 				tabIdx += 1;
 			}
 			tabIdx = posmod(tabIdx, tabs.length);
-			console.log('new', tabIdx, tabs[tabIdx])
 			setCurrentTab(tabs[tabIdx])
 			e.stopPropagation()
 		}

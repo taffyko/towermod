@@ -153,14 +153,24 @@ const TreeNodeComponent: FC<NodeComponentProps<
 };
 
 export const Outliner = () => {
-	const layouts = useAppSelector(s => s.data.layouts) || []
-	const animations = useAppSelector(s => s.data.animations) || []
-	const behaviors = useAppSelector(s => s.data.behaviors) || []
-	const containers = useAppSelector(s => s.data.containers) || []
-	const families = useAppSelector(s => s.data.families) || []
-	const objectTypes = useAppSelector(s => s.data.objectTypes) || []
-	const traits = useAppSelector(s => s.data.traits) || []
-	const appBlock = useAppSelector(s => s.data.appBlock)
+	// FIXME
+	// const layouts = useAppSelector(s => s.data.layouts) || []
+	// const animations = useAppSelector(s => s.data.animations) || []
+	// const behaviors = useAppSelector(s => s.data.behaviors) || []
+	// const containers = useAppSelector(s => s.data.containers) || []
+	// const families = useAppSelector(s => s.data.families) || []
+	// const objectTypes = useAppSelector(s => s.data.objectTypes) || []
+	// const traits = useAppSelector(s => s.data.traits) || []
+	// const appBlock = useAppSelector(s => s.data.appBlock)
+	const layouts = []
+	const animations = []
+	const behaviors = []
+	const containers = []
+	const families = []
+	const objectTypes = []
+	const traits = []
+	const appBlock = null
+
 
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
 		yield getRootContainerData('Layouts')

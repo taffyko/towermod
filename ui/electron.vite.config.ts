@@ -38,7 +38,8 @@ export default defineConfig((env) => {
 		// as subsequent attempts to replace the loaded files when hot-reloading will fail
 		const libFiles = globSync("src/towermod/*.node", { cwd: projectRootDir, absolute: true })
 		for (const filePath of libFiles) {
-			const destPath = path.join(projectRootDir, 'out/main', path.basename(filePath));
+			const destPath = path.join(projectRootDir, 'out/main/src/towermod', path.basename(filePath));
+			try { fs.mkdirSync(path.dirname(destPath), { recursive: true }) } catch {}
 			fs.copyFileSync(filePath, destPath)
 		}
 	}
@@ -49,7 +50,7 @@ export default defineConfig((env) => {
 				externalizeDepsPlugin(),
 				isBuild ? viteStaticCopy({
 					targets: [
-						{ src: 'src/towermod/*.node', dest: './' }
+						{ src: 'src/towermod/*.node', dest: './src/towermod/' }
 					]
 				}) : null,
 				tsconfigPathPlugin(),
@@ -63,6 +64,9 @@ export default defineConfig((env) => {
 					external: [
 						/.*\.node/,
 					],
+					output: {
+						preserveModules: true,
+					}
 				},
 				emptyOutDir: isBuild, // do not delete loaded *.node libraries when hot-reloading during dev
 			}

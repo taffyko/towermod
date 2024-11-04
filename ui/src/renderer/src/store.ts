@@ -10,7 +10,7 @@ import { stateSyncEnhancer } from 'electron-redux/renderer';
 export const store = configureStore({
 	reducer: rootReducer,
 	enhancers: (getDefaultEnhancers) => getDefaultEnhancers().concat(stateSyncEnhancer()),
-	middleware: (_getDefaultMiddleware) => new Tuple(serifyMiddleware),
+	middleware: (_getDefaultMiddleware) => new Tuple(),
 })
 
 export const dispatch = store.dispatch;

@@ -5,8 +5,10 @@ import { toast } from "react-toastify";
 export const Config = () => {
 	const game = useAppSelector(s => s.main.game);
 	return <div>
+		<button onClick={() => rpc.startTracing()}>Start profiling</button>
+		<button onClick={() => rpc.stopTracing()}>Stop profiling</button>
 		<button
-			disabled={!game}
+			// disabled={!game} // FIXME
 			onClick={async () => {
 				await rpc.newProject()
 				toast("New project initialized")
@@ -16,3 +18,4 @@ export const Config = () => {
 		</button>
 	</div>
 }
+

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, io::{Cursor, Read}, path::{Path, PathBuf}, sync::Mutex};
 
-use crate::{async_cleanup, convert_to_release_build, cstc::{self, *, plugin::PluginData}, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource};
+use crate::{first_time_setup, async_cleanup, convert_to_release_build, cstc::{self, *, plugin::PluginData}, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource};
 use anyhow::{Result, Context};
 use fs_err::tokio as fs;
 use futures::StreamExt;
@@ -9,7 +9,7 @@ use tokio::sync::RwLock;
 use tracing::instrument;
 
 #[napi]
-pub fn init() {
+pub async fn init() -> Result<()> {
 	use tracing_subscriber::prelude::*;
 	use tracing::level_filters::LevelFilter;
 	use tracing_subscriber::fmt::format::FmtSpan;
@@ -24,8 +24,10 @@ pub fn init() {
 		.with(fmt_layer);
 		// .with(console_layer);
 
+	first_time_setup().await?;
 	// FIXME: tracing not working with napi-rs?
 	// tracing::subscriber::set_global_default(subscriber).unwrap();
+	Ok(())
 }
 
 fn status(_msg: &str) {

@@ -52,16 +52,11 @@ app.whenReady().then(async () => {
 	// Set app user model id for windows
 	electronApp.setAppUserModelId('com.taffyko.towermod')
 
-	console.log("THE", process.env.REACT_DEV_TOOLS_PATH)
 	if (reactDevToolsPath) {
 		await session.defaultSession.loadExtension(reactDevToolsPath);
-		console.log("Loaded React Dev Tools")
 	}
 
 	electronRemote.initialize()
-
-	// IPC test
-	ipcMain.on('ping', () => console.log('pong'))
 
 	const mainWindow = createWindow()
 	electronRemote.enable(mainWindow.webContents);
