@@ -8,8 +8,8 @@ export async function startTracing() {
 	await contentTracing.startRecording({
 		included_categories: [
 			'*',
-			'disabled-by-default-v8.cpu_profiler',
-			'disabled-by-default-v8.cpu_profiler.hires',
+			// 'disabled-by-default-v8.cpu_profiler',
+			// 'disabled-by-default-v8.cpu_profiler.hires',
 		],
 		excluded_categories: [],
 	})
@@ -45,19 +45,11 @@ export async function playMod(filePath: string) {
 }
 
 export async function newProject() {
-	// const { main } = store.getState()
-	// if (!main.game) { throw new Error("Game not set"); }
+	const { main } = store.getState()
+	if (!main.game) { throw new Error("Game not set"); }
 
-	console.time('rust.gameFromPath')
-	const game = await towermod.gameFromPath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe");
-	console.timeEnd('rust.gameFromPath')
-	console.time('rust.newProject')
-	const data = await towermod.newProject(game);
-	console.timeEnd('rust.newProject')
-
-	console.time('dispatchMain')
+	const data = await towermod.newProject(main.game);
 	dispatch(actions.setData(data))
-	console.timeEnd('dispatchMain')
 }
 
 export async function playProject() {

@@ -43,7 +43,7 @@ pub fn mod_runtime_dir_path(mod_name: impl AsRef<Path>) -> PathBuf {
 	dir.push("runtime");
 	dir
 }
-	
+
 
 /// Subdirectory where installed mods are stored
 pub fn get_mods_dir_path() -> PathBuf {

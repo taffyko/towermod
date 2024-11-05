@@ -19,7 +19,10 @@ function createWindow() {
 		...(process.platform === 'linux' ? { icon } : {}),
 		webPreferences: {
 			preload: join(__dirname, '../preload/preload.js'),
-			sandbox: false
+			sandbox: false,
+			// ContextBridge::PassValueToOtherContext with large objects causes overhead in the thousands of milliseconds
+			// whenever the objects are passed to/from code in a preload script
+			contextIsolation: false,
 		}
 	})
 

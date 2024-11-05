@@ -7,13 +7,11 @@ preload()
 
 // Custom APIs for renderer
 const api = {}
-
 const towermodRpcModule = remote.require('./rpc');
 
-try {
-	contextBridge.exposeInMainWorld('electron', electronAPI)
-	contextBridge.exposeInMainWorld('api', api)
-	contextBridge.exposeInMainWorld('towermodRpcModule', towermodRpcModule)
-} catch (error) {
-	console.error(error)
-}
+// @ts-ignore
+window.electron = electronAPI
+// @ts-ignore
+window.api = api
+// @ts-ignore
+window.towermodRpcModule = towermodRpcModule

@@ -5,6 +5,7 @@ use anyhow::{Result, Context};
 use fs_err::tokio as fs;
 use futures::StreamExt;
 use napi_derive::napi;
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use tracing::instrument;
 
@@ -370,7 +371,7 @@ async fn game_from_path(Nt(file_path): Nt<PathBuf>) -> Result<Game> {
 }
 
 #[napi(object)]
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CstcData {
 	#[napi(ts_type = "Record<number, PluginData>")]
 	pub editor_plugins: Nt<HashMap<i32, PluginData>>,
