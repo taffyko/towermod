@@ -28,9 +28,9 @@ function getObjChildren(obj: TowermodObject): TowermodObject[] {
 
 type OutlinerNodeData = FixedSizeNodeData &
 	{
-		readonly isLeaf: boolean;
-		readonly name: string;
-		readonly nestingLevel: number;
+		isLeaf: boolean;
+		name: string;
+		nestingLevel: number;
 		obj: TowermodObject | null;
 	};
 
@@ -57,7 +57,7 @@ const getNodeData = (
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
 
 	const objType = obj.type;
-	let id = idx;
+	let id: string | number = idx;
 	let name: string
 	switch (objType) {
 		case 'Layout':
@@ -163,8 +163,8 @@ export const Outliner = () => {
 	const appBlock = useAppSelector(s => s.data.appBlock)
 
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
-		yield getRootContainerData('Layouts')
 		yield getRootContainerData('Animations')
+		yield getRootContainerData('Layouts')
 		yield getRootContainerData('Behaviors')
 		yield getRootContainerData('Containers')
 		yield getRootContainerData('Families')

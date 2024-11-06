@@ -45,17 +45,28 @@ export function setOpenRecursive(tree: VTree, id: string, open: boolean) {
 	let node: NodeRecord<NodePublicState> | null | undefined = tree.state.records.get(id)
 	if (!node) { return }
 
-	// const update: Record<string, boolean> = {...(open ? showTreeItemUpdate(tree, id) : null), [id]: open }
-	const update: Record<string, boolean> = { [id]: open }
+	// update outer modes tree nodes before updating children
+	// otherwise react-vtree's list ordering can break
+	const updatesByDepth: Record<number, Record<string, boolean>> = { 0: { [id]: open } }
 
-	function recurse(child: typeof node) {
+	function recurse(child: typeof node, depth: number) {
 		while (child) {
-			update[child.public.data.id] = open
-			recurse(child.child)
+			if (child.child) {
+				updatesByDepth[depth] ??= {}
+				const updates = updatesByDepth[depth]
+				updates[child.public.data.id] = open
+				recurse(child.child, depth + 1)
+			}
 			child = child.sibling
 		}
 	}
-	recurse(node.child)
+	recurse(node.child, 1)
 
-	tree.recomputeTree(update)
+	let i = 0;
+	while (true) {
+		const updates = updatesByDepth[i]
+		if (!updates) { break }
+		tree.recomputeTree(updates)
+		i++
+	}
 }
