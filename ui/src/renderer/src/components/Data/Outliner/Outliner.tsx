@@ -1,5 +1,5 @@
 /* eslint-disable max-depth */
-import {FC, useCallback, useContext} from 'react';
+import {useCallback, useContext} from 'react';
 import {
 	FixedSizeNodeData,
 	FixedSizeNodePublicState as NodePublicState,
@@ -116,10 +116,8 @@ type OutlinerNodeMeta = Readonly<{
 	nestingLevel: number;
 }>;
 
-const TreeNodeComponent: FC<NodeComponentProps<
-	OutlinerNodeData,
-	NodePublicState<OutlinerNodeData>
->> = (props) => {
+type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
+const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {isLeaf, name, nestingLevel}, isOpen, style, setOpen} = props
 	const tree = useContext(TreeContext)
 
@@ -152,7 +150,10 @@ const TreeNodeComponent: FC<NodeComponentProps<
 	</div>
 };
 
-export const Outliner = () => {
+interface OutlinerProps {
+}
+
+export const Outliner = (props: OutlinerProps) => {
 	const layouts = useAppSelector(s => s.data.layouts) || []
 	const animations = useAppSelector(s => s.data.animations) || []
 	const behaviors = useAppSelector(s => s.data.behaviors) || []
