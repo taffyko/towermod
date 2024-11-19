@@ -1,6 +1,8 @@
-import { ObjectInstance } from "@towermod"
+import { AppBlock, Behavior, Container, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation } from "@towermod"
 
-export type InspectorObjectValue = ObjectInstance
+type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | Animation
+
+export type InspectorObjectValue = TowermodObject
 type InspectorKeyTypes = string | number
 export type SizedInspectorValue = InspectorObjectValue | InspectorKeyTypes
 export type InspectorDictionaryValue = Record<InspectorKeyTypes, SizedInspectorValue>
@@ -11,10 +13,12 @@ export type InspectorValue = SizedInspectorValue | Array<SizedInspectorValue> | 
 export type TypeNameToValue = {
 	'unknown': unknown,
 	'string': string,
+	'boolean': boolean,
 	'number': number,
 	'Array': Array<unknown>,
 	'Record': Record<string | number, unknown>
-	'ObjectInstance': ObjectInstance,
+} & {
+	[T in InspectorObjectValue as T['type']]: T
 }
 export type InspectorTypeName = keyof TypeNameToValue
 

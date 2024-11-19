@@ -12,9 +12,9 @@ export const InspectorObject = (props: { pinfo: SimplePropertyInfo<InspectorObje
 
 			const valueComponent = getValueComponent(pinfo)
 
-			return <div className="hbox">
-				<div>{pinfo.key}</div>
-				<div>{valueComponent}</div>
+			return <div className="hbox gap">
+				<div>{pinfo.key}:</div>
+				<div className="hbox grow">{valueComponent}</div>
 			</div>
 		})}
 	</div>
@@ -23,24 +23,33 @@ export const InspectorObject = (props: { pinfo: SimplePropertyInfo<InspectorObje
 
 export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<InspectorArrayValue> }) => {
 	const { pinfo } = props
+	// TODO
 	return <div>array</div>
 }
 
 export const InspectorDictionary = (props: { pinfo: RecordPropertyInfo<InspectorDictionaryValue> }) => {
 	const { pinfo } = props
+	// TODO
 	return <div>dictionary</div>
 }
 
 export const InspectorString = (props: { pinfo: SimplePropertyInfo<string>}) => {
 	const { pinfo } = props
-	return <input type="string" value={pinfo.value} />
+	// TODO: dispatch changes
+	return <input className="grow" type="string" value={pinfo.value} />
 }
 
 export const InspectorNumeric = (props: { pinfo: SimplePropertyInfo<number>}) => {
 	const { pinfo } = props
-	return <input type="number" value={pinfo.value} />
+	// TODO: dispatch changes
+	return <input className="grow" type="number" value={pinfo.value} />
 }
 
+export const InspectorBoolean = (props: { pinfo: SimplePropertyInfo<number>}) => {
+	const { pinfo } = props
+	// TODO: dispatch changes
+	return <input className="grow" type="checkbox" value={pinfo.value} />
+}
 
 function getValueComponent(pinfo: PropertyInfo): React.ReactNode {
 	if (pinfo.hidden) { return null }
@@ -53,6 +62,8 @@ function getValueComponent(pinfo: PropertyInfo): React.ReactNode {
 			return <InspectorNumeric pinfo={pinfo as any} />
 		case 'string':
 			return <InspectorString pinfo={pinfo as any} />
+		case 'boolean':
+			return <InspectorBoolean pinfo={pinfo as any} />
 		case 'unknown':
 			return <div>(unknown) {String(pinfo.value)}</div>
 		default:

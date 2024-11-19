@@ -1,5 +1,5 @@
 /* eslint-disable max-depth */
-import {useCallback, useContext} from 'react';
+import { createContext, useCallback, useContext } from 'react';
 import {
 	FixedSizeNodeData,
 	FixedSizeNodePublicState as NodePublicState,
@@ -12,6 +12,7 @@ import { Layout, LayoutLayer, ObjectInstance, Animation, AppBlock, ObjectType, O
 import { assertUnreachable, enumerate } from '@shared/util';
 import { setOpenRecursive } from './treeUtil';
 import { TreeComponent, TreeContext } from './Tree';
+import Style from './Outliner.module.scss'
 
 type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock
 function getObjChildren(obj: TowermodObject): TowermodObject[] {
@@ -116,12 +117,27 @@ type OutlinerNodeMeta = Readonly<{
 	nestingLevel: number;
 }>;
 
+const OutlinerContext = createContext<OutlinerProps>(null!);
+
 type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
-	const {data: {isLeaf, name, nestingLevel}, isOpen, style, setOpen} = props
+	const {data: {isLeaf, name, nestingLevel, obj}, isOpen, style, setOpen} = props
 	const tree = useContext(TreeContext)
+	const { onChange } = useContext(OutlinerContext)
 
-	return <div
+	const selectable = !!obj;
+
+	return <button
+		className={`
+			${Style.treeItem}
+			${selectable ? Style.selectable : ''}
+		`}
+		onClick={() => {
+			if (selectable) {
+				console.log("onChange", obj)
+				onChange(obj!)
+			}
+		}}
 		style={{
 			...style,
 			alignItems: 'center',
@@ -130,7 +146,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 		}}
 	>
 		{!isLeaf && (
-			<div>
+			<div className={Style.expandButton}>
 				<button
 					type="button"
 					onClick={(e) => {
@@ -147,10 +163,11 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 			</div>
 		)}
 		<div style={defaultTextStyle}>{name}</div>
-	</div>
+	</button>
 };
 
 interface OutlinerProps {
+	onChange: (value: TowermodObject) => void
 }
 
 export const Outliner = (props: OutlinerProps) => {
@@ -204,12 +221,14 @@ export const Outliner = (props: OutlinerProps) => {
 	}, [layouts, animations, behaviors, containers, families, objectTypes, traits])
 
 	return <div className="vbox grow">
-		<TreeComponent
-			treeWalker={treeWalker}
-			itemSize={25}
-		>
-			{TreeNodeComponent}
-		</TreeComponent>
+		<OutlinerContext.Provider value={props}>
+			<TreeComponent
+				treeWalker={treeWalker}
+				itemSize={25}
+			>
+				{TreeNodeComponent}
+			</TreeComponent>
+		</OutlinerContext.Provider>
 	</div>
 }
 
