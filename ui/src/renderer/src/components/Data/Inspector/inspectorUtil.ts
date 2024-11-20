@@ -3,7 +3,7 @@ import { AppBlock, Behavior, Container, Family, Layout, LayoutLayer, ObjectInsta
 type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | Animation
 
 export type InspectorObjectValue = TowermodObject
-type InspectorKeyTypes = string | number
+export type InspectorKeyTypes = string | number
 export type SizedInspectorValue = InspectorObjectValue | InspectorKeyTypes
 export type InspectorDictionaryValue = Record<InspectorKeyTypes, SizedInspectorValue>
 export type InspectorArrayValue = Array<SizedInspectorValue>
@@ -15,6 +15,8 @@ export type TypeNameToValue = {
 	'string': string,
 	'boolean': boolean,
 	'number': number,
+	'float': number,
+	'int': number,
 	'Array': Array<unknown>,
 	'Record': Record<string | number, unknown>
 } & {
@@ -29,23 +31,25 @@ type KeyOfValue<T, V> = {
 export type BasePropertyInfo = {
 	key: InspectorKeyTypes,
 	hidden?: boolean,
+	// TODO:
+	readonly?: boolean,
 }
 
 export type ArrayPropertyInfo<T extends InspectorValue = InspectorValue> = BasePropertyInfo & {
-	value: Array<T>
+	value: readonly T[]
 	type: 'Array',
 	valueTypes: Set<KeyOfValue<TypeNameToValue, T>>
 }
 
 export type RecordPropertyInfo<T extends InspectorValue = InspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> = BasePropertyInfo & {
-	value: Record<TKey, T>,
+	value: Readonly<Record<TKey, T>>,
 	type: 'Record',
 	keyTypes: Set<KeyOfValue<TypeNameToValue, TKey>>,
 	valueTypes: Set<KeyOfValue<TypeNameToValue, T>>,
 }
 
 export type SimplePropertyInfo<T extends InspectorValue = InspectorValue> = BasePropertyInfo & {
-	value: T,
+	value: Readonly<T>,
 	hidden?: boolean,
 	type: Exclude<InspectorTypeName, 'Array' | 'Record'>,
 }

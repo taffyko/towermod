@@ -1,22 +1,43 @@
-import { InspectorValue, InspectorObjectValue, PropertyInfo, getPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, RecordPropertyInfo } from "./inspectorUtil"
-import React from "react"
+import { useAppDispatch } from "@renderer/hooks"
+import { InspectorValue, InspectorObjectValue, PropertyInfo, getPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, RecordPropertyInfo, InspectorKeyTypes } from "./inspectorUtil"
+import { actions } from "@shared/reducers"
+import React, { useEffect, useMemo, useState } from "react"
+import { ObjectInstance } from "@towermod"
 
 export const InspectorObject = (props: { pinfo: SimplePropertyInfo<InspectorObjectValue> }) => {
 	const { pinfo } = props
-	const obj = pinfo.value
-	const propertyInfos = getPropertyInfos(obj)
+	// Mutable draft copy of object
+	const [obj, setObj] = useState(() => ({...pinfo.value}))
+	useEffect(() => { setObj({...pinfo.value}) }, [pinfo.value])
+	const dispatch = useAppDispatch();
+
+	const onPropertyChange = (key: InspectorKeyTypes, value: any) => {
+		console.log(key, value)
+		obj[key] = value
+		setObj({...obj})
+		// FIXME
+		if (obj.type === 'ObjectInstance') {
+			dispatch(actions.updateObjectInstance(obj))
+		}
+	}
+
+	const propertyInfos = useMemo(() => getPropertyInfos(pinfo.value), [pinfo.value])
+	const valueComponents: React.ReactNode[] = useMemo(() => propertyInfos.map(pinfo => {
+		if (pinfo.hidden) { return null }
+		pinfo.value = obj[pinfo.key]
+
+		const valueComponent = getValueComponent(pinfo, (v) => {
+			onPropertyChange(pinfo.key, v)
+		})
+
+		return <div className="hbox gap" key={pinfo.key}>
+			<div>{pinfo.key}:</div>
+			<div className="hbox grow">{valueComponent}</div>
+		</div>
+	}), [propertyInfos, obj])
 
 	return <div className="vbox grow">
-		{propertyInfos.map(pinfo => {
-			if (pinfo.hidden) { return null }
-
-			const valueComponent = getValueComponent(pinfo)
-
-			return <div className="hbox gap">
-				<div>{pinfo.key}:</div>
-				<div className="hbox grow">{valueComponent}</div>
-			</div>
-		})}
+		{valueComponents}
 	</div>
 }
 
@@ -33,25 +54,22 @@ export const InspectorDictionary = (props: { pinfo: RecordPropertyInfo<Inspector
 	return <div>dictionary</div>
 }
 
-export const InspectorString = (props: { pinfo: SimplePropertyInfo<string>}) => {
-	const { pinfo } = props
-	// TODO: dispatch changes
-	return <input className="grow" type="string" value={pinfo.value} />
+export const InspectorString = (props: { pinfo: SimplePropertyInfo<string>, onChange: (v: string) => void}) => {
+	const { pinfo, onChange } = props
+	return <input className="grow" type="string" value={pinfo.value} onChange={(e) => onChange(e.target.value)} />
 }
 
-export const InspectorNumeric = (props: { pinfo: SimplePropertyInfo<number>}) => {
-	const { pinfo } = props
-	// TODO: dispatch changes
-	return <input className="grow" type="number" value={pinfo.value} />
+export const InspectorNumeric = (props: { pinfo: SimplePropertyInfo<number>, onChange: (v: number) => void}) => {
+	const { pinfo, onChange } = props
+	return <input className="grow" type="number" value={pinfo.value} onChange={(e) => onChange(Number(e.target.value))} />
 }
 
-export const InspectorBoolean = (props: { pinfo: SimplePropertyInfo<number>}) => {
-	const { pinfo } = props
-	// TODO: dispatch changes
-	return <input className="grow" type="checkbox" value={pinfo.value} />
+export const InspectorBoolean = (props: { pinfo: SimplePropertyInfo<number>, onChange: (v: boolean) => void }) => {
+	const { pinfo, onChange } = props
+	return <input className="grow" type="checkbox" value={pinfo.value} onChange={(e) => onChange(e.target.checked)} />
 }
 
-function getValueComponent(pinfo: PropertyInfo): React.ReactNode {
+function getValueComponent(pinfo: PropertyInfo, onChange: (v: any) => void): React.ReactNode {
 	if (pinfo.hidden) { return null }
 	switch (pinfo.type) {
 		case 'Array':
@@ -59,11 +77,11 @@ function getValueComponent(pinfo: PropertyInfo): React.ReactNode {
 		case 'Record':
 			return <InspectorDictionary pinfo={pinfo as any} />
 		case 'number':
-			return <InspectorNumeric pinfo={pinfo as any} />
+			return <InspectorNumeric pinfo={pinfo as any} onChange={onChange} />
 		case 'string':
-			return <InspectorString pinfo={pinfo as any} />
+			return <InspectorString pinfo={pinfo as any} onChange={onChange} />
 		case 'boolean':
-			return <InspectorBoolean pinfo={pinfo as any} />
+			return <InspectorBoolean pinfo={pinfo as any} onChange={onChange} />
 		case 'unknown':
 			return <div>(unknown) {String(pinfo.value)}</div>
 		default:
