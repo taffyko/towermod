@@ -127,14 +127,13 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 
 	const selectable = !!obj;
 
-	return <button
+	return <div
 		className={`
 			${Style.treeItem}
 			${selectable ? Style.selectable : ''}
 		`}
 		onClick={() => {
 			if (selectable) {
-				console.log("onChange", obj)
 				onChange(obj!)
 			}
 		}}
@@ -163,7 +162,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 			</div>
 		)}
 		<div style={defaultTextStyle}>{name}</div>
-	</button>
+	</div>
 };
 
 interface OutlinerProps {

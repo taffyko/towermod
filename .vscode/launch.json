@@ -5,47 +5,42 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Debug towermod-cli",
-			"type": "cppvsdbg",
-			"request": "launch",
-			"program": "${workspaceRoot}/rust/target/debug/towermod-cli.exe",
-			"args": ["run"],
-			"stopAtEntry": false,
-			"cwd": "${workspaceRoot}",
-			"environment": [
-				{"name": "RUST_BACKTRACE", "value": "1"},
-				{"name": "RUST_LOG", "value": "trace"},
-			],
-			"console": "integratedTerminal",
-			"preLaunchTask": "build-cli",
+			"name": "Debug Renderer Process",
+			"port": 9222,
+			"request": "attach",
+			"type": "chrome",
+			"pathMapping": {
+
+				"${workspaceFolder}": "${workspaceFolder}",
+				"/": "${workspaceFolder}/ui/src/renderer",
+			},
+			"timeout": 60000,
 		},
 		{
-			"name": "Debug towermod-godot",
-			"type": "cppvsdbg",
+			"name": "Debug Main Process",
+			"type": "node",
 			"request": "launch",
-			"cwd": "${workspaceFolder}/godot",
-			"program": "godot.exe",
-			"args": [],
-			"console": "externalTerminal",
-		},
-		{
-			"name": "Build & debug towermod-godot",
-			"type": "cppvsdbg",
-			"request": "launch",
-			"cwd": "${workspaceFolder}/godot",
-			"program": "godot.exe",
-			"args": [],
-			"preLaunchTask": "build-godot"
-		},
-		{
-			"name": "Debug scene in running editor",
-			"project": "${workspaceFolder}/godot",
-			"type": "godot",
-			"port": 6007,
-			"debugServer": 6006,
-			"address": "127.0.0.1",
-			"request": "launch",
-			"editor_path": "godot",
+			"cwd": "${workspaceRoot}/ui",
+			"runtimeExecutable": "${workspaceRoot}/ui/node_modules/.bin/electron-vite",
+			"windows": {
+				"runtimeExecutable": "${workspaceRoot}/ui/node_modules/.bin/electron-vite.cmd"
+			},
+			"runtimeArgs": ["--sourcemap"],
+			"env": {
+				"REMOTE_DEBUGGING_PORT": "9222"
+			}
 		}
 	],
+	"compounds": [
+		{
+			"name": "Debug All",
+			"configurations": ["Debug Main Process", "Debug Renderer Process"],
+			"presentation": {
+				"order": 1
+			}
+		}
+	]
 }
+
+
+

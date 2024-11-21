@@ -1,14 +1,17 @@
-import { AppBlock, Behavior, Container, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation } from "@towermod"
-
-type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | Animation
+import { TowermodObject } from "@shared/reducers/data"
 
 export type InspectorObjectValue = TowermodObject
 export type InspectorKeyTypes = string | number
 export type SizedInspectorValue = InspectorObjectValue | InspectorKeyTypes
-export type InspectorDictionaryValue = Record<InspectorKeyTypes, SizedInspectorValue>
-export type InspectorArrayValue = Array<SizedInspectorValue>
+export type InspectorArrayValue = InspectorValue[]
+export interface InspectorRecordValue { [key: InspectorKeyTypes]: InspectorValue }
 
-export type InspectorValue = SizedInspectorValue | Array<SizedInspectorValue> | InspectorDictionaryValue
+
+
+export type InspectorValue = SizedInspectorValue | InspectorArrayValue | InspectorRecordValue
+
+const numericSubtypeNames = ['int', 'float'] as const
+const stringSubtypeNames = [] as const
 
 export type TypeNameToValue = {
 	'unknown': unknown,
@@ -62,6 +65,35 @@ export function getPropertyInfos(obj: InspectorObjectValue): PropertyInfo[] {
 	return keys.map(key => objectPropertyInfo(obj, key))
 }
 
+export function inferPropertyInfoFromArrayValue(element: InspectorValue, parentPinfo: ArrayPropertyInfo, idx: number): PropertyInfo {
+	const pinfo = inferPropertyInfoFromValue(element, idx)
+	pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
+	return pinfo
+}
+
+export function speciateType(type: keyof TypeNameToValue, types: Set<keyof TypeNameToValue>): keyof TypeNameToValue {
+	switch (type) {
+		case 'number':
+			for (const subtype of numericSubtypeNames) {
+				if (types.has(subtype)) { return subtype }
+			}
+		break; case 'string':
+			for (const subtype of stringSubtypeNames) {
+				if (types.has(subtype)) { return subtype }
+			}
+	}
+	if (!types.has(type)) {
+		console.error(`${type} not in [${[...types]},]`)
+	}
+	return type;
+}
+
+export function inferPropertyInfoFromRecordValue(element: InspectorValue, parentPinfo: RecordPropertyInfo, key: string): PropertyInfo {
+	const pinfo = inferPropertyInfoFromValue(element, key)
+	pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
+	return pinfo
+}
+
 export function inferPropertyInfoFromValue(value: InspectorValue, key: InspectorKeyTypes): PropertyInfo {
 	const type = inferTypeFromValue(value);
 	switch (type) {
@@ -108,14 +140,38 @@ export function inferTypeFromValue(value: InspectorValue): InspectorTypeName {
 
 export function objectPropertyInfo(obj: InspectorObjectValue, key: string): PropertyInfo
 {
+
 	const value = obj[key]
 	if (key === 'type') { return { key, value, type: 'string', hidden: true } }
 
-	const pinfo: Partial<PropertyInfo> = { key, value }
-	const objType = obj['type'];
-	switch (objType) {
+	const pinfo = inferPropertyInfoFromValue(value, key);
+	const type = obj['type'];
+	switch (type) {
+		case 'Animation':
+			override(type, {
+				subAnimations: { hidden: true },
+				id: { readonly: true },
+				frames: { valueTypes: new Set(['AnimationFrame']) },
+			})
+		break; case 'Layout':
+			override(type, {
+				layers: { hidden: true },
+				imageIds: { hidden: true, }
+			})
+		break; case 'LayoutLayer':
+			override(type, {
+				objects: { hidden: true },
+			})
+		break; case 'ObjectInstance':
+			override(type, {
+				data: { hidden: true },
+			})
 		// Property info overrides here
 	}
 
-	return inferPropertyInfoFromValue(value, key);
+	return pinfo
+
+	function override<T extends TowermodObject['type']>(_type: T, overrides: Partial<Record<keyof TypeNameToValue[T], Partial<PropertyInfo>>>) {
+		Object.assign(pinfo, overrides[key])
+	}
 }
