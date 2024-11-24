@@ -1,8 +1,8 @@
 import { getCustomComponent } from "../customInspectorUtil"
-import { InspectorValue, InspectorObjectValue, PropertyInfo, objectPropertyInfos, InspectorRecordValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, RecordPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromValue, inferPropertyInfoFromArrayValue, inferPropertyInfoFromRecordValue } from "./inspectorUtil"
+import { InspectorValue, InspectorObjectValue, PropertyInfo, objectPropertyInfos, InspectorRecordValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, RecordPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromRecordValue, ObjectPropertyInfo } from "./inspectorUtil"
 import React, { useMemo } from "react"
 
-export const InspectorObject = (props: { pinfo: SimplePropertyInfo<InspectorObjectValue>, onChange: (v: InspectorObjectValue) => void }) => {
+export const InspectorObject = (props: { pinfo: ObjectPropertyInfo, onChange: (v: InspectorObjectValue) => void }) => {
 	const { pinfo: objPinfo, onChange } = props
 
 	const onPropertyChange = (key: InspectorKeyTypes, value: any) => {
@@ -10,7 +10,7 @@ export const InspectorObject = (props: { pinfo: SimplePropertyInfo<InspectorObje
 		onChange(newObj)
 	}
 
-	const propertyInfos = useMemo(() => objectPropertyInfos(objPinfo.value), [objPinfo.value])
+	const propertyInfos = useMemo(() => objectPropertyInfos(objPinfo), [objPinfo.value])
 	const propertyComponents: React.ReactNode[] = useMemo(() => propertyInfos.map(pinfo => {
 		if (pinfo.hidden) { return null }
 

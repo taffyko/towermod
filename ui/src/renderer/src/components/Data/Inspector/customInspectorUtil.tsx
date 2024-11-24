@@ -1,6 +1,8 @@
 import React from 'react'
 import { TowermodObject } from "@shared/reducers/data";
-import type { PropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, ObjectPropertyInfo } from "./base/inspectorUtil";
+import type { PropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes } from "./base/inspectorUtil";
+import { IdLink } from './IdLink';
+import { ImageLink } from './ImageLink';
 
 
 export type CustomInspectorObjects = TowermodObject
@@ -58,12 +60,27 @@ export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: 
 	return undefined
 }
 
-export function getCustomComponent(pinfo1: PropertyInfo, onChange: (v: any) => void): React.ReactNode | undefined {
-	if (typeof pinfo1.value === 'object' && pinfo1.type !== 'Record') {
-		const pinfo: ObjectPropertyInfo = pinfo1 as any
-		switch (pinfo.value.type) {
-			case 'ObjectType':
-				pinfo.key
+export function getCustomComponent(pinfo: PropertyInfo, onChange: (v: any) => void): React.ReactNode | undefined {
+	const objPinfo = pinfo.parent;
+	if (objPinfo && typeof objPinfo.value === 'object' && (objPinfo.type as any) !== 'Record') {
+		const obj = pinfo.value as InspectorObjectValue
+		const type = obj.type
+		switch (type) {
+			case 'AnimationFrame':
+				switch (pinfo.key) {
+					case 'imageId':
+						return <ImageLink id={pinfo.value as any} />
+				}
+			break; case 'ObjectInstance':
+				switch (pinfo.key) {
+					case 'objectTypeId':
+						return <IdLink lookup={{ type, id: pinfo.value as any }} />
+				}
+			break; case 'ObjectType':
+				switch (pinfo.key) {
+					case 'instances':
+						return <IdLink lookup={{ type, id: pinfo.value as any }} />
+				}
 		}
 	}
 

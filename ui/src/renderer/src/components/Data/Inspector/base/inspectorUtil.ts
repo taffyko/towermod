@@ -1,4 +1,3 @@
-import { TowermodObject } from "@shared/reducers/data"
 import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, propertyInfoOverrides } from "../customInspectorUtil"
 
 export type InspectorObjectValue = CustomInspectorObjects
@@ -31,31 +30,34 @@ type KeyOfValue<T, V> = {
 }[keyof T];
 
 export type BasePropertyInfo = {
-	key: InspectorKeyTypes,
+	parent?: ArrayPropertyInfo | RecordPropertyInfo | ObjectPropertyInfo,
 	hidden?: boolean,
 	// TODO:
 	readonly?: boolean,
 }
 
 export type ArrayPropertyInfo<T extends InspectorValue = InspectorValue> = BasePropertyInfo & {
+	key: InspectorKeyTypes,
 	value: readonly T[]
 	type: 'Array',
 	valueTypes: Set<KeyOfValue<TypeNameToValue, T>>
 }
 
 export type RecordPropertyInfo<T extends InspectorValue = InspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> = BasePropertyInfo & {
+	key: InspectorKeyTypes,
 	value: Readonly<Record<TKey, T>>,
 	type: 'Record',
 	keyTypes: Set<KeyOfValue<TypeNameToValue, TKey>>,
 	valueTypes: Set<KeyOfValue<TypeNameToValue, T>>,
 }
 export type SimplePropertyInfo<T extends InspectorValue = InspectorValue> = BasePropertyInfo & {
+	key: InspectorKeyTypes,
 	value: Readonly<T>,
 	type: Exclude<InspectorTypeName, 'Array' | 'Record'>,
 }
 export type ObjectPropertyInfo<T extends InspectorObjectValue = InspectorObjectValue> = BasePropertyInfo & {
 	key: keyof T,
-	value: Readonly<T>,
+	value: T,
 	type: T['type'],
 }
 
@@ -64,7 +66,7 @@ export type PropertyInfo<T extends InspectorValue = InspectorValue, TKey extends
 	ArrayPropertyInfo<T> | RecordPropertyInfo<T, TKey> | SimplePropertyInfo<T>
 
 export function inferPropertyInfoFromArrayValue(element: InspectorValue, parentPinfo: ArrayPropertyInfo, idx: number): PropertyInfo {
-	const pinfo = inferPropertyInfoFromValue(element, idx)
+	const pinfo = inferPropertyInfoFromValue(element, parentPinfo, idx)
 	pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
 	return pinfo
 }
@@ -87,12 +89,12 @@ export function speciateType(type: keyof TypeNameToValue, types: Set<keyof TypeN
 }
 
 export function inferPropertyInfoFromRecordValue(element: InspectorValue, parentPinfo: RecordPropertyInfo, key: InspectorKeyTypes): PropertyInfo {
-	const pinfo = inferPropertyInfoFromValue(element, key)
+	const pinfo = inferPropertyInfoFromValue(element, parentPinfo, key)
 	pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
 	return pinfo
 }
 
-export function inferPropertyInfoFromValue(value: InspectorValue, key: InspectorKeyTypes): PropertyInfo {
+export function inferPropertyInfoFromValue(value: InspectorValue, parent: PropertyInfo | undefined, key: InspectorKeyTypes): PropertyInfo {
 	const type = inferTypeFromValue(value);
 	switch (type) {
 		case 'Array':
@@ -100,6 +102,7 @@ export function inferPropertyInfoFromValue(value: InspectorValue, key: Inspector
 				type: 'Array',
 				key,
 				value,
+				parent,
 				valueTypes: new Set(['unknown']) as any,
 			} as ArrayPropertyInfo
 		case 'Record':
@@ -107,6 +110,7 @@ export function inferPropertyInfoFromValue(value: InspectorValue, key: Inspector
 				type: 'Record',
 				key,
 				value,
+				parent,
 				keyTypes: new Set(['string', 'number']) as any
 			} as RecordPropertyInfo
 		default:
@@ -114,6 +118,7 @@ export function inferPropertyInfoFromValue(value: InspectorValue, key: Inspector
 				type,
 				key,
 				value,
+				parent,
 			} as SimplePropertyInfo
 	}
 }
@@ -136,18 +141,19 @@ export function inferTypeFromValue(value: InspectorValue): InspectorTypeName {
 	}
 }
 
-export function objectPropertyInfo(obj: InspectorObjectValue, key: InspectorKeyTypes): PropertyInfo
+function objectPropertyInfo(obj: InspectorObjectValue, objPinfo: ObjectPropertyInfo | undefined, key: InspectorKeyTypes): PropertyInfo
 {
 	const value = obj[key]
 	if (key === 'type') { return { key, value, type: 'string', hidden: true } }
 
-	const pinfo = inferPropertyInfoFromValue(value, key);
+	const pinfo = inferPropertyInfoFromValue(value, objPinfo, key);
 	propertyInfoOverrides(obj, pinfo, key as any)
 
 	return pinfo
 }
 
-export function objectPropertyInfos(obj: InspectorObjectValue): PropertyInfo[] {
+export function objectPropertyInfos(objPinfo: ObjectPropertyInfo): PropertyInfo[] {
+	const obj = objPinfo.value
 	const keys = Object.keys(obj) as (keyof typeof obj)[]
-	return keys.map(key => objectPropertyInfo(obj, key))
+	return keys.map(key => objectPropertyInfo(obj, objPinfo, key))
 }

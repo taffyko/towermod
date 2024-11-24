@@ -1,6 +1,6 @@
 import Outliner from './Outliner/Outliner'
 import Inspector from './Inspector/base/Inspector'
-import { InspectorObjectValue, inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
+import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
 import { useState } from 'react'
 import { UniqueTowermodObject, actions, findObjectSelector } from '@shared/reducers/data'
 import { useAppDispatch, useAppSelector } from '@renderer/hooks'
@@ -19,7 +19,7 @@ export function Data() {
 			onChange={(value) => setSearchValue(value)}
 		/>
 		{ value ?
-			<Inspector pinfo={inferPropertyInfoFromValue(value, 'root') as any} onChange={onChange as any} />
+			<Inspector pinfo={inferPropertyInfoFromValue(value, undefined, 'root') as any} onChange={onChange as any} />
 		: null }
 	</div>
 }

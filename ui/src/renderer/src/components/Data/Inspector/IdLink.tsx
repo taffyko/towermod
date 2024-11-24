@@ -1,6 +1,6 @@
 import { UniqueTowermodObject } from "@shared/reducers/data";
 
-export function EntityId(props: { object: UniqueTowermodObject }) {
+export function IdLink(props: { lookup: Partial<UniqueTowermodObject> }) {
 	return <div>
 
 	</div>
