@@ -1,21 +1,21 @@
 /* eslint-disable max-depth */
-import { createContext, useCallback, useContext } from 'react';
+import { createContext, useCallback, useContext, useImperativeHandle, useMemo, useRef } from 'react';
 import {
 	FixedSizeNodeData,
 	FixedSizeNodePublicState as NodePublicState,
 	TreeWalker,
 	TreeWalkerValue,
 	NodeComponentProps,
+	FixedSizeTree,
 } from 'react-vtree';
 import { useAppSelector } from '@renderer/hooks';
-import { Layout, LayoutLayer, ObjectInstance, Animation, AppBlock, ObjectType, ObjectTrait, Container, Family, Behavior } from '@towermod';
 import { assertUnreachable, enumerate } from '@shared/util';
-import { setOpenRecursive } from './treeUtil';
+import { jumpToTreeItem, setOpenRecursive } from './treeUtil';
 import { TreeComponent, TreeContext } from './Tree';
 import Style from './Outliner.module.scss'
+import { UniqueTowermodObject } from '@shared/reducers/data';
 
-type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock
-function getObjChildren(obj: TowermodObject): TowermodObject[] {
+function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {
 	switch (obj.type) {
 		case 'Layout':
 			return obj.layers
@@ -32,7 +32,7 @@ type OutlinerNodeData = FixedSizeNodeData &
 		isLeaf: boolean;
 		name: string;
 		nestingLevel: number;
-		obj: TowermodObject | null;
+		obj: UniqueTowermodObject | null;
 	};
 
 type RootContainerName = 'Layouts' | 'Animations' | 'Behaviors' | 'Containers' | 'Families' | 'Object Types' | 'Traits'
@@ -52,30 +52,27 @@ const getRootContainerData = (name: RootContainerName) => {
 }
 
 const getNodeData = (
-	obj: TowermodObject,
-	idx: number,
+	obj: UniqueTowermodObject,
+	_idx: number,
 	nestingLevel: number,
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
 
 	const objType = obj.type;
-	let id: string | number = idx;
+	const id: string | number = getTreeItemId(obj);
 	let name: string
 	switch (objType) {
 		case 'Layout':
 			name = `Layout: ${obj.name}`
 		break; case 'LayoutLayer':
 			name = `Layer ${obj.id}: ${obj.name}`
-			id = obj.id
 		break; case 'ObjectInstance': {
 			// TODO: object type name
 			const pluginName = '' // TODO
 			const objectName = '' // TODO
 			name = `Instance: ${pluginName} (${objectName}: ${obj.id})`
-			id = obj.id
 		} break; case 'Animation':
 			// TODO: animations
 			name = `Animation ${obj.id}`
-			id = obj.id
 		break; case 'Behavior':
 			name = `Behavior: ${obj.name}`
 		break; case 'Container':
@@ -86,7 +83,6 @@ const getNodeData = (
 		break; case 'ObjectType': {
 			const pluginName = '' // TODO
 			name = `Type ${obj.id}: (${pluginName}: ${obj.name})`
-			id = obj.id
 		} break; case 'ObjectTrait':
 			name = `Trait: ${obj.name}`
 		break; case 'AppBlock':
@@ -108,7 +104,35 @@ const getNodeData = (
 	}
 };
 
-
+const getTreeItemId = (obj: UniqueTowermodObject) => {
+	const objType = obj.type;
+	let id: string | number
+	switch (objType) {
+		case 'Layout':
+			id = obj.name
+		break; case 'LayoutLayer':
+			id = obj.id
+		break; case 'ObjectInstance':
+			id = obj.id
+		break; case 'Animation':
+			id = obj.id
+		break; case 'Behavior':
+			id = obj.name
+		break; case 'Container':
+			id = obj.objectIds[0]
+		break; case 'Family':
+			id = obj.name
+		break; case 'ObjectType':
+			id = obj.id
+		break; case 'ObjectTrait':
+			id = obj.name
+		break; case 'AppBlock':
+			id = ''
+		break; default:
+			assertUnreachable(objType)
+	}
+	return `${obj.type}-${id}`
+}
 
 const defaultTextStyle = {marginLeft: 10};
 const defaultButtonStyle = {fontFamily: 'Courier New'};
@@ -117,13 +141,11 @@ type OutlinerNodeMeta = Readonly<{
 	nestingLevel: number;
 }>;
 
-const OutlinerContext = createContext<OutlinerProps>(null!);
-
 type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {isLeaf, name, nestingLevel, obj}, isOpen, style, setOpen} = props
 	const tree = useContext(TreeContext)
-	const { onChange } = useContext(OutlinerContext)
+	const { setValue } = useContext(OutlinerContext)
 
 	const selectable = !!obj;
 
@@ -134,7 +156,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 		`}
 		onClick={() => {
 			if (selectable) {
-				onChange(obj!)
+				setValue(obj!)
 			}
 		}}
 		style={{
@@ -165,8 +187,19 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	</div>
 };
 
-interface OutlinerProps {
-	onChange: (value: TowermodObject) => void
+export interface OutlinerHandle {
+	tree: FixedSizeTree<OutlinerNodeData>
+	setValue(value: UniqueTowermodObject)
+	jumpToItem(obj: UniqueTowermodObject)
+	setOpen(obj: UniqueTowermodObject, open: boolean)
+	setOpenRecursive(obj: UniqueTowermodObject, open: boolean)
+}
+
+const OutlinerContext = createContext<OutlinerHandle>(null!);
+
+export interface OutlinerProps {
+	setValue: (value: UniqueTowermodObject) => void,
+	handleRef?: React.Ref<OutlinerHandle>,
 }
 
 export const Outliner = (props: OutlinerProps) => {
@@ -179,6 +212,29 @@ export const Outliner = (props: OutlinerProps) => {
 	const traits = useAppSelector(s => s.data.traits) || []
 	const appBlock = useAppSelector(s => s.data.appBlock)
 
+	const treeRef = useRef<FixedSizeTree<OutlinerNodeData>>(null!)
+	const tree = treeRef.current
+
+	const handle = useMemo(() => {
+		return {
+			tree: tree,
+			setValue: props.setValue,
+			jumpToItem(obj) {
+				const treeItemId = getTreeItemId(obj)
+				jumpToTreeItem(tree, treeItemId)
+			},
+			setOpen(obj, open: boolean) {
+				const treeItemId = getTreeItemId(obj)
+				tree.recomputeTree({ [treeItemId]: open })
+			},
+			setOpenRecursive(obj, open: boolean) {
+				const treeItemId = getTreeItemId(obj)
+				setOpenRecursive(obj, treeItemId, open)
+			},
+		}
+	}, [tree, props.setValue])
+	useImperativeHandle(props.handleRef, () => handle, [handle])
+
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
 		yield getRootContainerData('Animations')
 		yield getRootContainerData('Layouts')
@@ -188,7 +244,7 @@ export const Outliner = (props: OutlinerProps) => {
 		yield getRootContainerData('Object Types')
 		if (appBlock) { yield getNodeData(appBlock, 0, 0) }
 
-		const rootContainerMap: Record<RootContainerName, TowermodObject[]> = {
+		const rootContainerMap: Record<RootContainerName, UniqueTowermodObject[]> = {
 			'Layouts': layouts,
 			'Animations': animations,
 			'Behaviors': behaviors,
@@ -220,10 +276,11 @@ export const Outliner = (props: OutlinerProps) => {
 	}, [layouts, animations, behaviors, containers, families, objectTypes, traits])
 
 	return <div className="vbox grow">
-		<OutlinerContext.Provider value={props}>
+		<OutlinerContext.Provider value={handle}>
 			<TreeComponent
 				treeWalker={treeWalker}
 				itemSize={25}
+				treeRef={treeRef}
 			>
 				{TreeNodeComponent}
 			</TreeComponent>

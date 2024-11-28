@@ -1,29 +1,32 @@
-import { createContext, forwardRef, useState } from "react"
+import { createContext, forwardRef } from "react"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { VTree } from "./treeUtil"
 import { FixedSizeNodeData, FixedSizeTree, FixedSizeTreeProps } from "react-vtree"
 import Scrollbars from "@renderer/components/Scrollbars"
+import { useForwardRef } from "@renderer/hooks"
 
 export const TreeContext = createContext<VTree | null>(null)
 
 export const TreeComponent = <
 	TData extends FixedSizeNodeData
 >(
-	props: Omit<FixedSizeTreeProps<TData>, 'height' | 'width'>,
+	props: Omit<FixedSizeTreeProps<TData>, 'height' | 'width'> & {
+		treeRef?: React.Ref<FixedSizeTree<TData>>
+	},
 ) => {
-	const [tree, setTreeRef] = useState<FixedSizeTree<TData> | null>(null);
+	const treeRef = useForwardRef(props.treeRef ?? null);
 
 	return <div className="grow">
 		<AutoSizer disableWidth>
 			{({height}) => (
 				<div style={{ height }}>
-					<TreeContext.Provider value={tree}>
+					<TreeContext.Provider value={treeRef.current}>
 						<FixedSizeTree
 							async
 							outerElementType={CustomScrollbarsVirtualList}
 							{...props}
 							width="100%"
-							ref={setTreeRef}
+							ref={treeRef}
 							height={height}
 						/>
 					</TreeContext.Provider>

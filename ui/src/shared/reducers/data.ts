@@ -1,4 +1,4 @@
-import { PayloadAction, createSelectorCreator, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame } from "@towermod";
 import { actions as mainActions } from './main'
 import { addRawReducers, assertUnreachable } from "@shared/util";
@@ -64,10 +64,24 @@ export const uniqueObjectTypes = new Set([
 	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock'
 ] as const)
 export type UniqueObjectTypes = (typeof uniqueObjectTypes) extends Set<infer T> ? T : never
+/** Towermod objects that possess unique IDs, making it possible to look them up */
 export type UniqueTowermodObject = Extract<TowermodObject, { type: UniqueObjectTypes }>
+/** Minimum properties needed to lookup each object */
+export type UniqueObjectLookup =
+	Pick<Layout, 'type' | 'name'>
+	| Pick<LayoutLayer, 'type' | 'id'>
+	| Pick<ObjectInstance, 'type' | 'id'>
+	| Pick<Animation, 'type' | 'id'>
+	| Pick<Behavior, 'type' | 'name'>
+	| Pick<Container, 'type' | 'objectIds'>
+	| Pick<Family, 'type' | 'name'>
+	| Pick<ObjectType, 'type' | 'id'>
+	| Pick<ObjectTrait, 'type' | 'name'>
+	| Pick<AppBlock, 'type'>
+export type ObjectFromLookup<T extends { type: TowermodObject['type'] }> = Extract<TowermodObject, T>
 
 
-export function findObjectSelector<T extends UniqueTowermodObject>(state: State, obj: T): T {
+export function findObject<T extends UniqueObjectLookup>(state: State, obj: T): ObjectFromLookup<T> {
 	let target: any = null
 	const type = obj.type;
 	switch (type) {
@@ -104,7 +118,7 @@ export const slice = createSlice({
 	reducers: {
 		setData(_state, _action: PayloadAction<State>) { /* stub */ },
 		editObject(state, { payload }: PayloadAction<UniqueTowermodObject>) {
-			const target = findObjectSelector(state, payload)
+			const target = findObject(state, payload)
 			if (target) { Object.assign(target, payload) }
 		},
 	},

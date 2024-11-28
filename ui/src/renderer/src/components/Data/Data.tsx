@@ -1,14 +1,31 @@
-import Outliner from './Outliner/Outliner'
-import Inspector from './Inspector/base/Inspector'
+import Outliner, { OutlinerHandle } from './Outliner/Outliner'
+import Inspector  from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
 import { useState } from 'react'
-import { UniqueTowermodObject, actions, findObjectSelector } from '@shared/reducers/data'
-import { useAppDispatch, useAppSelector } from '@renderer/hooks'
+import { UniqueObjectLookup, UniqueTowermodObject, actions, findObject } from '@shared/reducers/data'
+import { useAppDispatch, useAppSelector, useImperativeHandle } from '@renderer/hooks'
 
-export function Data() {
-	const [searchValue, setSearchValue] = useState<UniqueTowermodObject | null>(null)
+export interface DataHandle {
+	outliner: OutlinerHandle | null,
+	setValue(v: UniqueObjectLookup | null),
+	value: UniqueTowermodObject | null,
+}
+
+export function Data(props: {
+	handleRef?: React.Ref<DataHandle>
+}) {
+	const [searchValue, setSearchValue] = useState<UniqueObjectLookup | null>(null)
 	const dispatch = useAppDispatch()
-	const value = useAppSelector((state) => searchValue ? findObjectSelector(state.data, searchValue) : null)
+	const value = useAppSelector((state) => searchValue ? findObject(state.data, searchValue) : null)
+
+	const [outliner, setOutlinerRef] = useState<OutlinerHandle | null>(null!)
+	useImperativeHandle(props.handleRef, () => {
+		return {
+			outliner,
+			setValue: setSearchValue,
+			value,
+		}
+	}, [outliner, value])
 
 	const onChange = (obj: UniqueTowermodObject) => {
 		dispatch(actions.editObject(obj))
@@ -16,7 +33,8 @@ export function Data() {
 
 	return <div className="hbox gap grow">
 		<Outliner
-			onChange={(value) => setSearchValue(value)}
+			handleRef={setOutlinerRef}
+			setValue={(value) => setSearchValue(value)}
 		/>
 		{ value ?
 			<Inspector pinfo={inferPropertyInfoFromValue(value, undefined, 'root') as any} onChange={onChange as any} />

@@ -2,7 +2,10 @@ import { getCustomComponent } from "../customInspectorUtil"
 import { InspectorValue, InspectorObjectValue, PropertyInfo, objectPropertyInfos, InspectorRecordValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, RecordPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromRecordValue, ObjectPropertyInfo } from "./inspectorUtil"
 import React, { useMemo } from "react"
 
-export const InspectorObject = (props: { pinfo: ObjectPropertyInfo, onChange: (v: InspectorObjectValue) => void }) => {
+export const InspectorObject = (props: {
+	pinfo: ObjectPropertyInfo,
+	onChange: (v: InspectorObjectValue) => void
+}) => {
 	const { pinfo: objPinfo, onChange } = props
 
 	const onPropertyChange = (key: InspectorKeyTypes, value: any) => {
