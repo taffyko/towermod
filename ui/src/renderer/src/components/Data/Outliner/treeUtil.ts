@@ -1,3 +1,4 @@
+import { createContext } from 'react';
 import {
 	FixedSizeNodePublicState,
 	FixedSizeNodeData,
@@ -70,3 +71,5 @@ export function setOpenRecursive(tree: VTree, id: string, open: boolean) {
 		i++
 	}
 }
+
+export const TreeContext = createContext<VTree | null>(null)

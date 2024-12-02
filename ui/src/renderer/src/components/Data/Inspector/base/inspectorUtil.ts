@@ -67,7 +67,11 @@ export type PropertyInfo<T extends InspectorValue = InspectorValue, TKey extends
 
 export function inferPropertyInfoFromArrayValue(element: InspectorValue, parentPinfo: ArrayPropertyInfo, idx: number): PropertyInfo {
 	const pinfo = inferPropertyInfoFromValue(element, parentPinfo, idx)
-	pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
+	if (parentPinfo.valueTypes) {
+		pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
+	} else {
+		console.warn(`No type information given for Array: ${parentPinfo.type}.${pinfo.key}`)
+	}
 	return pinfo
 }
 
@@ -90,7 +94,11 @@ export function speciateType(type: keyof TypeNameToValue, types: Set<keyof TypeN
 
 export function inferPropertyInfoFromRecordValue(element: InspectorValue, parentPinfo: RecordPropertyInfo, key: InspectorKeyTypes): PropertyInfo {
 	const pinfo = inferPropertyInfoFromValue(element, parentPinfo, key)
-	pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
+	if (parentPinfo.valueTypes) {
+		pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
+	} else {
+		console.warn(`No type information given for Record ${parentPinfo.parent?.type}.${parentPinfo.key}`)
+	}
 	return pinfo
 }
 

@@ -30,8 +30,6 @@ export const InspectorObject = (props: {
 	</div>
 }
 
-
-
 export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<InspectorValue>, onChange: (v: InspectorArrayValue) => void }) => {
 	const { pinfo: arrPinfo, onChange } = props
 

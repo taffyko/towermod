@@ -1,16 +1,30 @@
 .backdrop {
 	display: none;
-	position: fixed;
+	position: absolute;
 	top: 0; left: 0; right: 0; bottom: 0;
-	&.active {
-		display: block;
-		background-color: var(--color-root-bg);
-		opacity: 0.5;
-	}
 	z-index: 10;
 	padding-top: calc(var(--gap) * 4);
+
+	&.active {
+		display: block;
+		background-color: rgb(from var(--color-root-bg) r g b / 0.5);
+	}
 }
 
 .modal {
+	position: relative;
 	margin: 0 auto;
+	width: 80%;
+	min-height: 20%;
+	padding: var(--gap);
+	border-radius: 4px;
+	box-shadow: 8px 8px rgba(255, 255, 255, 0.1);
+	background-color: var(--color-root-bg);
+	border: solid 1px var(--color-border);
+
+	.closeButton {
+		position: absolute;
+		top: var(--gap);
+		right: var(--gap);
+	}
 }

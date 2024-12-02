@@ -1,5 +1,5 @@
 import Outliner, { OutlinerHandle } from './Outliner/Outliner'
-import Inspector  from './Inspector/base/Inspector'
+import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
 import { useState } from 'react'
 import { UniqueObjectLookup, UniqueTowermodObject, actions, findObject } from '@shared/reducers/data'

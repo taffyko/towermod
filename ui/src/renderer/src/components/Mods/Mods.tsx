@@ -3,6 +3,7 @@ import { useAppSelector } from '@renderer/hooks';
 import { useEffect, useState } from 'react';
 import { ModInfo } from '@towermod';
 import Style from './Mods.module.scss'
+import Modal from '../Modal';
 
 export function ModDetails(props: { mod: ModInfo }) {
 	return <div className={Style.modDetails}>
@@ -47,6 +48,14 @@ export default function Mods() {
 	const modsList = useAppSelector(s => s.main?.modList);
 	const [selectedMod, setSelectedMod] = useState<ModInfo>();
 	if (!modsList) { return null }
+
+	const [showModal, setShowModal] = useState(true);
+
+	if (showModal) {
+		return <Modal requestClose={() => setShowModal(false)}>
+			Hello there!!
+		</Modal>
+	}
 
 	return <div className={Style.mods}>
 		<div>

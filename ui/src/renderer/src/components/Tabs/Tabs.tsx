@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo, useState } from "react"
+import React, { useCallback, useContext, useMemo, useState } from "react"
 import Style from './Tabs.module.scss'
 import { useEventListener, useImperativeHandle } from "@renderer/hooks";
 import { posmod } from "@shared/util";
+import { ModalContext } from "../Modal";
 
 export interface Tab {
 	name: string;
@@ -39,7 +40,13 @@ export const Tabs = (props: {
 		},
 	}), [tabs, setCurrentTab, currentTab])
 
+	const modalContext = useContext(ModalContext)
+
 	const onKeyDown = useCallback((e: KeyboardEvent | React.KeyboardEvent) => {
+		if (modalContext?.modalOpen) {
+			return
+		}
+
 		if (e.code === 'Tab' && e.ctrlKey) {
 			if (e.shiftKey) {
 				handle.nextTab(-1)
@@ -48,7 +55,7 @@ export const Tabs = (props: {
 			}
 			e.stopPropagation()
 		}
-	}, [tabs, currentTab])
+	}, [tabs, currentTab, modalContext])
 
 	useEventListener(window, 'keydown', onKeyDown)
 
@@ -82,5 +89,16 @@ export const Tabs = (props: {
 		<div className={`${Style.tabContent} stretchbox`}>
 			{currentTab.children}
 		</div>
+
+		{/* {tabs.map(tab => {
+			// render all tabs simultaneously so that tab state
+			return <div
+				key={tab.name}
+				style={{ display: tab === currentTab ? '' : 'none' }}
+				className={`${Style.tabContent} stretchbox`}
+			>
+				{tab.children}
+			</div>
+		})} */}
 	</div>
 }

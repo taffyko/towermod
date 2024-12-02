@@ -8,7 +8,7 @@ export const Config = () => {
 		<button onClick={() => rpc.startTracing()}>Start profiling</button>
 		<button onClick={() => rpc.stopTracing()}>Stop profiling</button>
 		<button
-			// disabled={!game} // FIXME
+			disabled={!game}
 			onClick={async () => {
 				await rpc.newProject()
 				toast("New project initialized")

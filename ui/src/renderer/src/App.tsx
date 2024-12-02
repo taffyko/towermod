@@ -9,8 +9,9 @@ import { rpc } from './util';
 import { Data, DataHandle } from './components/Data';
 import Config from './components/Config';
 import Style from './App.module.scss';
-import React from 'react';
 import { useAppSelector, useStateRef } from './hooks';
+import { ModalParent, ModalContext, ModalContextProvider } from './components/Modal';
+import { AppContext, AppContextState } from './appContext';
 
 async function initialize() {
 	await rpc.initialize()
@@ -18,13 +19,6 @@ async function initialize() {
 	await rpc.setGamePath("C:\\Program Files (x86)\\Steam\\steamapps\\common\\TowerClimb\\TowerClimb_V1_Steam4.exe")
 	await rpc.loadModList()
 }
-
-export interface AppContextState {
-	data: DataHandle,
-	tabs: TabsHandle,
-}
-
-export const AppContext = React.createContext<AppContextState>(null!)
 
 const App = () => {
 	const [dataHandle, setDataHandle] = useStateRef<DataHandle>()
@@ -54,16 +48,29 @@ const App = () => {
 	return <>
 		<AppContext.Provider value={appContext}>
 			<ErrorBoundary>
-				<TitleBar />
-				<div className={Style.pageContainer}>
-					<ErrorBoundary>
-						<Tabs tabs={tabs} handleRef={setTabsHandle} />
-					</ErrorBoundary>
-					<ToastContainer
-						position="top-center"
-						theme="dark"
-					/>
-				</div>
+				<ModalContextProvider>
+					<TitleBar />
+					<ModalContext.Consumer>
+						{(modalContext) =>
+							<div className={Style.pageContainer}>
+								<ModalParent />
+								<ToastContainer
+									position="top-center"
+									theme="dark"
+								/>
+								<div
+									className={Style.pageContent}
+									// @ts-ignore
+									inert={modalContext?.modalOpen ? "" : undefined}
+								>
+									<ErrorBoundary>
+										<Tabs tabs={tabs} handleRef={setTabsHandle} />
+									</ErrorBoundary>
+								</div>
+							</div>
+						}
+					</ModalContext.Consumer>
+				</ModalContextProvider>
 			</ErrorBoundary>
 		</AppContext.Provider>
 	</>

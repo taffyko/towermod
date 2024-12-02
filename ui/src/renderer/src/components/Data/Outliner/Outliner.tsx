@@ -1,5 +1,5 @@
 /* eslint-disable max-depth */
-import { createContext, useCallback, useContext, useImperativeHandle, useMemo, useRef } from 'react';
+import { createContext, useCallback, useContext, useImperativeHandle, useMemo } from 'react';
 import {
 	FixedSizeNodeData,
 	FixedSizeNodePublicState as NodePublicState,
@@ -8,13 +8,13 @@ import {
 	NodeComponentProps,
 	FixedSizeTree,
 } from 'react-vtree';
-import { useAppSelector } from '@renderer/hooks';
+import { useAppSelector, useStateRef } from '@renderer/hooks';
 import { assertUnreachable, enumerate } from '@shared/util';
-import { jumpToTreeItem, setOpenRecursive } from './treeUtil';
-import { TreeComponent, TreeContext } from './Tree';
+import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
+import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueTowermodObject } from '@shared/reducers/data';
-import { AppContext } from '@renderer/App';
+import { AppContext } from '@renderer/appContext';
 
 function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {
 	switch (obj.type) {
@@ -146,7 +146,7 @@ type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicSta
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {isLeaf, name, nestingLevel, obj}, isOpen, style, setOpen} = props
 	const tree = useContext(TreeContext)
-	const { data: { setValue } } = useContext(AppContext)
+	const app = useContext(AppContext)
 
 	const selectable = !!obj;
 
@@ -157,7 +157,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 		`}
 		onClick={() => {
 			if (selectable) {
-				setValue(obj!)
+				app?.data?.setValue(obj!)
 			}
 		}}
 		style={{
@@ -212,19 +212,18 @@ export const Outliner = (props: OutlinerProps) => {
 	const traits = useAppSelector(s => s.data.traits) || []
 	const appBlock = useAppSelector(s => s.data.appBlock)
 
-	const treeRef = useRef<FixedSizeTree<OutlinerNodeData>>(null!)
-	const tree = treeRef.current
+	const [tree, setTreeRef] = useStateRef<FixedSizeTree<OutlinerNodeData>>()
 
 	const handle = useMemo(() => {
 		return {
-			tree: tree,
+			tree: tree!,
 			jumpToItem(obj) {
 				const treeItemId = getTreeItemId(obj)
-				jumpToTreeItem(tree, treeItemId)
+				if (tree) { jumpToTreeItem(tree, treeItemId) }
 			},
 			setOpen(obj, open: boolean) {
 				const treeItemId = getTreeItemId(obj)
-				tree.recomputeTree({ [treeItemId]: open })
+				tree?.recomputeTree({ [treeItemId]: open })
 			},
 			setOpenRecursive(obj, open: boolean) {
 				const treeItemId = getTreeItemId(obj)
@@ -279,7 +278,7 @@ export const Outliner = (props: OutlinerProps) => {
 			<TreeComponent
 				treeWalker={treeWalker}
 				itemSize={25}
-				treeRef={treeRef}
+				treeRef={setTreeRef}
 			>
 				{TreeNodeComponent}
 			</TreeComponent>

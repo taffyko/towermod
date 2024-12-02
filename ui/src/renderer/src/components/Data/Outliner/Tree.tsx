@@ -1,11 +1,9 @@
-import { createContext, forwardRef } from "react"
+import { forwardRef } from "react"
 import AutoSizer from "react-virtualized-auto-sizer"
-import { VTree } from "./treeUtil"
+import { TreeContext } from "./treeUtil"
 import { FixedSizeNodeData, FixedSizeTree, FixedSizeTreeProps } from "react-vtree"
 import Scrollbars from "@renderer/components/Scrollbars"
 import { useForwardRef } from "@renderer/hooks"
-
-export const TreeContext = createContext<VTree | null>(null)
 
 export const TreeComponent = <
 	TData extends FixedSizeNodeData
