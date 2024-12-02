@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import type { AppDispatch, AppStore, RootState } from './store'
 
@@ -54,4 +54,9 @@ export function useImperativeHandle<T, R extends T>(ref: React.Ref<T> | undefine
 	const handle = useMemo(init, deps ?? [])
 	React.useImperativeHandle(ref, () => handle, [handle])
 	return handle
+}
+
+/** Semantic replacement for useRef that triggers a re-render when the ref updates */
+export function useStateRef<T>() {
+	return useState<T | null>(null)
 }

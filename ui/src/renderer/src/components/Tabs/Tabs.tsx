@@ -1,27 +1,51 @@
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useMemo, useState } from "react"
 import Style from './Tabs.module.scss'
-import { useEventListener } from "@renderer/hooks";
+import { useEventListener, useImperativeHandle } from "@renderer/hooks";
 import { posmod } from "@shared/util";
 
 export interface Tab {
 	name: string;
 	children: React.ReactNode;
+	disabled?: boolean;
 }
 
-export const Tabs = (props: { tabs: Tab[] }) => {
-	const { tabs } = props;
+export interface TabsHandle {
+	currentTab: string,
+	setCurrentTab(name: string),
+	nextTab(offset: number),
+}
+
+export const Tabs = (props: {
+	tabs: Tab[],
+	handleRef?: React.Ref<TabsHandle>,
+}) => {
+	const { tabs: allTabs } = props;
+	const tabs = useMemo(() => allTabs.filter(tab => !tab.disabled), [allTabs])
 	const [currentTab, setCurrentTab] = useState(tabs[0]);
+
+	const handle = useImperativeHandle(props.handleRef, () => ({
+		currentTab: currentTab.name,
+		setCurrentTab(name) {
+			for (const tab of tabs) {
+				if (tab.name === name) {
+					setCurrentTab(tab)
+				}
+			}
+		},
+		nextTab(offset) {
+			let tabIdx = tabs.indexOf(currentTab) + offset;
+			tabIdx = posmod(tabIdx, tabs.length);
+			setCurrentTab(tabs[tabIdx])
+		},
+	}), [tabs, setCurrentTab, currentTab])
 
 	const onKeyDown = useCallback((e: KeyboardEvent | React.KeyboardEvent) => {
 		if (e.code === 'Tab' && e.ctrlKey) {
-			let tabIdx = tabs.indexOf(currentTab);
 			if (e.shiftKey) {
-				tabIdx -= 1;
+				handle.nextTab(-1)
 			} else {
-				tabIdx += 1;
+				handle.nextTab(1)
 			}
-			tabIdx = posmod(tabIdx, tabs.length);
-			setCurrentTab(tabs[tabIdx])
 			e.stopPropagation()
 		}
 	}, [tabs, currentTab])

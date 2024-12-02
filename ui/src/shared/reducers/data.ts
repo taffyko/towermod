@@ -78,10 +78,11 @@ export type UniqueObjectLookup =
 	| Pick<ObjectType, 'type' | 'id'>
 	| Pick<ObjectTrait, 'type' | 'name'>
 	| Pick<AppBlock, 'type'>
-export type ObjectFromLookup<T extends { type: TowermodObject['type'] }> = Extract<TowermodObject, T>
+export type ObjectForType<T extends TowermodObject['type']> = Extract<TowermodObject, { type: T }>
+export type LookupForType<T extends UniqueObjectLookup['type']> = Extract<UniqueObjectLookup, { type: T }>
 
 
-export function findObject<T extends UniqueObjectLookup>(state: State, obj: T): ObjectFromLookup<T> {
+export function findObject<T extends UniqueObjectLookup>(state: State, obj: T): ObjectForType<T['type']> {
 	let target: any = null
 	const type = obj.type;
 	switch (type) {
@@ -120,6 +121,22 @@ export const slice = createSlice({
 		editObject(state, { payload }: PayloadAction<UniqueTowermodObject>) {
 			const target = findObject(state, payload)
 			if (target) { Object.assign(target, payload) }
+		},
+		addObjectType(state, { payload: pluginType }: PayloadAction<string>) {
+			// TODO: automatically create/associate a new animation for Sprite objects
+		},
+		removeObjectType(state, { payload: objectTypeId }: PayloadAction<number>) {
+			// TODO: confirm dialog
+			// TODO: find references in event sheets
+			// TODO: find ObjectTrait references
+			// TODO: find Container references
+			// TODO: find Family references
+		},
+		addObjectInstance(state, { payload: objectTypeId }: PayloadAction<{ objectTypeId: number, layoutLayerId: number }>) {
+			// TODO
+		},
+		removeObjectInstance(state, { payload }: PayloadAction<LookupForType<'ObjectInstance'>>) {
+			// TODO: do types need at least one instance?
 		},
 	},
 });

@@ -14,6 +14,7 @@ import { jumpToTreeItem, setOpenRecursive } from './treeUtil';
 import { TreeComponent, TreeContext } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueTowermodObject } from '@shared/reducers/data';
+import { AppContext } from '@renderer/App';
 
 function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {
 	switch (obj.type) {
@@ -145,7 +146,7 @@ type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicSta
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {isLeaf, name, nestingLevel, obj}, isOpen, style, setOpen} = props
 	const tree = useContext(TreeContext)
-	const { setValue } = useContext(OutlinerContext)
+	const { data: { setValue } } = useContext(AppContext)
 
 	const selectable = !!obj;
 
@@ -189,7 +190,6 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 
 export interface OutlinerHandle {
 	tree: FixedSizeTree<OutlinerNodeData>
-	setValue(value: UniqueTowermodObject)
 	jumpToItem(obj: UniqueTowermodObject)
 	setOpen(obj: UniqueTowermodObject, open: boolean)
 	setOpenRecursive(obj: UniqueTowermodObject, open: boolean)
@@ -218,7 +218,6 @@ export const Outliner = (props: OutlinerProps) => {
 	const handle = useMemo(() => {
 		return {
 			tree: tree,
-			setValue: props.setValue,
 			jumpToItem(obj) {
 				const treeItemId = getTreeItemId(obj)
 				jumpToTreeItem(tree, treeItemId)
@@ -232,7 +231,7 @@ export const Outliner = (props: OutlinerProps) => {
 				setOpenRecursive(obj, treeItemId, open)
 			},
 		}
-	}, [tree, props.setValue])
+	}, [tree])
 	useImperativeHandle(props.handleRef, () => handle, [handle])
 
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
