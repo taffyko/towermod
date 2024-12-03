@@ -9,8 +9,13 @@ export function* enumerate<T>(iterable: Iterable<T>) {
 }
 
 export function assertUnreachable(a: never): never {
-  throw new Error(`Deliberately unreachable case occurred: ${a}`);
+	throw new Error(`Deliberately unreachable case occurred: ${a}`);
 }
+
+export function assert(condition: unknown, msg?: string): asserts condition {
+	if (!condition) { throw new Error(msg ?? "Assertion failed") }
+}
+
 
 /** Add reducers without immer.js to a redux-toolkit slice */
 export function addRawReducers<S>(

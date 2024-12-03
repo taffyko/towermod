@@ -13,8 +13,10 @@ import { assertUnreachable, enumerate } from '@shared/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
-import { UniqueTowermodObject } from '@shared/reducers/data';
+import { UniqueObjectLookup, UniqueTowermodObject } from '@shared/reducers/data';
 import { AppContext } from '@renderer/appContext';
+import { objectDisplayName } from '@shared/dataUtil';
+import { store } from '@renderer/store';
 
 function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {
 	switch (obj.type) {
@@ -58,39 +60,8 @@ const getNodeData = (
 	nestingLevel: number,
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
 
-	const objType = obj.type;
 	const id: string | number = getTreeItemId(obj);
-	let name: string
-	switch (objType) {
-		case 'Layout':
-			name = `Layout: ${obj.name}`
-		break; case 'LayoutLayer':
-			name = `Layer ${obj.id}: ${obj.name}`
-		break; case 'ObjectInstance': {
-			// TODO: object type name
-			const pluginName = '' // TODO
-			const objectName = '' // TODO
-			name = `Instance: ${pluginName} (${objectName}: ${obj.id})`
-		} break; case 'Animation':
-			// TODO: animations
-			name = `Animation ${obj.id}`
-		break; case 'Behavior':
-			name = `Behavior: ${obj.name}`
-		break; case 'Container':
-			const firstObjName = '' // TODO
-			name = `Container: ${firstObjName}`
-		break; case 'Family':
-			name = `Family: ${obj.name}`
-		break; case 'ObjectType': {
-			const pluginName = '' // TODO
-			name = `Type ${obj.id}: (${pluginName}: ${obj.name})`
-		} break; case 'ObjectTrait':
-			name = `Trait: ${obj.name}`
-		break; case 'AppBlock':
-			name = 'Project Settings'
-		break; default:
-			assertUnreachable(objType)
-	}
+	const name = objectDisplayName(store.getState().data, obj)
 
 	return {
 		data: {
@@ -105,7 +76,7 @@ const getNodeData = (
 	}
 };
 
-const getTreeItemId = (obj: UniqueTowermodObject) => {
+const getTreeItemId = (obj: UniqueObjectLookup) => {
 	const objType = obj.type;
 	let id: string | number
 	switch (objType) {
@@ -190,9 +161,9 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 
 export interface OutlinerHandle {
 	tree: FixedSizeTree<OutlinerNodeData>
-	jumpToItem(obj: UniqueTowermodObject)
-	setOpen(obj: UniqueTowermodObject, open: boolean)
-	setOpenRecursive(obj: UniqueTowermodObject, open: boolean)
+	jumpToItem(obj: UniqueObjectLookup)
+	setOpen(obj: UniqueObjectLookup, open: boolean)
+	setOpenRecursive(obj: UniqueObjectLookup, open: boolean)
 }
 
 const OutlinerContext = createContext<OutlinerHandle>(null!);

@@ -34,6 +34,11 @@ export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pi
 				id: { readonly: true },
 				data: { hidden: true }, // TODO
 			})
+		break; case 'ObjectType':
+			override(type, {
+				id: { readonly: true },
+				descriptors: { hidden: true, valueTypes: new Set(['FeatureDescriptors']) }
+			})
 		break; case 'Behavior':
 			override(type, {
 				objectTypeId: { readonly: true },
@@ -75,7 +80,7 @@ export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: 
 export function getCustomComponent(pinfo: PropertyInfo, onChange: (v: any) => void): React.ReactNode | undefined {
 	const objPinfo = pinfo.parent;
 	if (objPinfo && typeof objPinfo.value === 'object' && (objPinfo.type as any) !== 'Record') {
-		const obj = pinfo.value as InspectorObjectValue
+		const obj = objPinfo.value as InspectorObjectValue
 		const type = obj.type
 		switch (type) {
 			case 'AnimationFrame':

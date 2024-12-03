@@ -80,16 +80,25 @@ export const InspectorRecord = (props: { pinfo: RecordPropertyInfo<InspectorReco
 
 export const InspectorString = (props: { pinfo: SimplePropertyInfo<string>, onChange: (v: string) => void}) => {
 	const { pinfo, onChange } = props
+	if (pinfo.readonly) {
+		return <div>{pinfo.value}</div>
+	}
 	return <input className="grow" type="string" value={pinfo.value} onChange={(e) => onChange(e.target.value)} />
 }
 
 export const InspectorNumeric = (props: { pinfo: SimplePropertyInfo<number>, onChange: (v: number) => void}) => {
 	const { pinfo, onChange } = props
+	if (pinfo.readonly) {
+		return <div>{pinfo.value}</div>
+	}
 	return <input className="grow" type="number" value={pinfo.value} onChange={(e) => onChange(Number(e.target.value))} />
 }
 
 export const InspectorBoolean = (props: { pinfo: SimplePropertyInfo<boolean>, onChange: (v: boolean) => void }) => {
 	const { pinfo, onChange } = props
+	if (pinfo.readonly) {
+		return <div>{pinfo.value}</div>
+	}
 	return <input className="grow" type="checkbox" checked={pinfo.value} onChange={(e) => onChange(e.target.checked)} />
 }
 

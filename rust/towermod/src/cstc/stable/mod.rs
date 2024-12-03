@@ -426,6 +426,7 @@ pub enum PrivateVariableType {
 	String,
 }
 
+/// Record on an ObjectType that describes the names and types of each object instance
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrivateVariable {

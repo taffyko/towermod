@@ -3,7 +3,7 @@ import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, O
 import { actions as mainActions } from './main'
 import { addRawReducers, assertUnreachable } from "@shared/util";
 
-type State = CstcData
+export type State = CstcData
 
 const initialState: State = {
 	editorPlugins: {},
@@ -67,6 +67,18 @@ export function findFamilyByName(state: State, name: string) {
 }
 export function findObjectTraitByName(state: State, name: string) {
 	return state.traits.find(o => o.name === name)
+}
+
+export function findObjectInstances(state: State, objTypeId: number) {
+	const objects: ObjectInstance[] = []
+	for (const layout of state.layouts) {
+		for (const layer of layout.layers) {
+			for (const object of layer.objects) {
+				if (object.objectTypeId === objTypeId) { objects.push(object) }
+			}
+		}
+	}
+	return objects
 }
 
 export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | FeatureDescriptors | FeatureDescriptor
@@ -148,6 +160,14 @@ export const slice = createSlice({
 		},
 		removeObjectInstance(state, { payload }: PayloadAction<LookupForType<'ObjectInstance'>>) {
 			// TODO: do types need at least one instance?
+		},
+		addPrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string } & ({ propType: 'string', initialValue: string } | { propType: 'number', initialValue: number })>) {
+			const instances = findObjectInstances(state, payload.objectTypeId)
+			// TODO: update every instance
+		},
+		removePrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string }>) {
+			const instances = findObjectInstances(state, payload.objectTypeId)
+			// TODO: confirmation
 		},
 	},
 });
