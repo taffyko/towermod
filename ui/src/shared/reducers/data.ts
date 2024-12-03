@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame } from "@towermod";
+import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors } from "@towermod";
 import { actions as mainActions } from './main'
 import { addRawReducers, assertUnreachable } from "@shared/util";
 
@@ -43,13 +43,24 @@ export function findLayoutLayerById(state: State, id: number) {
 	return undefined
 }
 export function findAnimationById(state: State, id: number) {
-	return state.animations.find(a => a.id === id)
+	function recurse(animations: Animation[]) {
+		for (const a of animations) {
+			if (a.id === id) {
+				return a
+			}
+			const result = recurse(a.subAnimations);
+			if (result) {
+				return result
+			}
+		}
+	}
+	return recurse(state.animations)
 }
 export function findContainerByFirstObjectId(state: State, id: number) {
 	return state.containers.find(c => c.objectIds[0] === id)
 }
-export function findBehaviorByName(state: State, name: string) {
-	return state.behaviors.find(b => b.name === name)
+export function findBehaviorByObjectTypeAndName(state: State, objectTypeId: number, name: string) {
+	return state.behaviors.find(b => b.objectTypeId === objectTypeId && b.name === name)
 }
 export function findFamilyByName(state: State, name: string) {
 	return state.families.find(b => b.name === name)
@@ -58,7 +69,7 @@ export function findObjectTraitByName(state: State, name: string) {
 	return state.traits.find(o => o.name === name)
 }
 
-export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame
+export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | FeatureDescriptors | FeatureDescriptor
 
 export const uniqueObjectTypes = new Set([
 	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock'
@@ -72,7 +83,7 @@ export type UniqueObjectLookup =
 	| Pick<LayoutLayer, 'type' | 'id'>
 	| Pick<ObjectInstance, 'type' | 'id'>
 	| Pick<Animation, 'type' | 'id'>
-	| Pick<Behavior, 'type' | 'name'>
+	| Pick<Behavior, 'type' | 'name' | 'objectTypeId'>
 	| Pick<Container, 'type' | 'objectIds'>
 	| Pick<Family, 'type' | 'name'>
 	| Pick<ObjectType, 'type' | 'id'>
@@ -97,7 +108,7 @@ export function findObject<T extends UniqueObjectLookup>(state: State, obj: T): 
 		break; case 'Animation':
 			target = findAnimationById(state, obj.id)
 		break; case 'Behavior':
-			target = findBehaviorByName(state, obj.name)
+			target = findBehaviorByObjectTypeAndName(state, obj.objectTypeId, obj.name)
 		break; case 'Container':
 			target = findContainerByFirstObjectId(state, obj.objectIds[0])
 		break; case 'Family':

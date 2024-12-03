@@ -32,7 +32,19 @@ export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pi
 		break; case 'ObjectInstance':
 			override(type, {
 				id: { readonly: true },
-				data: { hidden: true },
+				data: { hidden: true }, // TODO
+			})
+		break; case 'Behavior':
+			override(type, {
+				objectTypeId: { readonly: true },
+				data: { hidden: true }, // TODO
+				descriptors: { hidden: true, valueTypes: new Set(['FeatureDescriptors']) }
+			})
+		break; case 'FeatureDescriptors':
+			override(type, {
+				actions: { valueTypes: new Set(['FeatureDescriptor']) },
+				conditions: { valueTypes: new Set(['FeatureDescriptor']) },
+				expressions: { valueTypes: new Set(['FeatureDescriptor']) },
 			})
 	}
 
@@ -74,12 +86,17 @@ export function getCustomComponent(pinfo: PropertyInfo, onChange: (v: any) => vo
 			break; case 'ObjectInstance':
 				switch (pinfo.key) {
 					case 'objectTypeId':
-						return <IdLink lookup={{ type, id: pinfo.value as any }} />
+						return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
 				}
 			break; case 'ObjectType':
 				switch (pinfo.key) {
 					case 'instances':
-						return <IdLink lookup={{ type, id: pinfo.value as any }} />
+						return <IdLink lookup={{ type: 'ObjectInstance', id: pinfo.value as any }} />
+				}
+			break; case 'Behavior':
+				switch (pinfo.key) {
+					case 'objectTypeId':
+						return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
 				}
 		}
 	}

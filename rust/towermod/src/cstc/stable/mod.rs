@@ -184,6 +184,13 @@ pub struct FeatureDescriptors {
 	pub actions: Vec<FeatureDescriptor>,
 	pub conditions: Vec<FeatureDescriptor>,
 	pub expressions: Vec<FeatureDescriptor>,
+
+	#[napi(ts_type = "'FeatureDescriptors'")]
+	#[serde(skip, default = "FeatureDescriptors::type_name")]
+	pub _type: &'static str,
+}
+impl FeatureDescriptors {
+	pub fn type_name() -> &'static str { "FeatureDescriptors" }
 }
 
 #[napi(object)]
@@ -431,7 +438,15 @@ pub struct PrivateVariable {
 pub struct FeatureDescriptor {
 	pub script_name: String,
 	pub param_count: u32,
+
+	#[napi(ts_type = "'FeatureDescriptor'")]
+	#[serde(skip, default = "FeatureDescriptor::type_name")]
+	pub _type: &'static str,
 }
+impl FeatureDescriptor {
+	pub fn type_name() -> &'static str { "FeatureDescriptor" }
+}
+
 
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]

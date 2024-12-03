@@ -118,7 +118,7 @@ const getTreeItemId = (obj: UniqueTowermodObject) => {
 		break; case 'Animation':
 			id = obj.id
 		break; case 'Behavior':
-			id = obj.name
+			id = `${obj.objectTypeId}-${obj.name}`
 		break; case 'Container':
 			id = obj.objectIds[0]
 		break; case 'Family':

@@ -60,6 +60,7 @@ impl BlockReader<'_> {
 				actions: self.read_feature_descriptor_group(),
 				conditions: self.read_feature_descriptor_group(),
 				expressions: self.read_feature_descriptor_group(),
+				_type: "FeatureDescriptors",
 			}),
 		};
 		descriptors
@@ -69,7 +70,7 @@ impl BlockReader<'_> {
 		self.read_collection(|this| {
 			let script_name = this.read_string();
 			let param_count = this.read_u32();
-			FeatureDescriptor { script_name, param_count }
+			FeatureDescriptor { script_name, param_count, _type: FeatureDescriptor::type_name() }
 		})
 	}
 
@@ -214,7 +215,7 @@ impl BlockWriter {
 			None => {
 				self.write_u8(0);
 			}
-			Some(FeatureDescriptors { actions, conditions, expressions }) => {
+			Some(FeatureDescriptors { actions, conditions, expressions, _type }) => {
 				self.write_u8(1);
 				self.write_feature_descriptor_group(actions);
 				self.write_feature_descriptor_group(conditions);
