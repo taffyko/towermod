@@ -9,8 +9,7 @@ export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
 		case 'LayoutLayer':
 			return `Layer ${obj.id}: ${obj.name}`
 		case 'ObjectInstance': {
-			const objType = findObjectTypeById(data, obj.objectTypeId)
-			assert(objType)
+			const objType = assert(findObjectTypeById(data, obj.objectTypeId))
 			const plugin = data.editorPlugins[objType.pluginId]
 			const pluginName = plugin.stringTable.name
 			const objectName = objType.name
@@ -21,8 +20,7 @@ export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
 		case 'Behavior':
 			return `Behavior: ${obj.name}`
 		case 'Container':
-			const objType = findObjectTypeById(data, obj.objectIds[0])
-			assert(objType)
+			const objType = assert(findObjectTypeById(data, obj.objectIds[0]))
 			return `Container: ${objType.name}`
 		case 'Family':
 			return `Family: ${obj.name}`

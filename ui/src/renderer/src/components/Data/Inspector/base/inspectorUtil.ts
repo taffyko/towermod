@@ -40,15 +40,15 @@ export type ArrayPropertyInfo<T extends InspectorValue = InspectorValue> = BaseP
 	key: InspectorKeyTypes,
 	value: readonly T[]
 	type: 'Array',
-	valueTypes: Set<KeyOfValue<TypeNameToValue, T>>
+	valueTypes: Array<KeyOfValue<TypeNameToValue, T>>
 }
 
 export type RecordPropertyInfo<T extends InspectorValue = InspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> = BasePropertyInfo & {
 	key: InspectorKeyTypes,
 	value: Readonly<Record<TKey, T>>,
 	type: 'Record',
-	keyTypes: Set<KeyOfValue<TypeNameToValue, TKey>>,
-	valueTypes: Set<KeyOfValue<TypeNameToValue, T>>,
+	keyTypes: Array<KeyOfValue<TypeNameToValue, TKey>>,
+	valueTypes: Array<KeyOfValue<TypeNameToValue, T>>,
 }
 export type SimplePropertyInfo<T extends InspectorValue = InspectorValue> = BasePropertyInfo & {
 	key: InspectorKeyTypes,
@@ -75,18 +75,18 @@ export function inferPropertyInfoFromArrayValue(element: InspectorValue, parentP
 	return pinfo
 }
 
-export function speciateType(type: keyof TypeNameToValue, types: Set<keyof TypeNameToValue>): keyof TypeNameToValue {
+export function speciateType(type: keyof TypeNameToValue, types: Array<keyof TypeNameToValue>): keyof TypeNameToValue {
 	switch (type) {
 		case 'number':
 			for (const subtype of numericSubtypeNames) {
-				if (types.has(subtype)) { return subtype }
+				if (types.includes(subtype)) { return subtype }
 			}
 		break; case 'string':
 			for (const subtype of stringSubtypeNames) {
-				if (types.has(subtype)) { return subtype }
+				if (types.includes(subtype)) { return subtype }
 			}
 	}
-	if (!types.has(type)) {
+	if (!types.includes(type)) {
 		console.error(`${type} not in [${[...types]},]`)
 	}
 	return type;
@@ -111,7 +111,7 @@ export function inferPropertyInfoFromValue(value: InspectorValue, parent: Proper
 				key,
 				value,
 				parent,
-				valueTypes: new Set(['unknown']) as any,
+				valueTypes: ['unknown'] as any,
 			} as ArrayPropertyInfo
 		case 'Record':
 			return {
@@ -119,7 +119,7 @@ export function inferPropertyInfoFromValue(value: InspectorValue, parent: Proper
 				key,
 				value,
 				parent,
-				keyTypes: new Set(['string', 'number']) as any
+				keyTypes: ['string', 'number'] as any
 			} as RecordPropertyInfo
 		default:
 			return {

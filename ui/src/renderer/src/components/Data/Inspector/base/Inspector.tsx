@@ -54,7 +54,7 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<InspectorValue>
 	</div>
 }
 
-export const InspectorRecord = (props: { pinfo: RecordPropertyInfo<InspectorRecordValue>, onChange: (v: InspectorRecordValue) => void }) => {
+export const InspectorRecord = (props: { pinfo: RecordPropertyInfo<InspectorValue>, onChange: (v: InspectorRecordValue) => void }) => {
 	const { pinfo: recordPinfo, onChange } = props
 
 	const onPropertyChange = (key: InspectorKeyTypes, value: any) => {

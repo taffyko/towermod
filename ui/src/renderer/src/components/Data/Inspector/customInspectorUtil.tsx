@@ -17,7 +17,7 @@ export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pi
 			override(type, {
 				subAnimations: { hidden: true },
 				id: { readonly: true },
-				frames: { valueTypes: new Set(['AnimationFrame']) },
+				frames: { valueTypes: ['AnimationFrame'] },
 			})
 		break; case 'Layout':
 			override(type, {
@@ -37,19 +37,19 @@ export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pi
 		break; case 'ObjectType':
 			override(type, {
 				id: { readonly: true },
-				descriptors: { hidden: true, valueTypes: new Set(['FeatureDescriptors']) }
+				descriptors: { hidden: true, valueTypes: ['FeatureDescriptors'] }
 			})
 		break; case 'Behavior':
 			override(type, {
 				objectTypeId: { readonly: true },
 				data: { hidden: true }, // TODO
-				descriptors: { hidden: true, valueTypes: new Set(['FeatureDescriptors']) }
+				descriptors: { hidden: true, valueTypes: ['FeatureDescriptors'] }
 			})
 		break; case 'FeatureDescriptors':
 			override(type, {
-				actions: { valueTypes: new Set(['FeatureDescriptor']) },
-				conditions: { valueTypes: new Set(['FeatureDescriptor']) },
-				expressions: { valueTypes: new Set(['FeatureDescriptor']) },
+				actions: { valueTypes: ['FeatureDescriptor'] },
+				conditions: { valueTypes: ['FeatureDescriptor'] },
+				expressions: { valueTypes: ['FeatureDescriptor'] },
 			})
 	}
 
@@ -70,7 +70,7 @@ export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: 
 					},
 					readonly: true,
 					type: 'Array',
-					valueTypes: new Set(['int']),
+					valueTypes: ['int'],
 				}
 			]
 	}
@@ -92,6 +92,7 @@ export function getCustomComponent(pinfo: PropertyInfo, onChange: (v: any) => vo
 				switch (pinfo.key) {
 					case 'objectTypeId':
 						return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
+					// TODO: dictionary-gui for editing property values
 				}
 			break; case 'ObjectType':
 				switch (pinfo.key) {

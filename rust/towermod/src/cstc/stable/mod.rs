@@ -432,7 +432,15 @@ pub enum PrivateVariableType {
 pub struct PrivateVariable {
 	pub name: String,
 	pub value_type: PrivateVariableType,
+
+	#[napi(ts_type = "'PrivateVariable'")]
+	#[serde(skip, default = "PrivateVariable::type_name")]
+	pub _type: &'static str,
 }
+impl PrivateVariable {
+	pub fn type_name() -> &'static str { "PrivateVariable" }
+}
+
 
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]

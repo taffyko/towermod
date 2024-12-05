@@ -1,7 +1,7 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors } from "@towermod";
+import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariableType } from "@towermod";
 import { actions as mainActions } from './main'
-import { addRawReducers, assertUnreachable } from "@shared/util";
+import { addRawReducers, assert, assertUnreachable } from "@shared/util";
 
 export type State = CstcData
 
@@ -25,10 +25,10 @@ export function findObjectById(state: State, id: number) {
 			}
 		}
 	}
-	return undefined
+	return assert(false)
 }
 export function findObjectTypeById(state: State, id: number) {
-	return state.objectTypes.find(s => id === s.id)
+	return assert(state.objectTypes.find(s => id === s.id))
 }
 
 export function findLayoutByName(state: State, name: string) {
@@ -40,10 +40,10 @@ export function findLayoutLayerById(state: State, id: number) {
 			if (layer.id === id) { return layer }
 		}
 	}
-	return undefined
+	return assert(false)
 }
 export function findAnimationById(state: State, id: number) {
-	function recurse(animations: Animation[]) {
+	function recurse(animations: Animation[]): Animation | undefined {
 		for (const a of animations) {
 			if (a.id === id) {
 				return a
@@ -53,20 +53,21 @@ export function findAnimationById(state: State, id: number) {
 				return result
 			}
 		}
+		return undefined
 	}
-	return recurse(state.animations)
+	return assert(recurse(state.animations))
 }
 export function findContainerByFirstObjectId(state: State, id: number) {
-	return state.containers.find(c => c.objectIds[0] === id)
+	return assert(state.containers.find(c => c.objectIds[0] === id))
 }
 export function findBehaviorByObjectTypeAndName(state: State, objectTypeId: number, name: string) {
-	return state.behaviors.find(b => b.objectTypeId === objectTypeId && b.name === name)
+	return assert(state.behaviors.find(b => b.objectTypeId === objectTypeId && b.name === name))
 }
 export function findFamilyByName(state: State, name: string) {
-	return state.families.find(b => b.name === name)
+	return assert(state.families.find(b => b.name === name))
 }
 export function findObjectTraitByName(state: State, name: string) {
-	return state.traits.find(o => o.name === name)
+	return assert(state.traits.find(o => o.name === name))
 }
 
 export function findObjectInstances(state: State, objTypeId: number) {
@@ -161,13 +162,30 @@ export const slice = createSlice({
 		removeObjectInstance(state, { payload }: PayloadAction<LookupForType<'ObjectInstance'>>) {
 			// TODO: do types need at least one instance?
 		},
-		addPrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string } & ({ propType: 'string', initialValue: string } | { propType: 'number', initialValue: number })>) {
-			const instances = findObjectInstances(state, payload.objectTypeId)
-			// TODO: update every instance
+		addPrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string } & ({ propType: PrivateVariableType.String, initialValue: string } | { propType: PrivateVariableType.Integer, initialValue: number })>) {
+			const { objectTypeId, prop, propType, initialValue } = payload
+			const type = findObjectTypeById(state, objectTypeId)
+			if (type.privateVariables.find(o => o.name === prop)) {
+				console.error(`Property ${prop} already exists`)
+				return
+			}
+			type.privateVariables.push({ name: prop, valueType: propType })
+			const instances = findObjectInstances(state, objectTypeId)
+			for (const instance of instances) {
+				instance.privateVariables.push(String(initialValue))
+			}
 		},
 		removePrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string }>) {
-			const instances = findObjectInstances(state, payload.objectTypeId)
-			// TODO: confirmation
+			const { objectTypeId, prop } = payload
+			const type = findObjectTypeById(state, objectTypeId)
+			const propIdx = type.privateVariables.findIndex(o => o.name === prop)
+			if (propIdx === -1) { return }
+			type.privateVariables.splice(propIdx, 1)
+			const instances = findObjectInstances(state, objectTypeId)
+			for (const instance of instances) {
+				instance.privateVariables.splice(propIdx, 1)
+			}
+			// TODO: confirmation dialog
 		},
 	},
 });

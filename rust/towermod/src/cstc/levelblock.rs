@@ -88,7 +88,7 @@ impl BlockReader<'_> {
 	fn read_private_variable(&mut self) -> PrivateVariable {
 		let name = self.read_string();
 		let value_type = PrivateVariableType::from_i32(self.read_i32()).unwrap();
-		PrivateVariable { name, value_type }
+		PrivateVariable { name, value_type, _type: PrivateVariable::type_name() }
 	}
 
 	fn read_trait(&mut self) -> ObjectTrait {

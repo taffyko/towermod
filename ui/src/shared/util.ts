@@ -12,10 +12,12 @@ export function assertUnreachable(a: never): never {
 	throw new Error(`Deliberately unreachable case occurred: ${a}`);
 }
 
-export function assert(condition: unknown, msg?: string): asserts condition {
+export function assert<T>(value: T, msg?: string): NonNullable<T>
+export function assert(condition: unknown, msg?: string): asserts condition
+export function assert(condition: unknown, msg?: string) {
 	if (!condition) { throw new Error(msg ?? "Assertion failed") }
+	return condition
 }
-
 
 /** Add reducers without immer.js to a redux-toolkit slice */
 export function addRawReducers<S>(
