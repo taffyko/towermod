@@ -38,11 +38,14 @@ export function PrivateVariables(props: { pinfo: ArrayPropertyInfo<PrivateVariab
 	return <InspectorDictionary pinfo={customPinfo} onChange={(newValue) => {
 		for (const key of Object.keys(value)) {
 			if (!(key in newValue)) {
+				// TODO: confirmation modal
 				dispatch(actions.removePrivateVariable({ objectTypeId: obj.objectTypeId, prop: key }))
 			}
 		}
 		for (const key of Object.keys(newValue)) {
 			if (!(key in value)) {
+				console.log('new value', newValue[key])
+				// TODO: confirmation modal
 				dispatch(actions.addPrivateVariable({ objectTypeId: obj.objectTypeId, prop: key, initialValue: newValue[key] as any }))
 			}
 		}

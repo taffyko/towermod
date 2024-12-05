@@ -1,6 +1,6 @@
-import { getCustomComponent } from "../customInspectorUtil"
+import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
 import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo } from "./inspectorUtil"
-import React, { useMemo } from "react"
+import React, { useMemo, useState } from "react"
 
 export const InspectorObject = (props: {
 	pinfo: ObjectPropertyInfo,
@@ -49,8 +49,28 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorVal
 		</div>
 	}), [arrPinfo.value])
 
+	// adding elements
+	const [newValueType, setNewValueType] = useState(arrPinfo.valueTypes[0])
+	const getDefaultValue = defaultValueForType(newValueType)
+	const addElement = getDefaultValue ? () => {
+		const newArr = [...arrPinfo.value, getDefaultValue()]
+		onChange(newArr)
+	} : undefined
+
 	return <div className="vbox grow">
 		{valueComponents}
+		{addElement ?
+			<div className="hbox">
+				{arrPinfo.valueTypes.length > 1 ?
+					<select onChange={e => setNewValueType(e.target.value as any)}>
+						{arrPinfo.valueTypes.map(typeName =>
+							<option key={typeName} value={typeName}>{typeName}</option>
+						)}
+					</select>
+				: null}
+				<button onClick={() => addElement()}>+</button>
+			</div>
+		: null}
 	</div>
 }
 
@@ -62,19 +82,51 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		onChange(newObj)
 	}
 
+	const removeProperty = (key: InspectorKeyTypes) => {
+		const newObj = { ...dictPinfo.value }
+		delete newObj[key]
+		onChange(newObj)
+	}
+
 	const propertyComponents: React.ReactNode[] = useMemo(() => Object.entries(dictPinfo.value).map(([key, val]) => {
 		const pinfo = inferPropertyInfoFromDictionaryValue(val, dictPinfo, key)
 
 		const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
 
 		return <div className="hbox gap" key={pinfo.key}>
-			<div>{pinfo.key}:</div>
+			<div>
+				{pinfo.key}:
+				<button onClick={() => removeProperty(pinfo.key)}>X</button>
+			</div>
 			<div className="hbox grow">{valueComponent}</div>
 		</div>
 	}), [dictPinfo.value])
 
-	return <div className="vbox grow">
+	// adding properties
+	const [newKeyText, setNewKeyText] = useState("")
+	const [newValueType, setNewValueType] = useState(dictPinfo.valueTypes[0])
+	const getDefaultValue = defaultValueForType(newValueType)
+	const addProperty = getDefaultValue ? () => {
+		const newObj = { ...dictPinfo.value, [newKeyText]: getDefaultValue() }
+		setNewKeyText("")
+		onChange(newObj)
+	} : undefined
+
+	return <div className="vbox grow" key={dictPinfo.key}>
 		{propertyComponents}
+		{addProperty ?
+			<div className="hbox">
+				<input className="grow" type="text" value={newKeyText} onChange={e => setNewKeyText(e.target.value)} />
+				{dictPinfo.valueTypes.length > 1 ?
+					<select onChange={e => setNewValueType(e.target.value as any)}>
+						{dictPinfo.valueTypes.map(typeName =>
+							<option key={typeName} value={typeName}>{typeName}</option>
+						)}
+					</select>
+				: null}
+				<button disabled={!newKeyText} onClick={() => addProperty()}>+</button>
+			</div>
+		: null}
 	</div>
 }
 

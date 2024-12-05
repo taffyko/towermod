@@ -141,10 +141,13 @@ export function inferTypeFromValue(value: AnyInspectorValue): InspectorTypeName 
 		}
 	}
 	const type = typeof value
-	if (type === 'number' || type === 'string') {
-		return type
-	} else {
-		return 'unknown'
+	switch (type) {
+		case 'number':
+		case 'boolean':
+		case 'string':
+			return type
+		default:
+			return 'unknown'
 	}
 }
 

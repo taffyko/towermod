@@ -38,13 +38,22 @@ export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pi
 		break; case 'ObjectType':
 			override(type, {
 				id: { readonly: true },
-				descriptors: { hidden: true, valueTypes: ['FeatureDescriptors'] }
+				descriptors: { hidden: true, valueTypes: ['FeatureDescriptors'] },
+				privateVariables: { hidden: true },
 			})
 		break; case 'Behavior':
 			override(type, {
 				objectTypeId: { readonly: true },
 				data: { hidden: true }, // TODO
 				descriptors: { hidden: true, valueTypes: ['FeatureDescriptors'] }
+			})
+		break; case 'Container':
+			override(type, {
+				objectIds: { valueTypes: ['int'] }
+			})
+		break; case 'Family':
+			override(type, {
+				objectTypeIds: { valueTypes: ['int'] }
 			})
 		break; case 'FeatureDescriptors':
 			override(type, {
@@ -79,8 +88,14 @@ export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: 
 }
 
 export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): React.ReactNode | undefined {
-	const objPinfo = pinfo.parent;
-	if (objPinfo && typeof objPinfo.value === 'object' && (objPinfo.type as any) !== 'Dictionary') {
+	const parentPinfo = pinfo.parent
+	let objPinfo = parentPinfo
+	let collectionElement = false
+	if (parentPinfo?.type === 'Dictionary' || parentPinfo?.type === 'Array') {
+		collectionElement = true
+		objPinfo = parentPinfo.parent
+	}
+	if (parentPinfo && objPinfo && typeof objPinfo.value === 'object' && (objPinfo.type as any) !== 'Dictionary') {
 		const obj = objPinfo.value as InspectorObjectValue
 		const type = obj.type
 		switch (type) {
@@ -105,6 +120,13 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 				switch (pinfo.key) {
 					case 'objectTypeId':
 						return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
+				}
+			break; case 'Family':
+				switch (pinfo.key) {
+					case 'objectTypeIds':
+						if (collectionElement) {
+							return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
+						}
 				}
 		}
 	}

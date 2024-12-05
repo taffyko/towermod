@@ -170,7 +170,7 @@ export const slice = createSlice({
 				console.error(`Property ${prop} already exists`)
 				return
 			}
-			const valueType = typeof prop === 'number' ? 0 : 1 // PrivateVariableType.Integer : PrivateVariableType.String
+			const valueType = typeof initialValue === 'number' ? 0 : 1 // PrivateVariableType.Integer : PrivateVariableType.String
 			type.privateVariables.push({ name: prop, valueType, type: 'PrivateVariable' })
 			const instances = findObjectInstances(state, objectTypeId)
 			for (const instance of instances) {

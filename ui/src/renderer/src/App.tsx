@@ -3,7 +3,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Mods from './components/Mods';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Tab, Tabs, TabsHandle } from './components/Tabs';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TitleBar } from './components/TitleBar';
 import { rpc } from './util';
 import { Data, DataHandle } from './components/Data';
@@ -23,6 +23,7 @@ async function initialize() {
 const App = () => {
 	const [dataHandle, setDataHandle] = useStateRef<DataHandle>()
 	const [tabsHandle, setTabsHandle] = useStateRef<TabsHandle>()
+	const [ActiveModal, setModal] = useState<React.ElementType<{ requestClose: () => void }> | null>(null)
 
 	const dataIsLoaded = useAppSelector(store => !!store.data.objectTypes.length);
 
@@ -30,6 +31,7 @@ const App = () => {
 		return {
 			data: dataHandle!,
 			tabs: tabsHandle!,
+			openModal(modal) { setModal(modal as any) },
 		}
 	}, [dataHandle])
 
@@ -58,6 +60,9 @@ const App = () => {
 									position="top-center"
 									theme="dark"
 								/>
+								{ActiveModal ?
+									<ActiveModal requestClose={() => setModal(null)} />
+								: ActiveModal}
 								<div
 									className={Style.pageContent}
 									// @ts-ignore
