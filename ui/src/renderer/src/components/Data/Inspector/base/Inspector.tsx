@@ -1,3 +1,6 @@
+/**
+ * Contains implementations for base inspector components for types that are not application-specific
+ */
 import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
 import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo } from "./inspectorUtil"
 import React, { useMemo, useState } from "react"

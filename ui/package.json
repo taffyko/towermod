@@ -11,7 +11,7 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "build-rust": "napi build --platform --manifest-path ../rust/towermod/Cargo.toml --features bundled-dllreader --js index.cjs -o ./src/towermod --no-const-enum",
+    "build-rust": "napi build --platform --manifest-path ../rust/towermod/Cargo.toml --features bundled-dllreader --js index.cjs -o ./src/towermod",
     "start": "electron-vite preview",
     "dev": "electron-vite dev -w -- --sourcemap --remote-debugging-port=9222",
     "build": "npm run build-rust && electron-vite build",

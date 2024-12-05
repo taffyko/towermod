@@ -121,7 +121,9 @@ pub struct EventGroup {
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
+	#[napi(ts_type = "int")]
 	pub line_number: i32,
+	#[napi(ts_type = "int")]
 	pub sheet_id: i32,
 	pub conditions: Vec<EventCondition>,
 	pub actions: Vec<EventAction>,
@@ -131,9 +133,12 @@ pub struct Event {
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventCondition {
+	#[napi(ts_type = "int")]
 	pub object_id: i32,
+	#[napi(ts_type = "int")]
 	pub cond_id: i32,
 	pub negated: bool,
+	#[napi(ts_type = "int")]
 	pub movement_id: i32,
 	pub params: Vec<Vec<Token>>,
 }
@@ -141,8 +146,11 @@ pub struct EventCondition {
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventAction {
+	#[napi(ts_type = "int")]
 	pub object_id: i32,
+	#[napi(ts_type = "int")]
 	pub action_id: i32,
+	#[napi(ts_type = "int")]
 	pub movement_id: i32,
 	pub params: Vec<Vec<Token>>,
 }
@@ -161,9 +169,11 @@ pub struct LevelBlock {
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObjectType {
+	#[napi(ts_type = "int")]
 	pub id: i32,
 	pub name: String,
 	/// Index of the .csx plugin associated with this ObjectType
+	#[napi(ts_type = "int")]
 	pub plugin_id: i32,
 	pub global: bool,
 	pub destroy_when: DisableShaderWhen,
@@ -197,8 +207,11 @@ impl FeatureDescriptors {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Behavior {
+	#[napi(ts_type = "int")]
 	pub object_type_id: i32,
+	#[napi(ts_type = "int")]
 	pub new_index: i32,
+	#[napi(ts_type = "int")]
 	pub mov_index: i32,
 	pub name: String,
 	pub data: Vec<u8>,
@@ -260,8 +273,11 @@ impl ObjectTrait {
 pub struct Layout {
 	/// Unique name.
 	pub name: String,
+	#[napi(ts_type = "int")]
 	pub width: i32,
+	#[napi(ts_type = "int")]
 	pub height: i32,
+	#[napi(ts_type = "int")]
 	pub color: i32,
 	pub unbounded_scrolling: bool,
 	pub application_background: bool,
@@ -282,31 +298,34 @@ impl Layout {
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LayoutLayer {
+	#[napi(ts_type = "int")]
 	pub id: i32,
 	pub name: String,
 	pub layer_type: LayerType,
+	#[napi(ts_type = "int")]
 	pub filter_color: i32,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub opacity: Nt<f32>,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub angle: Nt<f32>,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub scroll_x_factor: Nt<f32>,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub scroll_y_factor: Nt<f32>,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub scroll_x: Nt<f32>,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub scroll_y: Nt<f32>,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub zoom_x_factor: Nt<f32>,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub zoom_y_factor: Nt<f32>,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub zoom_x: Nt<f32>,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub zoom_y: Nt<f32>,
 	pub clear_background_color: bool,
+	#[napi(ts_type = "int")]
 	pub background_color: i32,
 	pub force_own_texture: bool,
 	pub sampler: LayerSamplerMode,
@@ -334,17 +353,25 @@ pub enum LayerSamplerMode {
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObjectInstance {
+	#[napi(ts_type = "int")]
 	pub id: i32,
+	#[napi(ts_type = "int")]
 	pub object_type_id: i32,
+	#[napi(ts_type = "int")]
 	pub x: i32,
+	#[napi(ts_type = "int")]
 	pub y: i32,
+	#[napi(ts_type = "int")]
 	pub width: i32,
+	#[napi(ts_type = "int")]
 	pub height: i32,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub angle: Nt<f32>,
+	#[napi(ts_type = "int")]
 	pub filter: i32,
 	pub private_variables: Vec<String>,
 	pub data: Vec<u8>,
+	#[napi(ts_type = "int")]
 	pub key: i32,
 
 	#[napi(ts_type = "'ObjectInstance'")]
@@ -359,16 +386,20 @@ impl ObjectInstance {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[napi(object)]
 pub struct Animation {
+	#[napi(ts_type = "int")]
 	pub id: i32,
 	pub name: String,
+	#[napi(ts_type = "int")]
 	pub tag: i32,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub speed: Nt<f32>,
 	pub is_angle: bool,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub angle: Nt<f32>,
 	/// -1 == forever
+	#[napi(ts_type = "int")]
 	pub repeat_count: i32,
+	#[napi(ts_type = "int")]
 	pub repeat_to: i32,
 	pub ping_pong: bool,
 	pub frames: Vec<AnimationFrame>,
@@ -385,8 +416,9 @@ impl Animation {
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnimationFrame {
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub duration: Nt<f32>,
+	#[napi(ts_type = "int")]
 	pub image_id: i32,
 
 	#[napi(ts_type = "'AnimationFrame'")]
@@ -422,6 +454,7 @@ pub enum DisableShaderWhen {
 #[napi]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
 pub enum PrivateVariableType {
+	/// why is this `Integer`? are you sure it can't support decimal values as well?
 	Integer,
 	String,
 }
@@ -446,6 +479,7 @@ impl PrivateVariable {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeatureDescriptor {
 	pub script_name: String,
+	#[napi(ts_type = "int")]
 	pub param_count: u32,
 
 	#[napi(ts_type = "'FeatureDescriptor'")]
@@ -460,7 +494,9 @@ impl FeatureDescriptor {
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionPoint {
+	#[napi(ts_type = "int")]
 	pub x: i32,
+	#[napi(ts_type = "int")]
 	pub y: i32,
 	pub string: String,
 }
@@ -468,27 +504,40 @@ pub struct ActionPoint {
 #[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImageResource {
+	#[napi(ts_type = "int")]
 	pub id: i32,
+	#[napi(ts_type = "int")]
 	pub hotspot_x: i32,
+	#[napi(ts_type = "int")]
 	pub hotspot_y: i32,
 	pub data: Vec<u8>,
 	pub apoints: Vec<ActionPoint>,
+	#[napi(ts_type = "int")]
 	pub collision_width: u32,
+	#[napi(ts_type = "int")]
 	pub collision_height: u32,
+	#[napi(ts_type = "int")]
 	pub collision_pitch: i32,
 	pub collision_mask: Vec<u8>,
 }
 
+#[napi(object)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImageMetadata {
+	#[napi(ts_type = "int")]
 	pub id: i32,
+	#[napi(ts_type = "int")]
 	pub hotspot_x: i32,
+	#[napi(ts_type = "int")]
 	pub hotspot_y: i32,
 	pub apoints: Vec<ActionPoint>,
 	// typically the same as the image's width in pixels
+	#[napi(ts_type = "int")]
 	pub collision_width: u32,
 	// typically the same as the image's height in pixels
+	#[napi(ts_type = "int")]
 	pub collision_height: u32,
+	#[napi(ts_type = "int")]
 	pub collision_pitch: i32,
 	pub collision_mask: Vec<u8>,
 }
@@ -511,13 +560,16 @@ impl ImageResource {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppBlock {
 	pub name: String,
+	#[napi(ts_type = "int")]
 	pub window_width: i32,
+	#[napi(ts_type = "int")]
 	pub window_height: i32,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub eye_distance: Nt<f32>,
 	pub show_menu: bool,
 	pub screensaver: bool,
 	pub fps_mode: FpsMode,
+	#[napi(ts_type = "int")]
 	pub fps: i32,
 	pub fullscreen: bool,
 	pub sampler_mode: SamplerMode,
@@ -527,20 +579,24 @@ pub struct AppBlock {
 	pub data_keys: Vec<DataKey>,
 	pub simulate_shaders: SimulateShadersMode,
 	pub original_project_path: String,
+	#[napi(ts_type = "int")]
 	pub fps_in_caption: i32,
 	pub use_motion_blur: bool,
+	#[napi(ts_type = "int")]
 	pub motion_blur_steps: i32,
 	pub text_rendering_mode: TextRenderingMode,
 	pub override_timedelta: bool,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub time_delta_override: Nt<f32>,
 	pub caption: bool,
 	pub minimize_box: bool,
 	pub maximize_box: bool,
 	pub resize_mode: ResizeMode,
-	#[napi(ts_type = "number")]
+	#[napi(ts_type = "float")]
 	pub minimum_fps: Nt<f32>,
+	#[napi(ts_type = "int")]
 	pub layout_index: i32,
+	#[napi(ts_type = "int")]
 	pub multisamples: u32,
 	pub texture_loading_mode: TextureLoadingMode,
 
@@ -557,6 +613,7 @@ impl AppBlock {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalVariable {
 	pub name: String,
+	#[napi(ts_type = "int")]
 	pub var_type: i32,
 	pub value: String,
 
@@ -572,7 +629,9 @@ impl GlobalVariable {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BehaviorControl {
 	pub name: String,
+	#[napi(ts_type = "int")]
 	pub vk: i32,
+	#[napi(ts_type = "int")]
 	pub player: i32,
 
 	#[napi(ts_type = "'BehaviorControl'")]

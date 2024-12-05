@@ -1,3 +1,4 @@
+import { float, int } from "@towermod"
 import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, propertyInfoOverrides } from "../customInspectorUtil"
 
 export type InspectorObjectValue = CustomInspectorObjects
@@ -11,13 +12,17 @@ export type AnyInspectorValue = SizedInspectorValue | InspectorArrayValue | Insp
 const numericSubtypeNames = ['int', 'float', ...customNumericSubtypeNames] as const
 const stringSubtypeNames = [...customStringSubtypeNames] as const
 
+/** Represents a list of selectable options / enum values */
+export type OptionsList<T extends string | number> = (T)[] | { name: string, value: T }[]
+
+
 export type TypeNameToValue = {
 	'unknown': unknown,
 	'string': string,
 	'boolean': boolean,
 	'number': number,
-	'float': number,
-	'int': number,
+	'float': float,
+	'int': int,
 	'Array': Array<unknown>,
 	'Dictionary': Record<string | number, unknown>
 } & {
@@ -39,6 +44,7 @@ export type ArrayPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> =
 	key: InspectorKeyTypes,
 	value: readonly T[]
 	type: 'Array',
+	/** List of type names representing the union of types this array can contain */
 	valueTypes: Array<KeyOfValue<TypeNameToValue, T>>
 }
 
@@ -46,7 +52,9 @@ export type DictionaryPropertyInfo<T extends AnyInspectorValue = AnyInspectorVal
 	key: InspectorKeyTypes,
 	value: Readonly<Record<TKey, T>>,
 	type: 'Dictionary',
+	/** List of type names representing the union of key types this dictionary can use to key its values */
 	keyTypes: Array<KeyOfValue<TypeNameToValue, TKey>>,
+	/** List of type names representing the union of value types this dictionary can contain */
 	valueTypes: Array<KeyOfValue<TypeNameToValue, T>>,
 }
 export type SimplePropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> = BasePropertyInfo & {
@@ -61,6 +69,8 @@ export type ObjectPropertyInfo<T extends InspectorObjectValue = InspectorObjectV
 }
 
 
+/** Property descriptors for objects and collections, which are capable of having sub-properties of their own */
+export type ParentPropertyInfo = ArrayPropertyInfo | DictionaryPropertyInfo | ObjectPropertyInfo
 export type AnyPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> =
 	ArrayPropertyInfo<T> | DictionaryPropertyInfo<T, TKey> | SimplePropertyInfo<T>
 

@@ -40,3 +40,13 @@ export function addRawReducers<S>(
 }
 
 export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
+
+interface Flavoring<FlavorT> {
+	_type?: FlavorT;
+}
+export type Flavor<T, FlavorT> = T & Flavoring<FlavorT>;
+
+declare module "@towermod" {
+	export type int = Flavor<number, 'int'>
+	export type float = Flavor<number, 'float'>
+}

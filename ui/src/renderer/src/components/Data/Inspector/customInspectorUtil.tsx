@@ -1,9 +1,10 @@
 import React from 'react'
-import { TowermodObject } from "@shared/reducers/data";
-import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName } from "./base/inspectorUtil";
+import { TowermodObject, findObjectInstances } from "@shared/reducers/data";
+import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName, ParentPropertyInfo } from "./base/inspectorUtil";
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
 import { PrivateVariables } from './PrivateVariables';
+import { store } from '@renderer/store';
 
 
 export type CustomInspectorObjects = TowermodObject
@@ -11,6 +12,7 @@ export type CustomInspectorObjects = TowermodObject
 export const customNumericSubtypeNames = [] as const
 export const customStringSubtypeNames = [] as const
 
+/** Provides additional property type/metadata information for each type */
 export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo, key: InspectorKeyTypes) {
 	const type = obj['type'];
 	switch (type) {
@@ -68,25 +70,37 @@ export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pi
 	}
 }
 
-export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo): AnyPropertyInfo[] | undefined {
-	switch (pinfo.type) {
+/** Provide additional virtual properties for each type, to display in the inspector */
+export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: ParentPropertyInfo): AnyPropertyInfo[] | undefined {
+	const type = obj['type']
+	switch (type) {
 		case 'ObjectType':
 			return [
 				{
+					// FIXME: this
 					key: 'instances',
 					get value() {
-						// TODO
-						return []
+						return findObjectInstances(store.getState().data, obj.id).map(instance => instance.id)
 					},
 					readonly: true,
 					type: 'Array',
 					valueTypes: ['int'],
+					parent: pinfo,
+				},
+				{
+					key: 'plugin',
+					get value() {
+						return store.getState().data.editorPlugins[obj.pluginId]?.stringTable.name
+					},
+					readonly: true,
+					type: 'string',
 				}
 			]
 	}
 	return undefined
 }
 
+/** Override the inspector component returned for certain properties of certain types */
 export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): React.ReactNode | undefined {
 	const parentPinfo = pinfo.parent
 	let objPinfo = parentPinfo
@@ -125,6 +139,7 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 				switch (pinfo.key) {
 					case 'objectTypeIds':
 						if (collectionElement) {
+							// FIXME: this
 							return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
 						}
 				}
