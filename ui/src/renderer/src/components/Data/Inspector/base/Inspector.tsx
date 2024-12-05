@@ -1,5 +1,5 @@
 import { getCustomComponent } from "../customInspectorUtil"
-import { InspectorValue, InspectorObjectValue, PropertyInfo, objectPropertyInfos, InspectorRecordValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, RecordPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromRecordValue, ObjectPropertyInfo } from "./inspectorUtil"
+import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo } from "./inspectorUtil"
 import React, { useMemo } from "react"
 
 export const InspectorObject = (props: {
@@ -30,7 +30,7 @@ export const InspectorObject = (props: {
 	</div>
 }
 
-export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<InspectorValue>, onChange: (v: InspectorArrayValue) => void }) => {
+export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorValue>, onChange: (v: InspectorArrayValue) => void }) => {
 	const { pinfo: arrPinfo, onChange } = props
 
 	const onElementChange = (key: InspectorKeyTypes, value: any) => {
@@ -54,16 +54,16 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<InspectorValue>
 	</div>
 }
 
-export const InspectorRecord = (props: { pinfo: RecordPropertyInfo<InspectorValue>, onChange: (v: InspectorRecordValue) => void }) => {
-	const { pinfo: recordPinfo, onChange } = props
+export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyInspectorValue>, onChange: (v: InspectorDictionaryValue) => void }) => {
+	const { pinfo: dictPinfo, onChange } = props
 
 	const onPropertyChange = (key: InspectorKeyTypes, value: any) => {
-		const newObj = { ...recordPinfo.value, [key]: value }
+		const newObj = { ...dictPinfo.value, [key]: value }
 		onChange(newObj)
 	}
 
-	const propertyComponents: React.ReactNode[] = useMemo(() => Object.entries(recordPinfo.value).map(([key, val]) => {
-		const pinfo = inferPropertyInfoFromRecordValue(val, recordPinfo, key)
+	const propertyComponents: React.ReactNode[] = useMemo(() => Object.entries(dictPinfo.value).map(([key, val]) => {
+		const pinfo = inferPropertyInfoFromDictionaryValue(val, dictPinfo, key)
 
 		const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
 
@@ -71,7 +71,7 @@ export const InspectorRecord = (props: { pinfo: RecordPropertyInfo<InspectorValu
 			<div>{pinfo.key}:</div>
 			<div className="hbox grow">{valueComponent}</div>
 		</div>
-	}), [recordPinfo.value])
+	}), [dictPinfo.value])
 
 	return <div className="vbox grow">
 		{propertyComponents}
@@ -102,7 +102,7 @@ export const InspectorBoolean = (props: { pinfo: SimplePropertyInfo<boolean>, on
 	return <input className="grow" type="checkbox" checked={pinfo.value} onChange={(e) => onChange(e.target.checked)} />
 }
 
-function getValueComponent(pinfo: PropertyInfo, onChange: (v: any) => void): React.ReactNode {
+function getValueComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): React.ReactNode {
 	if (pinfo.hidden) { return null }
 	const customComponent = getCustomComponent(pinfo, onChange)
 	if (customComponent !== undefined) {
@@ -111,8 +111,8 @@ function getValueComponent(pinfo: PropertyInfo, onChange: (v: any) => void): Rea
 	switch (pinfo.type) {
 		case 'Array':
 			return <InspectorArray pinfo={pinfo} onChange={onChange} />
-		case 'Record':
-			return <InspectorRecord pinfo={pinfo as any} onChange={onChange} />
+		case 'Dictionary':
+			return <InspectorDictionary pinfo={pinfo as any} onChange={onChange} />
 		case 'number': case 'int': case 'float':
 			return <InspectorNumeric pinfo={pinfo as any} onChange={onChange} />
 		case 'string':

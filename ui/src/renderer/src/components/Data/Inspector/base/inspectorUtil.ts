@@ -3,10 +3,10 @@ import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeN
 export type InspectorObjectValue = CustomInspectorObjects
 export type InspectorKeyTypes = string | number
 export type SizedInspectorValue = InspectorObjectValue | InspectorKeyTypes | boolean
-export type InspectorArrayValue = InspectorValue[]
-export interface InspectorRecordValue { [key: InspectorKeyTypes]: InspectorValue }
+export type InspectorArrayValue = AnyInspectorValue[]
+export interface InspectorDictionaryValue { [key: InspectorKeyTypes]: AnyInspectorValue }
 
-export type InspectorValue = SizedInspectorValue | InspectorArrayValue | InspectorRecordValue
+export type AnyInspectorValue = SizedInspectorValue | InspectorArrayValue | InspectorDictionaryValue
 
 const numericSubtypeNames = ['int', 'float', ...customNumericSubtypeNames] as const
 const stringSubtypeNames = [...customStringSubtypeNames] as const
@@ -19,7 +19,7 @@ export type TypeNameToValue = {
 	'float': number,
 	'int': number,
 	'Array': Array<unknown>,
-	'Record': Record<string | number, unknown>
+	'Dictionary': Record<string | number, unknown>
 } & {
 	[T in InspectorObjectValue as T['type']]: T
 }
@@ -30,30 +30,29 @@ type KeyOfValue<T, V> = {
 }[keyof T];
 
 export type BasePropertyInfo = {
-	parent?: ArrayPropertyInfo | RecordPropertyInfo | ObjectPropertyInfo,
+	parent?: ArrayPropertyInfo | DictionaryPropertyInfo | ObjectPropertyInfo,
 	hidden?: boolean,
-	// TODO:
 	readonly?: boolean,
 }
 
-export type ArrayPropertyInfo<T extends InspectorValue = InspectorValue> = BasePropertyInfo & {
+export type ArrayPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> = BasePropertyInfo & {
 	key: InspectorKeyTypes,
 	value: readonly T[]
 	type: 'Array',
 	valueTypes: Array<KeyOfValue<TypeNameToValue, T>>
 }
 
-export type RecordPropertyInfo<T extends InspectorValue = InspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> = BasePropertyInfo & {
+export type DictionaryPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> = BasePropertyInfo & {
 	key: InspectorKeyTypes,
 	value: Readonly<Record<TKey, T>>,
-	type: 'Record',
+	type: 'Dictionary',
 	keyTypes: Array<KeyOfValue<TypeNameToValue, TKey>>,
 	valueTypes: Array<KeyOfValue<TypeNameToValue, T>>,
 }
-export type SimplePropertyInfo<T extends InspectorValue = InspectorValue> = BasePropertyInfo & {
+export type SimplePropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> = BasePropertyInfo & {
 	key: InspectorKeyTypes,
 	value: Readonly<T>,
-	type: Exclude<InspectorTypeName, 'Array' | 'Record'>,
+	type: Exclude<InspectorTypeName, 'Array' | 'Dictionary'>,
 }
 export type ObjectPropertyInfo<T extends InspectorObjectValue = InspectorObjectValue> = BasePropertyInfo & {
 	key: keyof T,
@@ -62,10 +61,10 @@ export type ObjectPropertyInfo<T extends InspectorObjectValue = InspectorObjectV
 }
 
 
-export type PropertyInfo<T extends InspectorValue = InspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> =
-	ArrayPropertyInfo<T> | RecordPropertyInfo<T, TKey> | SimplePropertyInfo<T>
+export type AnyPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> =
+	ArrayPropertyInfo<T> | DictionaryPropertyInfo<T, TKey> | SimplePropertyInfo<T>
 
-export function inferPropertyInfoFromArrayValue(element: InspectorValue, parentPinfo: ArrayPropertyInfo, idx: number): PropertyInfo {
+export function inferPropertyInfoFromArrayValue(element: AnyInspectorValue, parentPinfo: ArrayPropertyInfo, idx: number): AnyPropertyInfo {
 	const pinfo = inferPropertyInfoFromValue(element, parentPinfo, idx)
 	if (parentPinfo.valueTypes) {
 		pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
@@ -92,17 +91,17 @@ export function speciateType(type: keyof TypeNameToValue, types: Array<keyof Typ
 	return type;
 }
 
-export function inferPropertyInfoFromRecordValue(element: InspectorValue, parentPinfo: RecordPropertyInfo, key: InspectorKeyTypes): PropertyInfo {
+export function inferPropertyInfoFromDictionaryValue(element: AnyInspectorValue, parentPinfo: DictionaryPropertyInfo, key: InspectorKeyTypes): AnyPropertyInfo {
 	const pinfo = inferPropertyInfoFromValue(element, parentPinfo, key)
 	if (parentPinfo.valueTypes) {
 		pinfo.type = speciateType(pinfo.type, parentPinfo.valueTypes)
 	} else {
-		console.warn(`No type information given for Record ${parentPinfo.parent?.type}.${parentPinfo.key}`)
+		console.warn(`No type information given for Dictionary ${parentPinfo.parent?.type}.${parentPinfo.key}`)
 	}
 	return pinfo
 }
 
-export function inferPropertyInfoFromValue(value: InspectorValue, parent: PropertyInfo | undefined, key: InspectorKeyTypes): PropertyInfo {
+export function inferPropertyInfoFromValue(value: AnyInspectorValue, parent: AnyPropertyInfo | undefined, key: InspectorKeyTypes): AnyPropertyInfo {
 	const type = inferTypeFromValue(value);
 	switch (type) {
 		case 'Array':
@@ -113,14 +112,14 @@ export function inferPropertyInfoFromValue(value: InspectorValue, parent: Proper
 				parent,
 				valueTypes: ['unknown'] as any,
 			} as ArrayPropertyInfo
-		case 'Record':
+		case 'Dictionary':
 			return {
-				type: 'Record',
+				type: 'Dictionary',
 				key,
 				value,
 				parent,
 				keyTypes: ['string', 'number'] as any
-			} as RecordPropertyInfo
+			} as DictionaryPropertyInfo
 		default:
 			return {
 				type,
@@ -131,14 +130,14 @@ export function inferPropertyInfoFromValue(value: InspectorValue, parent: Proper
 	}
 }
 
-export function inferTypeFromValue(value: InspectorValue): InspectorTypeName {
+export function inferTypeFromValue(value: AnyInspectorValue): InspectorTypeName {
 	if (value instanceof Array) {
 		return 'Array'
 	} else if (value instanceof Object) {
 		if ('type' in value) {
 			return (value as InspectorObjectValue)['type']
 		} else {
-			return 'Record'
+			return 'Dictionary'
 		}
 	}
 	const type = typeof value
@@ -149,7 +148,7 @@ export function inferTypeFromValue(value: InspectorValue): InspectorTypeName {
 	}
 }
 
-function objectPropertyInfo(obj: InspectorObjectValue, objPinfo: ObjectPropertyInfo | undefined, key: InspectorKeyTypes): PropertyInfo
+function objectPropertyInfo(obj: InspectorObjectValue, objPinfo: ObjectPropertyInfo | undefined, key: InspectorKeyTypes): AnyPropertyInfo
 {
 	const value = obj[key]
 	if (key === 'type') { return { key, value, type: 'string', hidden: true } }
@@ -160,7 +159,7 @@ function objectPropertyInfo(obj: InspectorObjectValue, objPinfo: ObjectPropertyI
 	return pinfo
 }
 
-export function objectPropertyInfos(objPinfo: ObjectPropertyInfo): PropertyInfo[] {
+export function objectPropertyInfos(objPinfo: ObjectPropertyInfo): AnyPropertyInfo[] {
 	const obj = objPinfo.value
 	const keys = Object.keys(obj) as (keyof typeof obj)[]
 	return keys.map(key => objectPropertyInfo(obj, objPinfo, key))

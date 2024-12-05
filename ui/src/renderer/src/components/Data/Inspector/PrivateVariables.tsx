@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from "@renderer/hooks";
-import { InspectorRecord } from "./base/Inspector";
-import { ArrayPropertyInfo, RecordPropertyInfo, SimplePropertyInfo } from "./base/inspectorUtil";
+import { InspectorDictionary } from "./base/Inspector";
+import { ArrayPropertyInfo, DictionaryPropertyInfo, SimplePropertyInfo } from "./base/inspectorUtil";
 import { findObjectTypeById } from "@shared/reducers/data";
 import { ObjectInstance, PrivateVariable } from "@towermod";
 import { actions } from "@shared/reducers";
@@ -25,9 +25,9 @@ export function PrivateVariables(props: { pinfo: ArrayPropertyInfo<PrivateVariab
 		return dict
 	}, [obj, objType])
 
-	const customPinfo: RecordPropertyInfo<string | number, string> = useMemo(() => {
+	const customPinfo: DictionaryPropertyInfo<string | number, string> = useMemo(() => {
 		return {
-			type: 'Record',
+			type: 'Dictionary',
 			key: pinfo.key,
 			keyTypes: ['string'],
 			valueTypes: ['int', 'string'],
@@ -35,7 +35,7 @@ export function PrivateVariables(props: { pinfo: ArrayPropertyInfo<PrivateVariab
 		}
 	}, [pinfo, value])
 
-	return <InspectorRecord pinfo={customPinfo} onChange={(newValue) => {
+	return <InspectorDictionary pinfo={customPinfo} onChange={(newValue) => {
 		for (const key of Object.keys(value)) {
 			if (!(key in newValue)) {
 				dispatch(actions.removePrivateVariable({ objectTypeId: obj.objectTypeId, prop: key }))

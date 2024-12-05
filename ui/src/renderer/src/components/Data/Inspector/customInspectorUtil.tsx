@@ -1,6 +1,6 @@
 import React from 'react'
 import { TowermodObject } from "@shared/reducers/data";
-import type { PropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes } from "./base/inspectorUtil";
+import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName } from "./base/inspectorUtil";
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
 import { PrivateVariables } from './PrivateVariables';
@@ -11,7 +11,7 @@ export type CustomInspectorObjects = TowermodObject
 export const customNumericSubtypeNames = [] as const
 export const customStringSubtypeNames = [] as const
 
-export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pinfo: PropertyInfo, key: InspectorKeyTypes) {
+export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo, key: InspectorKeyTypes) {
 	const type = obj['type'];
 	switch (type) {
 		case 'Animation':
@@ -54,12 +54,12 @@ export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pi
 			})
 	}
 
-	function override<T extends InspectorObjectValue['type']>(_type: T, overrides: Partial<Record<keyof TypeNameToValue[T], Partial<PropertyInfo>>>) {
+	function override<T extends InspectorObjectValue['type']>(_type: T, overrides: Partial<Record<keyof TypeNameToValue[T], Partial<AnyPropertyInfo>>>) {
 		Object.assign(pinfo, overrides[key])
 	}
 }
 
-export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: PropertyInfo): PropertyInfo[] | undefined {
+export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo): AnyPropertyInfo[] | undefined {
 	switch (pinfo.type) {
 		case 'ObjectType':
 			return [
@@ -78,9 +78,9 @@ export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: 
 	return undefined
 }
 
-export function getCustomComponent(pinfo: PropertyInfo, onChange: (v: any) => void): React.ReactNode | undefined {
+export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): React.ReactNode | undefined {
 	const objPinfo = pinfo.parent;
-	if (objPinfo && typeof objPinfo.value === 'object' && (objPinfo.type as any) !== 'Record') {
+	if (objPinfo && typeof objPinfo.value === 'object' && (objPinfo.type as any) !== 'Dictionary') {
 		const obj = objPinfo.value as InspectorObjectValue
 		const type = obj.type
 		switch (type) {
@@ -111,3 +111,14 @@ export function getCustomComponent(pinfo: PropertyInfo, onChange: (v: any) => vo
 
 	return undefined
 }
+
+export function defaultValueForType<T extends InspectorTypeName>(type: T): undefined | (() => TypeNameToValue[T])
+export function defaultValueForType(type: InspectorTypeName): undefined | (() => any) {
+	switch (type) {
+		case 'number': case 'int': case 'float': return () => 0
+		case 'string': return () => ""
+		case 'boolean': return () => false
+	}
+	return undefined
+}
+
