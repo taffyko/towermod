@@ -10,15 +10,7 @@ rustup install nightly-x86_64-pc-windows-msvc
 rustup install nightly-i686-pc-windows-msvc
 ```
 
-Build the 32-bit `dllreader` binary (used to read Construct Classic plugin DLLs from a 64-bit process)
-```powershell
-cd rust
-cargo build -p towermod --bin dllreader
-```
-
-Build the GDExtension library.
-```powershell
-cargo build -p towermod-godot
-```
-
-Open `./godot/project.godot` in Godot Engine.
+Inside the `ui` directory
+- `npm install`
+- `npm run build-rust`
+- `npm run dev`
