@@ -87,7 +87,7 @@ export function speciateType(type: keyof TypeNameToValue, types: Array<keyof Typ
 			}
 	}
 	if (!types.includes(type)) {
-		console.error(`${type} not in [${[...types]},]`)
+		console.warn(`${type} not in [${[...types]},]`)
 	}
 	return type;
 }

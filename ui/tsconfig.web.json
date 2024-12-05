@@ -16,7 +16,7 @@
     "moduleResolution": "bundler",
     "paths": {
       "@renderer/*": ["src/renderer/src/*"],
-      "@towermod": ["./src/towermod"],
+      "@towermod": ["src/towermod"],
       "@shared/*": ["src/shared/*"],
     }
   }

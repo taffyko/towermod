@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariableType } from "@towermod";
+import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable } from "@towermod";
+// import { PrivateVariableType } from "@towermod";
 import { actions as mainActions } from './main'
 import { addRawReducers, assert, assertUnreachable } from "@shared/util";
 
@@ -82,7 +83,7 @@ export function findObjectInstances(state: State, objTypeId: number) {
 	return objects
 }
 
-export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | FeatureDescriptors | FeatureDescriptor
+export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | FeatureDescriptors | FeatureDescriptor | PrivateVariable
 
 export const uniqueObjectTypes = new Set([
 	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock'
@@ -162,14 +163,15 @@ export const slice = createSlice({
 		removeObjectInstance(state, { payload }: PayloadAction<LookupForType<'ObjectInstance'>>) {
 			// TODO: do types need at least one instance?
 		},
-		addPrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string } & ({ propType: PrivateVariableType.String, initialValue: string } | { propType: PrivateVariableType.Integer, initialValue: number })>) {
-			const { objectTypeId, prop, propType, initialValue } = payload
+		addPrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string, initialValue: string | number }>) {
+			const { objectTypeId, prop, initialValue } = payload
 			const type = findObjectTypeById(state, objectTypeId)
 			if (type.privateVariables.find(o => o.name === prop)) {
 				console.error(`Property ${prop} already exists`)
 				return
 			}
-			type.privateVariables.push({ name: prop, valueType: propType })
+			const valueType = typeof prop === 'number' ? 0 : 1 // PrivateVariableType.Integer : PrivateVariableType.String
+			type.privateVariables.push({ name: prop, valueType, type: 'PrivateVariable' })
 			const instances = findObjectInstances(state, objectTypeId)
 			for (const instance of instances) {
 				instance.privateVariables.push(String(initialValue))
@@ -187,6 +189,17 @@ export const slice = createSlice({
 			}
 			// TODO: confirmation dialog
 		},
+		editPrivateVariables(state, { payload }: PayloadAction<{ objectId: number, vars: Record<string, string | number> }>) {
+			const { objectId, vars } = payload
+			const instance = findObjectById(state, objectId)
+			const type = findObjectTypeById(state, instance.objectTypeId)
+			for (const key of Object.keys(vars)) {
+				const propIdx = type.privateVariables.findIndex(o => o.name === key)
+				if (propIdx !== -1) {
+					instance.privateVariables[propIdx] = String(vars[key])
+				}
+			}
+		}
 	},
 });
 

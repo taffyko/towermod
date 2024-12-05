@@ -3,6 +3,7 @@ import { TowermodObject } from "@shared/reducers/data";
 import type { PropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes } from "./base/inspectorUtil";
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
+import { PrivateVariables } from './PrivateVariables';
 
 
 export type CustomInspectorObjects = TowermodObject
@@ -92,7 +93,8 @@ export function getCustomComponent(pinfo: PropertyInfo, onChange: (v: any) => vo
 				switch (pinfo.key) {
 					case 'objectTypeId':
 						return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
-					// TODO: dictionary-gui for editing property values
+					case 'privateVariables':
+						return <PrivateVariables pinfo={pinfo as any} />
 				}
 			break; case 'ObjectType':
 				switch (pinfo.key) {
