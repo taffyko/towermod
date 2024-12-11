@@ -1,4 +1,4 @@
-import { float, int } from "@towermod"
+import { float, int } from "@shared/util"
 import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, propertyInfoOverrides } from "../customInspectorUtil"
 
 export type InspectorObjectValue = CustomInspectorObjects

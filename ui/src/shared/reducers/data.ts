@@ -61,8 +61,8 @@ export function findAnimationById(state: State, id: number) {
 export function findContainerByFirstObjectId(state: State, id: number) {
 	return assert(state.containers.find(c => c.objectIds[0] === id))
 }
-export function findBehaviorByObjectTypeAndName(state: State, objectTypeId: number, name: string) {
-	return assert(state.behaviors.find(b => b.objectTypeId === objectTypeId && b.name === name))
+export function findBehaviorByObjectTypeAndIdx(state: State, objectTypeId: number, idx: number) {
+	return assert(state.behaviors.find(b => b.objectTypeId === objectTypeId && b.movIndex === idx))
 }
 export function findFamilyByName(state: State, name: string) {
 	return assert(state.families.find(b => b.name === name))
@@ -97,7 +97,7 @@ export type UniqueObjectLookup =
 	| Pick<LayoutLayer, 'type' | 'id'>
 	| Pick<ObjectInstance, 'type' | 'id'>
 	| Pick<Animation, 'type' | 'id'>
-	| Pick<Behavior, 'type' | 'name' | 'objectTypeId'>
+	| Pick<Behavior, 'type' | 'movIndex' | 'objectTypeId'>
 	| Pick<Container, 'type' | 'objectIds'>
 	| Pick<Family, 'type' | 'name'>
 	| Pick<ObjectType, 'type' | 'id'>
@@ -122,7 +122,7 @@ export function findObject<T extends UniqueObjectLookup>(state: State, obj: T): 
 		break; case 'Animation':
 			target = findAnimationById(state, obj.id)
 		break; case 'Behavior':
-			target = findBehaviorByObjectTypeAndName(state, obj.objectTypeId, obj.name)
+			target = findBehaviorByObjectTypeAndIdx(state, obj.objectTypeId, obj.movIndex)
 		break; case 'Container':
 			target = findContainerByFirstObjectId(state, obj.objectIds[0])
 		break; case 'Family':

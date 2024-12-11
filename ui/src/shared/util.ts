@@ -50,3 +50,4 @@ declare module "@towermod" {
 	export type int = Flavor<number, 'int'>
 	export type float = Flavor<number, 'float'>
 }
+export type { int, float } from "@towermod"
