@@ -48,21 +48,21 @@ impl BlockReader<'_> {
 		let layout_index = self.read_i32();
 		let multisamples = self.read_u32();
 		let texture_loading_mode = TextureLoadingMode::from_i32(self.read_i32()).unwrap();
-		AppBlock { name, window_width, window_height, eye_distance, show_menu, screensaver, fps_mode, fps, fullscreen, sampler_mode, global_variables, behavior_controls, disable_windows_key, data_keys, simulate_shaders, original_project_path, fps_in_caption, use_motion_blur, motion_blur_steps, text_rendering_mode, override_timedelta, time_delta_override, caption, minimize_box, resize_mode, maximize_box, minimum_fps, layout_index, multisamples, texture_loading_mode, _type: "AppBlock" }
+		AppBlock { name, window_width, window_height, eye_distance, show_menu, screensaver, fps_mode, fps, fullscreen, sampler_mode, global_variables, behavior_controls, disable_windows_key, data_keys, simulate_shaders, original_project_path, fps_in_caption, use_motion_blur, motion_blur_steps, text_rendering_mode, override_timedelta, time_delta_override, caption, minimize_box, resize_mode, maximize_box, minimum_fps, layout_index, multisamples, texture_loading_mode, _type: AppBlock::type_name() }
 	}
 
 	fn read_global_variable(&mut self) -> GlobalVariable {
 		let name = self.read_string();
 		let var_type = self.read_i32();
 		let value = self.read_string();
-		GlobalVariable { name, var_type, value, _type: "GlobalVariable" }
+		GlobalVariable { name, var_type, value, _type: GlobalVariable::type_name() }
 	}
 
 	fn read_behavior_control(&mut self) -> BehaviorControl {
 		let name = self.read_string();
 		let vk = self.read_i32();
 		let player = self.read_i32();
-		BehaviorControl { name, vk, player, _type: "BehaviorControl" }
+		BehaviorControl { name, vk, player, _type: BehaviorControl::type_name() }
 	}
 }
 

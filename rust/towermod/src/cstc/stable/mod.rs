@@ -182,10 +182,10 @@ pub struct ObjectType {
 
 	#[napi(ts_type = "'ObjectType'")]
 	#[serde(skip, default = "ObjectType::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl ObjectType {
-	pub fn type_name() -> &'static str { "ObjectType" }
+	pub fn type_name() -> String { String::from("ObjectType") }
 }
 
 #[napi(object)]
@@ -197,14 +197,13 @@ pub struct FeatureDescriptors {
 
 	#[napi(ts_type = "'FeatureDescriptors'")]
 	#[serde(skip, default = "FeatureDescriptors::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl FeatureDescriptors {
-	pub fn type_name() -> &'static str { "FeatureDescriptors" }
+	pub fn type_name() -> String { String::from("FeatureDescriptors") }
 }
 
 #[napi(object)]
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Behavior {
 	#[napi(ts_type = "int")]
@@ -219,10 +218,10 @@ pub struct Behavior {
 
 	#[napi(ts_type = "'Behavior'")]
 	#[serde(skip, default = "Behavior::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl Behavior {
-	pub fn type_name() -> &'static str { "Behavior" }
+	pub fn type_name() -> String { String::from("Behavior") }
 }
 
 #[napi(object)]
@@ -232,10 +231,10 @@ pub struct Container {
 
 	#[napi(ts_type = "'Container'")]
 	#[serde(skip, default = "Container::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl Container {
-	pub fn type_name() -> &'static str { "Container" }
+	pub fn type_name() -> String { String::from("Container") }
 }
 
 #[napi(object)]
@@ -248,10 +247,10 @@ pub struct Family {
 
 	#[napi(ts_type = "'Family'")]
 	#[serde(skip, default = "Family::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl Family {
-	pub fn type_name() -> &'static str { "Family" }
+	pub fn type_name() -> String { String::from("Family") }
 }
 
 #[napi(object)]
@@ -262,10 +261,10 @@ pub struct ObjectTrait {
 
 	#[napi(ts_type = "'ObjectTrait'")]
 	#[serde(skip, default = "ObjectTrait::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl ObjectTrait {
-	pub fn type_name() -> &'static str { "ObjectTrait" }
+	pub fn type_name() -> String { String::from("ObjectTrait") }
 }
 
 #[napi(object)]
@@ -288,10 +287,10 @@ pub struct Layout {
 
 	#[napi(ts_type = "'Layout'")]
 	#[serde(skip, default = "Layout::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl Layout {
-	pub fn type_name() -> &'static str { "Layout" }
+	pub fn type_name() -> String { String::from("Layout") }
 }
 
 
@@ -335,10 +334,10 @@ pub struct LayoutLayer {
 
 	#[napi(ts_type = "'LayoutLayer'")]
 	#[serde(skip, default = "LayoutLayer::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl LayoutLayer {
-	pub fn type_name() -> &'static str { "LayoutLayer" }
+	pub fn type_name() -> String { String::from("LayoutLayer") }
 }
 
 
@@ -376,10 +375,10 @@ pub struct ObjectInstance {
 
 	#[napi(ts_type = "'ObjectInstance'")]
 	#[serde(skip, default = "ObjectInstance::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl ObjectInstance {
-	pub fn type_name() -> &'static str { "ObjectInstance" }
+	pub fn type_name() -> String { String::from("ObjectInstance") }
 }
 
 
@@ -407,10 +406,10 @@ pub struct Animation {
 
 	#[napi(ts_type = "'Animation'")]
 	#[serde(skip, default = "Animation::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl Animation {
-	pub fn type_name() -> &'static str { "Animation" }
+	pub fn type_name() -> String { String::from("Animation") }
 }
 
 #[napi(object)]
@@ -423,11 +422,11 @@ pub struct AnimationFrame {
 
 	#[napi(ts_type = "'AnimationFrame'")]
 	#[serde(skip, default = "AnimationFrame::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 
 }
 impl AnimationFrame {
-	pub fn type_name() -> &'static str { "AnimationFrame" }
+	pub fn type_name() -> String { String::from("AnimationFrame") }
 }
 
 #[napi]
@@ -468,10 +467,10 @@ pub struct PrivateVariable {
 
 	#[napi(ts_type = "'PrivateVariable'")]
 	#[serde(skip, default = "PrivateVariable::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl PrivateVariable {
-	pub fn type_name() -> &'static str { "PrivateVariable" }
+	pub fn type_name() -> String { String::from("PrivateVariable") }
 }
 
 
@@ -484,10 +483,10 @@ pub struct FeatureDescriptor {
 
 	#[napi(ts_type = "'FeatureDescriptor'")]
 	#[serde(skip, default = "FeatureDescriptor::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl FeatureDescriptor {
-	pub fn type_name() -> &'static str { "FeatureDescriptor" }
+	pub fn type_name() -> String { String::from("FeatureDescriptor") }
 }
 
 
@@ -603,10 +602,10 @@ pub struct AppBlock {
 
 	#[napi(ts_type = "'AppBlock'")]
 	#[serde(skip, default = "AppBlock::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl AppBlock {
-	pub fn type_name() -> &'static str { "AppBlock" }
+	pub fn type_name() -> String { String::from("AppBlock") }
 }
 
 #[napi(object)]
@@ -619,10 +618,10 @@ pub struct GlobalVariable {
 
 	#[napi(ts_type = "'GlobalVariable'")]
 	#[serde(skip, default = "GlobalVariable::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl GlobalVariable {
-	pub fn type_name() -> &'static str { "GlobalVariable" }
+	pub fn type_name() -> String { String::from("GlobalVariable") }
 }
 
 #[napi(object)]
@@ -636,10 +635,10 @@ pub struct BehaviorControl {
 
 	#[napi(ts_type = "'BehaviorControl'")]
 	#[serde(skip, default = "BehaviorControl::type_name")]
-	pub _type: &'static str,
+	pub _type: String,
 }
 impl BehaviorControl {
-	pub fn type_name() -> &'static str { "BehaviorControl" }
+	pub fn type_name() -> String { String::from("BehaviorControl") }
 }
 
 #[napi]

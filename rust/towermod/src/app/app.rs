@@ -1,13 +1,13 @@
 use std::{collections::HashMap, io::{Cursor, ErrorKind, Read}, path::{Path, PathBuf}, sync::Mutex};
-
 use crate::{async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project};
 use anyhow::{Result, Context};
 use fs_err::tokio as fs;
 use futures::StreamExt;
 use napi_derive::napi;
-use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use tracing::instrument;
+
+use super::state::CstcData;
 
 #[napi]
 pub async fn init() -> Result<()> {
@@ -33,12 +33,6 @@ pub async fn init() -> Result<()> {
 
 fn status(_msg: &str) {
 	// TODO
-}
-
-#[napi(ts_args_type = "gamePath: string")]
-pub async fn run_game(Nt(ref game_path): Nt<PathBuf>) -> Result<()> {
-	crate::run_game(game_path).await?;
-	Ok(())
 }
 
 #[napi]
@@ -282,18 +276,6 @@ pub fn remove_mouse_cursor_hide_events(events: &mut cstc::EventBlock) {
 }
 
 #[instrument]
-#[napi]
-pub async fn get_image_override(id: i32, project: Project) -> Result<Option<Vec<u8>>> {
-	let mut path = project.images_path()?;
-	path.push(format!("{id}.png"));
-	match fs::read(&path).await {
-		Ok(v) => Ok(Some(v)),
-		Err(e) if e.kind() == ErrorKind::NotFound => return Ok(None),
-		Err(e) => Err(e)?,
-	}
-}
-
-#[instrument]
 pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_name: &str) -> Result<()> {
 	// FIXME make this less brittle
 
@@ -380,23 +362,6 @@ pub async fn patch_with_images(game_path: &Path, mut found_images_by_id: HashMap
 #[instrument]
 async fn game_from_path(Nt(file_path): Nt<PathBuf>) -> Result<Game> {
 	Game::from_path(file_path).await
-}
-
-#[napi(object)]
-#[derive(Default, Clone, Debug, Serialize, Deserialize)]
-pub struct CstcData {
-	#[napi(ts_type = "Record<number, PluginData>")]
-	pub editor_plugins: Nt<HashMap<i32, PluginData>>,
-	pub object_types: Vec<ObjectType>,
-	pub behaviors: Vec<Behavior>,
-	pub traits: Vec<ObjectTrait>,
-	pub families: Vec<Family>,
-	pub layouts: Vec<Layout>,
-	pub containers: Vec<Container>,
-	pub animations: Vec<Animation>,
-	pub app_block: Option<AppBlock>,
-	pub event_block: Option<EventBlock>,
-	pub image_block: Vec<ImageResource>,
 }
 
 #[napi]

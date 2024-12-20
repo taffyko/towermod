@@ -24,12 +24,7 @@ export async function stopTracing() {
 	console.log(`Trace saved to ${outFile}`)
 }
 
-export async function getImage(id: int): Promise<ArrayBuffer | undefined> {
-	const state = store.getState()
-	const override = await towermod.getImageOverride(id, state.main.project!)
-	// FIXME
-	return override
-}
+export const getImage = towermod.getImage
 
 export async function initialize() {
 	await towermod.init()
@@ -69,7 +64,6 @@ export async function playVanilla() {
 	if (!gamePath) { throw new Error("Game not set") }
 	await towermod.runGame(gamePath)
 }
-
 
 export async function winMinimize() {
 	BrowserWindow.getFocusedWindow()?.minimize();

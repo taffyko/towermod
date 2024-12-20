@@ -112,6 +112,26 @@ impl ToNapiValue for Nt<f32> {
 	}
 }
 
+// Vec<u8>
+impl From<Nt<Vec<u8>>> for Vec<u8> {
+	fn from(Nt(value): Nt<Vec<u8>>) -> Self {
+		value
+	}
+}
+impl FromNapiValue for Nt<Vec<u8>> {
+	unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> Result<Self> {
+		let buf: Uint8Array = FromNapiValue::from_napi_value(env, napi_val)?;
+		Ok(Nt(buf.to_vec()))
+	}
+}
+impl ToNapiValue for Nt<Vec<u8>> {
+	unsafe fn to_napi_value(env: napi::sys::napi_env, val: Self) -> napi::Result<napi::sys::napi_value> {
+		let val = Uint8Array::new(val.0);
+		Uint8Array::to_napi_value(env, val)
+	}
+}
+
+
 // HashMap<i32, V>
 impl<V> ToNapiValue for Nt<HashMap<i32, V>> where
 	V: ToNapiValue
@@ -163,13 +183,6 @@ impl<V> FromNapiValue for Nt<HashSet<V>> where
 		Ok(Nt(vec.into_iter().collect()))
 	}
 }
-
-
-
-
-
-
-
 
 // PathBuf
 impl From<Nt<PathBuf>> for PathBuf {
@@ -309,7 +322,7 @@ pub mod serde {
 		pub fn deserialize<'a, D: Deserializer<'a>>(deserializer: D) -> Result<Nt<OffsetDateTime>, D::Error> {
 			time::serde::rfc3339::deserialize(deserializer).map(|v| Nt(v))
 		}
-		
+
 		pub mod option {
 			use super::*;
 
@@ -324,7 +337,7 @@ pub mod serde {
 				deserializer: D,
 			) -> Result<Option<Nt<OffsetDateTime>>, D::Error> {
 				time::serde::rfc3339::option::deserialize(deserializer).map(|o| o.map(|v| Nt(v)))
-			}		
+			}
 		}
 	}
 }
