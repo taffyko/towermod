@@ -25,7 +25,7 @@ const App = () => {
 	const [tabsHandle, setTabsHandle] = useStateRef<TabsHandle>()
 	const [ActiveModal, setModal] = useState<React.ElementType<{ requestClose: () => void }> | null>(null)
 
-	const dataIsLoaded = useAppSelector(store => !!store.data.objectTypes.length);
+	const dataIsLoaded = useAppSelector(store => !!store.data?.objectTypes.length);
 
 	const appContext = useMemo<AppContextState>(() => {
 		return {

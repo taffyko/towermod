@@ -1,6 +1,6 @@
-use std::{collections::HashMap, io::{Cursor, Read}, path::{Path, PathBuf}, sync::Mutex};
+use std::{collections::HashMap, io::{Cursor, ErrorKind, Read}, path::{Path, PathBuf}, sync::Mutex};
 
-use crate::{first_time_setup, async_cleanup, convert_to_release_build, cstc::{self, *, plugin::PluginData}, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource};
+use crate::{async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project};
 use anyhow::{Result, Context};
 use fs_err::tokio as fs;
 use futures::StreamExt;
@@ -278,6 +278,18 @@ pub fn remove_mouse_cursor_hide_events(events: &mut cstc::EventBlock) {
 		_ => false,
 	}) {
 		e.actions.retain(|act| act.object_id != 12 && act.action_id != 255)
+	}
+}
+
+#[instrument]
+#[napi]
+pub async fn get_image_override(id: i32, project: Project) -> Result<Option<Vec<u8>>> {
+	let mut path = project.images_path()?;
+	path.push(format!("{id}.png"));
+	match fs::read(&path).await {
+		Ok(v) => Ok(Some(v)),
+		Err(e) if e.kind() == ErrorKind::NotFound => return Ok(None),
+		Err(e) => Err(e)?,
 	}
 }
 

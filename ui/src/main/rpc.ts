@@ -2,6 +2,7 @@ import { BrowserWindow, contentTracing } from 'electron';
 import { dispatch, store } from './store';
 import { actions } from '@shared/reducers';
 import * as towermod from '@towermod';
+import { int } from '@towermod';
 
 export async function startTracing() {
 	console.log("Starting trace...")
@@ -23,6 +24,12 @@ export async function stopTracing() {
 	console.log(`Trace saved to ${outFile}`)
 }
 
+export async function getImage(id: int): Promise<ArrayBuffer | undefined> {
+	const state = store.getState()
+	const override = await towermod.getImageOverride(id, state.main.project!)
+	// FIXME
+	return override
+}
 
 export async function initialize() {
 	await towermod.init()
