@@ -1,16 +1,34 @@
-Tools to create and play mods for games built with the Construct Classic engine
+# electron-app
 
-Releases downloadable at https://gamebanana.com/tools/17559
+An Electron application with React and TypeScript
 
-# Building / developing
+## Recommended IDE Setup
 
-Install 32-bit and 64-bit nightly toolchains for Rust (they are both required)
-```powershell
-rustup install nightly-x86_64-pc-windows-msvc
-rustup install nightly-i686-pc-windows-msvc
+- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+## Project Setup
+
+### Install
+
+```bash
+$ npm install
 ```
 
-Inside the `ui` directory
-- `npm install`
-- `npm run build-rust`
-- `npm run dev`
+### Development
+
+```bash
+$ npm run dev
+```
+
+### Build
+
+```bash
+# For windows
+$ npm run build:win
+
+# For macOS
+$ npm run build:mac
+
+# For Linux
+$ npm run build:linux
+```

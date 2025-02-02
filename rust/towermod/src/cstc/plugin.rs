@@ -1,8 +1,8 @@
 use std::{os::raw::c_void, mem, ffi::CStr, collections::{HashMap, HashSet}};
 use derivative::Derivative;
-use napi_derive::napi;
 use num_derive::FromPrimitive;
 use serde::{Serialize, Deserialize};
+use serde_alias::serde_alias;
 use windows::{Win32::{Foundation::{HMODULE, FreeLibrary}, System::LibraryLoader::{LoadLibraryW, GetProcAddress}, UI::WindowsAndMessaging::LoadStringA, Graphics::Gdi::HBITMAP}, core::{PSTR, HSTRING, s}};
 use anyhow::Result;
 
@@ -87,8 +87,10 @@ pub enum Property
 	PROPERTY_BUTTON,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 pub struct PluginStringTable {
 	pub name: String,
 	pub author: String,
@@ -98,27 +100,25 @@ pub struct PluginStringTable {
 	pub web: String,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 pub struct PluginData {
-	#[napi(ts_type = "Record<number, AcesEntry>")]
-	pub conditions: Nt<HashMap<i32, AcesEntry>>,
-	#[napi(ts_type = "Record<number, AcesEntry>")]
-	pub actions: Nt<HashMap<i32, AcesEntry>>,
-	#[napi(ts_type = "Record<number, AcesEntry>")]
-	pub expressions: Nt<HashMap<i32, AcesEntry>>,
-	#[napi(ts_type = "Record<string, number[]>")]
+	pub conditions: HashMap<i32, AcesEntry>,
+	pub actions: HashMap<i32, AcesEntry>,
+	pub expressions: HashMap<i32, AcesEntry>,
 	pub cnd_categories: AceCategories,
-	#[napi(ts_type = "Record<string, number[]>")]
 	pub act_categories: AceCategories,
-	#[napi(ts_type = "Record<string, number[]>")]
 	pub exp_categories: AceCategories,
 	pub properties: Vec<CPropItem>,
 	pub string_table: PluginStringTable,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 pub struct Param {
 	pub param_type: u16,
 	pub name: String,
@@ -126,8 +126,10 @@ pub struct Param {
 	pub init_str: String,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Derivative, Debug, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 #[derivative(Default)]
 pub struct AcesEntry {
 	/// Deprecated
@@ -144,10 +146,12 @@ pub struct AcesEntry {
 }
 
 /// AceList entries grouped by Category name
-pub type AceCategories = HashMap<String, Nt<HashSet<i32>>>;
+pub type AceCategories = HashMap<String, HashSet<i32>>;
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 pub struct CPropItem {
 	pub prop_type: i32,
 	pub label: String,
@@ -159,7 +163,7 @@ fn sort_categories(aces: &HashMap<i32, AcesEntry>) -> AceCategories {
 	let mut cats = AceCategories::new();
 	for (id, ace) in aces {
 		match cats.get_mut(&ace.ace_category) {
-			None => { cats.insert(ace.ace_category.clone(), Nt(HashSet::from([*id]))); }
+			None => { cats.insert(ace.ace_category.clone(), HashSet::from([*id])); }
 			Some(set) => { set.insert(*id); }
 		};
 	}
@@ -226,7 +230,7 @@ pub mod x86_plugin_ffi {
 		pub ide_flags: i32,
 		pub hinst_dll: HMODULE,
 		/// Index of DLL in DLLs list
-		pub o_id: u32, 
+		pub o_id: u32,
 		pub e_size: u32,
 		#[derivative(Default(value = "ptr::null()"))]
 		pub prop_table: *const PropertyTableEntry,
@@ -354,7 +358,7 @@ pub mod x86_plugin_ffi {
 		}
 		/// `s` contains the dereferenced *value* of a property (`label`, `description`, `text`) on the `CVirtualPropItem` given to `ETOnPropertyChanged`
 		extern "thiscall" fn Assign(&mut self, s: *mut *const c_char, p: *const c_char) {
-			unsafe { 
+			unsafe {
 				*s = p;
 			}
 		}
@@ -428,12 +432,12 @@ pub mod x86_plugin_ffi {
 				cnd_categories: sort_categories(&cnds),
 				act_categories: sort_categories(&acts),
 				exp_categories: sort_categories(&exps),
-				conditions: Nt(cnds),
-				actions: Nt(acts),
-				expressions: Nt(exps),
+				conditions: cnds,
+				actions: acts,
+				expressions: exps,
 				properties,
 				string_table,
-			}) 
+			})
 		}
 	}
 }

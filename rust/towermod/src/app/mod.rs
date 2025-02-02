@@ -1,5 +1,4 @@
-mod app;
-pub mod api;
+//! Flux-style application logic
 pub mod state;
-
-pub use app::*;
+pub mod selectors;
+pub mod thunks;

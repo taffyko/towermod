@@ -1,3 +1,6 @@
+//! Structures in this module must not be changed, lest backwards compatibility with existing mods be broken.
+//! Serde is used to export and load patches, so the serialized representation must remain stable between towermod versions.
+
 pub const CAP_BEGINEVENTLIST: u8 = 1;
 pub const CAP_BEGINEVENT: u8 = 2;
 pub const CAP_BEGINCONDITIONS: u8 = 3;
@@ -15,13 +18,12 @@ pub const CAP_ENDEVENTLIST: u8 = 14;
 pub const CAP_BEGINGROUP: u8 = 15;
 pub const CAP_ENDGROUP: u8 = 16;
 
-use napi_derive::napi;
 use num_derive::{FromPrimitive, ToPrimitive};
 use serde::{Serialize, Deserialize};
+use serde_alias::serde_alias;
 
 use crate::Nt;
 
-#[napi]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Token {
 	Integer(i64),
@@ -47,7 +49,6 @@ impl From<&Token> for TokenKind {
 	}
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum TokenKind {
 	Null,
@@ -79,22 +80,21 @@ pub enum TokenKind {
 	Whitespace, Color,
 }
 
-#[napi]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DataKey {
 	Pointer(String, u32),
 	String(String, String),
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum TextureLoadingMode {
 	LoadOnAppStart,
 	LoadOnLayoutStart,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EventBlock {
 	pub sheet_names: Vec<String>,
 	pub layout_sheets: Vec<Vec<SomeEvent>>,
@@ -102,7 +102,6 @@ pub struct EventBlock {
 
 pub type ImageBlock = Vec<ImageResource>;
 
-#[napi]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SomeEvent {
 	Event(Event),
@@ -110,47 +109,43 @@ pub enum SomeEvent {
 	EventInclude(i32),
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EventGroup {
 	pub active: bool,
 	pub name: String,
 	pub events: Vec<SomeEvent>,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Event {
-	#[napi(ts_type = "int")]
 	pub line_number: i32,
-	#[napi(ts_type = "int")]
 	pub sheet_id: i32,
 	pub conditions: Vec<EventCondition>,
 	pub actions: Vec<EventAction>,
 	pub events: Vec<SomeEvent>,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EventCondition {
-	#[napi(ts_type = "int")]
 	pub object_id: i32,
-	#[napi(ts_type = "int")]
 	pub cond_id: i32,
 	pub negated: bool,
-	#[napi(ts_type = "int")]
 	pub movement_id: i32,
 	pub params: Vec<Vec<Token>>,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EventAction {
-	#[napi(ts_type = "int")]
 	pub object_id: i32,
-	#[napi(ts_type = "int")]
 	pub action_id: i32,
-	#[napi(ts_type = "int")]
 	pub movement_id: i32,
 	pub params: Vec<Vec<Token>>,
 }
@@ -166,21 +161,19 @@ pub struct LevelBlock {
 	pub animations: Vec<Animation>,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ObjectType {
-	#[napi(ts_type = "int")]
 	pub id: i32,
 	pub name: String,
 	/// Index of the .csx plugin associated with this ObjectType
-	#[napi(ts_type = "int")]
 	pub plugin_id: i32,
 	pub global: bool,
 	pub destroy_when: DisableShaderWhen,
 	pub private_variables: Vec<PrivateVariable>,
 	pub descriptors: Option<FeatureDescriptors>,
 
-	#[napi(ts_type = "'ObjectType'")]
 	#[serde(skip, default = "ObjectType::type_name")]
 	pub _type: String,
 }
@@ -188,14 +181,14 @@ impl ObjectType {
 	pub fn type_name() -> String { String::from("ObjectType") }
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureDescriptors {
 	pub actions: Vec<FeatureDescriptor>,
 	pub conditions: Vec<FeatureDescriptor>,
 	pub expressions: Vec<FeatureDescriptor>,
 
-	#[napi(ts_type = "'FeatureDescriptors'")]
 	#[serde(skip, default = "FeatureDescriptors::type_name")]
 	pub _type: String,
 }
@@ -203,20 +196,17 @@ impl FeatureDescriptors {
 	pub fn type_name() -> String { String::from("FeatureDescriptors") }
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Behavior {
-	#[napi(ts_type = "int")]
 	pub object_type_id: i32,
-	#[napi(ts_type = "int")]
 	pub new_index: i32,
-	#[napi(ts_type = "int")]
 	pub mov_index: i32,
 	pub name: String,
 	pub data: Vec<u8>,
 	pub descriptors: Option<FeatureDescriptors>,
 
-	#[napi(ts_type = "'Behavior'")]
 	#[serde(skip, default = "Behavior::type_name")]
 	pub _type: String,
 }
@@ -224,12 +214,12 @@ impl Behavior {
 	pub fn type_name() -> String { String::from("Behavior") }
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Container {
 	pub object_ids: Vec<i32>,
 
-	#[napi(ts_type = "'Container'")]
 	#[serde(skip, default = "Container::type_name")]
 	pub _type: String,
 }
@@ -237,15 +227,15 @@ impl Container {
 	pub fn type_name() -> String { String::from("Container") }
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Family {
 	// Unique name.
 	pub name: String,
 	pub object_type_ids: Vec<i32>,
 	pub private_variables: Vec<PrivateVariable>,
 
-	#[napi(ts_type = "'Family'")]
 	#[serde(skip, default = "Family::type_name")]
 	pub _type: String,
 }
@@ -253,13 +243,13 @@ impl Family {
 	pub fn type_name() -> String { String::from("Family") }
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ObjectTrait {
 	pub name: String,
 	pub object_type_ids: Vec<i32>,
 
-	#[napi(ts_type = "'ObjectTrait'")]
 	#[serde(skip, default = "ObjectTrait::type_name")]
 	pub _type: String,
 }
@@ -267,16 +257,14 @@ impl ObjectTrait {
 	pub fn type_name() -> String { String::from("ObjectTrait") }
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Layout {
 	/// Unique name.
 	pub name: String,
-	#[napi(ts_type = "int")]
 	pub width: i32,
-	#[napi(ts_type = "int")]
 	pub height: i32,
-	#[napi(ts_type = "int")]
 	pub color: i32,
 	pub unbounded_scrolling: bool,
 	pub application_background: bool,
@@ -285,7 +273,6 @@ pub struct Layout {
 	pub image_ids: Vec<i32>,
 	pub texture_loading_mode: TextureLoadingMode,
 
-	#[napi(ts_type = "'Layout'")]
 	#[serde(skip, default = "Layout::type_name")]
 	pub _type: String,
 }
@@ -294,37 +281,25 @@ impl Layout {
 }
 
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LayoutLayer {
-	#[napi(ts_type = "int")]
 	pub id: i32,
 	pub name: String,
 	pub layer_type: LayerType,
-	#[napi(ts_type = "int")]
 	pub filter_color: i32,
-	#[napi(ts_type = "float")]
-	pub opacity: Nt<f32>,
-	#[napi(ts_type = "float")]
-	pub angle: Nt<f32>,
-	#[napi(ts_type = "float")]
-	pub scroll_x_factor: Nt<f32>,
-	#[napi(ts_type = "float")]
-	pub scroll_y_factor: Nt<f32>,
-	#[napi(ts_type = "float")]
-	pub scroll_x: Nt<f32>,
-	#[napi(ts_type = "float")]
-	pub scroll_y: Nt<f32>,
-	#[napi(ts_type = "float")]
-	pub zoom_x_factor: Nt<f32>,
-	#[napi(ts_type = "float")]
-	pub zoom_y_factor: Nt<f32>,
-	#[napi(ts_type = "float")]
-	pub zoom_x: Nt<f32>,
-	#[napi(ts_type = "float")]
-	pub zoom_y: Nt<f32>,
+	pub opacity: f32,
+	pub angle: f32,
+	pub scroll_x_factor: f32,
+	pub scroll_y_factor: f32,
+	pub scroll_x: f32,
+	pub scroll_y: f32,
+	pub zoom_x_factor: f32,
+	pub zoom_y_factor: f32,
+	pub zoom_x: f32,
+	pub zoom_y: f32,
 	pub clear_background_color: bool,
-	#[napi(ts_type = "int")]
 	pub background_color: i32,
 	pub force_own_texture: bool,
 	pub sampler: LayerSamplerMode,
@@ -332,7 +307,6 @@ pub struct LayoutLayer {
 	pub clear_depth_buffer: bool,
 	pub objects: Vec<ObjectInstance>,
 
-	#[napi(ts_type = "'LayoutLayer'")]
 	#[serde(skip, default = "LayoutLayer::type_name")]
 	pub _type: String,
 }
@@ -341,7 +315,6 @@ impl LayoutLayer {
 }
 
 
-#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum LayerSamplerMode {
 	Default,
@@ -349,31 +322,22 @@ pub enum LayerSamplerMode {
 	Linear,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ObjectInstance {
-	#[napi(ts_type = "int")]
 	pub id: i32,
-	#[napi(ts_type = "int")]
 	pub object_type_id: i32,
-	#[napi(ts_type = "int")]
 	pub x: i32,
-	#[napi(ts_type = "int")]
 	pub y: i32,
-	#[napi(ts_type = "int")]
 	pub width: i32,
-	#[napi(ts_type = "int")]
 	pub height: i32,
-	#[napi(ts_type = "float")]
-	pub angle: Nt<f32>,
-	#[napi(ts_type = "int")]
+	pub angle: f32,
 	pub filter: i32,
 	pub private_variables: Vec<String>,
 	pub data: Vec<u8>,
-	#[napi(ts_type = "int")]
 	pub key: i32,
 
-	#[napi(ts_type = "'ObjectInstance'")]
 	#[serde(skip, default = "ObjectInstance::type_name")]
 	pub _type: String,
 }
@@ -382,29 +346,23 @@ impl ObjectInstance {
 }
 
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[napi(object)]
+#[serde(rename_all = "camelCase")]
 pub struct Animation {
-	#[napi(ts_type = "int")]
 	pub id: i32,
 	pub name: String,
-	#[napi(ts_type = "int")]
 	pub tag: i32,
-	#[napi(ts_type = "float")]
-	pub speed: Nt<f32>,
+	pub speed: f32,
 	pub is_angle: bool,
-	#[napi(ts_type = "float")]
-	pub angle: Nt<f32>,
+	pub angle: f32,
 	/// -1 == forever
-	#[napi(ts_type = "int")]
 	pub repeat_count: i32,
-	#[napi(ts_type = "int")]
 	pub repeat_to: i32,
 	pub ping_pong: bool,
 	pub frames: Vec<AnimationFrame>,
 	pub sub_animations: Vec<Animation>,
 
-	#[napi(ts_type = "'Animation'")]
 	#[serde(skip, default = "Animation::type_name")]
 	pub _type: String,
 }
@@ -412,15 +370,13 @@ impl Animation {
 	pub fn type_name() -> String { String::from("Animation") }
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AnimationFrame {
-	#[napi(ts_type = "float")]
-	pub duration: Nt<f32>,
-	#[napi(ts_type = "int")]
+	pub duration: f32,
 	pub image_id: i32,
 
-	#[napi(ts_type = "'AnimationFrame'")]
 	#[serde(skip, default = "AnimationFrame::type_name")]
 	pub _type: String,
 
@@ -429,7 +385,6 @@ impl AnimationFrame {
 	pub fn type_name() -> String { String::from("AnimationFrame") }
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
 pub enum LayerType {
 	Normal,
@@ -438,7 +393,6 @@ pub enum LayerType {
 	Include,
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
 pub enum DisableShaderWhen {
 	NoSetting,
@@ -450,7 +404,6 @@ pub enum DisableShaderWhen {
 	Ps11Available,
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
 pub enum PrivateVariableType {
 	/// why is this `Integer`? are you sure it can't support decimal values as well?
@@ -459,13 +412,13 @@ pub enum PrivateVariableType {
 }
 
 /// Record on an ObjectType that describes the names and types of each object instance
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PrivateVariable {
 	pub name: String,
 	pub value_type: PrivateVariableType,
 
-	#[napi(ts_type = "'PrivateVariable'")]
 	#[serde(skip, default = "PrivateVariable::type_name")]
 	pub _type: String,
 }
@@ -474,14 +427,13 @@ impl PrivateVariable {
 }
 
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureDescriptor {
 	pub script_name: String,
-	#[napi(ts_type = "int")]
 	pub param_count: u32,
 
-	#[napi(ts_type = "'FeatureDescriptor'")]
 	#[serde(skip, default = "FeatureDescriptor::type_name")]
 	pub _type: String,
 }
@@ -490,53 +442,42 @@ impl FeatureDescriptor {
 }
 
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ActionPoint {
-	#[napi(ts_type = "int")]
 	pub x: i32,
-	#[napi(ts_type = "int")]
 	pub y: i32,
 	pub string: String,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImageResource {
-	#[napi(ts_type = "int")]
 	pub id: i32,
-	#[napi(ts_type = "int")]
 	pub hotspot_x: i32,
-	#[napi(ts_type = "int")]
 	pub hotspot_y: i32,
 	pub data: Vec<u8>,
 	pub apoints: Vec<ActionPoint>,
-	#[napi(ts_type = "int")]
 	pub collision_width: u32,
-	#[napi(ts_type = "int")]
 	pub collision_height: u32,
-	#[napi(ts_type = "int")]
 	pub collision_pitch: i32,
 	pub collision_mask: Vec<u8>,
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImageMetadata {
-	#[napi(ts_type = "int")]
 	pub id: i32,
-	#[napi(ts_type = "int")]
 	pub hotspot_x: i32,
-	#[napi(ts_type = "int")]
 	pub hotspot_y: i32,
 	pub apoints: Vec<ActionPoint>,
 	// typically the same as the image's width in pixels
-	#[napi(ts_type = "int")]
 	pub collision_width: u32,
 	// typically the same as the image's height in pixels
-	#[napi(ts_type = "int")]
 	pub collision_height: u32,
-	#[napi(ts_type = "int")]
 	pub collision_pitch: i32,
 	pub collision_mask: Vec<u8>,
 }
@@ -555,20 +496,17 @@ impl ImageResource {
 	}
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AppBlock {
 	pub name: String,
-	#[napi(ts_type = "int")]
 	pub window_width: i32,
-	#[napi(ts_type = "int")]
 	pub window_height: i32,
-	#[napi(ts_type = "float")]
-	pub eye_distance: Nt<f32>,
+	pub eye_distance: f32,
 	pub show_menu: bool,
 	pub screensaver: bool,
 	pub fps_mode: FpsMode,
-	#[napi(ts_type = "int")]
 	pub fps: i32,
 	pub fullscreen: bool,
 	pub sampler_mode: SamplerMode,
@@ -578,29 +516,22 @@ pub struct AppBlock {
 	pub data_keys: Vec<DataKey>,
 	pub simulate_shaders: SimulateShadersMode,
 	pub original_project_path: String,
-	#[napi(ts_type = "int")]
 	pub fps_in_caption: i32,
 	pub use_motion_blur: bool,
-	#[napi(ts_type = "int")]
 	pub motion_blur_steps: i32,
 	pub text_rendering_mode: TextRenderingMode,
 	pub override_timedelta: bool,
-	#[napi(ts_type = "float")]
-	pub time_delta_override: Nt<f32>,
+	pub time_delta_override: f32,
 	pub caption: bool,
 	pub minimize_box: bool,
 	pub maximize_box: bool,
 	pub resize_mode: ResizeMode,
-	#[napi(ts_type = "float")]
-	pub minimum_fps: Nt<f32>,
-	#[napi(ts_type = "int")]
+	pub minimum_fps: f32,
 	pub layout_index: i32,
-	#[napi(ts_type = "int")]
 	pub multisamples: u32,
 	pub texture_loading_mode: TextureLoadingMode,
 
 
-	#[napi(ts_type = "'AppBlock'")]
 	#[serde(skip, default = "AppBlock::type_name")]
 	pub _type: String,
 }
@@ -608,15 +539,14 @@ impl AppBlock {
 	pub fn type_name() -> String { String::from("AppBlock") }
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlobalVariable {
 	pub name: String,
-	#[napi(ts_type = "int")]
 	pub var_type: i32,
 	pub value: String,
 
-	#[napi(ts_type = "'GlobalVariable'")]
 	#[serde(skip, default = "GlobalVariable::type_name")]
 	pub _type: String,
 }
@@ -624,16 +554,14 @@ impl GlobalVariable {
 	pub fn type_name() -> String { String::from("GlobalVariable") }
 }
 
-#[napi(object)]
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BehaviorControl {
 	pub name: String,
-	#[napi(ts_type = "int")]
 	pub vk: i32,
-	#[napi(ts_type = "int")]
 	pub player: i32,
 
-	#[napi(ts_type = "'BehaviorControl'")]
 	#[serde(skip, default = "BehaviorControl::type_name")]
 	pub _type: String,
 }
@@ -641,7 +569,6 @@ impl BehaviorControl {
 	pub fn type_name() -> String { String::from("BehaviorControl") }
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum FpsMode {
 	VSync,
@@ -649,14 +576,12 @@ pub enum FpsMode {
 	Fixed,
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum SamplerMode {
 	Point,
 	Linear,
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum TextRenderingMode {
 	Aliased,
@@ -664,7 +589,6 @@ pub enum TextRenderingMode {
 	ClearType,
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum SimulateShadersMode {
 	NoSimulation,
@@ -673,7 +597,6 @@ pub enum SimulateShadersMode {
 	Ps00,
 }
 
-#[napi]
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum ResizeMode {
 	Disabled,

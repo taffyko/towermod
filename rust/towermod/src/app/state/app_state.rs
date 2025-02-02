@@ -1,23 +1,20 @@
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use redux_rs::{Selector, Store};
-use crate::Project;
+use crate::{Game, Project};
 use super::data_state as data;
 
 pub enum Action {
 	Data(data::Action),
 	SetProject(Option<Project>),
-}
-impl Action {
-	pub async fn dispatch(self, store: &AppStore) {
-		store.dispatch(self).await;
-	}
+	SetGame(Option<Game>),
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct State {
 	pub data: data::State,
 	pub project: Option<Project>,
+	pub game: Option<Game>,
 }
 
 pub fn reducer(mut state: State, action: Action) -> State {
@@ -27,6 +24,9 @@ pub fn reducer(mut state: State, action: Action) -> State {
 		}
 		Action::SetProject(project) => {
 			state.project = project
+		}
+		Action::SetGame(game) => {
+			state.game = game
 		}
 	}
 	state

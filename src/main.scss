@@ -1,0 +1,44 @@
+@use './base.scss';
+@use './global.scss';
+
+:root {
+	--color-text: #efefef;
+	--color-root-bg: #010101;
+	--color-bg: #434343;
+	--color-bg-active: #838383;
+	--color-bg-hover: #636363;
+	--color-border: #ffffff;
+	--color-error: #f2334c;
+	--color-warn: #f5e167;
+	--color-scrollbar-thumb: var(--color-bg-active);
+	color: var(--color-text);
+
+	--gap: 0.5rem;
+	--border-width: 1px;
+	--border-radius: 5px;
+
+	--font: serif;
+}
+
+body {
+	background-color: transparent;
+	display: flex;
+	height: 100vh;
+	align-items: stretch;
+	justify-content: stretch;
+	user-select: none;
+	overflow: hidden;
+	font-family: var(--font);
+}
+
+div#root {
+	background-color: var(--color-root-bg);
+	border-radius: var(--border-radius);
+	border: solid var(--border-width) var(--color-border);
+	width: calc(100vw - 1px);
+	height: calc(100vh - 1px);
+	display: flex;
+	align-items: stretch;
+	justify-content: stretch;
+	flex-direction: column;
+}

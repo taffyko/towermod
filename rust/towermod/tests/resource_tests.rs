@@ -1,4 +1,6 @@
 use std::path::PathBuf;
+pub use towermod_lib as towermod;
+
 use towermod::cstc;
 use towermod::cstc::decode_object_data;
 use towermod::cstc::ObjectData;

@@ -94,9 +94,9 @@ impl<'a> BlockReader<'a> {
 		let name = self.read_string();
 		let tag = self.read_i32();
 
-		let speed = Nt(self.read_f32());
+		let speed = self.read_f32();
 		let is_angle = self.read_u8() != 0;
-		let angle = Nt(self.read_f32());
+		let angle = self.read_f32();
 
 		let repeat_count = self.read_i32();
 		let repeat_to = self.read_i32();
@@ -110,7 +110,7 @@ impl<'a> BlockReader<'a> {
 	}
 
 	fn read_animation_frame(&mut self) -> AnimationFrame {
-		let duration = Nt(self.read_f32());
+		let duration = self.read_f32();
 		let image_id = self.read_i32();
 		AnimationFrame { duration, image_id, _type: AnimationFrame::type_name() }
 	}

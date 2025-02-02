@@ -1,0 +1,23 @@
+.mods {
+	width: 100%;
+}
+
+.modList {
+}
+
+.modListItem {
+	border: solid var(--border-width) var(--color-border);
+	background-color: var(--color-bg-root);
+	&.selected {
+		background-color: var(--color-bg-active);
+	}
+}
+
+.modDetails {
+
+}
+
+
+.error {
+	color: var(--color-error);
+}

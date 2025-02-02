@@ -11,17 +11,12 @@
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 extern crate test;
-mod config;
-mod run;
-mod project;
-pub(in crate) mod newtype;
-pub mod tcr;
-pub mod util;
-pub mod cstc;
-pub mod macros;
-pub mod app;
 
-pub use project::*;
-pub use config::*;
-pub use run::*;
-pub use newtype::*;
+mod etc;
+pub use etc::*;
+
+pub mod cstc;
+pub mod app;
+#[cfg(feature = "tauri")]
+pub mod tauri;
+

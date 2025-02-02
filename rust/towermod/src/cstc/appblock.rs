@@ -21,7 +21,7 @@ impl BlockReader<'_> {
 		let name = self.read_string();
 		let window_width = self.read_i32();
 		let window_height = self.read_i32();
-		let eye_distance = Nt(self.read_f32());
+		let eye_distance = self.read_f32();
 		let show_menu = self.read_i32() == 1;
 		let screensaver = self.read_u8() == 1;
 		let fps_mode = FpsMode::from_u8(self.read_u8()).unwrap();
@@ -39,12 +39,12 @@ impl BlockReader<'_> {
 		let motion_blur_steps = self.read_i32();
 		let text_rendering_mode = TextRenderingMode::from_i32(self.read_i32()).unwrap();
 		let override_timedelta = self.read_u8() == 1;
-		let time_delta_override = Nt(self.read_f32());
+		let time_delta_override = self.read_f32();
 		let caption = self.read_u8() == 1;
 		let minimize_box = self.read_u8() == 1;
 		let resize_mode = ResizeMode::from_i32(self.read_i32()).unwrap();
 		let maximize_box = self.read_u8() == 1;
-		let minimum_fps = Nt(self.read_f32());
+		let minimum_fps = self.read_f32();
 		let layout_index = self.read_i32();
 		let multisamples = self.read_u32();
 		let texture_loading_mode = TextureLoadingMode::from_i32(self.read_i32()).unwrap();

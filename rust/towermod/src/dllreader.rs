@@ -1,6 +1,7 @@
 #![allow(unused_parens)]
 #![allow(unused_import_braces)]
 use std::{io::{self, Write}, env};
+use towermod_lib as towermod;
 
 #[cfg(target_arch="x86")]
 fn main() {

@@ -5,42 +5,44 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Debug Renderer Process",
-			"port": 9222,
+			"name": "Tauri (built binary)",
+			"type": "cppvsdbg",
+			"request": "launch",
+			// change the exe name to your actual exe name
+			// (to debug release builds, change `target/debug` to `release/debug`)
+			"program": "${workspaceRoot}/rust/target/x86_64-pc-windows-msvc/debug/towermod.exe",
+			"cwd": "${workspaceRoot}",
+			"preLaunchTask": "vite"
+		},
+		{
+			"name": "Frontend (Attach)",
 			"request": "attach",
-			"type": "chrome",
-			"pathMapping": {
-
-				"${workspaceFolder}": "${workspaceFolder}",
-				"/": "${workspaceFolder}/ui/src/renderer",
-			},
+			"type": "msedge",
+			"port": 9223,
 			"timeout": 60000,
 		},
 		{
-			"name": "Debug Main Process",
-			"type": "node",
-			"request": "launch",
-			"cwd": "${workspaceRoot}/ui",
-			"runtimeExecutable": "${workspaceRoot}/ui/node_modules/.bin/electron-vite",
-			"windows": {
-				"runtimeExecutable": "${workspaceRoot}/ui/node_modules/.bin/electron-vite.cmd"
-			},
-			"runtimeArgs": ["--sourcemap"],
-			"env": {
-				"REMOTE_DEBUGGING_PORT": "9222"
-			}
+			"name": "Frontend (tauri dev)",
+			"request": "attach",
+			"type": "msedge",
+			"port": 9223,
+			"timeout": 60000,
+			"preLaunchTask": "tauri-dev"
 		}
 	],
 	"compounds": [
 		{
-			"name": "Debug All",
-			"configurations": ["Debug Main Process", "Debug Renderer Process"],
-			"presentation": {
-				"order": 1
-			}
-		}
+			"name": "Tauri",
+			"configurations": ["Tauri (built binary)"],
+			"preLaunchTask": "build-tauri",
+		},
+		{
+			"name": "Tauri & Frontend",
+			"configurations": [
+				"Tauri (built binary)",
+				"Frontend (Attach)"
+			],
+			"preLaunchTask": "build-tauri",
+		},
 	]
 }
-
-
-

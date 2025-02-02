@@ -7,9 +7,9 @@ use crate::{cstc::plugin::{AcesEntry, PluginData, PluginStringTable}, Nt};
 /// Since we can't dynamically query its capabilities like we can a with an SDK plugin, we just have to manually hardcode that metadata here.
 pub fn get_system_plugin() -> PluginData {
 	PluginData {
-		conditions: Nt(aces_entries(get_system_condition_names())),
-		actions: Nt(aces_entries(get_system_action_names())),
-		expressions: Nt(HashMap::new()),
+		conditions: aces_entries(get_system_condition_names()),
+		actions: aces_entries(get_system_action_names()),
+		expressions: HashMap::new(),
 		cnd_categories: HashMap::new(),
 		act_categories: HashMap::new(),
 		exp_categories: HashMap::new(),
