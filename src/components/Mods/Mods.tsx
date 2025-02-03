@@ -8,6 +8,7 @@ import { win32 as path } from 'path';
 import { toast } from 'react-toastify';
 import { openFolder, getModsDirPath } from '@/rpc';
 import { ToastContext } from '../Toasts';
+import { Button } from '../Button';
 
 export const ModListItem = (props: {
 	selected: boolean,
@@ -68,7 +69,7 @@ export default function Mods() {
 	const { data: modsList } = api.useGetInstalledModsQuery();
 	const [playMod] = api.usePlayModMutation();
 	const [selectedMod, setSelectedMod] = useState<ModInfo>();
-	const [showModal, setShowModal] = useState(true);
+	const [showModal, setShowModal] = useState(false); // FIXME
 	const dispatch = useAppDispatch();
 	const { toast } = useContext(ToastContext)
 	if (!modsList) { return null }
@@ -81,25 +82,25 @@ export default function Mods() {
 
 	return <div className={Style.mods}>
 		<div className="hbox gap">
-			<button onClick={() => {
+			<Button onClick={() => {
 				dispatch(api.util.invalidateTags(['ModInfo']))
 				toast("Mod list reloaded")
 			}}>
 				Refresh mod list
-			</button>
-			<button disabled={!selectedMod || !!selectedMod.error} onClick={async () => {
+			</Button>
+			<Button disabled={!selectedMod || !!selectedMod.error} onClick={async () => {
 				if (selectedMod?.filePath) {
 					playMod(selectedMod.filePath)
 				}
 			}}>
 				Play mod
-			</button>
-			<button onClick={async () => {
+			</Button>
+			<Button onClick={async () => {
 				openFolder(await getModsDirPath())
 				toast('Opened mod directory')
 			}}>
 				Open mods folder
-			</button>
+			</Button>
 		</div>
 		<div className="hbox gap">
 			<ModList

@@ -3,6 +3,7 @@ import Style from './Tabs.module.scss'
 import { useEventListener, useImperativeHandle } from "@renderer/hooks";
 import { posmod } from "@shared/util";
 import { ModalContext } from "../Modal";
+import Text from '@renderer/components/Text'
 
 export interface Tab {
 	name: string;
@@ -80,7 +81,7 @@ export const Tabs = (props: {
 									${tab === currentTab ? Style.active : ""}
 								`}
 							>
-								{tab.name}
+								<Text>{tab.name}</Text>
 							</div>
 						</div>
 				)}

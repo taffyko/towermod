@@ -1,0 +1,18 @@
+.button {
+	border: solid 1px currentColor;
+	background-color: var(--color-bg);
+	border-radius: 5px;
+	color: var(--color-text);
+	--a-pressable: 0.1s background-color ease-out;
+	animation: var(--a-pressable);
+}
+
+.button:active {
+	background-color: var(--color-bg-active);
+	color: var(--color-text-active);
+}
+
+.button:hover {
+	background-color: var(--color-bg-hover);
+	--a2: 0.0s background-color ease-out;
+}

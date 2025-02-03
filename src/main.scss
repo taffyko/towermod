@@ -1,12 +1,22 @@
 @use './base.scss';
 @use './global.scss';
 
+@font-face {
+	font-family: 'times-16';
+	src: url('/times_bitmap_16.ttf');
+}
+
 :root {
 	--color-text: #efefef;
-	--color-root-bg: #010101;
-	--color-bg: #434343;
-	--color-bg-active: #838383;
-	--color-bg-hover: #636363;
+	--color-text-hover: #f2f2f2;
+	--color-text-active: var(--color-text-hover);
+
+	--color-root-bg: #0D0D0D;
+
+	--color-bg: #1C1C1C;
+	--color-bg-active: #2C2C2C;
+	--color-bg-hover: #3C3C3C;
+
 	--color-border: #ffffff;
 	--color-error: #f2334c;
 	--color-warn: #f5e167;
@@ -17,7 +27,20 @@
 	--border-width: 1px;
 	--border-radius: 5px;
 
-	--font: serif;
+	--font: 'times-16', times, 'Times New Roman', serif;
+	font-size: 16px;
+}
+
+.text {
+	filter: url(#salinear2);
+	-webkit-filter: url(#salinear2);
+}
+
+* {
+	font-family: inherit;
+	font-size: inherit;
+	font-smooth: none;
+	-webkit-font-smoothing: none;
 }
 
 body {

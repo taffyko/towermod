@@ -1,3 +1,5 @@
+@use '../../mixins' as *;
+
 .tabs {
 	display: flex;
 	flex-flow: column nowrap;
@@ -21,8 +23,10 @@
 				flex-flow: column nowrap;
 				justify-content: flex-start;
 
+				@include pressable('.tab');
+
 				.tab {
-					padding: 0 var(--gap);
+					padding: 0 calc(var(--gap) / 2);
 					background-color: var(--color-root-bg);
 					border: solid var(--border-width) var(--color-border);
 					border-top: none;
@@ -34,20 +38,17 @@
 					display: flex;
 					align-items: flex-end;
 
-					--a1: 0.25s height ease-out;
-					--a2: 0.25s background-color ease-out;
-					transition: var(--a1), var(--a2);
+					--a-height: 0.25s height cubic-bezier(0, 0.05, 0, 1);
+					transition: var(--a-height), var(--a-pressable);
+
+					* {
+						margin-bottom: calc(-1 * var(--gap) / 2)
+					}
 				}
 
 				&.active .tab {
 					height: 2.5rem;
-					background-color: var(--color-bg-active);
-					--a1: 0.1s height ease-out;
-				}
-
-				&:hover .tab {
-					background-color: var(--color-bg-hover);
-					--a2: 0.1s background-color ease-out;
+					--a-height: 0.25s height cubic-bezier(0, 0.05, 0, 1);
 				}
 			}
 		}

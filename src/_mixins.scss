@@ -1,0 +1,17 @@
+@mixin pressable($class) {
+	#{$class} {
+		border: none;
+		--a-pressable: 0.1s background-color ease-out;
+		animation: var(--a-pressable);
+	}
+
+	#{$class}.active, #{$class}:active {
+		background-color: var(--color-bg-active);
+		color: var(--color-text-active);
+	}
+
+	#{$class}:hover {
+		background-color: var(--color-bg-hover);
+		--a2: 0.0s background-color ease-out;
+	}
+}
