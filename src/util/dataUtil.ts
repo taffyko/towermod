@@ -1,4 +1,4 @@
-import { UniqueTowermodObject, findObjectTypeById, State } from "./reducers/data";
+import { UniqueTowermodObject, findObjectTypeById, State } from "../reducers/data";
 import { assert, assertUnreachable, unwrap } from "./util";
 
 export function objectDisplayName(data: State, obj: UniqueTowermodObject) {

@@ -12,6 +12,7 @@ export default defineConfig(async () => ({
 	],
 	resolve: {
 		alias: {
+			'@': '/src',
 			path: "path-browserify-win32"
 		}
 	},

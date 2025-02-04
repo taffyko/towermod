@@ -1,9 +1,9 @@
 import Style from './TitleBar.module.scss';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import minimize from '@/icons/minimize.svg';
-import maximize from '@/icons/maximize.svg';
-import unmaximize from '@/icons/unmaximize.svg';
-import close from '@/icons/close.svg';
+import minimizeImg from '@/icons/minimize.svg';
+import maximizeImg from '@/icons/maximize.svg';
+import unmaximizeImg from '@/icons/unmaximize.svg';
+import closeImg from '@/icons/close.svg';
 import { useEffect, useState } from 'react';
 import IconButton from '@/components/IconButton';
 
@@ -30,15 +30,15 @@ export const TitleBar = () => {
 				<span className="centerbox">TowerMod {VERSION}</span>
 			</div>
 			<div className={Style.buttons}>
-				<IconButton big src={minimize} tabIndex={-1} onClick={() => {
+				<IconButton big src={minimizeImg} tabIndex={-1} onClick={() => {
 					const window = getCurrentWindow();
 					window.minimize()
 				}} />
-				<IconButton big src={maximized ? unmaximize : maximize} tabIndex={-1} onClick={() => {
+				<IconButton big src={maximized ? unmaximizeImg : maximizeImg} tabIndex={-1} onClick={() => {
 					const window = getCurrentWindow();
 					window.toggleMaximize()
 				}} />
-				<IconButton big src={close} tabIndex={-1} onClick={() => {
+				<IconButton big src={closeImg} tabIndex={-1} onClick={() => {
 					const window = getCurrentWindow();
 					window.close()
 				}} />

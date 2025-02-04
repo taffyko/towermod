@@ -1,3 +1,4 @@
+import Style from './App.module.scss';
 import Mods from '@/app/Mods';
 import { ErrorBoundary } from '@/app/ErrorBoundary';
 import { Tab, Tabs, TabsHandle } from '@/app/Tabs';
@@ -5,14 +6,13 @@ import { useEffect, useMemo } from 'react';
 import { TitleBar } from '@/app/TitleBar';
 import { Data, DataHandle } from '@/app/Data';
 import Config from '@/app/Config';
-import Style from './App.module.scss';
-import { useStateRef } from './hooks';
+import { useStateRef } from '@/util/hooks';
 import { ModalContextContainer } from '@/app/Modal';
 import { AppContext, AppContextState } from './appContext';
-import { initialize } from './thunks';
-import { api } from './api';
+import { initialize } from '@/util/thunks';
+import { api } from '@/api';
 import { ToastContainer } from '@/app/Toast';
-import { Portal } from './components/Portal';
+import { Portal } from '@/components/Portal';
 
 const App = () => {
 	const [dataHandle, setDataHandle] = useStateRef<DataHandle>()

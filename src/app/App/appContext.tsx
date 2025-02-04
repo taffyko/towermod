@@ -1,6 +1,6 @@
 import React from "react";
-import { DataHandle } from "./components/Data";
-import { TabsHandle } from "./components/Tabs";
+import type { DataHandle } from "@/app/Data";
+import type { TabsHandle } from "@/app/Tabs";
 
 export interface AppContextState {
 	data: DataHandle | null,

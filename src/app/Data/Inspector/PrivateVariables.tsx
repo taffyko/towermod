@@ -1,10 +1,10 @@
-import { useAppDispatch, useAppSelector } from "@/hooks";
+import { useAppDispatch, useAppSelector } from "@/util/hooks";
 import { InspectorDictionary } from "./base/Inspector";
 import { ArrayPropertyInfo, DictionaryPropertyInfo, SimplePropertyInfo } from "./base/inspectorUtil";
 import { findObjectTypeById } from "@/reducers/data";
 import { ObjectInstance, PrivateVariable } from "@towermod";
 import { actions } from "@/reducers";
-import { assert } from "@/util";
+import { assert } from "@/util/util";
 import { useMemo } from "react";
 
 export function PrivateVariables(props: { pinfo: ArrayPropertyInfo<PrivateVariable> }) {

@@ -1,4 +1,4 @@
-import { MiniEvent, Timer } from "@/util";
+import { MiniEvent, Timer } from "@/util/util";
 import React from "react"
 
 export interface ToastOptions {

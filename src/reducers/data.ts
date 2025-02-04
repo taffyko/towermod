@@ -2,7 +2,7 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable } from "@towermod";
 // import { PrivateVariableType } from "@towermod";
 import { actions as mainActions } from './main'
-import { addRawReducers, assert, assertUnreachable, unwrap } from "@/util";
+import { addRawReducers, assert, assertUnreachable, unwrap } from "@/util/util";
 
 export type State = CstcData
 

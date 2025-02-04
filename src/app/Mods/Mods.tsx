@@ -3,10 +3,10 @@ import { ModInfo } from '@towermod';
 import Style from './Mods.module.scss'
 import Modal from '@/app/Modal';
 import { api } from "@/api";
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch } from '@/util/hooks';
 import { win32 as path } from 'path';
 import { toast } from '@/app/Toast';
-import { openFolder, getModsDirPath } from '@/rpc';
+import { openFolder, getModsDirPath } from '@/util/rpc';
 import { Button } from '@/components/Button';
 
 export const ModListItem = (props: {

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ToastData, closeToast, toasts, toastsUpdated } from './toastStore';
 import IconButton from "@/components/IconButton";
 import closeSvg from '@/icons/close.svg';
-import { useIsHovered, useMiniEvent, useRerender, useStateRef } from '@/hooks';
+import { useIsHovered, useMiniEvent, useRerender, useStateRef } from '@/util/hooks';
 import Text from '@/components/Text';
 
 function Toast(props: ToastData & { idx: number }) {
@@ -35,7 +35,7 @@ function Toast(props: ToastData & { idx: number }) {
 		style={{ ['--timer-opacity' as any]: 1 - timerProgress }}
 	>
 		<IconButton src={closeSvg} className={Style.closeButton} onClick={() => closeToast(id)} />
-		<Text>{content} weqioue qwioeuqwo ieuqwoi ueqwiowequioeqw uoqweuiqweioq weueqiowu weoiq eoiqw</Text>
+		<Text>{content}</Text>
 	</div>
 }
 

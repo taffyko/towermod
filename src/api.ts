@@ -1,9 +1,9 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { int } from '@/util';
+import { int } from '@/util/util';
 import { invoke } from "@tauri-apps/api/core";
 import { Game, ModInfo, Project } from '@towermod';
 import type { BaseEndpointDefinition } from '@reduxjs/toolkit/query'
-import { useMemoWithCleanup } from './hooks';
+import { useMemoWithCleanup } from './util/hooks';
 
 
 type FetchBaseQueryFn = ReturnType<typeof fetchBaseQuery>

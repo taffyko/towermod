@@ -1,0 +1,8 @@
+.lineEdit {
+	border: solid 1px currentColor;
+	background-color: var(--color-bg-2);
+	border-radius: 5px;
+	color: var(--color-text);
+	--a-pressable: 0.1s background-color ease-out;
+	animation: var(--a-pressable);
+}
