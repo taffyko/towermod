@@ -14,7 +14,7 @@ $heightExpanded: 2.2rem;
 		position: relative;
 		display: flex;
 		flex-flow: column nowrap;
-		height: calc(1.5rem);
+		height: calc($heightExpanded + var(--gap-s));
 
 		.tabBar {
 			position: absolute;

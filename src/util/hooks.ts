@@ -58,15 +58,29 @@ export function useImperativeHandle<T, R extends T>(ref: React.Ref<T> | undefine
 
 /** Allows you to return both a value and a cleanup function that runs before the value recomputes */
 export function useMemoWithCleanup<T>(factory: () => [T] | [T, ReturnType<EffectCallback>], deps: DependencyList): T {
-	const ref = useRef<void | (() => void)>();
-	return useMemo(() => {
-		if (ref.current) {
-			ref.current()
+	const resultRef = useRef<null | [T] | [T, ReturnType<EffectCallback>]>(null)
+	// recompute value
+	if (!resultRef.current) {
+		resultRef.current = factory()
+	}
+
+	useEffect(() => {
+		return () => {
+			if (resultRef.current) {
+				const [, cleanup] = resultRef.current
+				if (cleanup) {
+					// queue cleanup in next task
+					// (to give the chance for a subsequent render to propagate the new value first)
+					setTimeout(() => cleanup(), 0)
+				}
+				// invalidate value to trigger recompute on next render
+				resultRef.current = null
+			}
 		}
-		const [value, cleanup] = factory()
-		ref.current = cleanup
-		return value
 	}, deps)
+
+	const [value, ] = resultRef.current
+	return value
 }
 
 /** Semantic replacement for useRef that triggers a re-render when the ref updates */
@@ -114,4 +128,16 @@ export function useIsFocused(el: HTMLElement) {
 		setFocused(false)
 	})
 	return focused
+}
+
+export function useObjectUrl(blob: Blob | null | undefined): string | null {
+	const href = useMemoWithCleanup(() => {
+			if (blob) {
+				const href = URL.createObjectURL(blob);
+				return [href, () => URL.revokeObjectURL(href)]
+			} else {
+				return [null]
+			}
+	}, [blob])
+	return href
 }

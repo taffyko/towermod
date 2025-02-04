@@ -1,4 +1,6 @@
 .errorBoundary {
+	user-select: text;
+	padding: var(--gap-m);
 	color: var(--color-error);
 	height: 100%;
 }
