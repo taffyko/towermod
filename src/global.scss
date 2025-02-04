@@ -15,6 +15,13 @@
 	justify-content: stretch;
 }
 
+.centerbox {
+	display: inline-flex;
+	flex-flow: column nowrap;
+	align-items: center;
+	justify-content: center;
+}
+
 .gap {
 	gap: var(--gap);
 }

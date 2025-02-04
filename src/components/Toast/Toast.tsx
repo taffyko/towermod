@@ -4,16 +4,22 @@ import { ToastData, closeToast, toasts, toastsUpdated } from './toastStore';
 import IconButton from "../IconButton";
 import closeSvg from '@/icons/close.svg';
 import { useIsHovered, useMiniEvent, useRerender, useStateRef } from '@/hooks';
+import Text from '@/components/Text';
 
-function Toast(props: ToastData) {
-	const { content, id, timer } = props;
+function Toast(props: ToastData & { idx: number }) {
+	const { content, id, idx, timer } = props;
 	const [timerProgress, setTimerProgress] = useState(timer.progress);
 	const [el, setEl] = useStateRef<HTMLDivElement>();
 	const hovered = useIsHovered(el);
 
 	useEffect(() => {
-		hovered ? timer.stop() : timer.update();
-	}, [hovered, timer])
+		if (idx > 0 || hovered) {
+			timer.stop()
+			timer.reset()
+		} else {
+			timer.start()
+		}
+	}, [hovered, timer, idx])
 
 	useMiniEvent(timer.progressEvent, (progress) => {
 		setTimerProgress(progress)
@@ -23,15 +29,13 @@ function Toast(props: ToastData) {
 		closeToast(id)
 	}, [closeToast, id]);
 
-	const opacity = hovered ? 1 : 1 - timerProgress;
-
 	return <div
 		ref={setEl}
 		className={Style.toast}
-		style={{ ['--timer-opacity' as any]: opacity }}
+		style={{ ['--timer-opacity' as any]: 1 - timerProgress }}
 	>
-		<IconButton src={closeSvg} onClick={() => closeToast(id)} />
-		{content}
+		<IconButton src={closeSvg} className={Style.closeButton} onClick={() => closeToast(id)} />
+		<Text>{content} weqioue qwioeuqwo ieuqwoi ueqwiowequioeqw uoqweuiqweioq weueqiowu weoiq eoiqw</Text>
 	</div>
 }
 
@@ -43,9 +47,10 @@ export function ToastContainer() {
 	}, [rerender]);
 
 	return <div className={Style.toastContainer}>
-		{toasts.map((toastData) =>
+		{toasts.map((toastData, idx) =>
 			<Toast
 				key={toastData.id}
+				idx={idx}
 				{...toastData}
 			/>
 		)}

@@ -40,10 +40,6 @@
 
 					--a-height: 0.25s height cubic-bezier(0, 0.05, 0, 1);
 					transition: var(--a-height), var(--a-pressable);
-
-					* {
-						margin-bottom: calc(-1 * var(--gap) / 2)
-					}
 				}
 
 				&.active .tab {

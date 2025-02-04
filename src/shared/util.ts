@@ -54,44 +54,60 @@ export class MiniEvent<T = void> {
 }
 
 export class Timer {
-	/** seconds */
-	#startTime = 0.0
-	#timeLeft = 0.0
-	#running = false
-	get timeLeft() { return this.#timeLeft }
-	set timeLeft(time: number) {
-		this.#startTime = time
-		this.#timeLeft = time
-	}
-	get progress() { return 1 - this.#timeLeft / this.#startTime }
+
+	get progress() { return 1 - this.timeLeft / this.startTime }
 	get running() { return this.#running }
-	#animationFrame = 0
-	/** milliseconds */
-	#domTimestamp = performance.now()
+
 	readonly timeoutEvent = new MiniEvent()
 	readonly progressEvent = new MiniEvent<number>()
-	constructor(time: number) {
-		this.timeLeft = time
-		this.update()
-	}
-	update(delta = 0.0) {
-		console.log("update", this.#timeLeft); // FIXME
-		this.#running = true
-		if (this.#timeLeft <= 0) {
-			this.stop()
-			this.timeoutEvent.fire()
+
+	/** seconds */
+	timeLeft = 0.0
+	/** seconds */
+	startTime = 0.0
+	#running = false
+	#animationFrame = 0
+	/** milliseconds */
+	#domTimestamp = 0
+
+	start() {
+		if (!this.#running) {
+			this.#running = true
+			this.#domTimestamp = performance.now()
+			this.#update()
 		}
-		this.#timeLeft = Math.max(0, this.timeLeft - delta)
-		this.progressEvent.fire(this.progress)
-		this.#animationFrame = requestAnimationFrame((newDomTimestamp) => {
-			const delta = (newDomTimestamp - this.#domTimestamp) / 1000
-			this.#domTimestamp = newDomTimestamp
-			this.update(delta)
-		})
 	}
 	stop() {
 		cancelAnimationFrame(this.#animationFrame)
 		this.#running = false
+	}
+	reset() {
+		this.timeLeft = this.startTime
+		this.progressEvent.fire(this.progress)
+	}
+
+	constructor(time: number) {
+		this.timeLeft = time
+		this.startTime = time
+		this.start()
+	}
+
+	#update(delta = 0.0) {
+		if (!this.#running) {
+			return
+		}
+		if (this.timeLeft <= 0) {
+			this.stop()
+			this.timeoutEvent.fire()
+			return
+		}
+		this.timeLeft = Math.max(0, this.timeLeft - delta)
+		this.progressEvent.fire(this.progress)
+		this.#animationFrame = requestAnimationFrame((newDomTimestamp) => {
+			const delta = (newDomTimestamp - this.#domTimestamp) / 1000
+			this.#domTimestamp = newDomTimestamp
+			this.#update(delta)
+		})
 	}
 }
 

@@ -7,7 +7,7 @@ export function IconButton(props: {
 } & React.ComponentProps<'button'>) {
 	const { src, big, className, ...htmlProps } = props
 	return <button
-		className={`${Style.iconButton} ${big ? Style.big : ''} ${Style.small} ${className ?? ''}`}
+		className={`${Style.iconButton} ${big ? Style.big : ''} ${className ?? ''}`}
 		{...htmlProps}
 	>
 		<Svg href={src} />

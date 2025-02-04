@@ -24,6 +24,9 @@
 	color: var(--color-text);
 
 	--gap: 0.5rem;
+	--gap-s: 0.25rem;
+	--gap-m: 0.5rem;
+	--gap-l: 1rem;
 	--border-width: 1px;
 	--border-radius: 5px;
 
@@ -32,18 +35,23 @@
 }
 
 .text {
-	filter: url(#salinear2);
-	-webkit-filter: url(#salinear2);
+	filter: url(#salinear5);
+	-webkit-filter: url(#salinear5);
+}
+
+::selection {
+	background-color: var(--color-text);
+	color: var(--color-bg);
 }
 
 * {
 	font-family: inherit;
 	font-size: inherit;
 	font-smooth: none;
-	-webkit-font-smoothing: none;
 }
 
 body {
+	color: var(--color-text);
 	background-color: transparent;
 	display: flex;
 	height: 100vh;
@@ -52,6 +60,9 @@ body {
 	user-select: none;
 	overflow: hidden;
 	font-family: var(--font);
+
+	color: var(--color-text);
+	background: var(--color-background);
 }
 
 div#root {

@@ -2,13 +2,14 @@ $iconSize: 16px;
 
 .iconButton {
 	padding: 0;
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 
 	border: none;
 	border-radius: 5px;
 
+	height: calc($iconSize + var(--gap-s));
 	aspect-ratio: 1 / 1;
 
 	align-self: center;
@@ -16,15 +17,19 @@ $iconSize: 16px;
 	color: var(--color-text);
 	transition: 0.1s background-color ease-out;
 
-	& * {
+	& > * {
 		height: min(100%, $iconSize);
 	}
 
 	&.big {
-		height: 32px;
+		height: calc($iconSize + var(--gap-l));
 	}
 
 	&:hover {
-		background-color: var(--color-bg-hover)
+		background-color: var(--color-bg-hover);
+		color: var(--color-text-hover);
+		& img {
+			transform: scale(1.2);
+		}
 	}
 }

@@ -27,7 +27,7 @@ export const TitleBar = () => {
 	return <div className={Style.titleBarRoot}>
 		<div className={Style.titleBarContent}>
 			<div className={Style.draggable}>
-				<div className={Style.title}>TowerMod {VERSION}</div>
+				<span className="centerbox">TowerMod {VERSION}</span>
 			</div>
 			<div className={Style.buttons}>
 				<IconButton big src={minimize} tabIndex={-1} onClick={() => {

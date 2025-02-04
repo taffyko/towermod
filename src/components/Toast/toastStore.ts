@@ -3,14 +3,17 @@ import React from "react"
 
 export interface ToastOptions {
 	type: 'info' | 'error' | 'success' | 'warning',
+	time?: number,
 }
 
-export function toast(content: React.ReactNode, options?: ToastOptions) {
+const DEFAULT_TIME = 1.0;
+
+export function toast(content: React.ReactNode, options?: Partial<ToastOptions>) {
 	const id = crypto.randomUUID()
 	toasts.push({
 		content,
 		id,
-		timer: new Timer(1.0),
+		timer: new Timer(options?.time ?? DEFAULT_TIME),
 		type: options?.type || 'info',
 	});
 	toastsUpdated.fire();
