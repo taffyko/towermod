@@ -1,4 +1,4 @@
-import { float, int } from "@shared/util"
+import { float, int } from "@/util"
 import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, propertyInfoOverrides } from "../customInspectorUtil"
 
 export type InspectorObjectValue = CustomInspectorObjects

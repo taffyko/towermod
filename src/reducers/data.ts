@@ -2,14 +2,13 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable } from "@towermod";
 // import { PrivateVariableType } from "@towermod";
 import { actions as mainActions } from './main'
-import { addRawReducers, assert, assertUnreachable } from "@shared/util";
+import { addRawReducers, assert, assertUnreachable, unwrap } from "@/util";
 
 export type State = CstcData
 
 const initialState: State = {
 	editorPlugins: {},
 	layouts: [],
-	imageBlock: [],
 	objectTypes: [],
 	behaviors: [],
 	traits: [],
@@ -29,7 +28,7 @@ export function findObjectById(state: State, id: number) {
 	return assert(false)
 }
 export function findObjectTypeById(state: State, id: number) {
-	return assert(state.objectTypes.find(s => id === s.id))
+	return unwrap(state.objectTypes.find(s => id === s.id))
 }
 
 export function findLayoutByName(state: State, name: string) {

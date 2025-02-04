@@ -2,7 +2,7 @@ import Outliner, { OutlinerHandle } from './Outliner/Outliner'
 import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
 import { useState } from 'react'
-import { UniqueObjectLookup, UniqueTowermodObject, actions, findObject } from '@shared/reducers/data'
+import { UniqueObjectLookup, UniqueTowermodObject, actions, findObject } from '@/reducers/data'
 import { useAppDispatch, useAppSelector, useImperativeHandle, useStateRef } from '@renderer/hooks'
 
 export interface DataHandle {

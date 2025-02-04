@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useMemo, useState } from "react"
 import Style from './Tabs.module.scss'
 import { useEventListener, useImperativeHandle } from "@renderer/hooks";
-import { posmod } from "@shared/util";
+import { posmod } from "@/util";
 import { ModalContext } from "../Modal";
 import Text from '@renderer/components/Text'
 

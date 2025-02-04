@@ -1,5 +1,5 @@
 import { UniqueTowermodObject, findObjectTypeById, State } from "./reducers/data";
-import { assert, assertUnreachable } from "./util";
+import { assert, assertUnreachable, unwrap } from "./util";
 
 export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
 	const objTypeName = obj.type
@@ -9,7 +9,7 @@ export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
 		case 'LayoutLayer':
 			return `Layer ${obj.id}: ${obj.name}`
 		case 'ObjectInstance': {
-			const objType = assert(findObjectTypeById(data, obj.objectTypeId))
+			const objType = unwrap(findObjectTypeById(data, obj.objectTypeId))
 			const plugin = data.editorPlugins[objType.pluginId]
 			const pluginName = plugin.stringTable.name
 			const objectName = objType.name
@@ -20,7 +20,7 @@ export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
 		case 'Behavior':
 			return `Behavior: ${obj.name}`
 		case 'Container':
-			const objType = assert(findObjectTypeById(data, obj.objectIds[0]))
+			const objType = unwrap(findObjectTypeById(data, obj.objectIds[0]))
 			return `Container: ${objType.name}`
 		case 'Family':
 			return `Family: ${obj.name}`

@@ -1,4 +1,3 @@
-@use './base.scss';
 @use './global.scss';
 
 @font-face {
@@ -75,4 +74,16 @@ div#root {
 	align-items: stretch;
 	justify-content: stretch;
 	flex-direction: column;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	font-weight: normal;
+}
+
+ul {
+	list-style: none;
 }

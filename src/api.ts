@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { int } from '@shared/util';
+import { int } from '@/util';
 import { invoke } from "@tauri-apps/api/core";
 import { Game, ModInfo, Project } from '@towermod';
 import type { BaseEndpointDefinition } from '@reduxjs/toolkit/query'

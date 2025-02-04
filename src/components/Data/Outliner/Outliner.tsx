@@ -9,13 +9,13 @@ import {
 	FixedSizeTree,
 } from 'react-vtree';
 import { useAppSelector, useStateRef } from '@renderer/hooks';
-import { assertUnreachable, enumerate } from '@shared/util';
+import { assertUnreachable, enumerate } from '@/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
-import { UniqueObjectLookup, UniqueTowermodObject } from '@shared/reducers/data';
+import { UniqueObjectLookup, UniqueTowermodObject } from '@/reducers/data';
 import { AppContext } from '@renderer/appContext';
-import { objectDisplayName } from '@shared/dataUtil';
+import { objectDisplayName } from '@/dataUtil';
 import { store } from '@renderer/store';
 
 function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {

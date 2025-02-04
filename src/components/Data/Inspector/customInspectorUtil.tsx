@@ -1,5 +1,5 @@
 import React from 'react'
-import { TowermodObject, findObjectInstances } from "@shared/reducers/data";
+import { TowermodObject, findObjectInstances } from "@/reducers/data";
 import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName, ParentPropertyInfo } from "./base/inspectorUtil";
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';

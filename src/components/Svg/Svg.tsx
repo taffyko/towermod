@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { api } from '@/api';
-import { assert } from "@/shared/util";
+import { assert } from "@/util";
 import Style from './Svg.module.scss';
 
 function svgToDataUri(svg: string | SVGElement) {

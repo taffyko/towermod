@@ -1,8 +1,8 @@
 import { AppContext } from "@renderer/appContext";
 import { useAppSelector } from "@renderer/hooks";
 import { store } from "@renderer/store";
-import { objectDisplayName } from "@shared/dataUtil";
-import { UniqueObjectLookup, UniqueTowermodObject, findObject } from "@shared/reducers/data";
+import { objectDisplayName } from "@/dataUtil";
+import { UniqueObjectLookup, UniqueTowermodObject, findObject } from "@/reducers/data";
 import { useContext } from "react";
 
 export function IdLink(props: { lookup: UniqueObjectLookup }) {
