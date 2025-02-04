@@ -1,6 +1,6 @@
-import { AppContext } from "@renderer/appContext";
-import { useAppSelector } from "@renderer/hooks";
-import { store } from "@renderer/store";
+import { AppContext } from "@/appContext";
+import { useAppSelector } from "@/hooks";
+import { store } from "@/store";
 import { objectDisplayName } from "@/dataUtil";
 import { UniqueObjectLookup, UniqueTowermodObject, findObject } from "@/reducers/data";
 import { useContext } from "react";

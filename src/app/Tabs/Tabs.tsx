@@ -1,9 +1,9 @@
 import React, { useCallback, useContext, useMemo, useState } from "react"
 import Style from './Tabs.module.scss'
-import { useEventListener, useImperativeHandle } from "@renderer/hooks";
+import { useEventListener, useImperativeHandle } from "@/hooks";
 import { posmod } from "@/util";
 import { ModalContext } from "../Modal";
-import Text from '@renderer/components/Text'
+import Text from '@/components/Text'
 
 export interface Tab {
 	name: string;

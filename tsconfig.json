@@ -23,8 +23,6 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@renderer/*": ["src/*"],
-      "@shared/*": ["src/shared/*"],
       "@towermod": ["src/towermod.ts"]
     }
   },

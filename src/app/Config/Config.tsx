@@ -1,7 +1,7 @@
 import { useMemoWithCleanup } from "@/hooks";
-import { api } from "@renderer/api";
+import { api } from "@/api";
 import { useState } from "react";
-import { toast } from "@/components/Toast";
+import { toast } from "@/app/Toast";
 
 export const Config = () => {
 	const { data: game } = api.useGetGameQuery()

@@ -8,15 +8,15 @@ import {
 	NodeComponentProps,
 	FixedSizeTree,
 } from 'react-vtree';
-import { useAppSelector, useStateRef } from '@renderer/hooks';
+import { useAppSelector, useStateRef } from '@/hooks';
 import { assertUnreachable, enumerate } from '@/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject } from '@/reducers/data';
-import { AppContext } from '@renderer/appContext';
+import { AppContext } from '@/appContext';
 import { objectDisplayName } from '@/dataUtil';
-import { store } from '@renderer/store';
+import { store } from '@/store';
 
 function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {
 	switch (obj.type) {

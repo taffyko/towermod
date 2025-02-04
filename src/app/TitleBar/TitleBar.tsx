@@ -5,7 +5,7 @@ import maximize from '@/icons/maximize.svg';
 import unmaximize from '@/icons/unmaximize.svg';
 import close from '@/icons/close.svg';
 import { useEffect, useState } from 'react';
-import IconButton from '../IconButton';
+import IconButton from '@/components/IconButton';
 
 const VERSION = "v1.0.6"; // FIXME
 

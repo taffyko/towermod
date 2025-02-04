@@ -1,7 +1,7 @@
 import Style from './Toast.module.scss';
 import { useEffect, useState } from "react";
 import { ToastData, closeToast, toasts, toastsUpdated } from './toastStore';
-import IconButton from "../IconButton";
+import IconButton from "@/components/IconButton";
 import closeSvg from '@/icons/close.svg';
 import { useIsHovered, useMiniEvent, useRerender, useStateRef } from '@/hooks';
 import Text from '@/components/Text';

@@ -30,9 +30,9 @@ export function useForwardRef<T>(inputRef?: React.Ref<T>): React.RefObject<T> {
 	}, [inputRef, valueHolder])
 }
 
-export function useEventListener<K extends keyof WindowEventMap>(el: Window | null, type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
-export function useEventListener<K extends keyof DocumentEventMap>(el: Document | null, type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
-export function useEventListener<K extends keyof HTMLElementEventMap, E extends HTMLElement>(el: E | null, type: K, listener: (this: E, ev: HTMLElementEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
+export function useEventListener<K extends keyof WindowEventMap>(el: Window | null | undefined, type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
+export function useEventListener<K extends keyof DocumentEventMap>(el: Document | null | undefined, type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
+export function useEventListener<K extends keyof HTMLElementEventMap, E extends HTMLElement>(el: E | null | undefined, type: K, listener: (this: E, ev: HTMLElementEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
 export function useEventListener(el: any, type: string, listener: EventListener, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions) {
 	let cb = listener;
 	if (deps) {

@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from "@renderer/hooks";
+import { useAppDispatch, useAppSelector } from "@/hooks";
 import { InspectorDictionary } from "./base/Inspector";
 import { ArrayPropertyInfo, DictionaryPropertyInfo, SimplePropertyInfo } from "./base/inspectorUtil";
 import { findObjectTypeById } from "@/reducers/data";

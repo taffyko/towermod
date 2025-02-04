@@ -1,13 +1,13 @@
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { ModInfo } from '@towermod';
 import Style from './Mods.module.scss'
-import Modal from '../Modal';
+import Modal from '@/app/Modal';
 import { api } from "@/api";
 import { useAppDispatch } from '@/hooks';
 import { win32 as path } from 'path';
-import { toast } from '@/components/Toast';
+import { toast } from '@/app/Toast';
 import { openFolder, getModsDirPath } from '@/rpc';
-import { Button } from '../Button';
+import { Button } from '@/components/Button';
 
 export const ModListItem = (props: {
 	selected: boolean,

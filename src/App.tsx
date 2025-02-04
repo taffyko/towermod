@@ -1,17 +1,17 @@
-import Mods from './components/Mods';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { Tab, Tabs, TabsHandle } from './components/Tabs';
-import { useEffect, useMemo, useState } from 'react';
-import { TitleBar } from './components/TitleBar';
-import { Data, DataHandle } from './components/Data';
-import Config from './components/Config';
+import Mods from '@/app/Mods';
+import { ErrorBoundary } from '@/app/ErrorBoundary';
+import { Tab, Tabs, TabsHandle } from '@/app/Tabs';
+import { useEffect, useMemo } from 'react';
+import { TitleBar } from '@/app/TitleBar';
+import { Data, DataHandle } from '@/app/Data';
+import Config from '@/app/Config';
 import Style from './App.module.scss';
 import { useStateRef } from './hooks';
-import { ModalContext, ModalContextContainer, ModalContextProvider } from './components/Modal';
+import { ModalContextContainer } from '@/app/Modal';
 import { AppContext, AppContextState } from './appContext';
 import { initialize } from './thunks';
 import { api } from './api';
-import { ToastContainer } from '@/components/Toast';
+import { ToastContainer } from '@/app/Toast';
 import { Portal } from './components/Portal';
 
 const App = () => {

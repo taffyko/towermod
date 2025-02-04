@@ -1,9 +1,9 @@
 import { useContext, useEffect, useMemo, useState } from 'react'
 import Style from './Modal.module.scss'
 import { ModalContext, ModalContextState } from '.'
-import { useEventListener } from '@renderer/hooks'
+import { useEventListener } from '@/hooks'
 import { Portal } from '@/components/Portal'
-import IconButton from '../IconButton'
+import IconButton from '@/components/IconButton'
 import close from '@/icons/close.svg';
 
 export function Modal(props: {

@@ -4,7 +4,7 @@ import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorK
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
 import { PrivateVariables } from './PrivateVariables';
-import { store } from '@renderer/store';
+import { store } from '@/store';
 
 
 export type CustomInspectorObjects = TowermodObject
