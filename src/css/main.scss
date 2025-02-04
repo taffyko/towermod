@@ -15,6 +15,7 @@
 	--color-bg: #1C1C1C;
 	--color-bg-active: #2C2C2C;
 	--color-bg-hover: #3C3C3C;
+	--color-bg-highlight: #7F7F7F;
 
 	--color-border: #ffffff;
 	--color-error: #f2334c;
@@ -39,8 +40,8 @@
 }
 
 ::selection {
-	background-color: var(--color-text);
-	color: var(--color-bg);
+	background-color: var(--color-bg-highlight);
+	color: var(--color-text);
 }
 
 * {

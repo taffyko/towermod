@@ -1,49 +1,47 @@
 @use '@/css/mixins' as *;
 
+$height: 1.5rem;
+$heightExpanded: 2.2rem;
+
 .tabs {
+	// page container
 	display: flex;
 	flex-flow: column nowrap;
 	height: 100%;
 
 	.tabBarOuter {
+		// height dictates spacing from the content below
 		position: relative;
 		display: flex;
 		flex-flow: column nowrap;
-		height: calc(1.5rem + var(--gap) / 2);
+		height: calc(1.5rem);
 
 		.tabBar {
 			position: absolute;
 			display: flex;
 			flex-flow: row nowrap;
-			gap: calc(var(--gap) / 2);
+			gap: var(--gap-s);
 
-			.tabOuter {
-				height: 100%;
+			@include pressable('.tab');
+
+			.tab {
+				padding: 0 var(--gap-s);
+				background-color: var(--color-root-bg);
+				border: solid var(--border-width) var(--color-border);
+				border-top: none;
+
+				text-align: center;
+				border-radius: 0 0 5px 5px;
+				height: $height;
+
 				display: flex;
-				flex-flow: column nowrap;
-				justify-content: flex-start;
+				align-items: flex-end;
 
-				@include pressable('.tab');
+				--a-height: 0.25s height cubic-bezier(0, 0.05, 0, 1);
+				transition: var(--a-height), var(--a-pressable);
 
-				.tab {
-					padding: 0 calc(var(--gap) / 2);
-					background-color: var(--color-root-bg);
-					border: solid var(--border-width) var(--color-border);
-					border-top: none;
-
-					text-align: center;
-					border-radius: 0 0 5px 5px;
-					height: 1.5rem;
-
-					display: flex;
-					align-items: flex-end;
-
-					--a-height: 0.25s height cubic-bezier(0, 0.05, 0, 1);
-					transition: var(--a-height), var(--a-pressable);
-				}
-
-				&.active .tab {
-					height: 2.5rem;
+				&.active {
+					height: $heightExpanded;
 					--a-height: 0.25s height cubic-bezier(0, 0.05, 0, 1);
 				}
 			}

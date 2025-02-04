@@ -2,6 +2,8 @@ import { useMemoWithCleanup } from "@/util/hooks";
 import { api } from "@/api";
 import { useState } from "react";
 import { toast } from "@/app/Toast";
+import { Button } from "@/components/Button";
+import { LineEdit } from "@/components/LineEdit";
 
 export const Config = () => {
 	const { data: game } = api.useGetGameQuery()
@@ -25,7 +27,7 @@ export const Config = () => {
 
 
 	return <div>
-		<button
+		<Button
 			disabled={!game}
 			onClick={async () => {
 				await newProject()
@@ -33,8 +35,8 @@ export const Config = () => {
 			}}
 		>
 			New project
-		</button>
-		<input type="text" value={gamePath} onChange={(e) => setGamePath(e.target.value)} />
+		</Button>
+		<LineEdit value={gamePath} onChange={(e) => setGamePath(e.target.value)} />
 
 		<button onClick={() => {
 			setGame(gamePath)

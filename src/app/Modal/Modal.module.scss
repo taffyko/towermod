@@ -3,7 +3,7 @@
 	position: absolute;
 	top: 0; left: 0; right: 0; bottom: 0;
 	z-index: 10;
-	padding-top: calc(var(--gap) * 4);
+	padding-top: var(--gap-l);
 
 	&.active {
 		display: block;

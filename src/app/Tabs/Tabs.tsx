@@ -64,26 +64,19 @@ export const Tabs = (props: {
 		<div className={Style.tabBarOuter}>
 			<div className={Style.tabBar}>
 				{tabs.map((tab) =>
-						<div
-							key={tab.name}
-							className={`
-								${Style.tabOuter}
-								${tab === currentTab ? Style.active : ""}
-							`}
+					<div
+						key={tab.name}
+						onClick={() => setCurrentTab(tab)}
+						onKeyDown={onKeyDown}
+						tabIndex={0}
 
-							onClick={() => setCurrentTab(tab)}
-							onKeyDown={onKeyDown}
-							tabIndex={0}
-						>
-							<div
-								className={`
-									${Style.tab}
-									${tab === currentTab ? Style.active : ""}
-								`}
-							>
-								<Text>{tab.name}</Text>
-							</div>
-						</div>
+						className={`
+							${Style.tab}
+							${tab === currentTab ? Style.active : ""}
+						`}
+					>
+						<Text>{tab.name}</Text>
+					</div>
 				)}
 			</div>
 		</div>
