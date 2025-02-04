@@ -2,11 +2,11 @@ import Style from './App.module.scss';
 import Mods from '@/app/Mods';
 import { ErrorBoundary } from '@/app/ErrorBoundary';
 import { Tab, Tabs, TabsHandle } from '@/app/Tabs';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { TitleBar } from '@/app/TitleBar';
 import { Data, DataHandle } from '@/app/Data';
 import Config from '@/app/Config';
-import { useStateRef } from '@/util/hooks';
+import { useMountEffect, useStateRef } from '@/util/hooks';
 import { ModalContextContainer } from '@/app/Modal';
 import { AppContext, AppContextState } from './appContext';
 import { initialize } from '@/util/thunks';
@@ -18,8 +18,8 @@ const App = () => {
 	const [dataHandle, setDataHandle] = useStateRef<DataHandle>()
 	const [tabsHandle, setTabsHandle] = useStateRef<TabsHandle>()
 
-	const { data: project } = api.useIsDataLoadedQuery()
-	const dataIsLoaded = !!project
+	const { data: dataIsLoaded } = api.useIsDataLoadedQuery()
+	console.log('data is loaded', dataIsLoaded);
 
 	const appContext = useMemo<AppContextState>(() => {
 		return {
@@ -36,9 +36,9 @@ const App = () => {
 		{ name: 'Events', children: <div />, disabled: !dataIsLoaded },
 	], [dataIsLoaded, setDataHandle])
 
-	useEffect(() => {
+	useMountEffect(() => {
 		initialize()
-	}, [])
+	})
 
 	const [titleRef, setTitleRef] = useStateRef<HTMLDivElement>();
 

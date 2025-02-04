@@ -3,15 +3,18 @@ use serde::{Deserialize, Serialize};
 use redux_rs::{Selector, Store};
 use crate::{Game, Project};
 use super::data_state as data;
+use super::config_state as config;
 
 pub enum Action {
 	Data(data::Action),
+	Config(config::Action),
 	SetProject(Option<Project>),
 	SetGame(Option<Game>),
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct State {
+	pub config: config::TowermodConfig,
 	pub data: data::State,
 	pub project: Option<Project>,
 	pub game: Option<Game>,
@@ -21,6 +24,9 @@ pub fn reducer(mut state: State, action: Action) -> State {
 	match action {
 		Action::Data(action) => {
 			state.data = data::reducer(state.data, action);
+		}
+		Action::Config(action) => {
+			state.config = config::reducer(state.config, action);
 		}
 		Action::SetProject(project) => {
 			state.project = project

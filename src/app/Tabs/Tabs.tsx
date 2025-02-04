@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useState } from "react"
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react"
 import Style from './Tabs.module.scss'
 import { useEventListener, useImperativeHandle } from "@/util/hooks";
 import { posmod } from "@/util/util";
@@ -24,6 +24,12 @@ export const Tabs = (props: {
 	const { tabs: allTabs } = props;
 	const tabs = useMemo(() => allTabs.filter(tab => !tab.disabled), [allTabs])
 	const [currentTab, setCurrentTab] = useState(tabs[0]);
+
+	useEffect(() => {
+		if (!tabs.includes(currentTab)) {
+			setCurrentTab(tabs.find(tab => tab.name === currentTab?.name) ?? tabs[0])
+		}
+	}, [tabs, currentTab, setCurrentTab])
 
 	const handle = useImperativeHandle(props.handleRef, () => ({
 		currentTab: currentTab.name,

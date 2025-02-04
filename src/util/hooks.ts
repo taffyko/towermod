@@ -88,6 +88,18 @@ export function useStateRef<T>() {
 	return useState<T | null>(null)
 }
 
+/**
+ * Run only once on initial mount, even during development
+ * (for edge-cases where StrictMode considerations can be safely disregarded)
+ */
+export function useMountEffect(effect: () => void) {
+	const executedRef = useRef(false);
+	useEffect(() => {
+		if (executedRef.current) { return }
+		effect()
+		executedRef.current = true
+	}, []);
+}
 
 export function useMiniEvent<T>(event: MiniEvent<T>, cb: (e: T) => void, deps: React.DependencyList) {
 	// eslint-disable-next-line react-hooks/exhaustive-deps

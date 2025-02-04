@@ -76,6 +76,7 @@ pub fn try_find_towerclimb() -> Result<PathBuf, ConfigError> {
 		let mut path: PathBuf = [program_files_x86, r"Steam\steamapps\common\TowerClimb"].iter().collect();
 		// give up if installion dir doesn't exist
 		if !path.is_dir() {
+			// TODO: also search /SteamLibrary on other drives
 			return Err(ConfigError::TowerclimbNotFound);
 		}
 

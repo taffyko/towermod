@@ -515,3 +515,7 @@ export declare const enum TokenKind {
   Whitespace = 52,
   Color = 53
 }
+
+export interface TowermodConfig {
+	filePath: string,
+}

@@ -1,5 +1,5 @@
-use std::{collections::HashMap, io::{Cursor, ErrorKind, Read}, path::{Path, PathBuf}, sync::Mutex};
-use crate::{app::state::{AppAction, DataAction, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project};
+use std::{collections::HashMap, io::{Cursor, Read}, path::{Path, PathBuf}, sync::Mutex};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project};
 use anyhow::Result;
 use tauri::command;
 use anyhow::{Context};
@@ -7,31 +7,56 @@ use fs_err::tokio as fs;
 use futures::StreamExt;
 use tokio::sync::RwLock;
 use tracing::instrument;
-use crate::app::{state::{select, CstcData}, selectors};
+use crate::app::{state::{select, CstcData}, selectors, thunks};
 
 fn status(_msg: &str) {
 	// TODO
 }
 
+static INITIALIZED: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
+
+/// Should be idempotent
 #[command]
 pub async fn init() -> Result<()> {
+	if (*INITIALIZED.lock().unwrap()) {
+		return Ok(())
+	} else {
+		let mut initialized = INITIALIZED.lock().unwrap();
+		*initialized = true;
+	}
+
+	// Set up logging / tracing
 	use tracing_subscriber::prelude::*;
 	use tracing::level_filters::LevelFilter;
 	use tracing_subscriber::fmt::format::FmtSpan;
 
-	// let console_layer = console_subscriber::spawn();
-
 	let fmt_layer = tracing_subscriber::fmt::Layer::default()
 		.with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
 		.with_filter(LevelFilter::INFO);
-
+	let console_layer = console_subscriber::spawn();
 	let subscriber = tracing_subscriber::Registry::default()
-		.with(fmt_layer);
-		// .with(console_layer);
+		.with(fmt_layer)
+		.with(console_layer);
+	tracing::subscriber::set_global_default(subscriber).unwrap();
 
+	// Set up file structure
 	first_time_setup().await?;
-	// FIXME: tracing not working with napi-rs?
-	// tracing::subscriber::set_global_default(subscriber).unwrap();
+
+	// Attempt to load existing config from disk.
+	let _ = thunks::load_config().await;
+	// Attempt to auto-detect game path if none set
+	let config = selectors::get_config().await;
+	if config.game_path.is_none() {
+		if let Ok(game_path) = crate::try_find_towerclimb() {
+			STORE.dispatch(ConfigAction::SetConfig(TowermodConfig {
+				game_path: Some(game_path),
+				..config
+			}).into()).await;
+			// Attempt to save updated config
+			let _ = thunks::save_config().await;
+		}
+	}
+
 	Ok(())
 }
 

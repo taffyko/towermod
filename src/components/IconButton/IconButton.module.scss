@@ -28,13 +28,13 @@ $iconSize: 16px;
 	&:hover {
 		background-color: var(--color-bg-hover);
 		color: var(--color-text-hover);
-		& img {
+		&:not(:active) img {
 			transform: scale(1.2);
 		}
 	}
 
 	&:active {
-		transform: scale(0.95);
+		transform: scale(0.9);
 		background-color: var(--color-bg-pressed);
 	}
 }

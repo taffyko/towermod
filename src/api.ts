@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { int } from '@/util/util';
 import { invoke } from "@tauri-apps/api/core";
-import { Game, ModInfo, Project } from '@towermod';
+import { Game, ModInfo, Project, TowermodConfig } from '@towermod';
 import type { BaseEndpointDefinition } from '@reduxjs/toolkit/query'
 import { useMemoWithCleanup } from './util/hooks';
 
@@ -29,7 +29,7 @@ function queryFn<ResultType, QueryArg>(fn: (arg: QueryArg) => Promise<ResultType
 export const api = createApi({
 	reducerPath: 'api',
 	baseQuery: fetchBaseQuery({ baseUrl: '/' }), // Base URL for API calls
-	tagTypes: ['Project', 'Game', 'Data', 'Image', 'ModInfo'],
+	tagTypes: ['Project', 'Game', 'Data', 'Image', 'ModInfo', 'TowermodConfig'],
 	endpoints: (builder) => ({
 		getImage: builder.query<Blob | null, number>({
 			queryFn: queryFn(async (id) => {
@@ -114,7 +114,27 @@ export const api = createApi({
 		}),
 		getText: builder.query<string, string>({
 			query: (arg) => ({ url: arg, responseHandler: 'text' })
-		})
+		}),
+
+		// config
+		getConfig: builder.query<TowermodConfig, void>({
+			queryFn: queryFn(async () => {
+				return await invoke('get_config')
+			}),
+			providesTags: ['TowermodConfig']
+		}),
+		saveConfig: builder.mutation<void, void>({
+			queryFn: queryFn(async () => {
+				await invoke('save_config')
+			}),
+		}),
+		loadConfig: builder.mutation<void, void>({
+			queryFn: queryFn(async () => {
+				await invoke('save_config')
+			}),
+			invalidatesTags: ['TowermodConfig'],
+		}),
+
 	}),
 });
 
