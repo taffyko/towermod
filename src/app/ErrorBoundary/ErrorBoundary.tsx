@@ -4,7 +4,7 @@ import { toast } from "@/app/Toast";
 import Style from './ErrorBoundary.module.scss';
 
 export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
-	state = {
+	state: { error: any } = {
 		error: undefined
 	}
 
@@ -31,7 +31,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 	render() {
 		if (this.state.error) {
 			return <pre className={Style.errorBoundary}>
-				{String(this.state.error)}
+				{this.state.error.stack}
 			</pre>
 		} else {
 			return this.props.children;

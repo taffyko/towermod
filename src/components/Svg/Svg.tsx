@@ -1,6 +1,5 @@
 import { useMemo } from "react"
 import { api } from '@/api';
-import { assert } from "@/util/util";
 import Style from './Svg.module.scss';
 
 function svgToDataUri(svg: string | SVGElement) {
@@ -17,7 +16,11 @@ export function Svg(props: {
 	const url = useMemo(() => {
 		if (!data) { return null }
 		const svgDoc = (new DOMParser).parseFromString(data, 'image/svg+xml');
-		const svg = assert(svgDoc.querySelector('svg'));
+		const svg = svgDoc.querySelector('svg')
+		if (!svg) {
+			console.error("SVG not found in loaded content");
+			return null
+		}
 		svg.setAttribute('shape-rendering', 'crispEdges');
 		return svgToDataUri(svg);
 	}, [data])

@@ -17,6 +17,9 @@ import { UniqueObjectLookup, UniqueTowermodObject } from '@/reducers/data';
 import { AppContext } from '@/app/App/appContext';
 import { objectDisplayName } from '@/util/dataUtil';
 import { store } from '@/store';
+import IconButton from '@/components/IconButton';
+import arrowDownImg from '@/icons/arrowDown.svg';
+import arrowRightImg from '@/icons/arrowRight.svg';
 
 function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {
 	switch (obj.type) {
@@ -89,7 +92,7 @@ const getTreeItemId = (obj: UniqueObjectLookup) => {
 		break; case 'Animation':
 			id = obj.id
 		break; case 'Behavior':
-			id = `${obj.objectTypeId}-${obj.name}`
+			id = `${obj.objectTypeId}-${obj.movIndex}`
 		break; case 'Container':
 			id = obj.objectIds[0]
 		break; case 'Family':
@@ -140,8 +143,8 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	>
 		{!isLeaf && (
 			<div className={Style.expandButton}>
-				<button
-					type="button"
+				<IconButton
+					src={isOpen ? arrowDownImg : arrowRightImg}
 					onClick={(e) => {
 						if (e.shiftKey && tree) {
 							setOpenRecursive(tree, props.data.id, !isOpen)
@@ -150,9 +153,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 						}
 					}}
 					style={defaultButtonStyle}
-				>
-					{isOpen ? 'V' : '>'}
-				</button>
+				/>
 			</div>
 		)}
 		<div style={defaultTextStyle}>{name}</div>
@@ -161,9 +162,9 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 
 export interface OutlinerHandle {
 	tree: FixedSizeTree<OutlinerNodeData>
-	jumpToItem(obj: UniqueObjectLookup)
-	setOpen(obj: UniqueObjectLookup, open: boolean)
-	setOpenRecursive(obj: UniqueObjectLookup, open: boolean)
+	jumpToItem(obj: UniqueObjectLookup): void
+	setOpen(obj: UniqueObjectLookup, open: boolean): void
+	setOpenRecursive(obj: UniqueObjectLookup, open: boolean): void
 }
 
 const OutlinerContext = createContext<OutlinerHandle>(null!);
@@ -198,9 +199,9 @@ export const Outliner = (props: OutlinerProps) => {
 			},
 			setOpenRecursive(obj, open: boolean) {
 				const treeItemId = getTreeItemId(obj)
-				setOpenRecursive(obj, treeItemId, open)
+				setOpenRecursive(tree!, treeItemId, open)
 			},
-		}
+		} as OutlinerHandle
 	}, [tree])
 	useImperativeHandle(props.handleRef, () => handle, [handle])
 

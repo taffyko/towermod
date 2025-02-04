@@ -12,8 +12,8 @@ export function assertUnreachable(a: never): never {
 	throw new Error(`Deliberately unreachable case occurred: ${a}`);
 }
 
-export function unwrap<T>(value: T): NonNullable<T> {
-	assert(value)
+export function unwrap<T>(value: T, msg?: string): NonNullable<T> {
+	assert(value, msg)
 	return value!
 }
 

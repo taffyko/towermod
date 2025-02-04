@@ -48,13 +48,11 @@ const App = () => {
 			<AppContext.Provider value={appContext}>
 				<ErrorBoundary>
 					<ModalContextContainer className={Style.pageContent}>
-						<ErrorBoundary>
-							<Portal parent={titleRef}>
-								<TitleBar />
-							</Portal>
-							<ToastContainer />
-							<Tabs tabs={tabs} handleRef={setTabsHandle} />
-						</ErrorBoundary>
+						<Portal parent={titleRef}>
+							<TitleBar />
+						</Portal>
+						<ToastContainer />
+						<Tabs tabs={tabs} handleRef={setTabsHandle} />
 					</ModalContextContainer>
 				</ErrorBoundary>
 			</AppContext.Provider>

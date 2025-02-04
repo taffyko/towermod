@@ -32,4 +32,9 @@ $iconSize: 16px;
 			transform: scale(1.2);
 		}
 	}
+
+	&:active {
+		transform: scale(0.95);
+		background-color: var(--color-bg-pressed);
+	}
 }

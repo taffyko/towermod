@@ -68,7 +68,7 @@ export const Tabs = (props: {
 						key={tab.name}
 						onClick={() => setCurrentTab(tab)}
 						onKeyDown={onKeyDown}
-						tabIndex={0}
+						tabIndex={-1}
 
 						className={`
 							${Style.tab}
