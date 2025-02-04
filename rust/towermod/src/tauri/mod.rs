@@ -5,29 +5,28 @@ mod commands;
 use tauri::{plugin::TauriPlugin, Runtime};
 use tauri_bindgen_host::ipc_router_wip::{BuilderExt, Router};
 
-tauri_bindgen_host::generate!({
-    path: "../../greet.wit",
-    async: false,
-    tracing: true
-});
+// tauri_bindgen_host::generate!({
+//     path: "../../greet.wit",
+//     async: false,
+//     tracing: true
+// });
 
-#[derive(Clone, Copy)]
-struct GreetCtx;
+// #[derive(Clone, Copy)]
+// struct GreetCtx;
 
-impl greet::Greet for GreetCtx {
-	fn greet(&self, name: String) -> String {
-			format!(
-					"Hello, {}! You've been greeted from code-generated Rust!",
-					name
-			)
-	}
-}
+// impl greet::Greet for GreetCtx {
+// 	fn greet(&self, name: String) -> String {
+// 			format!(
+// 					"Hello, {}! You've been greeted from code-generated Rust!",
+// 					name
+// 			)
+// 	}
+// }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-	let mut router: Router<GreetCtx> = Router::new(GreetCtx {});
-
-	greet::add_to_router(&mut router, |ctx| ctx).unwrap();
+	// let mut router: Router<GreetCtx> = Router::new(GreetCtx {});
+	// greet::add_to_router(&mut router, |ctx| ctx).unwrap();
 
 	tauri::Builder::default()
 		.setup(|app| {
@@ -73,7 +72,8 @@ pub fn run() {
 				thunks::get_installed_mods
 			]
 		)
-		.ipc_router(router)
+		// TODO: once tauri-bindgen properly supports windows
+		// .ipc_router(router)
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
 }

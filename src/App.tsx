@@ -1,5 +1,3 @@
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import Mods from './components/Mods';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Tab, Tabs, TabsHandle } from './components/Tabs';
@@ -13,7 +11,7 @@ import { ModalContext, ModalContextContainer, ModalContextProvider } from './com
 import { AppContext, AppContextState } from './appContext';
 import { initialize } from './thunks';
 import { api } from './api';
-import { ToastProvider } from './components/Toasts';
+import { ToastContainer } from '@/components/Toast';
 import { Portal } from './components/Portal';
 
 const App = () => {
@@ -49,20 +47,15 @@ const App = () => {
 		<div className={Style.pageContainer}>
 			<AppContext.Provider value={appContext}>
 				<ErrorBoundary>
-					<ToastProvider>
-						<ModalContextContainer className={Style.pageContent}>
-							<ErrorBoundary>
-								<Portal parent={titleRef}>
-									<TitleBar />
-								</Portal>
-								<ToastContainer
-									position="top-center"
-									theme="dark"
-								/>
-								<Tabs tabs={tabs} handleRef={setTabsHandle} />
-							</ErrorBoundary>
-						</ModalContextContainer>
-					</ToastProvider>
+					<ModalContextContainer className={Style.pageContent}>
+						<ErrorBoundary>
+							<Portal parent={titleRef}>
+								<TitleBar />
+							</Portal>
+							<ToastContainer />
+							<Tabs tabs={tabs} handleRef={setTabsHandle} />
+						</ErrorBoundary>
+					</ModalContextContainer>
 				</ErrorBoundary>
 			</AppContext.Provider>
 		</div>

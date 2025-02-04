@@ -1,6 +1,6 @@
 import React from "react";
 import { ErrorInfo } from "react";
-import { toast } from "react-toastify";
+import { toast } from "@/components/Toast";
 import Style from './ErrorBoundary.module.scss';
 
 export class ErrorBoundary extends React.Component<React.PropsWithChildren> {

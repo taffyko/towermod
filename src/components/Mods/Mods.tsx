@@ -5,9 +5,8 @@ import Modal from '../Modal';
 import { api } from "@/api";
 import { useAppDispatch } from '@/hooks';
 import { win32 as path } from 'path';
-import { toast } from 'react-toastify';
+import { toast } from '@/components/Toast';
 import { openFolder, getModsDirPath } from '@/rpc';
-import { ToastContext } from '../Toasts';
 import { Button } from '../Button';
 
 export const ModListItem = (props: {
@@ -71,7 +70,6 @@ export default function Mods() {
 	const [selectedMod, setSelectedMod] = useState<ModInfo>();
 	const [showModal, setShowModal] = useState(false); // FIXME
 	const dispatch = useAppDispatch();
-	const { toast } = useContext(ToastContext)
 	if (!modsList) { return null }
 
 	if (showModal) {

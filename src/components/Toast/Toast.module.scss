@@ -14,5 +14,7 @@
 .toast {
 	width: 200px;
 	pointer-events: visible;
-	background-color: red;
+	background-color: var(--bg-color);
+	transition: opacity 0.1s ease-out;
+	opacity: var(--timer-opacity);
 }

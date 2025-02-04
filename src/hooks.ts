@@ -1,6 +1,7 @@
 import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import type { AppDispatch, AppStore, RootState } from './store'
+import { MiniEvent, assert } from './shared/util';
 
 export const useAppDispatch = useDispatch.withTypes<AppDispatch>()
 export const useAppSelector = useSelector.withTypes<RootState>()
@@ -32,8 +33,7 @@ export function useForwardRef<T>(inputRef?: React.Ref<T>): React.RefObject<T> {
 export function useEventListener<K extends keyof WindowEventMap>(el: Window | null, type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
 export function useEventListener<K extends keyof DocumentEventMap>(el: Document | null, type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
 export function useEventListener<K extends keyof HTMLElementEventMap, E extends HTMLElement>(el: E | null, type: K, listener: (this: E, ev: HTMLElementEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
-export function useEventListener(el: any, type: string, listener: EventListener, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
-export function useEventListener(el: any, type: string, listener: EventListener, deps?: React.DependencyList, options?: any) {
+export function useEventListener(el: any, type: string, listener: EventListener, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions) {
 	let cb = listener;
 	if (deps) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,4 +72,46 @@ export function useMemoWithCleanup<T>(factory: () => [T] | [T, ReturnType<Effect
 /** Semantic replacement for useRef that triggers a re-render when the ref updates */
 export function useStateRef<T>() {
 	return useState<T | null>(null)
+}
+
+
+export function useMiniEvent<T>(event: MiniEvent<T>, cb: (e: T) => void, deps: React.DependencyList) {
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const fn = useCallback(cb, deps);
+	useEffect(() => {
+		event.subscribe(fn);
+		return () => event.unsubscribe(fn);
+	}, [event, fn]);
+}
+
+export function useRerender() {
+	const [, setState] = useState({});
+	const rerender = useMemo(() => () => setState({}), [setState]);
+	return rerender;
+}
+
+export function useIsHovered(el: HTMLElement | null) {
+	const [hovered, setHovered] = useState(false);
+	useEventListener(el, 'mouseenter', () => {
+		setHovered(true);
+	})
+	useEventListener(el, 'mouseleave', () => {
+		setHovered(false);
+	})
+	return hovered
+}
+
+export function useIsFocused(el: HTMLElement) {
+	const [focused, setFocused] = useState(false);
+	useEventListener(el, 'focus', () => {
+		setFocused(true);
+	})
+	useEventListener(el, 'blur', (e) => {
+		assert(e.currentTarget instanceof Node)
+		if (e.relatedTarget instanceof Node && e.currentTarget.contains(e.relatedTarget)) {
+			return
+		}
+		setFocused(false)
+	})
+	return focused
 }
