@@ -110,6 +110,12 @@ export function useMiniEvent<T>(event: MiniEvent<T>, cb: (e: T) => void, deps: R
 	}, [event, fn]);
 }
 
+export function useMiniEventValue<T>(event: MiniEvent<T>): T {
+	const [state, setState] = useState(event.lastValue as T)
+	useMiniEvent(event, setState, [])
+	return state
+}
+
 export function useRerender() {
 	const [, setState] = useState({});
 	const rerender = useMemo(() => () => setState({}), [setState]);

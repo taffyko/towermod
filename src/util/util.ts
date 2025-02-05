@@ -44,7 +44,11 @@ export function addRawReducers<S>(
 }
 
 export class MiniEvent<T = void> {
+	lastValue?: T
 	subscriptions = new Set<(e: T) => void>();
+	constructor(initialValue?: T) {
+		this.lastValue = initialValue
+	}
 	subscribe(fn: (e: T) => void) {
 		this.subscriptions.add(fn)
 	}
@@ -52,6 +56,7 @@ export class MiniEvent<T = void> {
 		this.subscriptions.delete(fn)
 	}
 	fire(e: T) {
+		this.lastValue = e
 		for (const fn of this.subscriptions) {
 			fn(e);
 		}

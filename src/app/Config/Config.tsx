@@ -1,17 +1,28 @@
 import { api } from "@/api";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/app/Toast";
 import { Button } from "@/components/Button";
 import { LineEdit } from "@/components/LineEdit";
 import Text from "@/components/Text";
-import Modal, { useModalContext } from "../Modal";
 import { filePicker } from "@/util/rpc";
+import { ConfirmModal } from "../Modal";
 
 
 export function FileDialog(props: Omit<React.ComponentProps<'input'>, 'onChange'> & {
 	onChange: (value: string) => void,
 }) {
-	const { onChange, ...htmlProps } = props;
+	const { value: externalValue, onChange, ...htmlProps } = props;
+
+	// const [internalValue, _setInternalValue] = useState("");
+	// const setInternalValue = useCallback(() => {
+
+	// }, [setInternalValue])
+	// useEffect(() => {
+	// 	if (externalValue !== undefined) {
+	// 		_setInternalValue(externalValue)
+	// 	}
+	// }, [externalValue])
+
 	return <div>
 		<LineEdit {...htmlProps} onChange={e => onChange(e.target.value)}></LineEdit>
 		<Button onClick={async () => {
@@ -25,15 +36,14 @@ export function FileDialog(props: Omit<React.ComponentProps<'input'>, 'onChange'
 
 function SetGameModal(props: {
 	initialValue: string,
-	onClose: () => void,
 	onConfirm: (value: string) => void,
 }) {
-	const { initialValue } = props;
+	const { initialValue, onConfirm } = props;
 	const [gamePath, setGamePath] = useState(initialValue)
-	return <div>
+	return <ConfirmModal onConfirm={() => onConfirm(gamePath)} confirmText="Set path">
 		Any unsaved project changes will be lost.
 		<FileDialog value={gamePath} onChange={setGamePath} />
-	</div>
+	</ConfirmModal>
 }
 
 export const Config = () => {
@@ -41,8 +51,6 @@ export const Config = () => {
 	const [setGame] = api.useSetGameMutation()
 	const [newProject] = api.useNewProjectMutation()
 	const { data: config } = api.useGetConfigQuery();
-	const [showSetGameModal, setShowSetGameModal] = useState(false)
-	const modalContext = useModalContext();
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
 	useEffect(() => {
@@ -53,8 +61,7 @@ export const Config = () => {
 		<div className="hbox">
 			{game ? <Text>Valid game selected</Text> : <Text>Please set a valid game path</Text>}
 			<div className="grow" />
-			<Button style={{ minWidth: '40%' }} onClick={() => setGame(gamePath)}>
-				Set game path
+			<Button style={{ minWidth: '40%' }} onClick={() => { /* FIXME */}}>Set game path
 			</Button>
 		</div>
 		<LineEdit disabled value={gamePath} />
