@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 
 export interface ModalContextState {
 	modalParent: HTMLDivElement,
@@ -9,3 +9,7 @@ export interface ModalContextState {
 }
 
 export const ModalContext = React.createContext<ModalContextState | null>(null)
+
+export function useModalContext() {
+	return useContext(ModalContext)
+}

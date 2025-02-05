@@ -144,7 +144,6 @@ export const api = createApi({
 			}),
 			invalidatesTags: ['TowermodConfig'],
 		}),
-
 	}),
 });
 

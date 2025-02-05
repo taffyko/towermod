@@ -58,6 +58,7 @@ pub fn run() {
 			tauri::generate_handler![
 				crate::etc::get_mods_dir_path,
 				crate::etc::open_folder,
+				crate::etc::file_picker,
 				commands::get_image,
 				selectors::get_game,
 				selectors::get_config,

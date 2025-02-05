@@ -6,4 +6,10 @@
 	color: var(--color-text);
 	--a-pressable: 0.1s background-color ease-out;
 	animation: var(--a-pressable);
+
+	&:disabled {
+		border-color: var(--color-border-disabled);
+		color: var(--color-text-disabled);
+		background-color: var(--color-bg-disabled);
+	}
 }

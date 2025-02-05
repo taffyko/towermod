@@ -847,3 +847,12 @@ pub fn open_folder(dir: &Path) -> Result<()> {
 		.spawn()?;
 	Ok(())
 }
+
+#[command]
+pub async fn file_picker() -> Result<Option<PathBuf>> {
+	let result = tokio::task::spawn_blocking(|| {
+		rfd::FileDialog::new()
+			.pick_file()
+	}).await?;
+	Ok(result)
+}

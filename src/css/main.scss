@@ -9,6 +9,7 @@
 	--color-text: #efefef;
 	--color-text-hover: #f2f2f2;
 	--color-text-active: var(--color-text-hover);
+	--color-text-disabled: #696969;
 
 	--color-root-bg: #0D0D0D;
 
@@ -17,8 +18,10 @@
 	--color-bg-pressed: #101010;
 	--color-bg-hover: #3C3C3C;
 	--color-bg-highlight: #7F7F7F;
+	--color-bg-disabled: #101010;
 
 	--color-border: #ffffff;
+	--color-border-disabled: #3C3C3C;
 	--color-error: #f2334c;
 	--color-warn: #f5e167;
 	--color-scrollbar-thumb: var(--color-bg-active);
