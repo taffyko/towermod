@@ -1,7 +1,7 @@
 
 import { useMiniEventValue, useStateRef } from '@/util/hooks';
-import Style from './Toast.module.scss';
-import { modalsUpdated, thisModalContext } from './modalStore';
+import Style from './Modal.module.scss';
+import { modalsUpdated, thisModalContext, useIsModalOpen } from './modalStore';
 
 function ModalParent() {
 	const modals = useMiniEventValue(modalsUpdated);
@@ -21,13 +21,16 @@ function ModalParent() {
 }
 
 export function ModalPageContainer(props: React.ComponentProps<'div'>) {
+	const isModalOpen = useIsModalOpen();
 	const { children, ...htmlProps } = props;
-	return <div
-		{...htmlProps}
-		// @ts-ignore
-		inert={isModalOpen ? "" : undefined}
-	>
+	return <>
 		<ModalParent />
-		{children}
-	</div>
+		<div
+			{...htmlProps}
+			// @ts-ignore
+			inert={isModalOpen ? "" : undefined}
+		>
+			{children}
+		</div>
+	</>
 }

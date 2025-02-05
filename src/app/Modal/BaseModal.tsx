@@ -17,7 +17,7 @@ export function BaseModal(props: { children: React.ReactNode, onCancel?: () => v
 	}, [active])
 
 	useEventListener(parent, 'click', (e) => {
-		if (e.target === parent) { onCancel?.() }
+		if (e.target === parent) { close(); onCancel?.() }
 	})
 
 	return <div className={Style.modal}>

@@ -8,7 +8,7 @@ import { Data, DataHandle } from '@/app/Data';
 import Images from '@/app/Images';
 import Config from '@/app/Config';
 import { useMountEffect, useStateRef } from '@/util/hooks';
-import { ModalContextContainer } from '@/app/Modal';
+import { ModalPageContainer } from '@/app/Modal';
 import { AppContext, AppContextState } from './appContext';
 import { api } from '@/api';
 import { ToastContainer } from '@/app/Toast';
@@ -48,13 +48,13 @@ const App = () => {
 		<div className={Style.pageContainer}>
 			<AppContext.Provider value={appContext}>
 				<ErrorBoundary>
-					<ModalContextContainer className={Style.pageContent}>
+					<ModalPageContainer className={Style.pageContent}>
 						<Portal parent={titleRef}>
 							<TitleBar />
 						</Portal>
 						<ToastContainer />
 						<Tabs tabs={tabs} handleRef={setTabsHandle} />
-					</ModalContextContainer>
+					</ModalPageContainer>
 				</ErrorBoundary>
 			</AppContext.Provider>
 		</div>

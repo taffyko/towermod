@@ -6,28 +6,44 @@ import { LineEdit } from "@/components/LineEdit";
 import Text from "@/components/Text";
 import { filePicker } from "@/util/rpc";
 import { ConfirmModal } from "../Modal";
+import { openModal } from "@/app/Modal";
 
 
-export function FileDialog(props: Omit<React.ComponentProps<'input'>, 'onChange'> & {
-	onChange: (value: string) => void,
+/** `useState` wrapper that mimics how native React components handle two-way binding with `value` and `onChange` */
+function useTwoWayBinding<T>(externalValue: T | undefined, onChange: ((value: T) => void) | undefined, initialValue: T): [T, (value: T) => void]
+function useTwoWayBinding<T>(externalValue: T, onChange?: (value: T) => void, initialValue?: T): [T, (value: T) => void]
+function useTwoWayBinding<T>(externalValue?: T, onChange?: (value: T) => void, initialValue?: T): any {
+	const [internalValue, _setInternalValue] = useState(externalValue ?? initialValue as T);
+
+	// For consistency with React's native `<input>` components,
+	// only value changes that originate internally should trigger the `onChange` handler.
+	const setInternalValue = useCallback((value: T) => {
+		// If no external value is being used, update the internal value
+		if (externalValue === undefined) { _setInternalValue(value) }
+		onChange?.(value);
+	}, [externalValue, onChange])
+
+	useEffect(() => {
+		// If an external value is provided, update the internal value.
+		if (externalValue !== undefined) { _setInternalValue(externalValue) }
+	}, [externalValue])
+
+	return [internalValue, setInternalValue]
+}
+
+export function FileDialog(props: Omit<React.ComponentProps<'input'>, 'value' | 'onChange'> & {
+	value?: string,
+	onChange?: (value: string) => void,
 }) {
 	const { value: externalValue, onChange, ...htmlProps } = props;
 
-	// const [internalValue, _setInternalValue] = useState("");
-	// const setInternalValue = useCallback(() => {
-
-	// }, [setInternalValue])
-	// useEffect(() => {
-	// 	if (externalValue !== undefined) {
-	// 		_setInternalValue(externalValue)
-	// 	}
-	// }, [externalValue])
+	const [value, setValue] = useTwoWayBinding(externalValue, onChange, "");
 
 	return <div>
-		<LineEdit {...htmlProps} onChange={e => onChange(e.target.value)}></LineEdit>
+		<LineEdit {...htmlProps} value={value} onChange={e => setValue(e.target.value)}></LineEdit>
 		<Button onClick={async () => {
 			const file = await filePicker();
-			if (file != null) { onChange(file) }
+			if (file != null) { setValue(file) }
 		}}>
 			Browse
 		</Button>
@@ -36,11 +52,13 @@ export function FileDialog(props: Omit<React.ComponentProps<'input'>, 'onChange'
 
 function SetGameModal(props: {
 	initialValue: string,
-	onConfirm: (value: string) => void,
 }) {
-	const { initialValue, onConfirm } = props;
+	const { initialValue } = props;
+	const [setGame] = api.useSetGameMutation()
 	const [gamePath, setGamePath] = useState(initialValue)
-	return <ConfirmModal onConfirm={() => onConfirm(gamePath)} confirmText="Set path">
+	return <ConfirmModal onConfirm={() => {
+		setGame(gamePath)
+	}} confirmText="Set path">
 		Any unsaved project changes will be lost.
 		<FileDialog value={gamePath} onChange={setGamePath} />
 	</ConfirmModal>
@@ -48,7 +66,6 @@ function SetGameModal(props: {
 
 export const Config = () => {
 	const { data: game } = api.useGetGameQuery()
-	const [setGame] = api.useSetGameMutation()
 	const [newProject] = api.useNewProjectMutation()
 	const { data: config } = api.useGetConfigQuery();
 
@@ -61,7 +78,7 @@ export const Config = () => {
 		<div className="hbox">
 			{game ? <Text>Valid game selected</Text> : <Text>Please set a valid game path</Text>}
 			<div className="grow" />
-			<Button style={{ minWidth: '40%' }} onClick={() => { /* FIXME */}}>Set game path
+			<Button style={{ minWidth: '40%' }} onClick={() => { openModal(<SetGameModal initialValue={gamePath} /> )}}>Set game path
 			</Button>
 		</div>
 		<LineEdit disabled value={gamePath} />

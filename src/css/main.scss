@@ -56,7 +56,6 @@
 
 body {
 	color: var(--color-text);
-	background-color: transparent;
 	display: flex;
 	height: 100vh;
 	align-items: stretch;
@@ -66,7 +65,7 @@ body {
 	font-family: var(--font);
 
 	color: var(--color-text);
-	background: var(--color-background);
+	background-color: transparent;
 }
 
 div#root {

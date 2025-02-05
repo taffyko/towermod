@@ -4,6 +4,7 @@ import React, { useMemo } from "react"
 
 export function openModal(content: React.ReactNode) {
 	const id = crypto.randomUUID()
+	modals = [...modals]
 	modals.push({
 		content,
 		id,
@@ -14,6 +15,7 @@ export function openModal(content: React.ReactNode) {
 export function closeModal(id: string) {
 	const idx = modals.findIndex(t => t.id === id);
 	if (idx === -1) return;
+	modals = [...modals]
 	modals.splice(idx, 1);
 	modalsUpdated.fire(modals);
 }
@@ -31,6 +33,11 @@ export function useModalContext() {
 	}), [id, activeModalId, parent])
 }
 
+export function useIsModalOpen() {
+	const modals = useMiniEventValue(modalsUpdated)
+	return !!modals.length
+}
+
 export const thisModalContext = React.createContext<{
 	id: string | null
 	parent: HTMLDivElement | null,
@@ -43,6 +50,6 @@ export interface ModalData {
 }
 
 /** @internal */
-export const modals: ModalData[] = [];
+export let modals: ModalData[] = [];
 /** @internal */
 export const modalsUpdated = new MiniEvent(modals);

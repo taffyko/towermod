@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ModInfo } from '@towermod';
 import Style from './Mods.module.scss'
-import Modal from '@/app/Modal';
 import { api } from "@/api";
 import { useAppDispatch } from '@/util/hooks';
 import { win32 as path } from 'path';
@@ -68,15 +67,8 @@ export default function Mods() {
 	const { data: modsList } = api.useGetInstalledModsQuery();
 	const [playMod] = api.usePlayModMutation();
 	const [selectedMod, setSelectedMod] = useState<ModInfo>();
-	const [showModal, setShowModal] = useState(false); // FIXME
 	const dispatch = useAppDispatch();
 	if (!modsList) { return null }
-
-	if (showModal) {
-		return <Modal requestClose={() => setShowModal(false)}>
-			Hello there!!
-		</Modal>
-	}
 
 	return <div className={Style.mods}>
 		<div className="hbox gap">

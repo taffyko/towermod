@@ -1,6 +1,7 @@
 import { Button } from "@/components/Button";
 import { BaseModal } from "./BaseModal";
 import { useMemo } from "react";
+import { useModalContext } from "./modalStore";
 
 export function ChoiceModal<TOption extends string>(props: {
 	children?: React.ReactNode,
@@ -8,12 +9,13 @@ export function ChoiceModal<TOption extends string>(props: {
 	onChoose?: (option: TOption | 'cancel') => void,
 }) {
 	const { children, options, onChoose } = props;
+	const { close } = useModalContext();
 
 	return <BaseModal onCancel={() => onChoose?.('cancel')}>
 		{children}
 		<div className="hbox">
 			{Object.entries(options).map(([key, value]) =>
-				<Button key={key} onClick={() => onChoose?.(key as TOption)}>{value as string}</Button>
+				<Button key={key} onClick={() => { close(); onChoose?.(key as TOption)}}>{value as string}</Button>
 			)}
 		</div>
 	</BaseModal>
