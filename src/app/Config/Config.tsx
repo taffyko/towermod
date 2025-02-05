@@ -10,8 +10,6 @@ export const Config = () => {
 	const { data: game } = api.useGetGameQuery()
 	const [setGame] = api.useSetGameMutation()
 	const [newProject] = api.useNewProjectMutation()
-	const [imageId, setImageId] = useState(0)
-	const { data: blob } = api.useGetImageQuery(imageId)
 	const { data: config } = api.useGetConfigQuery();
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
@@ -19,28 +17,51 @@ export const Config = () => {
 		if (game?.filePath) { setGamePath(game.filePath) }
 	}, [game])
 
-	const href = useObjectUrl(blob);
-
-	return <div>
-		<hr />
-		<Text>Package legacy projects as playable mods</Text>
+	return <div className="vbox gap">
+			<div className="hbox">
+				{game ? <Text>Valid game selected</Text> : <Text>Please set a valid game path</Text>}
+				<div className="grow" />
+				<Button style={{ minWidth: '40%' }} onClick={() => setGame(gamePath)}>
+					Set game path
+				</Button>
+			</div>
 		<LineEdit value={gamePath} onChange={(e) => setGamePath(e.target.value)} />
+		<hr />
 
-		<Button onClick={() => setGame(gamePath)}>
-			Set game path
-		</Button>
+		<Text>Package legacy projects as playable mods</Text>
+		<Button onClick={() => {/* FIXME */}}>Export mod from legacy TCRepainter data</Button>
+		<Button onClick={() => {/* FIXME */}}>Export files/images-only mod</Button>
+		<hr />
 
-		<input type="number" value={imageId} onChange={(e) => setImageId(parseInt(e.target.value))} />
-		{href ? <img src={href} /> : <div>No image for ID {imageId}</div>}
-		<Button
-			disabled={!game}
-			onClick={async () => {
-				await newProject()
-				toast("New project initialized")
-			}}
-		>
-			New project
-		</Button>
+		<Text>Towermod (New projects only)</Text>
+		<div className="hbox gap">
+			<Button
+				className="grow"
+				disabled={!game}
+				onClick={async () => {
+					await newProject()
+					toast("New project initialized")
+				}}
+			>
+				New project
+			</Button>
+			<Button className="grow" onClick={() => {/* FIXME */}}>Load project</Button>
+		</div>
+		<div className="hbox gap">
+			<Button className="grow" onClick={() => {/* FIXME */}}>Save project</Button>
+			<Button className="grow" onClick={() => {/* FIXME */}}>Browse project</Button>
+		</div>
+		<Button onClick={() => {/* FIXME */}}>Export Towermod project</Button>
+		<hr />
+
+		<Text>Cache</Text>
+
+		<div className="hbox gap">
+			<Button className="grow" onClick={() => {/* FIXME */}}>Clear cache</Button>
+			<Button className="grow" onClick={() => {/* FIXME */}}>Nuke all cached data</Button>
+		</div>
+		<Button className="grow" onClick={() => {/* FIXME */}}>Browse cache</Button>
+
 	</div>
 }
 

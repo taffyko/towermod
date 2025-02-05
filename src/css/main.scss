@@ -93,8 +93,9 @@ ul {
 hr {
 	border: solid 1px var(--color-bg-highlight);
 	border-style: solid none none none;
+	margin-bottom: var(--gap-s);
+}
 
-
-	filter: url(#salinear5);
-	-webkit-filter: url(#salinear5);
+img {
+	image-rendering: pixelated;
 }

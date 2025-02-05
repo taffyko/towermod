@@ -3,7 +3,7 @@ import { int } from '@/util/util';
 import { invoke } from "@tauri-apps/api/core";
 import { Game, ModInfo, Project, TowermodConfig } from '@towermod';
 import type { BaseEndpointDefinition } from '@reduxjs/toolkit/query'
-import { useMemoWithCleanup } from './util/hooks';
+import { useMemoWithCleanup, useObjectUrl } from './util/hooks';
 
 
 type FetchBaseQueryFn = ReturnType<typeof fetchBaseQuery>
@@ -160,13 +160,6 @@ async function getImage(id: int): Promise<Uint8Array | null> {
 
 export function useImageUrl(id: int): string | null {
 	const { data: blob } = api.useGetImageQuery(id)
-	const href = useMemoWithCleanup(() => {
-		if (blob) {
-			const href = URL.createObjectURL(blob);
-			return [href, () => URL.revokeObjectURL(href)]
-		} else {
-			return [null]
-		}
-	}, [blob])
+	const href = useObjectUrl(blob);
 	return href
 }

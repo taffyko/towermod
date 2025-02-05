@@ -5,8 +5,9 @@ import { Tab, Tabs, TabsHandle } from '@/app/Tabs';
 import { useMemo } from 'react';
 import { TitleBar } from '@/app/TitleBar';
 import { Data, DataHandle } from '@/app/Data';
+import Images from '@/app/Images';
 import Config from '@/app/Config';
-import { useAppDispatch, useMountEffect, useStateRef } from '@/util/hooks';
+import { useMountEffect, useStateRef } from '@/util/hooks';
 import { ModalContextContainer } from '@/app/Modal';
 import { AppContext, AppContextState } from './appContext';
 import { api } from '@/api';
@@ -31,10 +32,10 @@ const App = () => {
 	const tabs: Tab[] = useMemo(() => [
 		{ name: 'Config', children: <Config /> },
 		{ name: 'Mods', children: <Mods /> },
-		{ name: 'Images', children: <div /> },
+		{ name: 'Images', children: <Images />, disabled: !game },
 		{ name: 'Data', children: <Data handleRef={setDataHandle} />, disabled: !dataIsLoaded },
 		{ name: 'Events', children: <div />, disabled: !dataIsLoaded },
-	], [dataIsLoaded, setDataHandle])
+	], [dataIsLoaded, setDataHandle, game])
 
 	useMountEffect(() => {
 		init()

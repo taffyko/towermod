@@ -9,9 +9,10 @@
 
 	.titleBarContent {
 		padding: 0 var(--gap);
-		gap: var(--gap);
 		display: flex;
 		flex-flow: row nowrap;
+		gap: var(--gap);
+		align-items: center;
 
 		.draggable {
 			display: flex;
@@ -20,17 +21,46 @@
 			flex-grow: 1;
 			flex-shrink: 1;
 			overflow: hidden;
-
-			* {
-				overflow: hidden;
-				text-overflow: ellipsis;
-			}
 		}
 
 		.buttons {
 			display: flex;
 			flex-flow: row nowrap;
 			justify-self: flex-end;
+		}
+
+		.icon {
+			transition: filter 0.25s ease-out;
+			filter:
+				brightness(100%)
+				drop-shadow(0 0 5px rgba(255, 255, 255, 0.0))
+				drop-shadow(0 0 5px rgb(255, 179, 14, 0.0))
+			;
+			&:hover {
+				filter:
+					brightness(100%)
+					drop-shadow(0 0 5px rgba(255, 255, 255, 0.0))
+					drop-shadow(0 0 5px rgb(255, 179, 14, 0.5))
+				;
+			}
+			&.active {
+				transition: none;
+				filter:
+						brightness(200%)
+						drop-shadow(0 0 5px rgba(255, 255, 255, 1.0))
+						drop-shadow(0 4px 5px rgb(255, 179, 14, 1.0))
+						drop-shadow(-3px 0 5px rgb(255, 179, 14, 1.0))
+						drop-shadow(3px -2px 5px rgb(255, 255, 255, 1.0))
+				;
+				// filter:
+				// brightness(200%)
+				// drop-shadow(0 0 5px orange)
+				// drop-shadow(3px 0 5px orange)
+				// drop-shadow(0 0 5px white)
+				// drop-shadow(-3px -1px 5px white)
+				;
+			}
+
 		}
 	}
 }

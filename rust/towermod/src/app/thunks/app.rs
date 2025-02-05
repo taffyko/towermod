@@ -59,14 +59,7 @@ pub async fn init() -> Result<()> {
 	// Otherwise, try to autodetect and load game path
 	if !game_path_valid {
 		if let Ok(game_path) = log_error(crate::try_find_towerclimb(), "Failed to find TowerClimb executable") {
-			if let Ok(_) = log_error(thunks::set_game(game_path.clone()).await, "Failed to load game at detected path") {
-				STORE.dispatch(ConfigAction::SetConfig(TowermodConfig {
-					game_path: Some(game_path),
-					..config
-				}).into()).await;
-				// Attempt to save updated config
-				let _ = log_error(thunks::save_config().await, "");
-			}
+			let _ = log_error(thunks::set_game(game_path.clone()).await, "Failed to load game at detected path");
 		}
 	}
 
@@ -395,8 +388,14 @@ pub async fn patch_with_images(game_path: &Path, mut found_images_by_id: HashMap
 #[instrument]
 #[command]
 pub async fn set_game(file_path: PathBuf) -> Result<()> {
-	let game = Game::from_path(file_path).await?;
+	let game = Game::from_path(file_path.clone()).await?;
 	STORE.dispatch(AppAction::SetGame(Some(game))).await;
+	// Update config with new game path
+	STORE.dispatch(ConfigAction::SetConfig(TowermodConfig {
+		game_path: Some(file_path)
+	}).into()).await;
+	// Attempt to save updated config
+	let _ = log_error(thunks::save_config().await, "");
 	Ok(())
 }
 
