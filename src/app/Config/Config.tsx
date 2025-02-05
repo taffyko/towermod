@@ -1,6 +1,6 @@
 import { useMemoWithCleanup, useObjectUrl } from "@/util/hooks";
 import { api } from "@/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "@/app/Toast";
 import { Button } from "@/components/Button";
 import { LineEdit } from "@/components/LineEdit";
@@ -10,15 +10,16 @@ export const Config = () => {
 	const { data: game } = api.useGetGameQuery()
 	const [setGame] = api.useSetGameMutation()
 	const [newProject] = api.useNewProjectMutation()
-
 	const [imageId, setImageId] = useState(0)
-
 	const { data: blob } = api.useGetImageQuery(imageId)
+	const { data: config } = api.useGetConfigQuery();
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
+	useEffect(() => {
+		if (game?.filePath) { setGamePath(game.filePath) }
+	}, [game])
 
 	const href = useObjectUrl(blob);
-	console.log('href', href)
 
 	return <div>
 		<hr />

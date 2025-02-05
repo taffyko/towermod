@@ -26,10 +26,12 @@ function queryFn<ResultType, QueryArg>(fn: (arg: QueryArg) => Promise<ResultType
 	}
 }
 
+const tagTypes = ['Project', 'Game', 'Data', 'Image', 'ModInfo', 'TowermodConfig'] as const;
+
 export const api = createApi({
 	reducerPath: 'api',
 	baseQuery: fetchBaseQuery({ baseUrl: '/' }), // Base URL for API calls
-	tagTypes: ['Project', 'Game', 'Data', 'Image', 'ModInfo', 'TowermodConfig'],
+	tagTypes,
 	endpoints: (builder) => ({
 		getImage: builder.query<Blob | null, number>({
 			queryFn: queryFn(async (id) => {
@@ -116,6 +118,14 @@ export const api = createApi({
 			query: (arg) => ({ url: arg, responseHandler: 'text' })
 		}),
 
+		init: builder.mutation<void, void>({
+			queryFn: queryFn(async () => {
+				await invoke('init')
+			}),
+			invalidatesTags: tagTypes
+		}),
+
+
 		// config
 		getConfig: builder.query<TowermodConfig, void>({
 			queryFn: queryFn(async () => {
@@ -130,7 +140,7 @@ export const api = createApi({
 		}),
 		loadConfig: builder.mutation<void, void>({
 			queryFn: queryFn(async () => {
-				await invoke('save_config')
+				await invoke('load_config')
 			}),
 			invalidatesTags: ['TowermodConfig'],
 		}),

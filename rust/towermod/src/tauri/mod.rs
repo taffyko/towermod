@@ -60,6 +60,7 @@ pub fn run() {
 				crate::etc::open_folder,
 				commands::get_image,
 				selectors::get_game,
+				selectors::get_config,
 				selectors::is_data_loaded,
 				thunks::new_project,
 				thunks::export_from_files,
@@ -69,7 +70,9 @@ pub fn run() {
 				thunks::play_vanilla,
 				thunks::init,
 				thunks::set_game,
-				thunks::get_installed_mods
+				thunks::get_installed_mods,
+				thunks::load_config,
+				thunks::save_config
 			]
 		)
 		// TODO: once tauri-bindgen properly supports windows

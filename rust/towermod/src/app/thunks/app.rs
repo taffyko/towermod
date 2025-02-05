@@ -1,5 +1,5 @@
 use std::{collections::HashMap, io::{Cursor, Read}, path::{Path, PathBuf}, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::{log_error, zip_merge_copy_into}, Game, GameType, ModInfo, ModType, Nt, PeResource, Project};
 use anyhow::Result;
 use tauri::command;
 use anyhow::{Context};
@@ -25,6 +25,9 @@ pub async fn init() -> Result<()> {
 		*initialized = true;
 	}
 
+	println!("Initializing (stdout)");
+	eprintln!("Initializing (stderr)");
+
 	// Set up logging / tracing
 	use tracing_subscriber::prelude::*;
 	use tracing::level_filters::LevelFilter;
@@ -43,17 +46,27 @@ pub async fn init() -> Result<()> {
 	first_time_setup().await?;
 
 	// Attempt to load existing config from disk.
-	let _ = thunks::load_config().await;
-	// Attempt to auto-detect game path if none set
+	let _ = log_error(thunks::load_config().await, "");
+
+	// Attempt to load from saved game path, if set
 	let config = selectors::get_config().await;
-	if config.game_path.is_none() {
-		if let Ok(game_path) = crate::try_find_towerclimb() {
-			STORE.dispatch(ConfigAction::SetConfig(TowermodConfig {
-				game_path: Some(game_path),
-				..config
-			}).into()).await;
-			// Attempt to save updated config
-			let _ = thunks::save_config().await;
+	let mut game_path_valid = false;
+	if let Some(game_path) = config.game_path {
+		if let Ok(_) = log_error(thunks::set_game(game_path).await, "Failed to load game at saved path") {
+			game_path_valid = true;
+		}
+	}
+	// Otherwise, try to autodetect and load game path
+	if !game_path_valid {
+		if let Ok(game_path) = log_error(crate::try_find_towerclimb(), "Failed to find TowerClimb executable") {
+			if let Ok(_) = log_error(thunks::set_game(game_path.clone()).await, "Failed to load game at detected path") {
+				STORE.dispatch(ConfigAction::SetConfig(TowermodConfig {
+					game_path: Some(game_path),
+					..config
+				}).into()).await;
+				// Attempt to save updated config
+				let _ = log_error(thunks::save_config().await, "");
+			}
 		}
 	}
 

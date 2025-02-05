@@ -44,7 +44,6 @@ export function PrivateVariables(props: { pinfo: ArrayPropertyInfo<PrivateVariab
 		}
 		for (const key of Object.keys(newValue)) {
 			if (!(key in value)) {
-				console.log('new value', newValue[key])
 				// TODO: confirmation modal
 				dispatch(actions.addPrivateVariable({ objectTypeId: obj.objectTypeId, prop: key, initialValue: newValue[key] as any }))
 			}

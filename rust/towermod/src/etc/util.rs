@@ -213,6 +213,17 @@ pub async fn remove_dir_if_exists(path: impl AsRef<Path>) -> Result<()> {
 	}
 }
 
+pub fn log_error<T, E: std::fmt::Debug>(result: std::result::Result<T, E>, context: &str) -> std::result::Result<T, E> {
+	if let Err(e) = &result {
+		if context.is_empty() {
+			log::error!("{:?}", e)
+		} else {
+			log::error!("{}: {:?}", context, e)
+		}
+	}
+	result
+}
+
 pub fn diff(old: &[u8], new: &[u8]) -> Result<Vec<u8>> {
 	let mut patch = vec![];
 	bidiff::simple_diff(old, new, &mut patch)?;

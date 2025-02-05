@@ -6,10 +6,9 @@ import { useMemo } from 'react';
 import { TitleBar } from '@/app/TitleBar';
 import { Data, DataHandle } from '@/app/Data';
 import Config from '@/app/Config';
-import { useMountEffect, useStateRef } from '@/util/hooks';
+import { useAppDispatch, useMountEffect, useStateRef } from '@/util/hooks';
 import { ModalContextContainer } from '@/app/Modal';
 import { AppContext, AppContextState } from './appContext';
-import { initialize } from '@/util/thunks';
 import { api } from '@/api';
 import { ToastContainer } from '@/app/Toast';
 import { Portal } from '@/components/Portal';
@@ -19,7 +18,8 @@ const App = () => {
 	const [tabsHandle, setTabsHandle] = useStateRef<TabsHandle>()
 
 	const { data: dataIsLoaded } = api.useIsDataLoadedQuery()
-	console.log('data is loaded', dataIsLoaded);
+	const [init] = api.useInitMutation();
+	const { data: game } = api.useGetGameQuery();
 
 	const appContext = useMemo<AppContextState>(() => {
 		return {
@@ -37,7 +37,7 @@ const App = () => {
 	], [dataIsLoaded, setDataHandle])
 
 	useMountEffect(() => {
-		initialize()
+		init()
 	})
 
 	const [titleRef, setTitleRef] = useStateRef<HTMLDivElement>();
