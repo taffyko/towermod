@@ -1,6 +1,6 @@
 import BaseScrollbars from "react-custom-scrollbars-2";
 import Style from './Scrollbars.module.scss';
-import React, { useCallback, useImperativeHandle, useState } from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useState } from "react";
 
 type Props = React.ComponentProps<typeof BaseScrollbars> & {
 	viewRef?: React.LegacyRef<HTMLDivElement>
@@ -20,6 +20,10 @@ export const Scrollbars = React.forwardRef<BaseScrollbars | null, Props>((inputP
 		setInnerRef(newInnerRef)
 		setInnerViewRef(newInnerRef?.container?.children[0] as HTMLDivElement || null)
   }, []);
+
+	useEffect(() => {
+		innerViewRef?.parentElement?.classList.add(Style.viewParent)
+	}, [innerViewRef])
 
 	return <BaseScrollbars
 		ref={refSetter}

@@ -4,7 +4,7 @@ import { useModalContext } from "./modalStore"
 import IconButton from '@/components/IconButton';
 import closeImg from '@/icons/close.svg';
 
-export function BaseModal(props: { children: React.ReactNode, onCancel?: () => void }) {
+export function BaseModal(props: { children: React.ReactNode, title?: string, onCancel?: () => void }) {
 	const { children, onCancel } = props;
 	const { active, close, parent } = useModalContext();
 
@@ -16,12 +16,18 @@ export function BaseModal(props: { children: React.ReactNode, onCancel?: () => v
 		}
 	}, [active])
 
-	useEventListener(parent, 'click', (e) => {
-		if (e.target === parent) { close(); onCancel?.() }
-	})
+	// Dismiss when backdrop is clicked
+	// useEventListener(parent, 'click', (e) => {
+	// 	if (e.target === parent) { close(); onCancel?.() }
+	// })
 
 	return <div className={Style.modal}>
-		<IconButton src={closeImg} className={Style.closeButton} onClick={() => { close(); onCancel?.() }} />
-		{children}
+		<div className={Style.title}>
+			{props.title}
+			<IconButton src={closeImg} className={Style.closeButton} onClick={() => { close(); onCancel?.() }} />
+		</div>
+		<div className={Style.content}>
+			{children}
+		</div>
 	</div>
 }

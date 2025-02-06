@@ -8,7 +8,7 @@ use super::config_state as config;
 pub enum Action {
 	Data(data::Action),
 	Config(config::Action),
-	SetProject(Option<Project>),
+	SetProject(Option<(Project, data::State)>),
 	SetGame(Option<Game>),
 }
 
@@ -28,11 +28,17 @@ pub fn reducer(mut state: State, action: Action) -> State {
 		Action::Config(action) => {
 			state.config = config::reducer(state.config, action);
 		}
-		Action::SetProject(project) => {
-			state.project = project
+		Action::SetProject(Some((project, data))) => {
+			state.project = Some(project);
+			state.data = data;
+		}
+		Action::SetProject(None) => {
+			state.project = None;
+			state.data = data::State::default();
 		}
 		Action::SetGame(game) => {
-			state.game = game
+			state.game = game;
+			state.data = data::State::default();
 		}
 	}
 	state

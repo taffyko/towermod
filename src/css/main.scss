@@ -19,9 +19,11 @@
 	--color-bg-hover: #3C3C3C;
 	--color-bg-highlight: #7F7F7F;
 	--color-bg-disabled: #101010;
+	--color-bg-alternate: #2A2A2A;
 
 	--color-border: #ffffff;
 	--color-border-disabled: #3C3C3C;
+	--color-border-outer: #191617;
 	--color-error: #f2334c;
 	--color-warn: #f5e167;
 	--color-scrollbar-thumb: var(--color-bg-active);
@@ -48,6 +50,17 @@
 	color: var(--color-text);
 }
 
+::-webkit-scrollbar {
+	width: 5px;
+	height: 5px;
+	background-color: transparent;
+}
+::-webkit-scrollbar-thumb {
+	border: solid 1px var(--border-color);
+	background-color: var(--color-bg-alternate);
+	border-radius: 5px;
+}
+
 * {
 	font-family: inherit;
 	font-size: inherit;
@@ -71,13 +84,14 @@ body {
 div#root {
 	background-color: var(--color-root-bg);
 	border-radius: var(--border-radius);
-	border: solid var(--border-width) var(--color-border);
+	border: solid var(--border-width) var(--color-border-outer);
 	width: calc(100vw);
 	height: calc(100vh);
 	display: flex;
 	align-items: stretch;
 	justify-content: stretch;
 	flex-direction: column;
+	overflow: hidden;
 }
 
 *,

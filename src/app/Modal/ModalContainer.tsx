@@ -2,6 +2,7 @@
 import { useMiniEventValue, useStateRef } from '@/util/hooks';
 import Style from './Modal.module.scss';
 import { modalsUpdated, thisModalContext, useIsModalOpen } from './modalStore';
+import Scrollbars from '@/components/Scrollbars';
 
 function ModalParent() {
 	const modals = useMiniEventValue(modalsUpdated);

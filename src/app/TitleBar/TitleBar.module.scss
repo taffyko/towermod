@@ -3,8 +3,9 @@
 	width: 100%;
 	height: 32px;
 	flex-shrink: 0;
+	background-color: var(--color-bg-alternate);
 
-	border-bottom: solid var(--border-width) var(--color-border);
+	border-bottom: solid var(--border-width) var(--color-border-outer);
 	white-space: pre;
 
 	.titleBarContent {

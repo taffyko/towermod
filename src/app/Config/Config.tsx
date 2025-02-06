@@ -4,43 +4,21 @@ import { toast } from "@/app/Toast";
 import { Button } from "@/components/Button";
 import { LineEdit } from "@/components/LineEdit";
 import Text from "@/components/Text";
-import { filePicker } from "@/util/rpc";
 import { ConfirmModal } from "../Modal";
 import { openModal } from "@/app/Modal";
-import { useTwoWayBinding } from "@/util/hooks";
-import { FileDialogOptions } from "@towermod";
 import { win32 as path } from "path";
-
-export function FilePathInput(props: Omit<React.ComponentProps<'input'>, 'value' | 'onChange'> & {
-	value?: string,
-	onChange?: (value: string) => void,
-	options?: FileDialogOptions,
-}) {
-	const { value: externalValue, onChange, options, ...htmlProps } = props;
-
-	const [value, setValue] = useTwoWayBinding(externalValue, onChange, "");
-
-	return <div>
-		<LineEdit {...htmlProps} value={value} onChange={e => setValue(e.target.value)}></LineEdit>
-		<Button onClick={async () => {
-			const file = await filePicker(options);
-			if (file != null) { setValue(file) }
-		}}>
-			Browse
-		</Button>
-	</div>
-}
+import FilePathEdit from "@/components/FilePathEdit";
 
 function SetGameModal(props: {
 	initialValue: string,
 }) {
 	const [setGame] = api.useSetGameMutation()
 	const [gamePath, setGamePath] = useState(props.initialValue)
-	return <ConfirmModal onConfirm={() => {
+	return <ConfirmModal title="Set game path" onConfirm={() => {
 		setGame(gamePath)
 	}} confirmText="Set path">
 		Any unsaved project changes will be lost.
-		<FilePathInput value={gamePath} onChange={setGamePath} options={{
+		<FilePathEdit value={gamePath} onChange={setGamePath} options={{
 			fileName: gamePath,
 			startingDirectory: path.dirname(gamePath),
 			filters: [{ name: "Construct Classic game", extensions: ["exe"] }]
@@ -60,7 +38,7 @@ export const Config = () => {
 
 	return <div className="vbox gap">
 		<div className="hbox">
-			{game ? <Text>Valid game selected</Text> : <Text>Please set a valid game path</Text>}
+			{game ? <span>Valid game selected</span> : <span style={{ color: 'var(--color-warn)' }}>Please set a valid game path</span>}
 			<div className="grow" />
 			<Button style={{ minWidth: '40%' }} onClick={() => { openModal(<SetGameModal initialValue={gamePath} /> )}}>Set game path
 			</Button>

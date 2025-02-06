@@ -9,10 +9,15 @@ import IconButton from '@/components/IconButton';
 import iconImg from '@/icons/icon.png';
 import { useStateRef } from '@/util/hooks';
 import chime from '@/audio/chime.ogg';
+import { api } from '@/api';
 
 const VERSION = "v0.2.0"; // FIXME
 
 export const TitleBar = () => {
+	const { data: project, isLoading: isLoading1 } = api.useGetProjectQuery();
+	const { data: isDataLoaded, isLoading: isLoading2 } = api.useIsDataLoadedQuery();
+	const { data: game, isLoading: isLoading3 } = api.useGetGameQuery();
+	const isLoading = isLoading1 || isLoading2 || isLoading3;
 
 	const [maximized, setMaximized] = useState(false);
 	useEffect(() => {
@@ -25,6 +30,17 @@ export const TitleBar = () => {
 		updateMaximizedState()
 		return () => { result.then(unsubscribe => unsubscribe()) }
 	}, [])
+
+	let title = `TowerMod ${VERSION}`;
+	if (!isLoading) {
+		if (project) {
+			title = `${title} — ${project.displayName}`
+		} else if (isDataLoaded) {
+			title = `${title} — Unsaved project`
+		} else if (!game) {
+			title = `${title} — (NO GAME SELECTED)`
+		}
+	}
 
 
 	const [audioEl, setAudioEl] = useStateRef<HTMLAudioElement>();
@@ -44,7 +60,7 @@ export const TitleBar = () => {
 			}} />
 			<audio preload="auto" src={chime} ref={setAudioEl} />
 			<div className={Style.draggable}>
-				<span className="centerbox">TowerMod {VERSION}</span>
+				<span className="centerbox">{title}</span>
 			</div>
 			<div className={Style.buttons}>
 				<IconButton big src={minimizeImg} tabIndex={-1} onClick={() => {
