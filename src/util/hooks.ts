@@ -103,18 +103,21 @@ export function useMountEffect(effect: () => void) {
 	}, []);
 }
 
-export function useMiniEvent<T>(event: MiniEvent<T>, cb: (e: T) => void, deps: React.DependencyList) {
+export function useMiniEvent<T>(event: MiniEvent<T> | null | undefined, cb: (e: T) => void, deps: React.DependencyList) {
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const fn = useCallback(cb, deps);
 	useEffect(() => {
-		event.subscribe(fn);
-		return () => event.unsubscribe(fn);
+		event?.subscribe(fn);
+		return () => event?.unsubscribe(fn);
 	}, [event, fn]);
 }
 
-export function useMiniEventValue<T>(event: MiniEvent<T>): T {
-	const [state, setState] = useState(event.lastValue as T)
+export function useMiniEventValue<T>(event: MiniEvent<T>): T
+export function useMiniEventValue(event: undefined): undefined
+export function useMiniEventValue<T>(event?: MiniEvent<T>): T | undefined {
+	const [state, setState] = useState(event?.lastValue as T)
 	useMiniEvent(event, setState, [])
+	if (!event) { return undefined; }
 	return state
 }
 

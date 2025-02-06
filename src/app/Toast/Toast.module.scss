@@ -22,8 +22,8 @@
 	border-radius: 4px;
 
 	position: relative;
-	top: calc(var(--timer-opacity) * var(--gap));
-	opacity: var(--timer-opacity);
+	top: calc(var(--time-left) * var(--gap));
+	opacity: var(--time-left);
 	max-width: 40vw;
 
 	&:hover {

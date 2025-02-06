@@ -69,7 +69,7 @@ export class Timer {
 	get running() { return this.#running }
 
 	readonly timeoutEvent = new MiniEvent()
-	readonly progressEvent = new MiniEvent<number>()
+	readonly progressEvent = new MiniEvent(0.0)
 
 	/** seconds */
 	timeLeft = 0.0
