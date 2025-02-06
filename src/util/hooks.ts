@@ -2,6 +2,8 @@ import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo,
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import type { AppDispatch, AppStore, RootState } from '../store'
 import { MiniEvent, assert } from './util';
+import { useIsSpinning } from '@/app/GlobalSpinner';
+import { useIsModalOpen } from '@/app/Modal/modalStore';
 
 export const useAppDispatch = useDispatch.withTypes<AppDispatch>()
 export const useAppSelector = useSelector.withTypes<RootState>()
@@ -180,4 +182,10 @@ export function useTwoWayBinding<T>(externalValue?: T, onChange?: (value: T) => 
 	}, [externalValue])
 
 	return [internalValue, setInternalValue]
+}
+
+export function useIsInert() {
+	const isSpinning = useIsSpinning();
+	const isModalOpen = useIsModalOpen();
+	return isSpinning || isModalOpen;
 }

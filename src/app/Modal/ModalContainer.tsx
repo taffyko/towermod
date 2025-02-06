@@ -1,10 +1,9 @@
 
 import { useMiniEventValue, useStateRef } from '@/util/hooks';
 import Style from './Modal.module.scss';
-import { modalsUpdated, thisModalContext, useIsModalOpen } from './modalStore';
-import Scrollbars from '@/components/Scrollbars';
+import { modalsUpdated, thisModalContext } from './modalStore';
 
-function ModalParent() {
+export function ModalParent() {
 	const modals = useMiniEventValue(modalsUpdated);
 	const isModalOpen = !!modals.length;
 	const [el, setEl] = useStateRef<HTMLDivElement>();
@@ -19,19 +18,4 @@ function ModalParent() {
 			</thisModalContext.Provider>
 		)}
 	</div>
-}
-
-export function ModalPageContainer(props: React.ComponentProps<'div'>) {
-	const isModalOpen = useIsModalOpen();
-	const { children, ...htmlProps } = props;
-	return <>
-		<ModalParent />
-		<div
-			{...htmlProps}
-			// @ts-ignore
-			inert={isModalOpen ? "" : undefined}
-		>
-			{children}
-		</div>
-	</>
 }

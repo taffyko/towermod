@@ -20,12 +20,15 @@
 	--color-bg-highlight: #7F7F7F;
 	--color-bg-disabled: #101010;
 	--color-bg-alternate: #2A2A2A;
+	--color-bg-detail: #5F5F5F;
 
 	--color-border: #ffffff;
 	--color-border-disabled: #3C3C3C;
 	--color-border-outer: #191617;
 	--color-error: #f2334c;
+	--color-error-dark: #9d353f;
 	--color-warn: #f5e167;
+	--color-warn-dark: #bfb565;
 	--color-scrollbar-thumb: var(--color-bg-active);
 	color: var(--color-text);
 
@@ -67,7 +70,7 @@
 	font-smooth: none;
 }
 
-body {
+:root > body {
 	color: var(--color-text);
 	display: flex;
 	height: 100vh;

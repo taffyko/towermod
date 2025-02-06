@@ -33,6 +33,23 @@
 		opacity: 1;
 	}
 
+	.toastStripe {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 3px;
+		background-color: var(--color-bg-detail);
+	}
+	&.warning .toastStripe {
+		background-color: var(--color-warn-dark);
+	}
+	&.error .toastStripe {
+		background-color: var(--color-error-dark);
+	}
+
+
+
 	.closeButton {
 		margin-right: var(--gap-s);
 		margin-left: calc(-1 * var(--gap-s));

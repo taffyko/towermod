@@ -8,14 +8,20 @@ import { ConfirmModal } from "../Modal";
 import { openModal } from "@/app/Modal";
 import { win32 as path } from "path";
 import FilePathEdit from "@/components/FilePathEdit";
+import { spin } from "../GlobalSpinner";
 
 function SetGameModal(props: {
 	initialValue: string,
 }) {
 	const [setGame] = api.useSetGameMutation()
 	const [gamePath, setGamePath] = useState(props.initialValue)
-	return <ConfirmModal title="Set game path" onConfirm={() => {
-		setGame(gamePath)
+	return <ConfirmModal title="Set game path" onConfirm={async () => {
+		await spin(setGame(gamePath));
+		if (gamePath) {
+			toast("Game path set");
+		} else {
+			toast("No game set...", { type: 'warning' });
+		}
 	}} confirmText="Set path">
 		Any unsaved project changes will be lost.
 		<FilePathEdit value={gamePath} onChange={setGamePath} options={{
@@ -29,11 +35,10 @@ function SetGameModal(props: {
 export const Config = () => {
 	const { data: game } = api.useGetGameQuery()
 	const [newProject] = api.useNewProjectMutation()
-	const { data: config } = api.useGetConfigQuery();
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
 	useEffect(() => {
-		if (game?.filePath) { setGamePath(game.filePath) }
+		setGamePath(game?.filePath || "")
 	}, [game])
 
 	return <div className="vbox gap">
@@ -57,7 +62,7 @@ export const Config = () => {
 				className="grow"
 				disabled={!game}
 				onClick={async () => {
-					await newProject()
+					await spin(newProject())
 					toast("New project initialized")
 				}}
 			>

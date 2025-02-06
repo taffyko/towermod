@@ -1,3 +1,3 @@
 export * from './ConfirmModal';
 export * from './ModalContainer';
-export { openModal } from './modalStore';
+export { openModal, useIsModalOpen } from './modalStore';

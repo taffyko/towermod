@@ -7,12 +7,14 @@ import { TitleBar } from '@/app/TitleBar';
 import { Data, DataHandle } from '@/app/Data';
 import Images from '@/app/Images';
 import Config from '@/app/Config';
-import { useMountEffect, useStateRef } from '@/util/hooks';
-import { ModalPageContainer } from '@/app/Modal';
+import { useIsInert, useMountEffect, useStateRef } from '@/util/hooks';
+import { ModalParent } from '@/app/Modal';
 import { AppContext, AppContextState } from './appContext';
 import { api } from '@/api';
 import { ToastContainer } from '@/app/Toast';
 import { Portal } from '@/components/Portal';
+import { GlobalSpinner, useIsSpinning } from '../GlobalSpinner';
+import { useIsModalOpen } from '../Modal/modalStore';
 
 const App = () => {
 	const [dataHandle, setDataHandle] = useStateRef<DataHandle>()
@@ -31,7 +33,7 @@ const App = () => {
 
 	const tabs: Tab[] = useMemo(() => [
 		{ name: 'Config', children: <Config /> },
-		{ name: 'Mods', children: <Mods /> },
+		{ name: 'Mods', children: <Mods />, disabled: !game },
 		{ name: 'Images', children: <Images />, disabled: !game },
 		{ name: 'Data', children: <Data handleRef={setDataHandle} />, disabled: !dataIsLoaded },
 		{ name: 'Events', children: <div />, disabled: !dataIsLoaded },
@@ -42,19 +44,26 @@ const App = () => {
 	})
 
 	const [titleRef, setTitleRef] = useStateRef<HTMLDivElement>();
+	const isInert = useIsInert();
 
 	return <>
 		<div ref={setTitleRef} />
 		<div className={Style.pageContainer}>
 			<AppContext.Provider value={appContext}>
 				<ErrorBoundary>
-					<ModalPageContainer className={Style.pageContent}>
+					<GlobalSpinner />
+					<ToastContainer />
+					<ModalParent />
+					<div
+						// @ts-ignore
+						inert={isInert ? "" : undefined}
+						className={Style.pageContent}
+					>
 						<Portal parent={titleRef}>
 							<TitleBar />
 						</Portal>
-						<ToastContainer />
 						<Tabs tabs={tabs} handleRef={setTabsHandle} />
-					</ModalPageContainer>
+					</div>
 				</ErrorBoundary>
 			</AppContext.Provider>
 		</div>

@@ -7,7 +7,7 @@ import { useIsHovered, useMiniEvent, useRerender, useStateRef } from '@/util/hoo
 import Text from '@/components/Text';
 
 function Toast(props: ToastData & { idx: number }) {
-	const { content, id, idx, timer } = props;
+	const { content, id, idx, timer, type } = props;
 	const [timerProgress, setTimerProgress] = useState(timer.progress);
 	const [el, setEl] = useStateRef<HTMLDivElement>();
 	const hovered = useIsHovered(el);
@@ -31,10 +31,15 @@ function Toast(props: ToastData & { idx: number }) {
 
 	return <div
 		ref={setEl}
-		className={Style.toast}
+		className={`
+			${Style.toast}
+			${type === 'warning' ? Style.warning : ''}
+			${type === 'error' ? Style.error : ''}
+		`}
 		style={{ ['--timer-opacity' as any]: 1 - timerProgress }}
 	>
 		<IconButton src={closeSvg} className={Style.closeButton} onClick={() => closeToast(id)} />
+		<div className={Style.toastStripe}></div>
 		<Text>{content}</Text>
 	</div>
 }

@@ -42,23 +42,20 @@ export const TitleBar = () => {
 		}
 	}
 
-
-	const [audioEl, setAudioEl] = useStateRef<HTMLAudioElement>();
-
 	return <div className={Style.titleBarRoot}>
 		<div className={Style.titleBarContent}>
 			<img className={Style.icon} src={iconImg} height="16" onClick={(e) => {
 				const el = e.currentTarget;
 				el.classList.add(Style.active)
 				el.offsetTop
-				el.classList.remove(Style.active)
-				if (audioEl) {
-					audioEl.volume = 0.1;
-					audioEl.currentTime = 0;
-					audioEl.play();
-				}
+				el.classList.remove(Style.active);
+
+				const audio = new Audio(chime);
+				audio.preservesPitch = false;
+				audio.playbackRate = 1.0 + (Math.random() - 0.5)*0.1;
+				audio.play();
 			}} />
-			<audio preload="auto" src={chime} ref={setAudioEl} />
+			<audio preload="auto" src={chime} />
 			<div className={Style.draggable}>
 				<span className="centerbox">{title}</span>
 			</div>

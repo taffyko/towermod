@@ -1,9 +1,8 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react"
 import Style from './Tabs.module.scss'
-import { useEventListener, useImperativeHandle } from "@/util/hooks";
+import { useEventListener, useImperativeHandle, useIsInert } from "@/util/hooks";
 import { posmod } from "@/util/util";
 import Text from '@/components/Text'
-import { useIsModalOpen } from "../Modal/modalStore";
 
 export interface Tab {
 	name: string;
@@ -47,10 +46,10 @@ export const Tabs = (props: {
 		},
 	}), [tabs, setCurrentTab, currentTab])
 
-	const isModalOpen = useIsModalOpen();
+	const isInert = useIsInert();
 
 	const onKeyDown = useCallback((e: KeyboardEvent | React.KeyboardEvent) => {
-		if (isModalOpen) {
+		if (isInert) {
 			return
 		}
 
@@ -62,7 +61,7 @@ export const Tabs = (props: {
 			}
 			e.stopPropagation()
 		}
-	}, [tabs, currentTab, isModalOpen])
+	}, [tabs, currentTab, isInert])
 
 	useEventListener(window, 'keydown', onKeyDown)
 
