@@ -1,5 +1,5 @@
 import { api } from "@/api";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "@/app/Toast";
 import { Button } from "@/components/Button";
 import { LineEdit } from "@/components/LineEdit";
@@ -7,42 +7,23 @@ import Text from "@/components/Text";
 import { filePicker } from "@/util/rpc";
 import { ConfirmModal } from "../Modal";
 import { openModal } from "@/app/Modal";
+import { useTwoWayBinding } from "@/util/hooks";
+import { FileDialogOptions } from "@towermod";
+import { win32 as path } from "path";
 
-
-/** `useState` wrapper that mimics how native React components handle two-way binding with `value` and `onChange` */
-function useTwoWayBinding<T>(externalValue: T | undefined, onChange: ((value: T) => void) | undefined, initialValue: T): [T, (value: T) => void]
-function useTwoWayBinding<T>(externalValue: T, onChange?: (value: T) => void, initialValue?: T): [T, (value: T) => void]
-function useTwoWayBinding<T>(externalValue?: T, onChange?: (value: T) => void, initialValue?: T): any {
-	const [internalValue, _setInternalValue] = useState(externalValue ?? initialValue as T);
-
-	// For consistency with React's native `<input>` components,
-	// only value changes that originate internally should trigger the `onChange` handler.
-	const setInternalValue = useCallback((value: T) => {
-		// If no external value is being used, update the internal value
-		if (externalValue === undefined) { _setInternalValue(value) }
-		onChange?.(value);
-	}, [externalValue, onChange])
-
-	useEffect(() => {
-		// If an external value is provided, update the internal value.
-		if (externalValue !== undefined) { _setInternalValue(externalValue) }
-	}, [externalValue])
-
-	return [internalValue, setInternalValue]
-}
-
-export function FileDialog(props: Omit<React.ComponentProps<'input'>, 'value' | 'onChange'> & {
+export function FilePathInput(props: Omit<React.ComponentProps<'input'>, 'value' | 'onChange'> & {
 	value?: string,
 	onChange?: (value: string) => void,
+	options?: FileDialogOptions,
 }) {
-	const { value: externalValue, onChange, ...htmlProps } = props;
+	const { value: externalValue, onChange, options, ...htmlProps } = props;
 
 	const [value, setValue] = useTwoWayBinding(externalValue, onChange, "");
 
 	return <div>
 		<LineEdit {...htmlProps} value={value} onChange={e => setValue(e.target.value)}></LineEdit>
 		<Button onClick={async () => {
-			const file = await filePicker();
+			const file = await filePicker(options);
 			if (file != null) { setValue(file) }
 		}}>
 			Browse
@@ -53,14 +34,17 @@ export function FileDialog(props: Omit<React.ComponentProps<'input'>, 'value' | 
 function SetGameModal(props: {
 	initialValue: string,
 }) {
-	const { initialValue } = props;
 	const [setGame] = api.useSetGameMutation()
-	const [gamePath, setGamePath] = useState(initialValue)
+	const [gamePath, setGamePath] = useState(props.initialValue)
 	return <ConfirmModal onConfirm={() => {
 		setGame(gamePath)
 	}} confirmText="Set path">
 		Any unsaved project changes will be lost.
-		<FileDialog value={gamePath} onChange={setGamePath} />
+		<FilePathInput value={gamePath} onChange={setGamePath} options={{
+			fileName: gamePath,
+			startingDirectory: path.dirname(gamePath),
+			filters: [{ name: "Construct Classic game", extensions: ["exe"] }]
+		}} />
 	</ConfirmModal>
 }
 

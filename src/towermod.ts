@@ -519,3 +519,15 @@ export declare const enum TokenKind {
 export interface TowermodConfig {
 	filePath: string,
 }
+
+export interface FileDialogFilter {
+	name: string,
+	extensions: string[],
+}
+export interface FileDialogOptions {
+	filters?: FileDialogFilter[],
+	startingDirectory?: string,
+	fileName?: string,
+	title?: string,
+	canCreateDirectories?: boolean,
+}

@@ -8,6 +8,7 @@ use std::io::{self, Cursor, Read, Write};
 use crate::util::ZipWriterExt;
 
 use async_scoped::TokioScope;
+use serde::{Deserialize, Serialize};
 use tauri::command;
 use ::time::OffsetDateTime;
 use tokio_stream::StreamExt;
@@ -848,11 +849,47 @@ pub fn open_folder(dir: &Path) -> Result<()> {
 	Ok(())
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileDialogOptions {
+	pub filters: Option<Vec<FileDialogFilter>>,
+	pub starting_directory: Option<PathBuf>,
+	pub file_name: Option<String>,
+	pub title: Option<String>,
+	pub can_create_directories: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileDialogFilter {
+	name: String,
+	extensions: Vec<String>,
+}
+
 #[command]
-pub async fn file_picker() -> Result<Option<PathBuf>> {
+pub async fn file_picker(options: Option<FileDialogOptions>) -> Result<Option<PathBuf>> {
 	let result = tokio::task::spawn_blocking(|| {
-		rfd::FileDialog::new()
-			.pick_file()
+		let mut file_dialog = rfd::FileDialog::new();
+		if let Some(options) = options {
+			if let Some(filters) = options.filters {
+				for filter in filters {
+					file_dialog = file_dialog.add_filter(filter.name, &*filter.extensions);
+				}
+			}
+			if let Some(v) = options.can_create_directories {
+				file_dialog = file_dialog.set_can_create_directories(v);
+			}
+			if let Some(v) = options.starting_directory {
+				file_dialog = file_dialog.set_directory(v);
+			}
+			if let Some(v) = options.title {
+				file_dialog = file_dialog.set_title(v);
+			}
+			if let Some(v) = options.file_name {
+				file_dialog = file_dialog.set_file_name(v);
+			}
+		}
+		file_dialog.pick_file()
 	}).await?;
 	Ok(result)
 }

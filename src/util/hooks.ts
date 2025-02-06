@@ -159,3 +159,25 @@ export function useObjectUrl(blob: Blob | null | undefined): string | null {
 	}, [blob])
 	return href
 }
+
+/** `useState` wrapper that mimics how native React components handle two-way binding with `value` and `onChange` */
+export function useTwoWayBinding<T>(externalValue: T | undefined, onChange: ((value: T) => void) | undefined, initialValue: T): [T, (value: T) => void]
+export function useTwoWayBinding<T>(externalValue: T, onChange?: (value: T) => void, initialValue?: T): [T, (value: T) => void]
+export function useTwoWayBinding<T>(externalValue?: T, onChange?: (value: T) => void, initialValue?: T): any {
+	const [internalValue, _setInternalValue] = useState(externalValue ?? initialValue as T);
+
+	// For consistency with React's native `<input>` components,
+	// only value changes that originate internally should trigger the `onChange` handler.
+	const setInternalValue = useCallback((value: T) => {
+		// If no external value is being used, update the internal value
+		if (externalValue === undefined) { _setInternalValue(value) }
+		onChange?.(value);
+	}, [externalValue, onChange])
+
+	useEffect(() => {
+		// If an external value is provided, update the internal value.
+		if (externalValue !== undefined) { _setInternalValue(externalValue) }
+	}, [externalValue])
+
+	return [internalValue, setInternalValue]
+}

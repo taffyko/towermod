@@ -77,9 +77,9 @@ export const api = createApi({
 			}),
 			providesTags: ['Data'],
 		}),
-		setGame: builder.mutation<void, string>({
+		setGame: builder.mutation<void, string | null>({
 			queryFn: queryFn(async (filePath) => {
-				await invoke('set_game', { filePath })
+				await invoke('set_game', { filePath: filePath || null })
 			}),
 			invalidatesTags: ['Project', 'Game', 'Data'],
 		}),
