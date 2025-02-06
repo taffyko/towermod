@@ -87,7 +87,7 @@
 div#root {
 	background-color: var(--color-root-bg);
 	border-radius: var(--border-radius);
-	border: solid var(--border-width) var(--color-border-outer);
+	border: solid calc(var(--border-width) * 2) var(--color-border-outer);
 	width: calc(100vw);
 	height: calc(100vh);
 	display: flex;

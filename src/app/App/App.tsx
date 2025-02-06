@@ -7,7 +7,7 @@ import { TitleBar } from '@/app/TitleBar';
 import { Data, DataHandle } from '@/app/Data';
 import Images from '@/app/Images';
 import Config from '@/app/Config';
-import { useIsInert, useMountEffect, useStateRef } from '@/util/hooks';
+import { useEventListener, useIsInert, useMountEffect, useStateRef } from '@/util/hooks';
 import { ModalParent } from '@/app/Modal';
 import { AppContext, AppContextState } from './appContext';
 import { api } from '@/api';
@@ -45,6 +45,12 @@ const App = () => {
 
 	const [titleRef, setTitleRef] = useStateRef<HTMLDivElement>();
 	const isInert = useIsInert();
+
+	useEventListener(document.body, 'contextmenu', (e) => {
+		if (e.target instanceof HTMLImageElement) {
+			e.preventDefault();
+		}
+	})
 
 	return <>
 		<div ref={setTitleRef} />

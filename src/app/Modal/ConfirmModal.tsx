@@ -52,7 +52,7 @@ export function ConfirmModal(props: {
 	const cancelText = props.cancelText ?? "Cancel"
 	const confirmText = props.confirmText ?? "OK"
 	const options = useMemo(() => ({ cancel: cancelText, confirm: confirmText }), [cancelText, confirmText])
-	return <ChoiceModal title={title} options={options} onChoose={choice => {
+	return <ChoiceModal title={title ?? "Confirm"} options={options} onChoose={choice => {
 		switch (choice) {
 			case 'cancel': props.onCancel?.(); break;
 			case 'confirm': props.onConfirm?.(); break;

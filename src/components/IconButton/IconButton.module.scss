@@ -35,6 +35,7 @@ $iconSize: 16px;
 
 	&:active {
 		transform: scale(0.9);
+		transition: none;
 		background-color: var(--color-bg-pressed);
 	}
 }

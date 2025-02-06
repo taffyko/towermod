@@ -7,9 +7,10 @@ import closeImg from '@/icons/close.svg';
 import { useEffect, useState } from 'react';
 import IconButton from '@/components/IconButton';
 import iconImg from '@/icons/icon.png';
-import { useStateRef } from '@/util/hooks';
+import Text from '@/components/Text';
 import chime from '@/audio/chime.ogg';
 import { api } from '@/api';
+import { ConfirmModal, openModal } from '../Modal';
 
 const VERSION = "v0.2.0"; // FIXME
 
@@ -44,6 +45,7 @@ export const TitleBar = () => {
 
 	return <div className={Style.titleBarRoot}>
 		<div className={Style.titleBarContent}>
+			<div className={Style.gap} />
 			<img className={Style.icon} src={iconImg} height="16" onClick={(e) => {
 				const el = e.currentTarget;
 				el.classList.add(Style.active)
@@ -56,8 +58,9 @@ export const TitleBar = () => {
 				audio.play();
 			}} />
 			<audio preload="auto" src={chime} />
+			<div className={Style.gap} />
 			<div className={Style.draggable}>
-				<span className="centerbox">{title}</span>
+				<Text className="centerbox">{title}</Text>
 			</div>
 			<div className={Style.buttons}>
 				<IconButton big src={minimizeImg} tabIndex={-1} onClick={() => {
@@ -70,7 +73,15 @@ export const TitleBar = () => {
 				}} />
 				<IconButton big src={closeImg} tabIndex={-1} onClick={() => {
 					const window = getCurrentWindow();
-					window.close()
+					if (isDataLoaded) {
+						openModal(
+							<ConfirmModal confirmText="Quit" onConfirm={() => window.close()}>
+								Any unsaved data will be lost.
+							</ConfirmModal>
+						);
+					} else {
+						window.close()
+					}
 				}} />
 			</div>
 		</div>

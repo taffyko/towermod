@@ -35,6 +35,7 @@ pub fn run() {
 				.inner_size(800., 600.)
 				.transparent(true)
 				.decorations(false)
+				.shadow(false)
 				.build()?;
 			let mut webview_builder = tauri::webview::WebviewBuilder::new("main", tauri::WebviewUrl::App("index.html".into()))
 				.transparent(true);

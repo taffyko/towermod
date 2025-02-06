@@ -34,6 +34,8 @@ function SetGameModal(props: {
 
 export const Config = () => {
 	const { data: game } = api.useGetGameQuery()
+	const { data: isDataLoaded } = api.useIsDataLoadedQuery()
+	const { data: project } = api.useGetProjectQuery()
 	const [newProject] = api.useNewProjectMutation()
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
@@ -52,8 +54,8 @@ export const Config = () => {
 		<hr />
 
 		<Text>Package legacy projects as playable mods</Text>
-		<Button onClick={() => {/* FIXME */}}>Export mod from legacy TCRepainter data</Button>
-		<Button onClick={() => {/* FIXME */}}>Export files/images-only mod</Button>
+		<Button disabled={!game} onClick={() => {/* FIXME */}}>Export mod from legacy TCRepainter data</Button>
+		<Button disabled={!game} onClick={() => {/* FIXME */}}>Export files/images-only mod</Button>
 		<hr />
 
 		<Text>Towermod (New projects only)</Text>
@@ -68,19 +70,19 @@ export const Config = () => {
 			>
 				New project
 			</Button>
-			<Button className="grow" onClick={() => {/* FIXME */}}>Load project</Button>
+			<Button disabled={!game} className="grow" onClick={() => {/* FIXME */}}>Load project</Button>
 		</div>
 		<div className="hbox gap">
-			<Button className="grow" onClick={() => {/* FIXME */}}>Save project</Button>
-			<Button className="grow" onClick={() => {/* FIXME */}}>Browse project</Button>
+			<Button disabled={!isDataLoaded} className="grow" onClick={() => {/* FIXME */}}>Save project</Button>
+			<Button disabled={!project} className="grow" onClick={() => {/* FIXME */}}>Browse project</Button>
 		</div>
-		<Button onClick={() => {/* FIXME */}}>Export Towermod project</Button>
+		<Button disabled={!project} onClick={() => {/* FIXME */}}>Export Towermod project</Button>
 		<hr />
 
 		<Text>Cache</Text>
 
 		<div className="hbox gap">
-			<Button className="grow" onClick={() => {/* FIXME */}}>Clear cache</Button>
+			<Button disabled={!game} className="grow" onClick={() => {/* FIXME */}}>Clear game cache</Button>
 			<Button className="grow" onClick={() => {/* FIXME */}}>Nuke all cached data</Button>
 		</div>
 		<Button className="grow" onClick={() => {/* FIXME */}}>Browse cache</Button>
