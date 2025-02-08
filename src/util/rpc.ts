@@ -12,4 +12,3 @@ export async function filePicker(options?: FileDialogOptions): Promise<string | 
 export async function getModsDirPath(): Promise<string> {
 	return await invoke('get_mods_dir_path')
 }
-

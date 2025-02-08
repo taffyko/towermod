@@ -1,7 +1,6 @@
 import React from "react";
 import { ErrorInfo } from "react";
-import { toast } from "@/app/Toast";
-import Style from './ErrorBoundary.module.scss';
+import { showError, ErrorMsg } from "@/components/Error";
 
 export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 	state: { error: any } = {
@@ -9,7 +8,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 	}
 
 	private promiseRejectionHandler = (event: PromiseRejectionEvent) => {
-		toast(<code>{event.reason.toString()}</code>, { type: "error" })
+		showError(event.reason)
 	}
 
 	componentDidMount() {
@@ -30,9 +29,9 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 
 	render() {
 		if (this.state.error) {
-			return <pre className={Style.errorBoundary}>
-				{this.state.error.stack}
-			</pre>
+			return <div style={{ padding: 'var(--gap-m)' }}>
+				<ErrorMsg error={this.state.error} />
+			</div>
 		} else {
 			return this.props.children;
 		}

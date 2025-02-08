@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ModInfo } from '@towermod';
 import Style from './Mods.module.scss'
 import { api } from "@/api";
@@ -7,6 +7,9 @@ import { win32 as path } from 'path';
 import { toast } from '@/app/Toast';
 import { openFolder, getModsDirPath } from '@/util/rpc';
 import { Button } from '@/components/Button';
+import { invoke } from '@tauri-apps/api/core';
+import { LoadContainer } from '@/components/LoadContainer';
+import { toastResult } from '@/components/Error';
 
 export const ModListItem = (props: {
 	selected: boolean,
@@ -30,13 +33,13 @@ export const ModListItem = (props: {
 }
 
 export function ModList(props: {
-	mods: ModInfo[],
+	mods?: ModInfo[],
 	selectedMod?: ModInfo
 	setSelectedMod: (mod: ModInfo | undefined) => void,
 }) {
 	const { mods, selectedMod, setSelectedMod } = props;
 	return <div className={Style.modList}>
-		{mods.map((mod, i) => <ModListItem
+		{mods?.map((mod, i) => <ModListItem
 			key={mod.error ? `${mod.author}.${mod.name}.${mod.version}` : i}
 			mod={mod}
 			selected={mod === selectedMod}
@@ -64,17 +67,15 @@ function ModDetails(props: {
 }
 
 export default function Mods() {
-	const { data: modsList } = api.useGetInstalledModsQuery();
+	const modsList = api.useGetInstalledModsQuery();
+	modsList.error
 	const [playMod] = api.usePlayModMutation();
 	const [selectedMod, setSelectedMod] = useState<ModInfo>();
-	const dispatch = useAppDispatch();
-	if (!modsList) { return null }
 
 	return <div className={Style.mods}>
 		<div className="hbox gap">
-			<Button onClick={() => {
-				dispatch(api.util.invalidateTags(['ModInfo']))
-				toast("Mod list reloaded")
+			<Button onClick={async () => {
+				toastResult(modsList.refetch(), "Mods list reloaded")
 			}}>
 				Refresh mod list
 			</Button>
@@ -93,11 +94,13 @@ export default function Mods() {
 			</Button>
 		</div>
 		<div className="hbox gap">
-			<ModList
-				mods={modsList}
-				selectedMod={selectedMod}
-				setSelectedMod={setSelectedMod}
-			/>
+			<LoadContainer info={modsList}>
+				<ModList
+					mods={modsList.data}
+					selectedMod={selectedMod}
+					setSelectedMod={setSelectedMod}
+				/>
+			</LoadContainer>
 			<ModDetails
 				mod={selectedMod}
 			/>

@@ -25,9 +25,6 @@ pub async fn init() -> Result<()> {
 		*initialized = true;
 	}
 
-	println!("Initializing (stdout)");
-	eprintln!("Initializing (stderr)");
-
 	// Set up logging / tracing
 	use tracing_subscriber::prelude::*;
 	use tracing::level_filters::LevelFilter;

@@ -26,7 +26,7 @@ export function ChoiceModal<TOption extends string>(props: {
 	</BaseModal>
 }
 
-export function AcknowledgeModal(props: {
+export function AlertModal(props: {
 	children?: React.ReactNode,
 	buttonText?: string,
 	onClose?: () => void,

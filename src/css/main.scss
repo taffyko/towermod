@@ -5,6 +5,16 @@
 	src: url('/times_bitmap_16.ttf');
 }
 
+@font-face {
+	font-family: 'courier-16';
+	src: url('/courier_bitmap_16.ttf');
+}
+@font-face {
+	font-family: 'courier-16-2';
+	src: url('/courier_bitmap_16_2.ttf');
+}
+
+
 :root {
 	--color-text: #efefef;
 	--color-text-hover: #f2f2f2;
@@ -24,6 +34,7 @@
 
 	--color-border: #ffffff;
 	--color-border-disabled: #3C3C3C;
+	--color-border-alternate: #3C3C3C;
 	--color-border-outer: #191617;
 	--color-error: #f2334c;
 	--color-error-dark: #9d353f;
@@ -39,8 +50,10 @@
 	--border-width: 1px;
 	--border-radius: 5px;
 
+	// TODO: courier monospace for errors
 	--font: 'times-16', times, 'Times New Roman', serif;
 	font-size: 16px;
+	--font-monospace: 'courier-16', courier, 'Courier New', monospace;
 }
 
 .text {

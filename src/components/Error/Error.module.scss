@@ -1,0 +1,13 @@
+.errorMsg {
+	user-select: text;
+	font-family: var(--font-monospace);
+	font-family: 'courier-16-2';
+	font-size: 16px;
+	color: var(--color-error);
+	background-color: var(--color-bg);
+	padding: var(--gap-m);
+	white-space: pre-wrap;
+	height: 100%;
+	border: solid 1px var(--color-border-alternate);
+	border-radius: 5px;
+}
