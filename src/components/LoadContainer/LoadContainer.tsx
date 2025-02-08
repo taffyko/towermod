@@ -1,22 +1,30 @@
+import Style from './LoadContainer.module.scss'
 import { ErrorMsg } from '@/components/Error';
 export function LoadContainer(props: React.ComponentProps<'div'> & {
-	info: { error?: any, isLoading?: boolean, isError?: boolean }
+	isLoading?: boolean
+	error?: any,
 	children?: React.ReactNode,
 }) {
-	const { info: { error, isLoading, isError }, children, ...htmlProps } = props;
+	const { isLoading, error, children, ...htmlProps } = props;
 	if (isLoading) {
 		return <SpinnerBox {...htmlProps} />
 	}
-	if (isError || (isError === undefined && error !== undefined)) {
+	if (error !== undefined) {
 		return <ErrorMsg {...htmlProps} error={error} />
 	}
-	return children
+	return <div {...htmlProps}>
+		{children}
+	</div>
 }
 
 function SpinnerBox(props: React.ComponentProps<'div'>) {
-	const { ...htmlProps } = props;
-	// TODO
-	return <div {...htmlProps} style={{ backgroundColor: 'red' }}>
-
+	const { className, ...htmlProps } = props;
+	return <div {...htmlProps} className={`${Style.spinnerContainer} ${className || ''}`}>
+		<div className={Style.spinnerBox}>
+			<div className={Style.spinnerBg} />
+			<div className={Style.spinnerSegment} />
+			<div className={Style.outlineInner} />
+			<div className={Style.outlineOuter} />
+		</div>
 	</div>
 }

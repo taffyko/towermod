@@ -63,7 +63,7 @@ export const Tabs = (props: {
 		}
 	}, [tabs, currentTab, isInert])
 
-	useEventListener(window, 'keydown', onKeyDown)
+	useEventListener(document.body, 'keydown', onKeyDown)
 
 	return <div className={Style.tabs}>
 		<div className={Style.tabBarOuter}>

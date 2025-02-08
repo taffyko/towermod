@@ -1,7 +1,7 @@
 import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import type { AppDispatch, AppStore, RootState } from '../store'
-import { MiniEvent, assert } from './util';
+import { MiniEvent, assert, createObjectUrl, revokeObjectUrl } from './util';
 import { useIsSpinning } from '@/app/GlobalSpinner';
 import { useIsModalOpen } from '@/app/Modal/modalStore';
 
@@ -44,7 +44,7 @@ export function useEventListener(el: any, type: string, listener: EventListener,
 	useEffect(() => {
 		el?.addEventListener(type, cb, options);
 		return () => {
-			el?.removeEventListener(type, cb);
+			el?.removeEventListener(type, cb, options);
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [el, cb]);
@@ -61,6 +61,7 @@ export function useImperativeHandle<T, R extends T>(ref: React.Ref<T> | undefine
 /** Allows you to return both a value and a cleanup function that runs before the value recomputes */
 export function useMemoWithCleanup<T>(factory: () => [T] | [T, ReturnType<EffectCallback>], deps: DependencyList): T {
 	const resultRef = useRef<null | [T] | [T, ReturnType<EffectCallback>]>(null)
+	const rerender = useRerender();
 	// recompute value
 	if (!resultRef.current) {
 		resultRef.current = factory()
@@ -77,6 +78,7 @@ export function useMemoWithCleanup<T>(factory: () => [T] | [T, ReturnType<Effect
 				}
 				// invalidate value to trigger recompute on next render
 				resultRef.current = null
+				rerender()
 			}
 		}
 	}, deps)
@@ -153,15 +155,28 @@ export function useIsFocused(el: HTMLElement) {
 	return focused
 }
 
-export function useObjectUrl(blob: Blob | null | undefined): string | null {
+export function useObjectUrl(data?: BlobPart | number[] | null, options?: BlobPropertyBag): string | null
+export function useObjectUrl(blob?: Blob | null): string | null
+export function useObjectUrl(data?: Blob | BlobPart | number[] | null, options?: BlobPropertyBag): string | null {
 	const href = useMemoWithCleanup(() => {
-			if (blob) {
-				const href = URL.createObjectURL(blob);
-				return [href, () => URL.revokeObjectURL(href)]
-			} else {
-				return [null]
-			}
-	}, [blob])
+		// convert to Blob if raw data given
+		let blob: Blob | undefined;
+		if (data instanceof Blob) {
+			blob = data
+		} else if (data) {
+			let binary;
+			if (data instanceof Array) { binary = new Uint8Array(data) }
+			else { binary = data }
+			blob = new Blob([binary], options)
+		}
+
+		if (blob) {
+			const href = createObjectUrl(blob);
+			return [href, () => revokeObjectUrl(href)]
+		} else {
+			return [null]
+		}
+	}, [data, options?.type])
 	return href
 }
 

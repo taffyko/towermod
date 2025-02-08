@@ -1,20 +1,56 @@
-.mods {
-	width: 100%;
-}
-
 .modList {
+	overflow-y: auto;
+	flex-basis: 0;
+	flex-grow: 1;
+	background-color: var(--color-bg-noninteractive);
+	padding: var(--gap-s);
+	z-index: 1;
 }
 
 .modListItem {
-	border: solid var(--border-width) var(--color-border);
+	padding: var(--gap-s);
+	border-bottom: solid var(--border-width) var(--color-border-alternate);
 	background-color: var(--color-bg-root);
+	&:hover {
+		background-color: var(--color-bg-hover);
+	}
 	&.selected {
 		background-color: var(--color-bg-active);
 	}
 }
 
 .modDetails {
+	overflow-y: auto;
+	position: relative;
+	border-radius: var(--border-radius);
+	gap: var(--gap-m);
+	display: flex;
+	flex-basis: 0;
+	flex-grow: 1;
+	flex-flow: column nowrap;
+	left: 0;
 
+	transition: left 0.25s cubic-bezier(0, 0.1, 0, 1);
+	.icon {
+		flex-shrink: 0;
+		flex-grow: 1;
+		object-fit: contain;
+		max-height: 32px;
+		max-width: 32px;
+	}
+
+	.logo {
+		object-fit: contain;
+		flex-shrink: 0;
+		max-height: 40vh;
+		max-width: 100%;
+	}
+
+	&.init {
+		left: -50px;
+		transition: none;
+		background-color: red !important;
+	}
 }
 
 

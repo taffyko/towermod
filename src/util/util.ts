@@ -121,6 +121,21 @@ export class Timer {
 	}
 }
 
+
+const objectUrls = new Set<string>()
+// @ts-ignore
+globalThis._registeredObjectUrls = objectUrls
+/** Records created URLs to help diagnose unreleased URL issues */
+export function createObjectUrl(obj: Blob | MediaSource) {
+	const url = URL.createObjectURL(obj)
+	objectUrls.add(url)
+	return url
+}
+export function revokeObjectUrl(url: string) {
+	objectUrls.delete(url)
+	URL.revokeObjectURL(url)
+}
+
 export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
 
 interface Flavoring<FlavorT> {

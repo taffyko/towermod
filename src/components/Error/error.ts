@@ -1,7 +1,7 @@
-import { ErrorMsg } from "./ErrorMsg";
 import { openModal } from "@/app/Modal";
 import { toast } from "@/app/Toast";
 import { ErrorModal } from "./ErrorModal";
+import React from 'react';
 
 type MaybePromise<T> = Promise<T> | T;
 
@@ -26,9 +26,15 @@ export function renderError(error: any): string {
 }
 
 export function showError(error: any) {
-	openModal(
-		<ErrorModal error={error} />
-	)
+	openModal(React.createElement(ErrorModal, { error }))
+}
+
+export async function throwOnError<T extends MaybePromise<QueryErrorInfo>>(info: T) {
+	const { isError, error } = await info;
+	if (isError || (isError === undefined && error !== undefined)) {
+		throw error
+	}
+	return info
 }
 
 export async function toastResult(info: MaybePromise<QueryErrorInfo>, successMsg?: string) {

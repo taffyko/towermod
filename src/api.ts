@@ -3,7 +3,7 @@ import { int } from '@/util/util';
 import { invoke } from "@tauri-apps/api/core";
 import { Game, ModInfo, Project, TowermodConfig } from '@towermod';
 import type { BaseEndpointDefinition } from '@reduxjs/toolkit/query'
-import { useMemoWithCleanup, useObjectUrl } from './util/hooks';
+import { useObjectUrl } from './util/hooks';
 
 
 type FetchBaseQueryFn = ReturnType<typeof fetchBaseQuery>
@@ -100,8 +100,8 @@ export const api = createApi({
 			}),
 		}),
 		playMod: builder.mutation<void, string>({
-			queryFn: queryFn(async (modId) => {
-				await invoke('play_mod', { modId })
+			queryFn: queryFn(async (zipPath) => {
+				await invoke('play_mod', { zipPath })
 			}),
 		}),
 		playProject: builder.mutation<void, void>({
@@ -124,7 +124,6 @@ export const api = createApi({
 			}),
 			invalidatesTags: tagTypes
 		}),
-
 
 		// config
 		getConfig: builder.query<TowermodConfig, void>({
