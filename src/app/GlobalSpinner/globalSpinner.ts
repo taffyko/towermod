@@ -5,7 +5,7 @@ export function spin<T>(promise: Promise<T>): Promise<T> {
 	promises = [...promises]
 	promises.push(promise)
 	promisesUpdated.fire(promises)
-	promise.then(() => removePromise(promise))
+	promise.finally(() => removePromise(promise))
 	return promise
 }
 

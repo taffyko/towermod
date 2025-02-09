@@ -305,7 +305,7 @@ export interface ModInfo {
   description: string
   towermodVersion: string
   /** Date that the mod was exported */
-  date: Date
+  date: string
   /** Path to zip file that mod was loaded from */
   filePath?: string
   cover?: Array<number>

@@ -1,0 +1,8 @@
+.select {
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	border-radius: var(--border-radius);
+	option {
+		border-radius: 10px;
+	}
+}

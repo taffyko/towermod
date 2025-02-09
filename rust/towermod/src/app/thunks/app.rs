@@ -447,11 +447,8 @@ pub async fn play_project() {
 
 #[command]
 pub async fn play_vanilla() -> Result<()> {
-	let game_path = select(|s| -> Option<_> {
-		Some(s.project.as_ref()?.game.file_path.as_ref()?.clone())
-	}).await.context("No project loaded")?;
-
-	crate::run_game(&game_path).await?;
+	let game = selectors::get_game().await.context("No game set")?;
+	crate::run_game(game.game_path()?).await?;
 	Ok(())
 }
 
