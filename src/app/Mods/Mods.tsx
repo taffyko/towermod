@@ -117,7 +117,7 @@ function ModDetails(props: {
 				</div>
 				<div className="grow" />
 				<div className="vbox gap">
-					<Select options={versions?.map(m => m.version) ?? []} value={mod?.version} onChange={(version) => {
+					<Select disabled={(versions?.length||0) <= 1} options={versions?.map(m => m.version) ?? []} value={mod?.version} onChange={(version) => {
 						const mod = versions?.find(m => m.version === version)
 						if (mod && mod.filePath) {
 							setSelectedVersion?.(uniqueVersionName(mod))

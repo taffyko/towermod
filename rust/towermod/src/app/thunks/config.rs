@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use fs_err::tokio as fs;
 
 fn config_path() -> PathBuf {
-	crate::config::get_cache_dir_path().join("towermod-config.toml")
+	crate::get_cache_dir_path().join("towermod-config.toml")
 }
 
 #[command]

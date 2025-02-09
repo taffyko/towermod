@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::ffi::{c_void, CString};
 use std::fmt::Debug;
 use std::io::{self, Cursor, Read, Write};
-use crate::util::ZipWriterExt;
+use crate::ZipWriterExt;
 
 use async_scoped::TokioScope;
 use serde::{Deserialize, Serialize};
@@ -35,9 +35,11 @@ use windows::core::{PCWSTR, PWSTR, HSTRING};
 use std::mem::{size_of_val, MaybeUninit};
 use crate::cstc::plugin::{PluginData, PluginStringTable};
 use crate::cstc::{self, plugin};
-use crate::{config::*, Game, ModInfo, ModType, Project};
+use crate::{Game, ModInfo, ModType, Project};
 use crate::macros::*;
-use crate::newtype::Nt;
+use crate::Nt;
+
+use super::{cstc_binary_dir, get_dllreader_path};
 
 pub struct OpenedHandle(pub HANDLE);
 
@@ -50,7 +52,7 @@ impl Drop for OpenedHandle {
 }
 
 #[instrument]
-pub async fn get_temp_file() -> Result<Nt<PathBuf>> {
+pub async fn get_temp_file() -> Result<PathBuf> {
 	unsafe {
 		let buffer = task::spawn_blocking(|| {
 			let mut buffer = [0u16; MAX_PATH as usize];
@@ -64,7 +66,7 @@ pub async fn get_temp_file() -> Result<Nt<PathBuf>> {
 		}).await?;
 		let len = buffer.iter().position(|v| *v == 0).unwrap();
 		let s = String::from_utf16_lossy(&buffer[0..len]);
-		Ok(Nt(s.into()))
+		Ok(s.into())
 	}
 }
 

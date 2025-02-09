@@ -1,5 +1,5 @@
 use std::{collections::HashMap, io::{Cursor, Read}, path::{Path, PathBuf}, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, tcr::TcrepainterPatch, util::{log_error, zip_merge_copy_into}, Game, GameType, ModInfo, ModType, Nt, PeResource, Project};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, TcrepainterPatch, log_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project};
 use anyhow::Result;
 use tauri::command;
 use anyhow::{Context};
@@ -18,29 +18,32 @@ static INITIALIZED: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
 /// Should be idempotent
 #[command]
 pub async fn init() -> Result<()> {
-	if (*INITIALIZED.lock().unwrap()) {
-		return Ok(())
-	} else {
+	if (!*INITIALIZED.lock().unwrap()) {
+		// Set up logging / tracing
+		use tracing_subscriber::prelude::*;
+		use tracing::level_filters::LevelFilter;
+		use tracing_subscriber::fmt::format::FmtSpan;
+
+		let fmt_layer = tracing_subscriber::fmt::Layer::default()
+			.with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
+			.with_filter(LevelFilter::INFO);
+		let console_layer = console_subscriber::spawn();
+		let subscriber = tracing_subscriber::Registry::default()
+			.with(fmt_layer)
+			.with(console_layer);
+		tracing::subscriber::set_global_default(subscriber).unwrap();
+
 		let mut initialized = INITIALIZED.lock().unwrap();
 		*initialized = true;
 	}
 
-	// Set up logging / tracing
-	use tracing_subscriber::prelude::*;
-	use tracing::level_filters::LevelFilter;
-	use tracing_subscriber::fmt::format::FmtSpan;
-
-	let fmt_layer = tracing_subscriber::fmt::Layer::default()
-		.with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
-		.with_filter(LevelFilter::INFO);
-	let console_layer = console_subscriber::spawn();
-	let subscriber = tracing_subscriber::Registry::default()
-		.with(fmt_layer)
-		.with(console_layer);
-	tracing::subscriber::set_global_default(subscriber).unwrap();
-
 	// Set up file structure
 	first_time_setup().await?;
+
+	// Skip if game already set
+	if selectors::get_game().await.is_some() {
+		return Ok(())
+	}
 
 	// Attempt to load existing config from disk.
 	let _ = log_error(thunks::load_config().await, "");
@@ -132,7 +135,7 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 	let runtime_dir = mod_info.mod_runtime_dir().await?;
 
 	status("Copying base game files");
-	crate::util::merge_copy_into(&game_path.parent().context("game_path.parent()")?, &runtime_dir, true, true).await?;
+	crate::merge_copy_into(&game_path.parent().context("game_path.parent()")?, &runtime_dir, true, true).await?;
 
 	let images_by_id: Mutex<HashMap<i32, Vec<u8>>> = Mutex::new(HashMap::new());
 
@@ -258,17 +261,17 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 			}
 			if let Some(level_block_patch) = level_block_patch.into_inner().unwrap() {
 				let level_block_bin = cstc::LevelBlock::read_bin(&game_path)?;
-				let buf = crate::util::apply_patch(&*level_block_bin, &*level_block_patch)?;
+				let buf = crate::apply_patch(&*level_block_bin, &*level_block_patch)?;
 				cstc::LevelBlock::write_bin(&output_exe_path, &buf)?;
 			}
 			if let Some(event_block_patch) = event_block_patch.into_inner().unwrap() {
 				let event_block_bin = cstc::EventBlock::read_bin(&game_path)?;
-				let buf = crate::util::apply_patch(&*event_block_bin, &*event_block_patch)?;
+				let buf = crate::apply_patch(&*event_block_bin, &*event_block_patch)?;
 				cstc::EventBlock::write_bin(&output_exe_path, &buf)?;
 			}
 			if let Some(app_block_patch) = app_block_patch.into_inner().unwrap() {
 				let app_block_bin = cstc::AppBlock::read_bin(&game_path)?;
-				let buf = crate::util::apply_patch(&*app_block_bin, &*app_block_patch)?;
+				let buf = crate::apply_patch(&*app_block_bin, &*app_block_patch)?;
 				cstc::AppBlock::write_bin(&output_exe_path, &buf)?;
 			}
 		}
@@ -338,7 +341,7 @@ pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_n
 	let settings_dir_dest_path = PathBuf::from_iter([crate::get_appdata_dir_path(), PathBuf::from_iter([&*appdata_suffix, "Settings"])]);
 
 	// Copy settings from vanilla game if none exists for the mod
-	crate::util::merge_copy_into(&settings_dir_path, &settings_dir_dest_path, false, false).await?;
+	crate::merge_copy_into(&settings_dir_path, &settings_dir_dest_path, false, false).await?;
 	Ok(())
 }
 
@@ -449,6 +452,26 @@ pub async fn play_project() {
 pub async fn play_vanilla() -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	crate::run_game(game.game_path()?).await?;
+	Ok(())
+}
+
+#[command]
+pub async fn load_project() {
+
+}
+
+#[command]
+pub async fn clear_game_cache() -> Result<()> {
+	let game = selectors::get_game().await.context("No game set")?;
+	game.clear_cache().await?;
+	Ok(())
+}
+
+#[command]
+pub async fn nuke_cache() -> Result<()> {
+	let path = crate::get_cache_dir_path();
+	fs::remove_dir_all(path).await?;
+	set_game(None).await?;
 	Ok(())
 }
 

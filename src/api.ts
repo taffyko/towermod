@@ -143,6 +143,21 @@ export const api = createApi({
 			}),
 			invalidatesTags: ['TowermodConfig'],
 		}),
+		cachePath: builder.query<string, void>({
+			queryFn: queryFn(async () => {
+				return await invoke('get_cache_dir_path')
+			}),
+		}),
+		clearGameCache: builder.mutation<void, void>({
+			queryFn: queryFn(async () => {
+				await invoke('clear_game_cache')
+			}),
+		}),
+		nukeCache: builder.mutation<void, void>({
+			queryFn: queryFn(async () => {
+				await invoke('nuke_cache')
+			}),
+		}),
 	}),
 });
 
@@ -161,3 +176,7 @@ export function useImageUrl(id: int): string | null {
 	const href = useObjectUrl(blob);
 	return href
 }
+function showModal(arg0: ConfirmModal) {
+	throw new Error('Function not implemented.');
+}
+

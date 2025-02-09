@@ -159,9 +159,9 @@ impl Game {
 			};
 		}
 
-		let mut plugin_names = crate::run::read_dllblock_names(self.game_path()?).await?;
+		let mut plugin_names = crate::read_dllblock_names(self.game_path()?).await?;
 		plugin_names.insert(-1, String::from("System"));
-		let mut editor_plugins = crate::run::load_editor_plugins_by_name(&plugin_names).await?;
+		let mut editor_plugins = crate::load_editor_plugins_by_name(&plugin_names).await?;
 		editor_plugins.insert(-1, crate::cstc::get_system_plugin());
 		let data = (plugin_names, editor_plugins);
 

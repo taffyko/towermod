@@ -38,6 +38,7 @@ pub fn reducer(mut state: State, action: Action) -> State {
 		}
 		Action::SetGame(game) => {
 			state.game = game;
+			state.project = None;
 			state.data = data::State::default();
 		}
 	}

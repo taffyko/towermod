@@ -1,13 +1,14 @@
-pub mod config;
-pub mod run;
-pub mod project;
-
-pub(in crate) mod newtype;
-pub mod tcr;
-pub mod util;
+mod project;
+mod config;
+mod run;
+mod tcr;
+mod util;
+mod newtype;
 pub mod macros;
 
 pub use project::*;
 pub use config::*;
 pub use run::*;
+pub use tcr::*;
+pub use util::*;
 pub use newtype::*;

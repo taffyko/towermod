@@ -99,7 +99,7 @@ impl From<Nt<PathBuf>> for PathBuf {
 pub mod serde {
 	// Implement time::serde::rfc3339 for Nt<OffsetDateTime>
 	pub mod rfc3339 {
-		use crate::newtype::*;
+		use crate::Nt;
 		use ::serde::{Serializer, Deserializer};
 		use std::result::Result;
 		use time::OffsetDateTime;

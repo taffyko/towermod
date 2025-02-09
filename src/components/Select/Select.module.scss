@@ -2,6 +2,11 @@
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	border-radius: var(--border-radius);
+
+	&:not(:disabled) {
+		border: solid 1px var(--color-border);
+	}
+
 	option {
 		border-radius: 10px;
 	}

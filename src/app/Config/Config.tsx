@@ -9,6 +9,9 @@ import { openModal } from "@/app/Modal";
 import { win32 as path } from "path";
 import FilePathEdit from "@/components/FilePathEdit";
 import { spin } from "../GlobalSpinner";
+import { throwOnError } from "@/components/Error";
+import { openFolder } from "@/util/rpc";
+import { assert } from "@/util";
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -37,6 +40,9 @@ export const Config = () => {
 	const { data: isDataLoaded } = api.useIsDataLoadedQuery()
 	const { data: project } = api.useGetProjectQuery()
 	const [newProject] = api.useNewProjectMutation()
+	const [nukeCache] = api.useNukeCacheMutation()
+	const [clearGameCache] = api.useClearGameCacheMutation()
+	const [getCachePath] = api.useLazyCachePathQuery()
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
 	useEffect(() => {
@@ -82,10 +88,43 @@ export const Config = () => {
 		<Text>Cache</Text>
 
 		<div className="hbox gap">
-			<Button disabled={!game} className="grow" onClick={() => {/* FIXME */}}>Clear game cache</Button>
-			<Button className="grow" onClick={() => {/* FIXME */}}>Nuke all cached data</Button>
+			<Button disabled={!game} className="grow" onClick={() => {
+				openModal(
+					<ConfirmModal onConfirm={onConfirm}>
+						Any unsaved data will be lost
+					</ConfirmModal>
+				)
+				async function onConfirm() {
+					await throwOnError(spin(clearGameCache()))
+					await spin(new Promise((resolve) => {
+						toast("Game cache deleted. Reloading...")
+						window.onload = resolve
+						window.location.reload()
+					}))
+				}
+			}}>Clear game cache</Button>
+			<Button className="grow" onClick={() => {
+				openModal(
+					<ConfirmModal onConfirm={onConfirm}>
+						Any unsaved data will be lost
+					</ConfirmModal>
+				)
+				async function onConfirm() {
+					await throwOnError(spin(nukeCache()))
+					await spin(new Promise((resolve) => {
+						toast("Cache nuked. Reloading...")
+						window.onload = resolve
+						window.location.reload()
+					}))
+				}
+			}}>Nuke all cached data</Button>
 		</div>
-		<Button className="grow" onClick={() => {/* FIXME */}}>Browse cache</Button>
+		<Button className="grow" onClick={async () => {
+			const { data: cachePath } = await throwOnError(spin(getCachePath()));
+			assert(cachePath)
+			await openFolder(cachePath)
+			toast("Cache folder opened")
+		}}>Browse cache</Button>
 
 	</div>
 }

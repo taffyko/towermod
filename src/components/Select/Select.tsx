@@ -4,9 +4,12 @@ export function Select(props: React.ComponentProps<'div'> & {
 	options: Record<string, string> | string[],
 	onChange?: (value: string) => void,
 	value?: string,
+	disabled?: boolean,
 }) {
-	const { options, onChange, value, className, ...htmlProps } = props;
+	const { options, onChange, value, className, disabled, ...htmlProps } = props;
+	console.log(disabled)
 	return <select {...(htmlProps as any)}
+		disabled={disabled}
 		className={`${Style.select} ${className || ''}`}
 		value={value} onChange={e => onChange?.(e.target.value)}
 	>
