@@ -1,6 +1,7 @@
 import { useMiniEventValue } from "@/util/hooks";
 import { MiniEvent } from "@/util/util";
 
+let timeout = 0;
 export function spin<T extends Function>(fn: T): T
 export function spin<T>(promise: Promise<T>): Promise<T>
 export function spin(promiseOrFn: any): any {
@@ -12,6 +13,11 @@ export function spin(promiseOrFn: any): any {
 		promises.push(promise)
 		promisesUpdated.fire(promises)
 		promise.finally(() => removePromise(promise))
+		clearTimeout(timeout)
+		timeout = window.setTimeout(() => {
+			promises = []
+			promisesUpdated.fire(promises)
+		}, 60000)
 		return promise
 	}
 }

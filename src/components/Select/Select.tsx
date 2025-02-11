@@ -7,7 +7,6 @@ export function Select(props: React.ComponentProps<'div'> & {
 	disabled?: boolean,
 }) {
 	const { options, onChange, value, className, disabled, ...htmlProps } = props;
-	console.log(disabled)
 	return <select {...(htmlProps as any)}
 		disabled={disabled}
 		className={`${Style.select} ${className || ''}`}

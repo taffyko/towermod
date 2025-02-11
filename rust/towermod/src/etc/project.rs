@@ -239,7 +239,7 @@ pub struct Project {
 	#[serde(with = "time::serde::rfc3339")]
 	pub date: time::OffsetDateTime,
 	/// Path to directory containing manifest.toml
-	#[serde(skip, default)]
+	#[serde(default)]
 	pub dir_path: Option<PathBuf>,
 }
 impl Project {
@@ -275,14 +275,15 @@ impl Project {
 
 	/// # Errors
 	/// - dir_path not set
-	pub async fn save(&mut self) -> Result<()> {
+	pub async fn save(&self) -> Result<()> {
 		let file_path = self.dir_path.as_ref().context("path not set")?.join("manifest.toml");
 		self.save_to(&file_path).await?;
 		Ok(())
 	}
-	pub async fn save_to(&mut self, file_path: impl AsRef<Path>) -> Result<()> {
-		let s = toml::to_string_pretty(self)?;
-		self.towermod_version = crate::VERSION.to_string();
+	pub async fn save_to(&self, file_path: impl AsRef<Path>) -> Result<()> {
+		let mut project = self.clone();
+		project.dir_path = None;
+		let s = toml::to_string_pretty(&project)?;
 		fs::write(file_path, s).await?;
 		Ok(())
 	}

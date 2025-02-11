@@ -1,9 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { int } from '@/util/util';
 import { invoke } from "@tauri-apps/api/core";
-import { Game, ModInfo, Project, TowermodConfig } from '@towermod';
+import { Game, ModInfo, ModType, Project, TowermodConfig } from '@towermod';
 import type { BaseEndpointDefinition } from '@reduxjs/toolkit/query'
 import { useObjectUrl } from './util/hooks';
+import { toast } from '@/app/Toast';
+import { renderError } from './components/Error';
 
 
 type FetchBaseQueryFn = ReturnType<typeof fetchBaseQuery>
@@ -19,6 +21,8 @@ function queryFn<ResultType, QueryArg>(fn: (arg: QueryArg) => Promise<ResultType
 				data,
 			}
 		} catch (e) {
+			toast(renderError(e), { type: 'error' })
+			console.error(e)
 			return {
 				error: e as any,
 			}
@@ -89,6 +93,11 @@ export const api = createApi({
 			}),
 			invalidatesTags: ['Project', 'Data'],
 		}),
+		exportMod: builder.mutation<void, ModType>({
+			queryFn: queryFn(async (modType) => {
+				await invoke('export_mod', { modType })
+			}),
+		}),
 		exportFromFiles: builder.mutation<void, void>({
 			queryFn: queryFn(async () => {
 				await invoke('export_from_files')
@@ -134,7 +143,7 @@ export const api = createApi({
 
 		loadProject: builder.mutation<void, string>({
 			queryFn: queryFn(async (manifestPath) => {
-				return await invoke('dump_images', { manifestPath })
+				return await invoke('load_project', { manifestPath })
 			}),
 			invalidatesTags: ['Project', 'Data'],
 		}),
@@ -142,6 +151,13 @@ export const api = createApi({
 		saveProject: builder.mutation<void, string>({
 			queryFn: queryFn(async (dirPath) => {
 				return await invoke('save_project', { dirPath })
+			}),
+			invalidatesTags: ['Project'],
+		}),
+
+		saveNewProject: builder.mutation<void, string>({
+			queryFn: queryFn(async (dirPath) => {
+				return await invoke('save_new_project', { dirPath })
 			}),
 			invalidatesTags: ['Project'],
 		}),

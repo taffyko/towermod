@@ -37,7 +37,6 @@ use crate::cstc::plugin::{PluginData, PluginStringTable};
 use crate::cstc::{self, plugin};
 use crate::{Game, ModInfo, ModType, Project};
 use crate::macros::*;
-use crate::Nt;
 
 use super::{cstc_binary_dir, get_dllreader_path};
 
@@ -851,9 +850,10 @@ pub fn open_folder(dir: &Path) -> Result<()> {
 	Ok(())
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileDialogOptions {
+	pub multi: Option<bool>,
 	pub filters: Option<Vec<FileDialogFilter>>,
 	pub starting_directory: Option<PathBuf>,
 	pub file_name: Option<String>,
@@ -868,28 +868,45 @@ pub struct FileDialogFilter {
 	extensions: Vec<String>,
 }
 
+fn set_file_dialog_options(mut file_dialog: rfd::FileDialog, options: &FileDialogOptions) -> rfd::FileDialog {
+	if let Some(filters) = &options.filters {
+		for filter in filters {
+			file_dialog = file_dialog.add_filter(&filter.name, &*filter.extensions);
+		}
+	}
+	if let Some(v) = options.can_create_directories {
+		file_dialog = file_dialog.set_can_create_directories(v);
+	}
+	if let Some(v) = &options.starting_directory {
+		file_dialog = file_dialog.set_directory(v);
+	}
+	if let Some(v) = &options.title {
+		file_dialog = file_dialog.set_title(v);
+	}
+	if let Some(v) = &options.file_name {
+		file_dialog = file_dialog.set_file_name(v);
+	}
+	file_dialog
+}
+
+#[command]
+pub async fn folder_picker(options: Option<FileDialogOptions>) -> Result<Option<PathBuf>> {
+	let result = tokio::task::spawn_blocking(move || {
+		let mut file_dialog = rfd::FileDialog::new();
+		if let Some(options) = &options {
+			file_dialog = set_file_dialog_options(file_dialog, options)
+		}
+		file_dialog.pick_folder()
+	}).await?;
+	Ok(result)
+}
+
 #[command]
 pub async fn file_picker(options: Option<FileDialogOptions>) -> Result<Option<PathBuf>> {
-	let result = tokio::task::spawn_blocking(|| {
+	let result = tokio::task::spawn_blocking(move || {
 		let mut file_dialog = rfd::FileDialog::new();
 		if let Some(options) = options {
-			if let Some(filters) = options.filters {
-				for filter in filters {
-					file_dialog = file_dialog.add_filter(filter.name, &*filter.extensions);
-				}
-			}
-			if let Some(v) = options.can_create_directories {
-				file_dialog = file_dialog.set_can_create_directories(v);
-			}
-			if let Some(v) = options.starting_directory {
-				file_dialog = file_dialog.set_directory(v);
-			}
-			if let Some(v) = options.title {
-				file_dialog = file_dialog.set_title(v);
-			}
-			if let Some(v) = options.file_name {
-				file_dialog = file_dialog.set_file_name(v);
-			}
+			file_dialog = set_file_dialog_options(file_dialog, &options)
 		}
 		file_dialog.pick_file()
 	}).await?;

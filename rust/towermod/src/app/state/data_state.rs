@@ -18,16 +18,16 @@ pub struct CstcData {
 	pub image_block: Vec<ImageMetadata>,
 }
 impl CstcData {
-	fn set_appblock(&mut self, app_block: AppBlock) {
+	pub fn set_appblock(&mut self, app_block: AppBlock) {
 		self.app_block = Some(app_block);
 	}
-	fn set_imageblock(&mut self, image_block: ImageBlock) {
+	pub fn set_imageblock(&mut self, image_block: ImageBlock) {
 		self.image_block = image_block.into_iter().map(|d| d.into()).collect();
 	}
-	fn set_eventblock(&mut self, event_block: EventBlock) {
+	pub fn set_eventblock(&mut self, event_block: EventBlock) {
 		self.event_block = Some(event_block);
 	}
-	fn set_levelblock(&mut self, level_block: LevelBlock) {
+	pub fn set_levelblock(&mut self, level_block: LevelBlock) {
 		self.animations = level_block.animations;
 		self.object_types = level_block.object_types;
 		self.layouts = level_block.layouts;
@@ -35,6 +35,22 @@ impl CstcData {
 		self.traits = level_block.traits;
 		self.families = level_block.families;
 		self.containers = level_block.containers;
+	}
+	pub fn into_blocks(self) -> (LevelBlock, AppBlock, EventBlock, Vec<ImageMetadata>) {
+		(
+			LevelBlock {
+				object_types: self.object_types,
+				behaviors: self.behaviors,
+				traits: self.traits,
+				families: self.families,
+				layouts: self.layouts,
+				containers: self.containers,
+				animations: self.animations,
+			},
+			self.app_block.unwrap(),
+			self.event_block.unwrap(),
+			self.image_block,
+		)
 	}
 }
 

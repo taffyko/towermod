@@ -10,7 +10,7 @@ import { win32 as path } from "path";
 import FilePathEdit from "@/components/FilePathEdit";
 import { spin } from "../GlobalSpinner";
 import { throwOnError } from "@/components/Error";
-import { filePicker, openFolder } from "@/util/rpc";
+import { filePicker, folderPicker, openFolder } from "@/util/rpc";
 import { assert } from "@/util";
 
 function SetGameModal(props: {
@@ -46,6 +46,9 @@ export const Config = () => {
 	const [getProjectsPath] = api.useLazyProjectsPathQuery()
 	const [loadProjectPreflight] = api.useLoadProjectPreflightMutation()
 	const [loadProject] = api.useLoadProjectMutation()
+	const [saveNewProject] = api.useSaveNewProjectMutation()
+	const [saveProject] = api.useSaveProjectMutation()
+	const [exportProject] = api.useExportModMutation()
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
 	useEffect(() => {
@@ -83,10 +86,10 @@ export const Config = () => {
 			<Button disabled={!game} className="grow" onClick={onClickLoadProject}>Load project</Button>
 		</div>
 		<div className="hbox gap">
-			<Button disabled={!isDataLoaded} className="grow" onClick={() => {/* FIXME */}}>Save project</Button>
-			<Button disabled={!project} className="grow" onClick={() => {/* FIXME */}}>Browse project</Button>
+			<Button disabled={!isDataLoaded} className="grow" onClick={spin(onClickSaveProject)}>Save project</Button>
+			<Button disabled={!project} className="grow" onClick={onClickBrowseProject}>Browse project</Button>
 		</div>
-		<Button disabled={!project} onClick={() => {/* FIXME */}}>Export Towermod project</Button>
+		<Button disabled={!project} onClick={onClickExportProject}>Export Towermod project</Button>
 		<hr />
 
 		<Text>Cache</Text>
@@ -100,6 +103,44 @@ export const Config = () => {
 		</div>
 		<Button className="grow" onClick={spin(onClickBrowseCache)}>Browse cache</Button>
 	</div>
+
+	function onClickExportProject() {
+		/** FIXME */
+		openModal(
+			<ConfirmModal confirmText="Export" onConfirm={spin(onConfirm)}>
+				todo
+			</ConfirmModal>
+		)
+		async function onConfirm() {
+			await throwOnError(exportProject('BinaryPatch'))
+			toast("Project exported")
+		}
+	}
+
+	async function onClickSaveProject() {
+		/** FIXME */
+		if (project) {
+			if (project.dirPath) {
+				await throwOnError(saveProject(project.dirPath))
+				toast("Project saved")
+			} else {
+				const dirPath = await folderPicker({ 'title': 'Select project folder' })
+				if (!dirPath) return;
+				await throwOnError(saveProject(dirPath))
+				toast("Project saved")
+			}
+		} else {
+			/** FIXME */
+			// saveNewProject()
+		}
+	}
+
+	async function onClickBrowseProject() {
+		if (project?.dirPath) {
+			await openFolder(project.dirPath)
+			toast("Project folder opened")
+		}
+	}
 
 	async function onClickBrowseCache() {
 		const { data: cachePath } = await throwOnError(getCachePath());

@@ -150,7 +150,9 @@ pub struct EventAction {
 	pub params: Vec<Vec<Token>>,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LevelBlock {
 	pub object_types: Vec<ObjectType>,
 	pub behaviors: Vec<Behavior>,
@@ -303,6 +305,7 @@ pub struct LayoutLayer {
 	pub background_color: i32,
 	pub force_own_texture: bool,
 	pub sampler: LayerSamplerMode,
+	#[serde(alias = "enable_3d")]
 	pub enable_3d: bool,
 	pub clear_depth_buffer: bool,
 	pub objects: Vec<ObjectInstance>,
@@ -484,15 +487,18 @@ pub struct ImageMetadata {
 
 impl From<ImageResource> for ImageMetadata {
 	fn from(o: ImageResource) -> Self {
-		let ImageResource { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask, .. } = o;
-		ImageMetadata { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask }
+		o.split().1
 	}
 }
 
 impl ImageResource {
-	pub fn new(metadata: ImageMetadata, data: Vec<u8>) -> Self {
+	pub fn new(data: Vec<u8>, metadata: ImageMetadata) -> Self {
 		let ImageMetadata { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask } = metadata;
 		ImageResource { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask, data }
+	}
+	pub fn split(self) -> (Vec<u8>, ImageMetadata) {
+		let ImageResource { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask, data } = self;
+		(data, ImageMetadata { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask })
 	}
 }
 

@@ -1,12 +1,12 @@
-use std::{collections::HashMap, io::{Cursor, Read}, path::{Path, PathBuf}, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, log_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project, ProjectType, TcrepainterPatch};
+use std::{collections::HashMap, io::{Cursor, Read, Write}, path::{Path, PathBuf}, sync::Mutex};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, log_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project, ProjectType, TcrepainterPatch, ZipWriterExt};
 use anyhow::Result;
 use async_scoped::TokioScope;
 use tauri::command;
 use anyhow::{Context};
 use fs_err::tokio as fs;
 use futures::StreamExt;
-use tokio::sync::RwLock;
+use tokio::{io::AsyncWriteExt, sync::RwLock};
 use tracing::instrument;
 use crate::app::{state::{select, CstcData}, selectors, thunks};
 
@@ -118,10 +118,9 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 	// TODO: cache once files are created for a given version of a mod
 	let zip_bytes = fs::read(&zip_path).await?;
 	let cursor = Cursor::new(&zip_bytes);
-	let zip = std::sync::Mutex::new(zip::ZipArchive::new(cursor)?);
+	let mut zip = zip::ZipArchive::new(cursor)?;
 
 	let mut mod_info: ModInfo = {
-		let mut zip = zip.lock().unwrap();
 		let mut file = zip.by_name("manifest.toml")?;
 		let mut s = String::new();
 		file.read_to_string(&mut s)?;
@@ -138,42 +137,9 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 	status("Copying base game files");
 	crate::merge_copy_into(&game_path.parent().context("game_path.parent()")?, &runtime_dir, true, true).await?;
 
-	let images_by_id: Mutex<HashMap<i32, Vec<u8>>> = Mutex::new(HashMap::new());
-
-	status("Writing custom images and files");
-	let zip_len = { let zip = zip.lock().unwrap(); zip.len() };
-
+	status("Writing custom files");
 	let is_towerclimb = mod_info.game.game_type == GameType::Towerclimb;
 
-	let results = std::sync::Mutex::new(vec![]);
-	let stream = futures::stream::iter(0..zip_len);
-	{
-		stream.for_each_concurrent(None, async |i: usize| {
-			let result: Result<()> = try {
-				let mut zip = zip.lock().unwrap();
-				let mut file = zip.by_index(i)?;
-				if !file.is_file() { return }
-				let filename = file.name();
-				if filename.starts_with("images/") && filename.ends_with(".png") {
-					let path = file.enclosed_name().with_context(|| format!("bad zip entry: {filename}"))?;
-					let file_stem = path.file_stem().with_context(|| format!("bad image name: {path:?}"))?.to_string_lossy();
-					if let Ok(i) = str::parse::<i32>(&file_stem) {
-						let mut buf = Vec::new();
-						file.read_to_end(&mut buf)?;
-						let mut images_by_id = images_by_id.lock().unwrap();
-						images_by_id.insert(i, buf);
-					};
-				}
-			};
-			results.lock().unwrap().push(result);
-		}).await;
-	}
-	let results = results.into_inner().unwrap();
-	for result in results {
-		result?;
-	}
-
-	let mut zip = zip.into_inner().unwrap();
 	zip_merge_copy_into(&mut zip, "files/", &runtime_dir, true).await?;
 	if is_towerclimb {
 		let towerclimb_savefiles_dir = PathBuf::from_iter([get_appdata_dir_path(), PathBuf::from_iter(["TowerClimb/Mods", &*mod_info.unique_name()])]);
@@ -204,7 +170,8 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 		let mut bytes = fs::read(&game_path).await?;
 		// need to apply the patch first, then transplant resources to a clean runtime binary
 		// otherwise the offsets would be incorrect
-		patch.patch(&images_by_id.into_inner().unwrap(), std::io::Cursor::new(&mut bytes))?;
+		let images_by_id = images::images_from_zip(zip_path).await?;
+		patch.patch(&images_by_id, std::io::Cursor::new(&mut bytes))?;
 		{
 			status("Writing data");
 			let temp_file = get_temp_file().await?;
@@ -216,65 +183,59 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 				anyhow::Ok(())
 			}?
 		};
-	} else {
-		let level_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
-		let event_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
-		let app_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
-		let image_metadata_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
-
+	} else if mod_info.mod_type == ModType::BinaryPatch {
 		let src_exe_path = mod_info.game.get_release_build().await?;
 		fs::copy(&src_exe_path, &output_exe_path).await?;
 
-		if mod_info.mod_type == ModType::BinaryPatch {
-			status("Extracting patches");
-			{
-				if let Ok(mut file) = zip.by_name("levelblock.patch") {
-					let mut buf = Vec::new();
-					file.read_to_end(&mut buf)?;
-					*level_block_patch.lock().unwrap() = Some(buf);
-				}
-				if let Ok(mut file) = zip.by_name("appblock.patch") {
-					let mut buf = Vec::new();
-					file.read_to_end(&mut buf)?;
-					*app_block_patch.lock().unwrap() = Some(buf);
-				}
-				if let Ok(mut file) = zip.by_name("eventblock.patch") {
-					let mut buf = Vec::new();
-					file.read_to_end(&mut buf)?;
-					*event_block_patch.lock().unwrap() = Some(buf);
-				};
-				if let Ok(mut file) = zip.by_name("imageblock.patch") {
-					let mut buf = Vec::new();
-					file.read_to_end(&mut buf)?;
-					*image_metadata_patch.lock().unwrap() = Some(buf);
-				};
-			}
+		let level_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+		let event_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+		let app_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+		let image_block_metadata: Mutex<Option<Vec<ImageMetadata>>> = Mutex::new(None);
 
-			status("Patching executable");
-			let images_by_id = images_by_id.into_inner()?;
-			if !images_by_id.is_empty() {
-				// TODO: read imageblock from game, convert to image metadata only
-				// apply patch
-				// then convert back to imageblock and load
-				let image_metadata = None;
-				let patched_image_block = patch_with_images(game.game_path()?, images_by_id, image_metadata).await?;
-				patched_image_block.write_to_pe(&output_exe_path)?;
+		status("Extracting patches");
+		{
+			if let Ok(mut file) = zip.by_name("levelblock.patch") {
+				let mut buf = Vec::new();
+				file.read_to_end(&mut buf)?;
+				*level_block_patch.lock().unwrap() = Some(buf);
 			}
-			if let Some(level_block_patch) = level_block_patch.into_inner().unwrap() {
-				let level_block_bin = cstc::LevelBlock::read_bin(&game_path)?;
-				let buf = crate::apply_patch(&*level_block_bin, &*level_block_patch)?;
-				cstc::LevelBlock::write_bin(&output_exe_path, &buf)?;
+			if let Ok(mut file) = zip.by_name("appblock.patch") {
+				let mut buf = Vec::new();
+				file.read_to_end(&mut buf)?;
+				*app_block_patch.lock().unwrap() = Some(buf);
 			}
-			if let Some(event_block_patch) = event_block_patch.into_inner().unwrap() {
-				let event_block_bin = cstc::EventBlock::read_bin(&game_path)?;
-				let buf = crate::apply_patch(&*event_block_bin, &*event_block_patch)?;
-				cstc::EventBlock::write_bin(&output_exe_path, &buf)?;
-			}
-			if let Some(app_block_patch) = app_block_patch.into_inner().unwrap() {
-				let app_block_bin = cstc::AppBlock::read_bin(&game_path)?;
-				let buf = crate::apply_patch(&*app_block_bin, &*app_block_patch)?;
-				cstc::AppBlock::write_bin(&output_exe_path, &buf)?;
-			}
+			if let Ok(mut file) = zip.by_name("eventblock.patch") {
+				let mut buf = Vec::new();
+				file.read_to_end(&mut buf)?;
+				*event_block_patch.lock().unwrap() = Some(buf);
+			};
+			if let Ok(mut file) = zip.by_name("imageblock.msgpack") {
+				let mut buf = Vec::new();
+				file.read_to_end(&mut buf)?;
+				let metadata: Vec<ImageMetadata> = rmp_serde::from_slice(&*buf)?;
+				*image_block_metadata.lock().unwrap() = Some(metadata);
+			};
+		}
+
+		status("Patching executable");
+		if let Some(image_block_metadata) = image_block_metadata.into_inner().unwrap() {
+			let patched_image_block = get_patched_image_block(Some(zip_path), Some(image_block_metadata)).await?;
+			patched_image_block.write_to_pe(&output_exe_path)?;
+		}
+		if let Some(level_block_patch) = level_block_patch.into_inner().unwrap() {
+			let level_block_bin = cstc::LevelBlock::read_bin(&game_path)?;
+			let buf = crate::apply_patch(&*level_block_bin, &*level_block_patch)?;
+			cstc::LevelBlock::write_bin(&output_exe_path, &buf)?;
+		}
+		if let Some(event_block_patch) = event_block_patch.into_inner().unwrap() {
+			let event_block_bin = cstc::EventBlock::read_bin(&game_path)?;
+			let buf = crate::apply_patch(&*event_block_bin, &*event_block_patch)?;
+			cstc::EventBlock::write_bin(&output_exe_path, &buf)?;
+		}
+		if let Some(app_block_patch) = app_block_patch.into_inner().unwrap() {
+			let app_block_bin = cstc::AppBlock::read_bin(&game_path)?;
+			let buf = crate::apply_patch(&*app_block_bin, &*app_block_patch)?;
+			cstc::AppBlock::write_bin(&output_exe_path, &buf)?;
 		}
 	}
 
@@ -303,7 +264,7 @@ pub fn remove_mouse_cursor_hide_events(events: &mut cstc::EventBlock) {
 	}
 }
 
-#[instrument]
+#[instrument(skip(events))]
 pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_name: &str) -> Result<()> {
 	// FIXME make this less brittle
 
@@ -346,45 +307,6 @@ pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_n
 	Ok(())
 }
 
-#[instrument]
-pub async fn patch_with_images(game_path: &Path, mut found_images_by_id: HashMap<i32, Vec<u8>>, image_metadatas: Option<Vec<cstc::ImageMetadata>>) -> Result<Vec<cstc::ImageResource>> {
-	// read base imageblock from PE
-	let mut base_image_block = cstc::ImageBlock::read_from_pe(game_path).await?;
-
-	if let Some(image_metadatas) = image_metadatas {
-		// add base images to found_images_by_id
-		for image_resource in base_image_block {
-			if !found_images_by_id.contains_key(&image_resource.id) {
-				found_images_by_id.insert(image_resource.id, image_resource.data);
-			}
-		}
-
-		let mut image_block = Vec::with_capacity(image_metadatas.len());
-		for metadata in image_metadatas {
-			let id = metadata.id;
-			image_block.push(
-				cstc::ImageResource::new(metadata, found_images_by_id.remove(&id).ok_or_else(|| anyhow::anyhow!("Could not find image {id}"))?)
-			)
-		}
-		Ok(image_block)
-	} else {
-		let images_by_id: RwLock<HashMap<i32, &mut cstc::ImageResource>> = RwLock::new(base_image_block.iter_mut().map(|image| {
-			let id = image.id;
-			(id, image)
-		}).collect());
-
-		{
-			let mut images_by_id = images_by_id.write().await;
-			for (i, data) in found_images_by_id.into_iter() {
-				if let Some(image) = images_by_id.get_mut(&i) {
-					image.data = data;
-				};
-			}
-		}
-
-		Ok(base_image_block)
-	}
-}
 
 #[instrument]
 #[command]
@@ -410,7 +332,7 @@ pub async fn new_project() -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let game_path = game.game_path()?;
 	let data = CstcData::default();
-	dump_images().await?;
+	// dump_images().await?;
 
 	let result: anyhow::Result<_> = tokio::try_join!(
 		LevelBlock::read_from_pe(&game_path),
@@ -419,16 +341,9 @@ pub async fn new_project() -> Result<()> {
 		ensure_base_data(data, &game),
 	);
 	let (level_block, app_block, event_block, mut data) = result?;
-
-	data.app_block = Some(app_block);
-	data.event_block = Some(event_block);
-	data.animations = level_block.animations;
-	data.object_types = level_block.object_types;
-	data.layouts = level_block.layouts;
-	data.behaviors = level_block.behaviors;
-	data.traits = level_block.traits;
-	data.families = level_block.families;
-	data.containers = level_block.containers;
+	data.set_appblock(app_block);
+	data.set_eventblock(event_block);
+	data.set_levelblock(level_block);
 
 	STORE.dispatch(DataAction::SetData(data).into()).await;
 
@@ -508,6 +423,8 @@ pub async fn load_project(manifest_path: PathBuf) -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let proj_dir = manifest_path.parent().unwrap();
 
+	let project = Project::from_path(&manifest_path).await?;
+
 	let result = tokio::try_join!(
 		fs::read(proj_dir.join("levelblock.json")),
 		fs::read(proj_dir.join("appblock.json")),
@@ -524,59 +441,67 @@ pub async fn load_project(manifest_path: PathBuf) -> Result<()> {
 
 	let mut data = CstcData::default();
 
-	let level_block: cstc::LevelBlock = serde_json::from_slice(&level_block_json).unwrap();
-	let app_block: cstc::AppBlock = serde_json::from_slice(&app_block_json).unwrap();
-	let event_block: cstc::EventBlock = serde_json::from_slice(&event_block_json).unwrap();
-	let image_block: Option<Vec<cstc::ImageMetadata>> = image_block_json.map(|o| serde_json::from_slice(&o).unwrap());
+	let level_block: cstc::LevelBlock = serde_json::from_slice(&level_block_json)?;
+	let app_block: cstc::AppBlock = serde_json::from_slice(&app_block_json)?;
+	let event_block: cstc::EventBlock = serde_json::from_slice(&event_block_json)?;
+	let image_block: Option<Vec<cstc::ImageMetadata>> = image_block_json.map(|o| serde_json::from_slice(&o)).transpose()?;
 
 	if let Some(image_block) = image_block {
 		data.image_block = image_block;
 	}
-	data.app_block = Some(app_block);
-	data.event_block = Some(event_block);
-	data.animations = level_block.animations;
-	data.object_types = level_block.object_types;
-	data.layouts = level_block.layouts;
-	data.behaviors = level_block.behaviors;
-	data.traits = level_block.traits;
-	data.families = level_block.families;
-	data.containers = level_block.containers;
+	data.set_appblock(app_block);
+	data.set_eventblock(event_block);
+	data.set_levelblock(level_block);
 
 	let data = ensure_base_data(data, &game).await?;
 
+	STORE.dispatch(AppAction::SetProject(Some(project)).into()).await;
 	STORE.dispatch(DataAction::SetData(data).into()).await;
 	Ok(())
 }
 
-// #[command]
-// pub async fn save_project(dir_path: PathBuf) -> Result<()> {
-// 	let game = selectors::get_game().await.context("No game set")?;
-// 	let project = selectors::get_project().await.context("No project set")?;
+#[command]
+pub async fn save_new_project(dir_path: PathBuf, author: String, name: String, display_name: String) -> Result<()> {
+	let game = selectors::get_game().await.context("No game set")?;
+	let mut project = Project::new(author, name, display_name, "0.0.1".to_string(), game);
+	project.dir_path = Some(PathBuf::from(&dir_path));
+	fs::create_dir_all(project.images_path()?).await?;
+	fs::create_dir_all(project.files_path()?).await?;
+	fs::create_dir_all(project.savefiles_path()?).await?;
+	STORE.dispatch(AppAction::SetProject(Some(project)).into()).await;
+	save_project(dir_path).await?;
+	Ok(())
+}
 
-// 	// Update date & version
-// 	project.dir_path = Some(dir_path.clone());
-// 	project.date = time::OffsetDateTime::now_utc().replace_nanosecond(0)?.replace_second(0)?;
-// 	project.towermod_version = crate::VERSION.to_string();
-// 	project.game = game;
-// 	// Save manifest.toml
-// 	project.save_to(&dir_path.join("manifest.toml")).await?;
+#[command]
+pub async fn save_project(dir_path: PathBuf) -> Result<()> {
+	let game = selectors::get_game().await.context("No game set")?;
+	let mut project = selectors::get_project().await.context("No project set")?;
 
-// 	let (level_block, app_block, event_block, image_block) = {
-// 		app!(this);
-// 		let data = this.data.bind();
-// 		data.get_data()
-// 	};
-// 	let level_block_json = serde_json::to_vec(&level_block)?;
-// 	let app_block_json = serde_json::to_vec(&app_block)?;
-// 	let event_block_json = serde_json::to_vec(&event_block)?;
-// 	let image_block_json = serde_json::to_vec(&image_block)?;
-// 	fs::write(proj_dir.join("imageblock.json"), &image_block_json).await?;
-// 	fs::write(proj_dir.join("levelblock.json"), &level_block_json).await?;
-// 	fs::write(proj_dir.join("appblock.json"), &app_block_json).await?;
-// 	fs::write(proj_dir.join("eventblock.json"), &event_block_json).await?;
+	// Update date & version
+	project.dir_path = Some(dir_path.clone());
+	project.date = time::OffsetDateTime::now_utc().replace_nanosecond(0)?.replace_second(0)?;
+	project.towermod_version = crate::VERSION.to_string();
+	project.game = game;
+	// Save manifest.toml
+	project.save_to(&dir_path.join("manifest.toml")).await?;
+	STORE.dispatch(AppAction::EditProjectInfo(project)).await;
 
-// 	Towermod::emit("active_project_updated", &[true.to_variant()]);
-// }
+	let data = select(|s| s.data.clone()).await;
+
+	let (level_block, app_block, event_block, image_block) = data.into_blocks();
+
+	let level_block_json = serde_json::to_vec(&level_block)?;
+	let app_block_json = serde_json::to_vec(&app_block)?;
+	let event_block_json = serde_json::to_vec(&event_block)?;
+	let image_block_json = serde_json::to_vec(&image_block)?;
+	fs::write(dir_path.join("imageblock.json"), &image_block_json).await?;
+	fs::write(dir_path.join("levelblock.json"), &level_block_json).await?;
+	fs::write(dir_path.join("appblock.json"), &app_block_json).await?;
+	fs::write(dir_path.join("eventblock.json"), &event_block_json).await?;
+
+	Ok(())
+}
 
 #[command]
 pub async fn edit_project_info(project: Project) {
@@ -599,12 +524,12 @@ pub async fn nuke_cache() -> Result<()> {
 	Ok(())
 }
 
-#[instrument]
+#[instrument(skip(data, game))]
 async fn ensure_base_data(mut data: CstcData, game: &Game) -> Result<CstcData> {
 	if data.image_block.is_empty() {
 		status("Initializing image data");
 		let image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;
-		data.image_block = image_block.into_iter().map(|d| d.into()).collect();
+		data.set_imageblock(image_block);
 	}
 	if data.editor_plugins.is_empty() {
 		status("Loading Construct Classic plugin data");
@@ -618,27 +543,230 @@ async fn ensure_base_data(mut data: CstcData, game: &Game) -> Result<CstcData> {
 	Ok(data)
 }
 
-// fn into_blocks(data: CstcData) -> (Option<AppBlock>, Option<EventBlock>, ImageBlock, LevelBlock) {
-// 	(
-// 		self.app_block,
-// 		self.event_block,
-// 		self.image_block.into(),
-// 		LevelBlock {
-// 			object_types: self.object_types,
-// 			behaviors: self.behaviors,
-// 			traits: self.traits,
-// 			families: self.families,
-// 			layouts: self.layouts,
-// 			containers: self.containers,
-// 			animations: self.animations,
-// 		}
-// 	)
+#[command]
+pub async fn export_mod(mod_type: ModType) -> Result<()> {
+	status("Exporting");
+	let mod_type: ModType = From::from(mod_type);
+	let project = selectors::get_project().await.context("Project not set")?;
+	let game = selectors::get_game().await.context("Game not set")?;
+	let game_path = game.game_path()?.clone();
+	let project_dir = project.dir_path()?.clone();
+	let images_path = project.images_path()?;
+	let files_path = project.files_path()?;
+	let savefiles_path = project.savefiles_path()?;
+
+	let mut buffer = vec![];
+	let mut zip = zip::ZipWriter::new(Cursor::new(&mut buffer));
+	let options: zip::write::FileOptions<'_, ()> = zip::write::FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+
+	if mod_type == ModType::BinaryPatch {
+		let mut level_block_patch = Vec::new();
+		let mut app_block_patch = Vec::new();
+		let mut event_block_patch = Vec::new();
+		let mut image_metadatas_bin = Vec::new();
+		{
+			let original_level_block_bin = cstc::LevelBlock::read_bin(&game_path)?;
+			let original_app_block_bin = cstc::AppBlock::read_bin(&game_path)?;
+			let original_event_block_bin = cstc::EventBlock::read_bin(&game_path)?;
+
+			let data = select(|s| s.data.clone()).await;
+			let (level_block, app_block, event_block, image_metadatas) = data.into_blocks();
+
+			status("Generating patches");
+			let ((), results) = unsafe {TokioScope::scope_and_collect(|s| {
+				s.spawn_blocking(|| {
+					let level_block_bin = level_block.to_bin()?;
+					level_block_patch = crate::etc::diff(&original_level_block_bin, &level_block_bin)?;
+					anyhow::Ok(())
+				});
+				s.spawn_blocking(|| {
+					let app_block_bin = app_block.to_bin()?;
+					app_block_patch = crate::etc::diff(&original_app_block_bin, &app_block_bin)?;
+					anyhow::Ok(())
+				});
+				s.spawn_blocking(|| {
+					let event_block_bin = event_block.to_bin()?;
+					event_block_patch = crate::etc::diff(&original_event_block_bin, &event_block_bin)?;
+					anyhow::Ok(())
+				});
+				s.spawn_blocking(|| {
+					image_metadatas_bin = rmp_serde::encode::to_vec(&image_metadatas)?;
+					anyhow::Ok(())
+				})
+			})}.await;
+			for result in results {
+				result??;
+			}
+		}
+		{
+			status("Zipping patches");
+			zip.start_file("levelblock.patch", options)?;
+			zip.write_all(&level_block_patch)?;
+			zip.start_file("eventblock.patch", options)?;
+			zip.write_all(&event_block_patch)?;
+			zip.start_file("appblock.patch", options)?;
+			zip.write_all(&app_block_patch)?;
+			zip.start_file("imageblock.msgpack", options)?;
+			zip.write_all(&image_metadatas_bin)?;
+		}
+	}
+
+
+	zip.add_file_if_exists(project_dir.join("cover.png"), options).await?;
+	zip.add_file_if_exists(project_dir.join("icon.png"), options).await?;
+
+	zip.add_dir_if_exists(&images_path, options).await?;
+	zip.add_dir_if_exists(&files_path, options).await?;
+	zip.add_dir_if_exists(&savefiles_path, options).await?;
+
+	let mod_info = ModInfo::new(project, mod_type);
+	status("Writing zip file");
+	let s = toml::to_string_pretty(&mod_info)?;
+	zip.start_file("manifest.toml", options)?;
+	zip.write_all(s.as_bytes())?;
+	zip.finish()?;
+	let mut file = fs::File::create(&mod_info.export_path()).await?;
+	file.write_all(&buffer).await?;
+
+	Ok(())
+}
+
+
+pub async fn get_patched_image_block(dir_or_zip: Option<PathBuf>, metadata: Option<Vec<ImageMetadata>>) -> Result<ImageBlock> {
+
+	let game = selectors::get_game().await.context("No game set")?;
+	let (mut images, base_metadata) = images::images_from_game(game.game_path()?).await?;
+	let metadata = metadata.unwrap_or(base_metadata);
+	if let Some(dir_or_zip) = dir_or_zip {
+		if dir_or_zip.is_dir() {
+			images.extend(images::images_from_dir(dir_or_zip).await?);
+		} else {
+			images.extend(images::images_from_zip(dir_or_zip).await?);
+		}
+	}
+
+	Ok(images::combine_imageblock(images, metadata))
+}
+
+// async fn hydrate_image_block(image_metadatas: Vec<ImageMetadata>) -> Result<()> {
+// 	let game = selectors::get_game().await.context("No game set")?;
+// 	let base_image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;
+// 	let mut images = base_image_block.into_iter().map(|d| d.data);
+// 	todo!()
 // }
 
-
 mod images {
-	use crate::cstc::ImageMetadata;
+	use std::{collections::HashMap, io::Read, path::{Path, PathBuf}};
+	use anyhow::{Context, Result};
+	use futures::StreamExt;
+	use tokio::sync::RwLock;
+use tokio_stream::wrappers::ReadDirStream;
+	use tracing::instrument;
+	use crate::{cstc::{self, ImageMetadata}, PeResource};
 
-	fn restore_image_block_images(image_block: Vec<ImageMetadata>) {
+	fn create_imageblock_metadata_patch(image_block: cstc::ImageBlock, metadata: Vec<ImageMetadata>) {
+		todo!()
+	}
+
+	fn apply_imageblock_metadata_patch(image_block: cstc::ImageBlock) {
+		let (images, metadata) = split_imageblock(image_block);
+		todo!()
+	}
+
+	fn split_imageblock(image_block: cstc::ImageBlock) -> (HashMap<i32, Vec<u8>>, Vec<ImageMetadata>) {
+		let mut metadatas = Vec::with_capacity(image_block.len());
+		let mut images = HashMap::with_capacity(image_block.len());
+		for image in image_block {
+			let (image, metadata) = image.split();
+			images.insert(metadata.id, image);
+			metadatas.push(metadata);
+		}
+		(images, metadatas)
+	}
+
+	pub fn combine_imageblock(mut images: HashMap<i32, Vec<u8>>, image_metadatas: Vec<ImageMetadata>) -> cstc::ImageBlock {
+		image_metadatas.into_iter().filter_map(|metadata| {
+			if let Some(image) = images.remove(&metadata.id) {
+				Some(cstc::ImageResource::new(image, metadata))
+			} else {
+				log::error!("Could not find image {}", metadata.id);
+				None
+			}
+		}).collect()
+	}
+
+	#[instrument]
+	pub async fn images_from_dir(images_dir: PathBuf) -> Result<HashMap<i32, Vec<u8>>> {
+		let images: RwLock<HashMap<i32, Vec<u8>>> = RwLock::new(HashMap::new());
+
+		let entries = ReadDirStream::new(match tokio::fs::read_dir(&images_dir).await {
+			Ok(v) => v,
+			Err(e) => match e.kind() {
+				std::io::ErrorKind::NotFound => { return Ok(images.into_inner()) },
+				_ => Err(e)?,
+			}
+		});
+		entries.for_each_concurrent(None, |entry| async {
+			let _: Result<()> = async {
+				let entry = entry?;
+				let path = entry.path();
+				if path.file_name().context("bad filename")?.to_string_lossy().ends_with(".png") {
+					if let Some(s) = path.file_stem() {
+						if let Ok(id) = str::parse::<i32>(&s.to_string_lossy()) {
+							match fs_err::read(path) {
+								Ok(data) => {
+									let mut found_images_by_id = images.write().await;
+									found_images_by_id.insert(id, data);
+								}
+								Err(e) => match e.kind() {
+									std::io::ErrorKind::IsADirectory => {},
+									_ => Err(e)?
+								}
+							}
+						}
+					}
+				}
+				Ok(())
+			}.await;
+		}).await;
+
+		Ok(images.into_inner())
+	}
+
+	#[instrument]
+	pub async fn images_from_zip(zip_path: PathBuf) -> Result<HashMap<i32, Vec<u8>>> {
+		tokio::task::spawn_blocking(|| -> Result<HashMap<i32, Vec<u8>>> {
+			let archive = std::fs::File::open(zip_path)?;
+			let mut zip = zip::ZipArchive::new(archive)?;
+
+			let mut images = HashMap::with_capacity(zip.len());
+
+			for i in 0..zip.len() {
+				let result: Result<()> = try {
+					let mut file = zip.by_index(i)?;
+					if !file.is_file() { continue }
+					let filename = file.name();
+					if filename.starts_with("images/") && filename.ends_with(".png") {
+						let path = file.enclosed_name().with_context(|| format!("bad zip entry: {filename}"))?;
+						let file_stem = path.file_stem().with_context(|| format!("bad image name: {path:?}"))?.to_string_lossy();
+						if let Ok(i) = str::parse::<i32>(&file_stem) {
+							let mut buf = Vec::new();
+							file.read_to_end(&mut buf)?;
+							images.insert(i, buf);
+						};
+					}
+				};
+				if let Err(e) = result {
+					log::error!("{}", e);
+				}
+			}
+
+			anyhow::Ok(images)
+		}).await?
+	}
+
+	pub async fn images_from_game(game_path: &Path) -> Result<(HashMap<i32, Vec<u8>>, Vec<ImageMetadata>)> {
+		let image_block = cstc::ImageBlock::read_from_pe(&game_path).await?;
+		Ok(split_imageblock(image_block))
 	}
 }

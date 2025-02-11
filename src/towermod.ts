@@ -313,12 +313,7 @@ export interface ModInfo {
 	error?: string
 }
 
-export declare const enum ModType {
-  FilesOnly = 0,
-  Legacy = 1,
-  BinaryPatch = 2
-}
-
+export type ModType = 'FilesOnly' | 'Legacy' | 'BinaryPatch';
 
 export interface ObjectInstance {
   id: int
