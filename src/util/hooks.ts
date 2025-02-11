@@ -140,7 +140,7 @@ export function useIsHovered(el: HTMLElement | null) {
 	return hovered
 }
 
-export function useIsFocused(el: HTMLElement) {
+export function useIsFocused(el: HTMLElement | null) {
 	const [focused, setFocused] = useState(false);
 	useEventListener(el, 'focus', () => {
 		setFocused(true);
@@ -155,9 +155,26 @@ export function useIsFocused(el: HTMLElement) {
 	return focused
 }
 
-export function useObjectUrl(data?: BlobPart | number[] | null, options?: BlobPropertyBag): string | null
-export function useObjectUrl(blob?: Blob | null): string | null
-export function useObjectUrl(data?: Blob | BlobPart | number[] | null, options?: BlobPropertyBag): string | null {
+export function useIsPressed(el: HTMLElement | null) {
+	const [pressed, setPressed] = useState(false);
+	useEffect(() => {
+		setPressed(false);
+	}, [el])
+	useEventListener(el, 'mousedown', () => {
+		setPressed(true);
+	})
+	useEventListener(el, 'mouseup', () => {
+		setPressed(false);
+	})
+	useEventListener(window, 'mouseup', () => {
+		setPressed(false);
+	})
+	return pressed
+}
+
+export function useObjectUrl(data?: BlobPart | number[] | null, options?: BlobPropertyBag): string | undefined
+export function useObjectUrl(blob?: Blob | null): string | undefined
+export function useObjectUrl(data?: Blob | BlobPart | number[] | null, options?: BlobPropertyBag): string | undefined {
 	const href = useMemoWithCleanup(() => {
 		// convert to Blob if raw data given
 		let blob: Blob | undefined;
@@ -174,7 +191,7 @@ export function useObjectUrl(data?: Blob | BlobPart | number[] | null, options?:
 			const href = createObjectUrl(blob);
 			return [href, () => revokeObjectUrl(href)]
 		} else {
-			return [null]
+			return [undefined]
 		}
 	}, [data, options?.type])
 	return href

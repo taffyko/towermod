@@ -37,9 +37,28 @@ export const api = createApi({
 	baseQuery: fetchBaseQuery({ baseUrl: '/' }), // Base URL for API calls
 	tagTypes,
 	endpoints: (builder) => ({
-		getImage: builder.query<Blob | null, number>({
+		getFile: builder.query<Blob | null, string | null | undefined>({
+			queryFn: queryFn(async (path) => {
+				const arrayBuffer = path ? await _getFile(path) : null
+				let blob: Blob | null = null
+				if (arrayBuffer) {
+					const fileExtension = path!.split('.').pop()?.toLowerCase()
+					let options: BlobPropertyBag | undefined;
+					switch (fileExtension) {
+						case '.jpg': case '.jpeg':
+							options = { type: 'image/jpeg' }
+						break; case '.png':
+							options = { type: 'image/png' }
+					}
+					blob = new Blob([arrayBuffer], options)
+				}
+				return blob
+			}),
+		}),
+
+		getGameImage: builder.query<Blob | null, number>({
 			queryFn: queryFn(async (id) => {
-				const arrayBuffer = await getImage(id)
+				const arrayBuffer = await _getGameImage(id)
 				let blob: Blob | null = null
 				if (arrayBuffer) {
 					blob = new Blob([arrayBuffer], { type: 'image/png' })
@@ -148,6 +167,13 @@ export const api = createApi({
 			invalidatesTags: ['Project', 'Data'],
 		}),
 
+		editProjectInfo: builder.mutation<void, Project>({
+			queryFn: queryFn(async (project) => {
+				return await invoke('edit_project_info', { project })
+			}),
+			invalidatesTags: ['Project'],
+		}),
+
 		saveProject: builder.mutation<void, string>({
 			queryFn: queryFn(async (dirPath) => {
 				return await invoke('save_project', { dirPath })
@@ -155,7 +181,7 @@ export const api = createApi({
 			invalidatesTags: ['Project'],
 		}),
 
-		saveNewProject: builder.mutation<void, string>({
+		saveNewProject: builder.mutation<void, { dirPath: string, author: string, name: string, displayName: string }>({
 			queryFn: queryFn(async (dirPath) => {
 				return await invoke('save_new_project', { dirPath })
 			}),
@@ -214,7 +240,17 @@ export const api = createApi({
 	}),
 });
 
-async function getImage(id: int): Promise<Uint8Array | null> {
+async function _getFile(path: string): Promise<Uint8Array | null> {
+	const enc = new TextEncoder();
+	const bytes = enc.encode(JSON.stringify(path))
+	const resp = new Uint8Array(await invoke("get_file", bytes));
+	if (!resp.length) {
+		return null
+	}
+	return resp
+}
+
+async function _getGameImage(id: int): Promise<Uint8Array | null> {
 	const enc = new TextEncoder();
 	const bytes = enc.encode(JSON.stringify(id))
 	const resp = new Uint8Array(await invoke("get_image", bytes));
@@ -224,8 +260,15 @@ async function getImage(id: int): Promise<Uint8Array | null> {
 	return resp
 }
 
-export function useImageUrl(id: int): string | null {
-	const { data: blob } = api.useGetImageQuery(id)
+
+export function useFileUrl(path: string | null | undefined): string | undefined {
+	const { data: blob } = api.useGetFileQuery(path)
 	const href = useObjectUrl(blob);
-	return href
+	return href ?? undefined
+}
+
+export function useGameImageUrl(id: int): string | undefined {
+	const { data: blob } = api.useGetGameImageQuery(id)
+	const href = useObjectUrl(blob);
+	return href ?? undefined
 }

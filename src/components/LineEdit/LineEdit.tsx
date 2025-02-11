@@ -4,5 +4,5 @@ export function LineEdit(props: React.ComponentProps<'input'> & {
 
 }) {
 	const { className, ...htmlProps } = props;
-	return <input type="text" className={`${Style.lineEdit} ${className ?? ''}`} {...htmlProps} />
+	return <input spellCheck={false} type="text" className={`${Style.lineEdit} ${className ?? ''}`} {...htmlProps} />
 }

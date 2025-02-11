@@ -10,8 +10,9 @@ import { win32 as path } from "path";
 import FilePathEdit from "@/components/FilePathEdit";
 import { spin } from "../GlobalSpinner";
 import { throwOnError } from "@/components/Error";
-import { filePicker, folderPicker, openFolder } from "@/util/rpc";
+import { filePicker, openFolder } from "@/util/rpc";
 import { assert } from "@/util";
+import { ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -107,31 +108,23 @@ export const Config = () => {
 	function onClickExportProject() {
 		/** FIXME */
 		openModal(
-			<ConfirmModal confirmText="Export" onConfirm={spin(onConfirm)}>
-				todo
-			</ConfirmModal>
+			<ProjectDetailsModal confirmText="Export" onConfirm={async (form) => {
+				await throwOnError(exportProject('BinaryPatch'))
+				toast("Project exported")
+			}} />
 		)
-		async function onConfirm() {
-			await throwOnError(exportProject('BinaryPatch'))
-			toast("Project exported")
-		}
 	}
 
 	async function onClickSaveProject() {
 		/** FIXME */
-		if (project) {
-			if (project.dirPath) {
-				await throwOnError(saveProject(project.dirPath))
-				toast("Project saved")
-			} else {
-				const dirPath = await folderPicker({ 'title': 'Select project folder' })
-				if (!dirPath) return;
-				await throwOnError(saveProject(dirPath))
-				toast("Project saved")
-			}
+		if (project && project.dirPath) {
+			await throwOnError(saveProject(project.dirPath))
+			toast("Project saved")
 		} else {
-			/** FIXME */
-			// saveNewProject()
+			openModal(<ProjectDetailsModal confirmText="Save" newProject onConfirm={async (form) => {
+				await throwOnError(saveNewProject(form));
+				toast("Project saved")
+			}} />)
 		}
 	}
 
@@ -201,7 +194,7 @@ export const Config = () => {
 		async function onConfirm() {
 			assert(manifestPath)
 			await throwOnError(loadProject(manifestPath))
+			toast("Project loaded")
 		}
 	}
 }
-

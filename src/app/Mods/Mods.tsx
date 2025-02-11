@@ -126,7 +126,7 @@ function ModDetails(props: {
 					<Text className={Style.date}>{mod.date.split('T')[0]}</Text>
 				</div>
 			</div>
-			{ logo ? <img className={Style.logo} src={logo} /> : null}
+			<img className={Style.logo} src={logo} />
 			<Text>{mod.description}</Text>
 			<div className="grow" />
 			<Button onClick={async () => {

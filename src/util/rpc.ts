@@ -7,11 +7,11 @@ export async function openFolder(dir: string) {
 }
 
 export async function filePicker(options?: FileDialogOptions): Promise<string | null> {
-	return await spin(invoke<string | null>("file_picker", { options }));
+	return await spin(invoke<string | null>("file_picker", { options }), true);
 }
 
 export async function folderPicker(options?: FileDialogOptions): Promise<string | null> {
-	return await spin(invoke<string | null>("folder_picker", { options }));
+	return await spin(invoke<string | null>("folder_picker", { options }), true);
 }
 
 export async function getModsDirPath(): Promise<string> {

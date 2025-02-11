@@ -65,6 +65,7 @@ pub fn run() {
 				crate::etc::get_mods_dir_path,
 				crate::etc::get_default_project_dir_path,
 				commands::get_image,
+				commands::get_file,
 				selectors::get_game,
 				selectors::get_config,
 				selectors::get_project,

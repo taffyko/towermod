@@ -1,0 +1,14 @@
+.imagePicker {
+	object-fit: contain;
+	border: solid 1px var(--color-border-alternate);
+	border-radius: var(--border-radius);
+
+	&:hover {
+		filter: brightness(125%);
+	}
+
+	&.pressed {
+		filter: brightness(75%);
+		transform: scale(0.95);
+	}
+}

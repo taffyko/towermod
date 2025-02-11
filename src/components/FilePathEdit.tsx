@@ -1,11 +1,12 @@
 import { useTwoWayBinding } from "@/util/hooks";
-import { filePicker } from "@/util/rpc";
+import { filePicker, folderPicker } from "@/util/rpc";
 import { FileDialogOptions } from "@towermod";
 import { LineEdit } from "./LineEdit";
 import { Button } from "./Button";
 
 export default function FilePathEdit(props: Omit<React.ComponentProps<'input'>, 'value' | 'onChange'> & {
 	value?: string,
+	folder?: boolean,
 	onChange?: (value: string) => void,
 	options?: FileDialogOptions,
 }) {
@@ -16,8 +17,13 @@ export default function FilePathEdit(props: Omit<React.ComponentProps<'input'>, 
 	return <div className="hbox gap">
 		<LineEdit className="grow" {...htmlProps} value={value} onChange={e => setValue(e.target.value)}></LineEdit>
 		<Button onClick={async () => {
-			const file = await filePicker(options);
-			if (file != null) { setValue(file) }
+			let path
+			if (props.folder) {
+				path = await folderPicker(options);
+			} else {
+				path = await filePicker(options);
+			}
+			if (path != null) { setValue(path) }
 		}}>
 			Browse
 		</Button>

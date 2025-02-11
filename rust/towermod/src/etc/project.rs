@@ -5,7 +5,7 @@ use fs_err::tokio as fs;
 use serde::{Serialize, Deserialize};
 use anyhow::{anyhow, Result, Context};
 use serde_alias::serde_alias;
-use crate::{Nt, convert_to_debug_build, convert_to_release_build, cstc::{plugin::PluginData, AppBlock, EventBlock, ImageBlock, LevelBlock}, get_cache_dir_path, mod_cache_dir_path, read_pe_file_resource, PeResource, ResId};
+use crate::{convert_to_debug_build, convert_to_release_build, cstc::{plugin::PluginData, AppBlock, EventBlock, ImageBlock, LevelBlock}, get_cache_dir_path, mod_cache_dir_path, read_pe_file_resource, PeResource, ResId};
 
 
 
@@ -50,6 +50,9 @@ pub struct Game {
 	pub file_path: Option<PathBuf>,
 }
 impl Game {
+	fn clear_unpersisted_fields(&mut self) {
+		self.file_path = None
+	}
 	pub async fn from_path(path: PathBuf) -> Result<Self> {
 		let file_name = path.file_name().ok_or(anyhow!("Unable to get file name from path"))?.to_string_lossy().to_string();
 		let bytes = fs::read(&path).await?;
@@ -238,11 +241,17 @@ pub struct Project {
 	/// Date that the project was last saved/exported
 	#[serde(with = "time::serde::rfc3339")]
 	pub date: time::OffsetDateTime,
+
+	// Working memory only //
 	/// Path to directory containing manifest.toml
 	#[serde(default)]
 	pub dir_path: Option<PathBuf>,
 }
 impl Project {
+	fn clear_unpersisted_fields(&mut self) {
+		self.dir_path = None;
+		self.game.clear_unpersisted_fields()
+	}
 	pub fn new(author: String, name: String, display_name: String, version: String, game: Game) -> Self {
 		Project {
 			game,
@@ -276,13 +285,9 @@ impl Project {
 	/// # Errors
 	/// - dir_path not set
 	pub async fn save(&self) -> Result<()> {
-		let file_path = self.dir_path.as_ref().context("path not set")?.join("manifest.toml");
-		self.save_to(&file_path).await?;
-		Ok(())
-	}
-	pub async fn save_to(&self, file_path: impl AsRef<Path>) -> Result<()> {
+		let file_path = self.dir_path()?.join("manifest.toml");
 		let mut project = self.clone();
-		project.dir_path = None;
+		project.clear_unpersisted_fields();
 		let s = toml::to_string_pretty(&project)?;
 		fs::write(file_path, s).await?;
 		Ok(())
@@ -347,6 +352,18 @@ pub struct ModInfo {
 	pub error: Option<String>,
 }
 impl ModInfo {
+	fn clear_unpersisted_fields(&mut self) {
+		self.game.clear_unpersisted_fields();
+		self.file_path = None;
+		self.cover = None;
+		self.icon = None;
+		self.error = None;
+	}
+	pub fn serialize(&self) -> Result<String> {
+		let mut mod_info = self.clone();
+		mod_info.clear_unpersisted_fields();
+		Ok(toml::to_string_pretty(&mod_info)?)
+	}
 	pub fn new(mut project: Project, mod_type: ModType) -> Self {
 		project.game.file_path = None;
 		ModInfo {

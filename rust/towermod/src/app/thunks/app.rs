@@ -471,7 +471,7 @@ pub async fn save_project(dir_path: PathBuf) -> Result<()> {
 	project.towermod_version = crate::VERSION.to_string();
 	project.game = game;
 	// Save manifest.toml
-	project.save_to(&dir_path.join("manifest.toml")).await?;
+	project.save().await?;
 	STORE.dispatch(AppAction::EditProjectInfo(project)).await;
 
 	let data = select(|s| s.data.clone()).await;
@@ -611,7 +611,7 @@ pub async fn export_mod(mod_type: ModType) -> Result<()> {
 
 	let mod_info = ModInfo::new(project, mod_type);
 	status("Writing zip file");
-	let s = toml::to_string_pretty(&mod_info)?;
+	let s = mod_info.serialize()?;
 	zip.start_file("manifest.toml", options)?;
 	zip.write_all(s.as_bytes())?;
 	zip.finish()?;

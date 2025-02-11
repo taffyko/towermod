@@ -402,7 +402,7 @@ export interface Project {
   /** Date that the project was last saved/exported */
   date: Date
   /** Path to manifest.toml */
-  dirPath?: string
+  dirPath: string
 }
 
 export declare const enum ProjectType {
