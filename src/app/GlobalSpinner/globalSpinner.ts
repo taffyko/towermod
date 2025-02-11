@@ -1,12 +1,19 @@
 import { useMiniEventValue } from "@/util/hooks";
 import { MiniEvent } from "@/util/util";
 
-export function spin<T>(promise: Promise<T>): Promise<T> {
-	promises = [...promises]
-	promises.push(promise)
-	promisesUpdated.fire(promises)
-	promise.finally(() => removePromise(promise))
-	return promise
+export function spin<T extends Function>(fn: T): T
+export function spin<T>(promise: Promise<T>): Promise<T>
+export function spin(promiseOrFn: any): any {
+	if (typeof promiseOrFn === 'function') {
+		return (...args: any[]) => spin(promiseOrFn(...args))
+	} else {
+		const promise = promiseOrFn;
+		promises = [...promises]
+		promises.push(promise)
+		promisesUpdated.fire(promises)
+		promise.finally(() => removePromise(promise))
+		return promise
+	}
 }
 
 function removePromise(promise: Promise<unknown>) {

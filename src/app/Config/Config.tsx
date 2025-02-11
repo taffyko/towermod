@@ -10,7 +10,7 @@ import { win32 as path } from "path";
 import FilePathEdit from "@/components/FilePathEdit";
 import { spin } from "../GlobalSpinner";
 import { throwOnError } from "@/components/Error";
-import { openFolder } from "@/util/rpc";
+import { filePicker, openFolder } from "@/util/rpc";
 import { assert } from "@/util";
 
 function SetGameModal(props: {
@@ -43,6 +43,9 @@ export const Config = () => {
 	const [nukeCache] = api.useNukeCacheMutation()
 	const [clearGameCache] = api.useClearGameCacheMutation()
 	const [getCachePath] = api.useLazyCachePathQuery()
+	const [getProjectsPath] = api.useLazyProjectsPathQuery()
+	const [loadProjectPreflight] = api.useLoadProjectPreflightMutation()
+	const [loadProject] = api.useLoadProjectMutation()
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
 	useEffect(() => {
@@ -53,7 +56,8 @@ export const Config = () => {
 		<div className="hbox">
 			{game ? <span>Valid game selected</span> : <span style={{ color: 'var(--color-warn)' }}>Please set a valid game path</span>}
 			<div className="grow" />
-			<Button style={{ minWidth: '40%' }} onClick={() => { openModal(<SetGameModal initialValue={gamePath} /> )}}>Set game path
+			<Button style={{ minWidth: '40%' }} onClick={() => { openModal(<SetGameModal initialValue={gamePath} /> )}}>
+				Set game path
 			</Button>
 		</div>
 		<LineEdit disabled value={gamePath} />
@@ -76,7 +80,7 @@ export const Config = () => {
 			>
 				New project
 			</Button>
-			<Button disabled={!game} className="grow" onClick={() => {/* FIXME */}}>Load project</Button>
+			<Button disabled={!game} className="grow" onClick={onClickLoadProject}>Load project</Button>
 		</div>
 		<div className="hbox gap">
 			<Button disabled={!isDataLoaded} className="grow" onClick={() => {/* FIXME */}}>Save project</Button>
@@ -88,44 +92,75 @@ export const Config = () => {
 		<Text>Cache</Text>
 
 		<div className="hbox gap">
-			<Button disabled={!game} className="grow" onClick={() => {
-				openModal(
-					<ConfirmModal onConfirm={onConfirm}>
-						Any unsaved data will be lost
-					</ConfirmModal>
-				)
-				async function onConfirm() {
-					await throwOnError(spin(clearGameCache()))
-					await spin(new Promise((resolve) => {
-						toast("Game cache deleted. Reloading...")
-						window.onload = resolve
-						window.location.reload()
-					}))
-				}
-			}}>Clear game cache</Button>
-			<Button className="grow" onClick={() => {
-				openModal(
-					<ConfirmModal onConfirm={onConfirm}>
-						Any unsaved data will be lost
-					</ConfirmModal>
-				)
-				async function onConfirm() {
-					await throwOnError(spin(nukeCache()))
-					await spin(new Promise((resolve) => {
-						toast("Cache nuked. Reloading...")
-						window.onload = resolve
-						window.location.reload()
-					}))
-				}
-			}}>Nuke all cached data</Button>
+			<Button disabled={!game} className="grow" onClick={onClickClearGameCache}>
+				Clear game cache</Button>
+			<Button className="grow" onClick={onClickNukeCache}>
+				Nuke all cached data
+			</Button>
 		</div>
-		<Button className="grow" onClick={async () => {
-			const { data: cachePath } = await throwOnError(spin(getCachePath()));
-			assert(cachePath)
-			await openFolder(cachePath)
-			toast("Cache folder opened")
-		}}>Browse cache</Button>
-
+		<Button className="grow" onClick={spin(onClickBrowseCache)}>Browse cache</Button>
 	</div>
+
+	async function onClickBrowseCache() {
+		const { data: cachePath } = await throwOnError(getCachePath());
+		assert(cachePath)
+		await openFolder(cachePath)
+		toast("Cache folder opened")
+	}
+
+	function onClickClearGameCache() {
+		openModal(
+			<ConfirmModal onConfirm={spin(onConfirm)}>
+				Any unsaved data will be lost
+			</ConfirmModal>
+		)
+		async function onConfirm() {
+			await throwOnError(clearGameCache())
+			await new Promise((resolve) => {
+				toast("Game cache deleted. Reloading...")
+				window.onload = resolve
+				window.location.reload()
+			})
+		}
+	}
+
+	function onClickNukeCache() {
+		openModal(
+			<ConfirmModal onConfirm={spin(onConfirm)}>
+				Any unsaved data will be lost
+			</ConfirmModal>
+		)
+		async function onConfirm() {
+			await throwOnError(nukeCache())
+			await new Promise((resolve) => {
+				toast("Cache nuked. Reloading...")
+				window.onload = resolve
+				window.location.reload()
+			})
+		}
+	}
+
+	async function onClickLoadProject() {
+		const { data: projectsPath } = await getProjectsPath();
+		const manifestPath = await filePicker({
+			filters: [{ name: "Towermod Project (manifest.toml)", extensions: ["toml"] }],
+			startingDirectory: projectsPath,
+		});
+		if (!manifestPath) { return }
+
+		const { data: warningMsg } = await throwOnError(loadProjectPreflight(manifestPath))
+		if (warningMsg) {
+			<ConfirmModal title="Warning" onConfirm={spin(onConfirm)}>
+				<pre>{warningMsg}</pre>
+			</ConfirmModal>
+		} else {
+			spin(onConfirm())
+		}
+
+		async function onConfirm() {
+			assert(manifestPath)
+			await throwOnError(loadProject(manifestPath))
+		}
+	}
 }
 

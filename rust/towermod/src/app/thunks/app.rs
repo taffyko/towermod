@@ -1,6 +1,7 @@
 use std::{collections::HashMap, io::{Cursor, Read}, path::{Path, PathBuf}, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, TcrepainterPatch, log_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, log_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project, ProjectType, TcrepainterPatch};
 use anyhow::Result;
+use async_scoped::TokioScope;
 use tauri::command;
 use anyhow::{Context};
 use fs_err::tokio as fs;
@@ -409,6 +410,7 @@ pub async fn new_project() -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let game_path = game.game_path()?;
 	let data = CstcData::default();
+	dump_images().await?;
 
 	let result: anyhow::Result<_> = tokio::try_join!(
 		LevelBlock::read_from_pe(&game_path),
@@ -456,9 +458,131 @@ pub async fn play_vanilla() -> Result<()> {
 }
 
 #[command]
-pub async fn load_project() {
+pub async fn load_project_preflight(manifest_path: PathBuf) -> Result<Option<String>> {
+	let proj = Project::from_path(&manifest_path).await?;
+	if proj.project_type != ProjectType::Towermod {
+		anyhow::bail!("Project manifest of type {:?} cannot be loaded as a TowerMod project", proj.project_type);
+	}
+	let game = selectors::get_game().await.context("No game set")?;
+	if !(proj.game.file_hash == game.file_hash) {
+		// Warn if project and current game differ
+		let msg = indoc::formatdoc!(r#"
+			Project and current game version DO NOT match.
+			Combining project data with the wrong game data usually won't end well.
+			Back up your project first.
 
+			Expected game for project {}:
+			- Filename: {}
+			- Size: {} bytes
+			- MD5: {}
+
+			Current game:
+			- Filename: {}
+			- Size: {} bytes
+			- MD5: {}
+		"#, proj.name, proj.game.file_name, proj.game.file_size, proj.game.file_hash, game.file_name, game.file_size, game.file_hash);
+		return Ok(Some(msg));
+	}
+	Ok(None)
 }
+
+#[command]
+pub async fn dump_images() -> Result<()> {
+	let game = selectors::get_game().await.context("No game set")?;
+	let image_dump_dir = game.image_dump_dir().await?;
+	let images = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;
+
+	unsafe {TokioScope::scope_and_collect(|s| {
+		for image in &images {
+			s.spawn(fs::write(
+				image_dump_dir.join(format!("{}.png", image.id)),
+				&image.data,
+			));
+		}
+	})}.await;
+	Ok(())
+}
+
+#[command]
+pub async fn load_project(manifest_path: PathBuf) -> Result<()> {
+	let game = selectors::get_game().await.context("No game set")?;
+	let proj_dir = manifest_path.parent().unwrap();
+
+	let result = tokio::try_join!(
+		fs::read(proj_dir.join("levelblock.json")),
+		fs::read(proj_dir.join("appblock.json")),
+		fs::read(proj_dir.join("eventblock.json")),
+		async {
+			match fs::read(proj_dir.join("imageblock.json")).await {
+				Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+				Err(e) => Err(e)?,
+				Ok(b) => Ok(Some(b)),
+			}
+		},
+	);
+	let (level_block_json, app_block_json, event_block_json, image_block_json) = result?;
+
+	let mut data = CstcData::default();
+
+	let level_block: cstc::LevelBlock = serde_json::from_slice(&level_block_json).unwrap();
+	let app_block: cstc::AppBlock = serde_json::from_slice(&app_block_json).unwrap();
+	let event_block: cstc::EventBlock = serde_json::from_slice(&event_block_json).unwrap();
+	let image_block: Option<Vec<cstc::ImageMetadata>> = image_block_json.map(|o| serde_json::from_slice(&o).unwrap());
+
+	if let Some(image_block) = image_block {
+		data.image_block = image_block;
+	}
+	data.app_block = Some(app_block);
+	data.event_block = Some(event_block);
+	data.animations = level_block.animations;
+	data.object_types = level_block.object_types;
+	data.layouts = level_block.layouts;
+	data.behaviors = level_block.behaviors;
+	data.traits = level_block.traits;
+	data.families = level_block.families;
+	data.containers = level_block.containers;
+
+	let data = ensure_base_data(data, &game).await?;
+
+	STORE.dispatch(DataAction::SetData(data).into()).await;
+	Ok(())
+}
+
+// #[command]
+// pub async fn save_project(dir_path: PathBuf) -> Result<()> {
+// 	let game = selectors::get_game().await.context("No game set")?;
+// 	let project = selectors::get_project().await.context("No project set")?;
+
+// 	// Update date & version
+// 	project.dir_path = Some(dir_path.clone());
+// 	project.date = time::OffsetDateTime::now_utc().replace_nanosecond(0)?.replace_second(0)?;
+// 	project.towermod_version = crate::VERSION.to_string();
+// 	project.game = game;
+// 	// Save manifest.toml
+// 	project.save_to(&dir_path.join("manifest.toml")).await?;
+
+// 	let (level_block, app_block, event_block, image_block) = {
+// 		app!(this);
+// 		let data = this.data.bind();
+// 		data.get_data()
+// 	};
+// 	let level_block_json = serde_json::to_vec(&level_block)?;
+// 	let app_block_json = serde_json::to_vec(&app_block)?;
+// 	let event_block_json = serde_json::to_vec(&event_block)?;
+// 	let image_block_json = serde_json::to_vec(&image_block)?;
+// 	fs::write(proj_dir.join("imageblock.json"), &image_block_json).await?;
+// 	fs::write(proj_dir.join("levelblock.json"), &level_block_json).await?;
+// 	fs::write(proj_dir.join("appblock.json"), &app_block_json).await?;
+// 	fs::write(proj_dir.join("eventblock.json"), &event_block_json).await?;
+
+// 	Towermod::emit("active_project_updated", &[true.to_variant()]);
+// }
+
+#[command]
+pub async fn edit_project_info(project: Project) {
+	STORE.dispatch(AppAction::EditProjectInfo(project)).await;
+}
+
 
 #[command]
 pub async fn clear_game_cache() -> Result<()> {
@@ -480,7 +604,7 @@ async fn ensure_base_data(mut data: CstcData, game: &Game) -> Result<CstcData> {
 	if data.image_block.is_empty() {
 		status("Initializing image data");
 		let image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;
-		data.image_block = image_block;
+		data.image_block = image_block.into_iter().map(|d| d.into()).collect();
 	}
 	if data.editor_plugins.is_empty() {
 		status("Loading Construct Classic plugin data");
@@ -492,4 +616,29 @@ async fn ensure_base_data(mut data: CstcData, game: &Game) -> Result<CstcData> {
 		data.editor_plugins = editor_plugins.into_iter().map(|(k, v)| (k, v)).collect();
 	}
 	Ok(data)
+}
+
+// fn into_blocks(data: CstcData) -> (Option<AppBlock>, Option<EventBlock>, ImageBlock, LevelBlock) {
+// 	(
+// 		self.app_block,
+// 		self.event_block,
+// 		self.image_block.into(),
+// 		LevelBlock {
+// 			object_types: self.object_types,
+// 			behaviors: self.behaviors,
+// 			traits: self.traits,
+// 			families: self.families,
+// 			layouts: self.layouts,
+// 			containers: self.containers,
+// 			animations: self.animations,
+// 		}
+// 	)
+// }
+
+
+mod images {
+	use crate::cstc::ImageMetadata;
+
+	fn restore_image_block_images(image_block: Vec<ImageMetadata>) {
+	}
 }

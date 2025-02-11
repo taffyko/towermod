@@ -125,6 +125,33 @@ export const api = createApi({
 			invalidatesTags: tagTypes
 		}),
 
+		loadProjectPreflight: builder.mutation<void, string>({
+			queryFn: queryFn(async (manifestPath) => {
+				return await invoke('load_project_preflight', { manifestPath })
+			}),
+			invalidatesTags: [],
+		}),
+
+		loadProject: builder.mutation<void, string>({
+			queryFn: queryFn(async (manifestPath) => {
+				return await invoke('dump_images', { manifestPath })
+			}),
+			invalidatesTags: ['Project', 'Data'],
+		}),
+
+		saveProject: builder.mutation<void, string>({
+			queryFn: queryFn(async (dirPath) => {
+				return await invoke('save_project', { dirPath })
+			}),
+			invalidatesTags: ['Project'],
+		}),
+
+		dumpImages: builder.mutation<void, void>({
+			queryFn: queryFn(async () => {
+				return await invoke('dump_images')
+			}),
+		}),
+
 		// config
 		getConfig: builder.query<TowermodConfig, void>({
 			queryFn: queryFn(async () => {
@@ -146,6 +173,16 @@ export const api = createApi({
 		cachePath: builder.query<string, void>({
 			queryFn: queryFn(async () => {
 				return await invoke('get_cache_dir_path')
+			}),
+		}),
+		modsPath: builder.query<string, void>({
+			queryFn: queryFn(async () => {
+				return await invoke('get_mods_dir_path')
+			}),
+		}),
+		projectsPath: builder.query<string, void>({
+			queryFn: queryFn(async () => {
+				return await invoke('get_default_project_dir_path')
 			}),
 		}),
 		clearGameCache: builder.mutation<void, void>({
@@ -176,7 +213,3 @@ export function useImageUrl(id: int): string | null {
 	const href = useObjectUrl(blob);
 	return href
 }
-function showModal(arg0: ConfirmModal) {
-	throw new Error('Function not implemented.');
-}
-

@@ -238,9 +238,9 @@ pub struct Project {
 	/// Date that the project was last saved/exported
 	#[serde(with = "time::serde::rfc3339")]
 	pub date: time::OffsetDateTime,
-	/// Path to manifest.toml
+	/// Path to directory containing manifest.toml
 	#[serde(skip, default)]
-	pub dir_path: Option<Nt<PathBuf>>,
+	pub dir_path: Option<PathBuf>,
 }
 impl Project {
 	pub fn new(author: String, name: String, display_name: String, version: String, game: Game) -> Self {
@@ -261,7 +261,7 @@ impl Project {
 		let file_path = file_path.as_ref();
 		let s = fs::read_to_string(&file_path).await?;
 		let mut p: Self = toml::from_str::<Self>(&s)?;
-		p.dir_path = Some(Nt(file_path.parent().unwrap().to_owned()));
+		p.dir_path = Some(file_path.parent().unwrap().to_owned());
 		Ok(p)
 	}
 
@@ -300,7 +300,7 @@ impl Project {
 	}
 
 	pub fn dir_path(&self) -> Result<&PathBuf> {
-		self.dir_path.as_ref().map(|p| &p.0).ok_or(anyhow!("Project directory path not set"))
+		self.dir_path.as_ref().ok_or(anyhow!("Project directory path not set"))
 	}
 	pub fn images_path(&self) -> Result<PathBuf> {
 		Ok(self.dir_path()?.join("images"))

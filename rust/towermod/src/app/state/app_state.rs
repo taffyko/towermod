@@ -9,6 +9,7 @@ pub enum Action {
 	Data(data::Action),
 	Config(config::Action),
 	SetProject(Option<(Project, data::State)>),
+	EditProjectInfo(Project),
 	SetGame(Option<Game>),
 }
 
@@ -35,6 +36,9 @@ pub fn reducer(mut state: State, action: Action) -> State {
 		Action::SetProject(None) => {
 			state.project = None;
 			state.data = data::State::default();
+		}
+		Action::EditProjectInfo(project) => {
+			state.project = Some(project);
 		}
 		Action::SetGame(game) => {
 			state.game = game;
