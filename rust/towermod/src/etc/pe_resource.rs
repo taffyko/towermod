@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::ffi::{c_void, CString};
 use std::fmt::Debug;
 use std::io::{self, Cursor, Read, Write};
-use crate::ZipWriterExt;
+use crate::{get_temp_file, ZipWriterExt};
 
 use async_scoped::TokioScope;
 use serde::{Deserialize, Serialize};
@@ -20,8 +20,6 @@ use tokio::task::JoinSet;
 use tokio::{process::Command, task};
 use fs_err::tokio as fs;
 use tracing::{instrument, Instrument, info_span};
-use std::time;
-use windows::Win32::Security::{TOKEN_PRIVILEGES, TOKEN_ADJUST_PRIVILEGES, TOKEN_QUERY, SE_PRIVILEGE_ENABLED, LUID_AND_ATTRIBUTES, LookupPrivilegeValueW, SE_DEBUG_NAME, AdjustTokenPrivileges};
 use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, GetTempFileNameW, VerQueryValueW};
 use windows::Win32::System::LibraryLoader::{BeginUpdateResourceW, EndUpdateResourceW, EnumResourceNamesW, EnumResourceTypesExW, FindResourceExW, LoadLibraryExW, LoadResource, LockResource, SizeofResource, UpdateResourceW, LOAD_LIBRARY_AS_DATAFILE};
 use windows::Win32::System::Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION, VirtualProtectEx, PAGE_PROTECTION_FLAGS, PAGE_EXECUTE_READWRITE};
@@ -30,7 +28,6 @@ use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, 
 use anyhow::{bail, Context, Result};
 use windows::Win32::Foundation::{HANDLE, HMODULE, BOOL, LUID, CloseHandle, FreeLibrary, MAX_PATH};
 use windows::Win32::System::Diagnostics::ToolHelp::{CreateToolhelp32Snapshot, TH32CS_SNAPTHREAD, THREADENTRY32, Thread32First, Thread32Next, TH32CS_SNAPMODULE, MODULEENTRY32W, Module32FirstW};
-use windows::Win32::System::Diagnostics::Debug::{ReadProcessMemory, WriteProcessMemory};
 use windows::core::{PCWSTR, PWSTR, HSTRING};
 use std::mem::{size_of_val, MaybeUninit};
 use crate::cstc::plugin::{PluginData, PluginStringTable};
@@ -50,106 +47,6 @@ impl Drop for OpenedHandle {
 	}
 }
 
-#[instrument]
-pub async fn get_temp_file() -> Result<PathBuf> {
-	unsafe {
-		let buffer = task::spawn_blocking(|| {
-			let mut buffer = [0u16; MAX_PATH as usize];
-			GetTempFileNameW(
-				&HSTRING::from(&*std::env::temp_dir().as_path()),
-				&HSTRING::from("tow"),
-				0,
-				&mut buffer
-			);
-			buffer
-		}).await?;
-		let len = buffer.iter().position(|v| *v == 0).unwrap();
-		let s = String::from_utf16_lossy(&buffer[0..len]);
-		Ok(s.into())
-	}
-}
-
-
-pub fn enable_debug_priv() -> Result<()> {
-	unsafe {
-		let mut htoken = MaybeUninit::<HANDLE>::uninit();
-		let mut luid = MaybeUninit::<LUID>::uninit();
-
-		let process = GetCurrentProcess();
-
-		OpenProcessToken(process, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, htoken.as_mut_ptr())?;
-
-		LookupPrivilegeValueW(PCWSTR::null(), SE_DEBUG_NAME, luid.as_mut_ptr())?;
-
-		let tkp = TOKEN_PRIVILEGES {
-			PrivilegeCount: 1,
-			Privileges: [LUID_AND_ATTRIBUTES {
-				Luid: luid.assume_init(),
-				Attributes: SE_PRIVILEGE_ENABLED,
-			}]
-		};
-
-		AdjustTokenPrivileges(OpenedHandle(htoken.assume_init()).0, false, Some(&tkp), size_of_val(&tkp) as u32, None, None)?;
-
-		Ok(())
-	}
-}
-
-pub fn find_process(name: &str, timeout: time::Duration) -> Result<u32> {
-	unsafe {
-		let start_time = time::Instant::now();
-		let name_upper = name.to_uppercase();
-		let mut pids = vec![0u32];
-		let mut given = 0u32;
-		loop {
-			loop {
-				pids.reserve(10);
-				ProcessStatus::EnumProcesses(&mut pids[0], (pids.capacity()*4) as u32, &mut given)?;
-				pids.set_len((given as usize) / 4);
-				if pids.len() < pids.capacity() { break; }
-			}
-
-			let found_pid = pids.iter().find(|pid| {
-				let handle = match OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, BOOL(0), **pid) {
-					Ok(v) => OpenedHandle(v),
-					Err(e) => {
-						log::trace!("PID: {} ERROR: {}", pid, e);
-						return false;
-					}
-				};
-				let mut hmodule = HMODULE::default();
-				let mut given = 0u32;
-
-				if let Err(_) = EnumProcessModules(handle.0, &mut hmodule, size_of_val(&hmodule) as u32, &mut given) {
-					return false;
-				}
-				let mut pwstr_vec = vec![0u16; 64];
-				GetModuleBaseNameW(handle.0, hmodule, &mut pwstr_vec);
-				let pwstr = PWSTR(&mut pwstr_vec[0]);
-
-				if let Ok(process_name) = pwstr.to_string() {
-					log::trace!("PID: {}, NAME: {}", pid, process_name);
-					if name_upper == process_name.to_uppercase() {
-						return true;
-					}
-				}
-				return false;
-			});
-
-			if let Some(pid) = found_pid {
-				return Ok(*pid);
-			}
-
-			if (start_time.elapsed() > timeout) {
-				break;
-			}
-		}
-		bail!("Couldn't find {}", name);
-	}
-}
-
-
-#[instrument]
 unsafe fn read_hmodule_resource(hmodule: HMODULE, res_type: &ResId, res_name: &ResId) -> Result<Vec<u8>> {
 	unsafe {
 		let hres = FindResourceExW(hmodule, res_type, res_name, 0x00);
@@ -727,15 +624,6 @@ pub async fn convert_to_debug_build(game: &Game, dest_exe: &Path) -> Result<()> 
 	Ok(())
 }
 
-pub fn terminate_process(pid: u32) -> Result<()> {
-	unsafe {
-		let process_handle = OpenedHandle(OpenProcess(PROCESS_ALL_ACCESS, BOOL(0), pid)?);
-		TerminateProcess(process_handle.0, 0)?;
-		Ok(())
-	}
-}
-
-
 #[instrument]
 pub async fn run_game(game_path: &Path) -> Result<u32> {
 	log::info!("Starting game... {}", &game_path.to_string_lossy());
@@ -743,172 +631,4 @@ pub async fn run_game(game_path: &Path) -> Result<u32> {
 		.spawn()
 		.context("Failed to start game")?;
 	child.id().context("Failed to start game")
-}
-
-pub fn freeze_threads(pid: u32) -> Result<Vec<u32>> {
-	unsafe {
-		let snapshot_handle = OpenedHandle(CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid)?);
-
-		let mut thread_ids = Vec::<u32>::new();
-		let mut te = THREADENTRY32::default();
-		te.dwSize = size_of_val(&te) as u32;
-		let mut result = Thread32First(snapshot_handle.0, &mut te);
-		while let Ok(_) = result {
-			if (te.th32OwnerProcessID == pid) {
-				thread_ids.push(te.th32ThreadID);
-			}
-			result = Thread32Next(snapshot_handle.0, &mut te);
-		}
-
-		log::info!("Suspending threads");
-		for id in &thread_ids {
-			log::trace!("Suspending thread {}", id);
-			let thread_handle = OpenedHandle(OpenThread(THREAD_ALL_ACCESS, BOOL(0), *id)?);
-			SuspendThread(thread_handle.0);
-		}
-
-		Ok(thread_ids)
-	}
-}
-
-pub fn resume_threads(thread_ids: &[u32]) -> Result<()> {
-	unsafe {
-		log::info!("Resuming threads");
-		for id in thread_ids {
-			let thread_handle = OpenedHandle(OpenThread(THREAD_ALL_ACCESS, BOOL(0), *id)?);
-			ResumeThread(thread_handle.0);
-		}
-		Ok(())
-	}
-}
-
-
-pub fn apply_memory_patch(pid: u32) -> Result<()> {
-	unsafe {
-		let snapshot_handle = OpenedHandle(CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid)?);
-
-		println!("Press Enter to continue...");
-		let _ = io::stdin().read_line(&mut String::new());
-
-		let mut me = MODULEENTRY32W::default();
-		me.dwSize = size_of_val(&me) as u32;
-		Module32FirstW(snapshot_handle.0, &mut me)?; // get main module holding loaded executable "TowerClimb_V1_Steam4.exe" (subsequent modules contain shared libraries, etc.)
-
-		let process_handle = OpenedHandle(OpenProcess(PROCESS_ALL_ACCESS, BOOL(0), pid)?);
-		// let you_cool = 0x00cd304b_isize;
-		// TowerClimb_V1_Steam4.exe + 0x00cdb84b
-		let you_cool = 0x00cdb84b_isize;
-		// let you_cool = 0x 01 0d b8 4b_isize;
-		/*
-		let module_entries = Vec::<MODULEENTRY32W>::new();
-		while let Ok(_) = result {
-			module_entries.push(me.clone());
-			println!("Module: {} {}", String::from_utf16_lossy(&me.szModule), String::from_utf16_lossy(&me.szExePath));
-			result = Module32NextW(snapshot_handle.0, &mut me);
-		}
-		println!("Modules result: {:?}", result);
-		*/
-		let mut buffer = [0u8; 1024];
-		let buffer_ptr = &mut buffer as *mut _ as *mut c_void;
-
-		let ptr = (me.modBaseAddr.offset(you_cool)) as *const c_void;
-
-		let mut read = 0;
-		ReadProcessMemory(process_handle.0, ptr, buffer_ptr, 10, Some(&mut read))?;
-		log::info!("Read from process: {:x?}", &buffer[0..read]);
-		let output = String::from_utf8_lossy(&buffer[0..read]);
-		log::info!("Read from process at address {:x?}: {}", ptr, output);
-
-		// Change page protection
-		let mut mem_info = MEMORY_BASIC_INFORMATION::default();
-		let mut old_flags = PAGE_PROTECTION_FLAGS::default();
-		VirtualQueryEx(process_handle.0, Some(ptr), &mut mem_info, size_of_val(&mem_info));
-		VirtualProtectEx(process_handle.0, mem_info.BaseAddress, mem_info.RegionSize, PAGE_EXECUTE_READWRITE, &mut old_flags)?;
-
-		VirtualQueryEx(process_handle.0, Some(ptr), &mut mem_info, size_of_val(&mem_info));
-
-		// Write
-		let mut written = 0;
-		let buffer = CString::new("NOT cool!").unwrap();
-		let buffer_ptr = &*buffer as *const _ as *const c_void;
-		WriteProcessMemory(process_handle.0, ptr, buffer_ptr, 10, Some(&mut written))?;
-
-		// Restore protection
-		VirtualProtectEx(process_handle.0, mem_info.BaseAddress, mem_info.RegionSize, old_flags, &mut old_flags)?;
-
-		Ok(())
-	}
-}
-
-#[command]
-pub fn open_folder(dir: &Path) -> Result<()> {
-	use std::process::Command;
-	let _ = Command::new("explorer.exe")
-		.arg(".")
-		.current_dir(dir)
-		.spawn()?;
-	Ok(())
-}
-
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FileDialogOptions {
-	pub multi: Option<bool>,
-	pub filters: Option<Vec<FileDialogFilter>>,
-	pub starting_directory: Option<PathBuf>,
-	pub file_name: Option<String>,
-	pub title: Option<String>,
-	pub can_create_directories: Option<bool>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FileDialogFilter {
-	name: String,
-	extensions: Vec<String>,
-}
-
-fn set_file_dialog_options(mut file_dialog: rfd::FileDialog, options: &FileDialogOptions) -> rfd::FileDialog {
-	if let Some(filters) = &options.filters {
-		for filter in filters {
-			file_dialog = file_dialog.add_filter(&filter.name, &*filter.extensions);
-		}
-	}
-	if let Some(v) = options.can_create_directories {
-		file_dialog = file_dialog.set_can_create_directories(v);
-	}
-	if let Some(v) = &options.starting_directory {
-		file_dialog = file_dialog.set_directory(v);
-	}
-	if let Some(v) = &options.title {
-		file_dialog = file_dialog.set_title(v);
-	}
-	if let Some(v) = &options.file_name {
-		file_dialog = file_dialog.set_file_name(v);
-	}
-	file_dialog
-}
-
-#[command]
-pub async fn folder_picker(options: Option<FileDialogOptions>) -> Result<Option<PathBuf>> {
-	let result = tokio::task::spawn_blocking(move || {
-		let mut file_dialog = rfd::FileDialog::new();
-		if let Some(options) = &options {
-			file_dialog = set_file_dialog_options(file_dialog, options)
-		}
-		file_dialog.pick_folder()
-	}).await?;
-	Ok(result)
-}
-
-#[command]
-pub async fn file_picker(options: Option<FileDialogOptions>) -> Result<Option<PathBuf>> {
-	let result = tokio::task::spawn_blocking(move || {
-		let mut file_dialog = rfd::FileDialog::new();
-		if let Some(options) = options {
-			file_dialog = set_file_dialog_options(file_dialog, &options)
-		}
-		file_dialog.pick_file()
-	}).await?;
-	Ok(result)
 }
