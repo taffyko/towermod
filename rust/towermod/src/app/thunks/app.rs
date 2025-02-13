@@ -240,13 +240,14 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 			let buf = crate::apply_patch(&*app_block_bin, &*app_block_patch)?;
 			cstc::AppBlock::write_bin(&output_exe_path, &buf)?;
 		}
+
+		let image_block = cstc::ImageBlock::read_from_pe(&game_path).await?;
+		let (images, mut metadatas) = images::split_imageblock(image_block);
 		if let Some(image_block_patch) = image_block_patch.into_inner().unwrap() {
-			let image_block = cstc::ImageBlock::read_from_pe(&game_path).await?;
-			let (images, metadatas) = images::split_imageblock(image_block);
-			let metadatas = images::apply_imageblock_metadata_patch(metadatas, image_block_patch)?;
-			let patched_image_block = get_patched_image_block(images, Some(zip_path), metadatas).await?;
-			patched_image_block.write_to_pe(&output_exe_path)?;
+			metadatas = images::apply_imageblock_metadata_patch(metadatas, image_block_patch)?;
 		}
+		let patched_image_block = get_patched_image_block(images, Some(zip_path), metadatas).await?;
+		patched_image_block.write_to_pe(&output_exe_path)?;
 	}
 
 	if is_towerclimb {
