@@ -19,7 +19,7 @@ export function ChoiceModal<TOption extends string>(props: {
 			<div className="grow" />
 			<div className={Style.choices}>
 				{Object.entries(options).map(([key, value]) =>
-					<Button key={key} onClick={() => { close(); onChoose?.(key as TOption)}}>{value as string}</Button>
+					<Button key={key} onClick={() => { onChoose?.(key as TOption); close() }}>{value as string}</Button>
 				)}
 			</div>
 		</div>

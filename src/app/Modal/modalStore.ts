@@ -10,6 +10,17 @@ export function openModal(content: React.ReactNode) {
 		id,
 	});
 	modalsUpdated.fire(modals);
+
+	// resolve when modal is closed
+	return new Promise<void>((resolve) => {
+		modalsUpdated.subscribe(onModalsUpdated)
+		function onModalsUpdated(modals: ModalData[]) {
+			if (!modals.find(m => m.id === id)) {
+				modalsUpdated.unsubscribe(onModalsUpdated)
+				resolve()
+			}
+		}
+	})
 }
 
 export function closeModal(id: string) {

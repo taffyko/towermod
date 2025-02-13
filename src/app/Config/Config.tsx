@@ -8,11 +8,12 @@ import { ConfirmModal } from "../Modal";
 import { openModal } from "@/app/Modal";
 import { win32 as path } from "path";
 import FilePathEdit from "@/components/FilePathEdit";
-import { spin } from "../GlobalSpinner";
+import { spin, useSpinQuery } from "../GlobalSpinner";
 import { throwOnError } from "@/components/Error";
-import { filePicker, openFolder } from "@/util/rpc";
+import { copyFile, filePicker, openFolder } from "@/util/rpc";
 import { assert } from "@/util";
-import { ProjectDetailsModal } from "@/app/ProjectDetailsModal";
+import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
+import { Project } from "@towermod";
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -37,14 +38,15 @@ function SetGameModal(props: {
 }
 
 export const Config = () => {
-	const { data: game } = api.useGetGameQuery()
-	const { data: isDataLoaded } = api.useIsDataLoadedQuery()
-	const { data: project } = api.useGetProjectQuery()
+	const { data: game } = useSpinQuery(api.useGetGameQuery())
+	const { data: isDataLoaded } = useSpinQuery(api.useIsDataLoadedQuery())
+	const { data: project } = useSpinQuery(api.useGetProjectQuery())
 	const [newProject] = api.useNewProjectMutation()
 	const [nukeCache] = api.useNukeCacheMutation()
 	const [clearGameCache] = api.useClearGameCacheMutation()
 	const [getCachePath] = api.useLazyCachePathQuery()
 	const [getProjectsPath] = api.useLazyProjectsPathQuery()
+	const [editProjectInfo] = api.useEditProjectInfoMutation()
 	const [loadProjectPreflight] = api.useLoadProjectPreflightMutation()
 	const [loadProject] = api.useLoadProjectMutation()
 	const [saveNewProject] = api.useSaveNewProjectMutation()
@@ -105,14 +107,36 @@ export const Config = () => {
 		<Button className="grow" onClick={spin(onClickBrowseCache)}>Browse cache</Button>
 	</div>
 
-	function onClickExportProject() {
-		/** FIXME */
-		openModal(
-			<ProjectDetailsModal confirmText="Export" onConfirm={async (form) => {
-				await throwOnError(exportProject('BinaryPatch'))
-				toast("Project exported")
-			}} />
+	async function updateProjectDetails(project: Project, confirmText = "Save"): Promise<boolean> {
+		let confirmed = false;
+		await openModal(
+			<ProjectDetailsModal project={project} confirmText={confirmText} onConfirm={spin(async (form: ProjectDetailsFormData) => {
+				form = form;
+				confirmed = true
+				const { coverPath, iconPath, ...rest } = form
+				if (form.coverPath) {
+					const coverDest = path.join(form.dirPath, 'cover.png');
+					await copyFile(form.coverPath, coverDest)
+				}
+				if (form.iconPath) {
+					const iconDest = path.join(form.dirPath, 'icon.png');
+					await copyFile(form.iconPath, iconDest)
+				}
+
+				const newProject: Project = { ...project, ...rest }
+				await throwOnError(editProjectInfo(newProject))
+			})} />
 		)
+		return confirmed
+	}
+
+
+	async function onClickExportProject() {
+		if (!project) { return }
+		const confirmed = await updateProjectDetails(project, "Export");
+		if (!confirmed) { return }
+		await throwOnError(spin(exportProject('BinaryPatch')))
+		toast("Project exported")
 	}
 
 	async function onClickSaveProject() {

@@ -68,6 +68,7 @@ lazy_static = "1.5.0"
 redux-rs = "0.3.3"
 static_assertions = "1.1.0"
 rfd = "0.15.2"
+itertools = "0.14.0"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

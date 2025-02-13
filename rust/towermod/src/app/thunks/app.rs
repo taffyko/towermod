@@ -8,6 +8,7 @@ use fs_err::tokio as fs;
 use futures::StreamExt;
 use tokio::{io::AsyncWriteExt, sync::RwLock};
 use tracing::instrument;
+use itertools::Itertools;
 use crate::etc::game_images as images;
 use crate::app::{state::{select, CstcData}, selectors, thunks};
 
@@ -478,14 +479,42 @@ pub async fn save_project(dir_path: PathBuf) -> Result<()> {
 
 	let (level_block, app_block, event_block, image_block) = data.into_blocks();
 
-	let level_block_json = serde_json::to_vec(&level_block)?;
-	let app_block_json = serde_json::to_vec(&app_block)?;
-	let event_block_json = serde_json::to_vec(&event_block)?;
-	let image_block_json = serde_json::to_vec(&image_block)?;
-	fs::write(dir_path.join("imageblock.json"), &image_block_json).await?;
-	fs::write(dir_path.join("levelblock.json"), &level_block_json).await?;
-	fs::write(dir_path.join("appblock.json"), &app_block_json).await?;
-	fs::write(dir_path.join("eventblock.json"), &event_block_json).await?;
+
+	let ((), results) = unsafe {TokioScope::scope_and_collect(|s| {
+		s.spawn_blocking(|| serde_json::to_vec(&level_block));
+		s.spawn_blocking(|| serde_json::to_vec(&app_block));
+		s.spawn_blocking(|| serde_json::to_vec(&event_block));
+		s.spawn_blocking(|| serde_json::to_vec(&image_block));
+	})}.await;
+	let Some((v1, v2, v3, v4)) = results.into_iter().collect_tuple() else { panic!() };
+	let level_block_json = v1??;
+	let app_block_json = v2??;
+	let event_block_json = v3??;
+	let image_block_json = v4??;
+
+	let ((), results) = unsafe {TokioScope::scope_and_collect(|s| {
+		s.spawn(async {
+			fs::write(dir_path.join("levelblock.json"), &level_block_json).await?;
+			anyhow::Ok(())
+		});
+		s.spawn(async {
+			fs::write(dir_path.join("appblock.json"), &app_block_json).await?;
+			Ok(())
+		});
+		s.spawn(async {
+			// until the eventblock editor is out, don't bother overwriting this file
+			let event_block_path = dir_path.join("eventblock.json");
+			if !event_block_path.exists() {
+				fs::write(event_block_path, &event_block_json).await?;
+			}
+			Ok(())
+		});
+		s.spawn(async {
+			fs::write(dir_path.join("imageblock.json"), &image_block_json).await?;
+			Ok(())
+		});
+	})}.await;
+	for result in results { result?? }
 
 	Ok(())
 }

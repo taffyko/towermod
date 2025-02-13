@@ -11,8 +11,8 @@ export function BaseModal(props: { children: React.ReactNode, title?: string, on
 	useEventListener(document.body, 'keydown', (e) => {
 		if (!active) { return }
 		if (e.code === 'Escape') {
-			close()
 			onCancel?.()
+			close()
 		}
 	}, [active])
 
@@ -24,7 +24,7 @@ export function BaseModal(props: { children: React.ReactNode, title?: string, on
 	return <div className={Style.modal}>
 		<div className={Style.title}>
 			{props.title}
-			<IconButton src={closeImg} className={Style.closeButton} onClick={() => { close(); onCancel?.() }} />
+			<IconButton src={closeImg} className={Style.closeButton} onClick={() => { onCancel?.(); close() }} />
 		</div>
 		<div className={Style.content}>
 			{children}

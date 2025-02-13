@@ -67,17 +67,18 @@ export const api = createApi({
 			}),
 			providesTags: (_r, _e, arg) => ['Data', { type: 'Image', id: arg }],
 		}),
-		getGame: builder.query<Game | null, void>({
+
+		getGame: builder.query<Game | undefined, void>({
 			queryFn: queryFn(async () => {
 				const game: Game = await invoke('get_game')
-				return game
+				return game ?? undefined
 			}),
 			providesTags: ['Game'],
 		}),
-		getProject: builder.query<Project | null, void>({
+		getProject: builder.query<Project | undefined, void>({
 			queryFn: queryFn(async () => {
 				const project: Project = await invoke('get_project')
-				return project
+				return project ?? undefined
 			}),
 			providesTags: ['Project'],
 		}),
@@ -116,16 +117,19 @@ export const api = createApi({
 			queryFn: queryFn(async (modType) => {
 				await invoke('export_mod', { modType })
 			}),
+			invalidatesTags: ['ModInfo']
 		}),
 		exportFromFiles: builder.mutation<void, void>({
 			queryFn: queryFn(async () => {
 				await invoke('export_from_files')
 			}),
+			invalidatesTags: ['ModInfo']
 		}),
 		exportFromLegacy: builder.mutation<void, void>({
 			queryFn: queryFn(async () => {
 				await invoke('export_from_legacy')
 			}),
+			invalidatesTags: ['ModInfo']
 		}),
 		playMod: builder.mutation<void, string>({
 			queryFn: queryFn(async (zipPath) => {

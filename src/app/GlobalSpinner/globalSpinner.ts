@@ -1,7 +1,12 @@
 import { useMiniEventValue } from "@/util/hooks";
 import { MiniEvent } from "@/util/util";
+import { useEffect, useRef } from "react";
 
 let timeout = 0;
+/**
+ * Activate loading spinner until a promise resolves
+ * With `noSpinner: true`, still greys the page and prevents interactivity, but does not show the spinner.
+ */
 export function spin<T extends Function>(fn: T, noSpinner?: boolean): T
 export function spin<T>(promise: Promise<T>, noSpinner?: boolean): Promise<T>
 export function spin(promiseOrFn: any, noSpinner?: boolean): any {
@@ -16,11 +21,29 @@ export function spin(promiseOrFn: any, noSpinner?: boolean): any {
 		event.fire(promises)
 		promise.finally(() => removePromise(promise))
 		clearTimeout(timeout)
-		timeout = window.setTimeout(() => {
-			event.fire([])
-		}, 60000)
+		// timeout = window.setTimeout(() => {
+		// 	event.fire([])
+		// }, 60000)
 		return promise
 	}
+}
+
+/** Activate loading spinner while waiting for an RTK Query hook to fetch */
+export function useSpinQuery<T extends { isFetching: boolean }>(queryInfo: T): T {
+	const promiseRef = useRef<Promise<unknown>>(null!)
+	if (!promiseRef.current) {
+		promiseRef.current = new Promise<unknown>(() => {});
+	}
+	useEffect(() => {
+		if (queryInfo.isFetching) {
+			if (!spinnerPromisesUpdated.lastValue?.includes(promiseRef.current)) {
+				spin(promiseRef.current)
+			}
+		} else {
+			removePromise(promiseRef.current)
+		}
+	}, [queryInfo.isFetching])
+	return queryInfo
 }
 
 function removePromise(promise: Promise<unknown>) {

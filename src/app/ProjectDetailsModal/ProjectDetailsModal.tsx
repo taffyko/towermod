@@ -9,6 +9,8 @@ import FilePathEdit from "@/components/FilePathEdit";
 import Style from './ProjectDetailsModal.module.scss';
 import ImagePathEdit from "@/components/ImagePathEdit/ImagePathEdit";
 import { TextEdit } from "@/components/TextEdit";
+import Text from '@/components/Text'
+import { Project } from "@towermod";
 
 export interface ProjectDetailsFormData {
 	author: string,
@@ -23,8 +25,8 @@ export interface ProjectDetailsFormData {
 
 // TODO: validation
 
-export function ProjectDetailsModal(props: { newProject?: boolean, confirmText?: string, onConfirm?: (data: ProjectDetailsFormData) => void }) {
-	const { data: originalProject } = api.useGetProjectQuery();
+export function ProjectDetailsModal(props: { project?: Project, newProject?: boolean, confirmText?: string, onConfirm?: (data: ProjectDetailsFormData) => void }) {
+	const { project: originalProject } = props;
 
 	const [author, setAuthor] = useState(originalProject?.author ?? "");
 	const [name, setName] = useState(originalProject?.name ?? "");
@@ -36,20 +38,28 @@ export function ProjectDetailsModal(props: { newProject?: boolean, confirmText?:
 	const [description, setDescription] = useState(originalProject?.description ?? "");
 
 	return <ConfirmModal title="Project Details" onConfirm={onConfirm} confirmText={props.confirmText}>
-		<div className="vbox gap">
+		<div className={Style.form}>
+			<Text>Author</Text>
 			<LineEdit placeholder="yourusername" value={author} onChange={e => setAuthor(e.target.value)} />
+			<Text>Mod ID</Text>
 			<LineEdit placeholder="your-mod" value={name} onChange={e => setName(e.target.value)} />
+			<Text>Name</Text>
 			<LineEdit placeholder="Your Mod" value={displayName} onChange={e => setDisplayName(e.target.value)} />
-		</div>
-		{ props.newProject ?
+		{ props.newProject ? <>
+			<Text>Save to location</Text>
 			<FilePathEdit folder value={dirPath} onChange={setDirPath} />
-		: null}
+		</> : null}
 		{ !props.newProject ? <>
+				<Text>Version</Text>
 				<LineEdit placeholder="0.1.0" value={version} onChange={e => setVersion(e.target.value)} />
+				<Text>Description</Text>
 				<TextEdit value={description} onChange={e => setDescription(e.target.value)} />
+				<Text>Cover</Text>
 				<ImagePathEdit width="240" height="160" value={coverPath} onChange={setCoverPath} />
+				<Text>Icon</Text>
 				<ImagePathEdit width="64" height="64" value={iconPath} onChange={setIconPath} />
 		</> : null }
+		</div>
 	</ConfirmModal>
 
 	function onConfirm() {

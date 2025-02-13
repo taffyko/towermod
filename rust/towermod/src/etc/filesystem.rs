@@ -63,6 +63,13 @@ pub fn open_folder(dir: &Path) -> Result<()> {
 	Ok(())
 }
 
+#[command]
+pub async fn copy_file(src: PathBuf, dest: PathBuf) -> Result<()> {
+	if (src == dest) { return Ok(()) }
+	fs::copy(src, dest).await?;
+	Ok(())
+}
+
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileDialogOptions {
