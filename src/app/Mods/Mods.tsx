@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query/react'
 import { ModInfo } from '@towermod';
 import Style from './Mods.module.scss'
 import Text from '@/components/Text'
@@ -91,6 +92,8 @@ function ModDetails(props: {
 	const { mod, versions, setSelectedVersion } = props;
 	const [el, setEl] = useStateRef<HTMLDivElement>();
 	const [playMod] = api.usePlayModMutation();
+	const { data: modCacheExists } = api.useModCacheExistsQuery(mod ?? skipToken);
+	const [clearModCache] = api.useClearModCacheMutation();
 
 	useEffect(() => {
 		el?.classList.add(Style.init)
@@ -129,12 +132,22 @@ function ModDetails(props: {
 			<img className={Style.logo} src={logo} />
 			<Text>{mod.description}</Text>
 			<div className="grow" />
-			<Button onClick={async () => {
-				await throwOnError(spin(playMod(mod.filePath!)))
-				toast(`Started "${mod.displayName}"`)
-			}}>
-				Play
-			</Button>
+			<div className="hbox gap">
+				<Button className="grow" onClick={async () => {
+					await throwOnError(spin(playMod(mod.filePath!)))
+					toast(`Started "${mod.displayName}"`)
+				}}>
+					Play
+				</Button>
+				{ modCacheExists ?
+					<Button onClick={async () => {
+						await throwOnError(spin(clearModCache(mod)))
+						toast(`Cleared cache for "${mod.displayName}"`)
+					}}>
+						Clear cache
+					</Button>
+				: null }
+			</div>
 		</div>
 	}
 }

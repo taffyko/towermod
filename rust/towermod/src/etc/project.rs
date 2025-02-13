@@ -384,7 +384,7 @@ impl ModInfo {
 	}
 
 	pub fn mod_runtime_dir_path(&self) -> PathBuf {
-		let mut dir = mod_cache_dir_path(self.unique_name());
+		let mut dir = mod_cache_dir_path(self.unique_version_name());
 		dir.push("runtime");
 		dir
 	}

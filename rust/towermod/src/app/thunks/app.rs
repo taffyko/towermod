@@ -133,6 +133,12 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 		anyhow::bail!("mod and currently selected game do not match");
 	}
 	mod_info.game = game.clone();
+
+	// run existing mod if it's already been patched
+	if let Ok(()) = run_patched_mod(&mod_info).await {
+		return Ok(())
+	}
+
 	let game_path = mod_info.game.game_path()?.clone();
 	let runtime_dir = mod_info.mod_runtime_dir().await?;
 
@@ -251,9 +257,32 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 	}
 
 	status("Running executable");
+	run_patched_mod(&mod_info).await?;
+	Ok(())
+}
+
+#[command]
+pub fn mod_cache_exists(mod_info: ModInfo) -> bool {
+	mod_info.mod_runtime_dir_path().exists()
+}
+
+#[command]
+pub async fn clear_mod_cache(mod_info: ModInfo) -> Result<()> {
+	fs::remove_dir_all(mod_info.mod_runtime_dir_path()).await?;
+	Ok(())
+}
+
+
+async fn run_patched_mod(mod_info: &ModInfo) -> Result<()> {
+	let game_path = mod_info.game.game_path()?.clone();
+	let runtime_dir = mod_info.mod_runtime_dir().await?;
+	let game_name = game_path.file_name().unwrap();
+	let output_exe_path = runtime_dir.join(game_name);
+
 	crate::run_game(&output_exe_path).await?;
 	Ok(())
 }
+
 
 /// Remove events that hide the mouse cursor
 /// (useful because otherwise the mouse cursor will be invisible while using the debugger window)

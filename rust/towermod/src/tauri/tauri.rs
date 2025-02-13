@@ -90,6 +90,8 @@ pub fn run() {
 				thunks::load_config,
 				thunks::save_config,
 				thunks::dump_images,
+				thunks::mod_cache_exists,
+				thunks::clear_mod_cache,
 			]
 		)
 		// TODO: once tauri-bindgen properly supports windows

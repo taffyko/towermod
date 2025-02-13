@@ -30,7 +30,7 @@ function queryFn<ResultType, QueryArg>(fn: (arg: QueryArg) => Promise<ResultType
 	}
 }
 
-const tagTypes = ['Project', 'Game', 'Data', 'Image', 'ModInfo', 'TowermodConfig'] as const;
+const tagTypes = ['Project', 'Game', 'Data', 'Image', 'ModInfo', 'ModCache', 'TowermodConfig'] as const;
 
 export const api = createApi({
 	reducerPath: 'api',
@@ -135,6 +135,7 @@ export const api = createApi({
 			queryFn: queryFn(async (zipPath) => {
 				await invoke('play_mod', { zipPath })
 			}),
+			invalidatesTags: ['ModCache']
 		}),
 		playProject: builder.mutation<void, void>({
 			queryFn: queryFn(async () => {
@@ -196,6 +197,19 @@ export const api = createApi({
 			queryFn: queryFn(async () => {
 				return await invoke('dump_images')
 			}),
+		}),
+
+		modCacheExists: builder.query<boolean, ModInfo>({
+			queryFn: queryFn(async (modInfo) => {
+				return await invoke('mod_cache_exists', { modInfo })
+			}),
+			providesTags: ['ModCache', 'ModInfo']
+		}),
+		clearModCache: builder.mutation<void, ModInfo>({
+			queryFn: queryFn(async (modInfo) => {
+				await invoke('clear_mod_cache', { modInfo })
+			}),
+			invalidatesTags: ['ModCache']
 		}),
 
 		// config
