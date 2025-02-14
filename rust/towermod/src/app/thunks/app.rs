@@ -250,7 +250,7 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 			}
 		}
 
-		let patched_image_block = get_patched_image_block(images, Some(zip_path), metadatas).await?;
+		let patched_image_block = images::get_patched_image_block(images, Some(zip_path), metadatas).await?;
 		patched_image_block.write_to_pe(&output_exe_path)?;
 	}
 
@@ -510,9 +510,7 @@ pub async fn save_project(dir_path: PathBuf) -> Result<()> {
 	STORE.dispatch(AppAction::EditProjectInfo(project)).await;
 
 	let data = select(|s| s.data.clone()).await;
-
 	let (level_block, app_block, event_block, image_block) = data.into_blocks();
-
 
 	let ((), results) = unsafe {TokioScope::scope_and_collect(|s| {
 		s.spawn_blocking(|| serde_json::to_vec(&level_block));
@@ -684,24 +682,11 @@ pub async fn export_mod(mod_type: ModType) -> Result<()> {
 	Ok(())
 }
 
-/// Combine base images, a directory or zip containing custom images, and metadata, to create a patched ImageBlock
-pub async fn get_patched_image_block(mut images: HashMap<i32, Vec<u8>>, dir_or_zip: Option<PathBuf>, metadata: Vec<ImageMetadata>) -> Result<ImageBlock> {
-	if let Some(dir_or_zip) = dir_or_zip {
-		if dir_or_zip.is_dir() {
-			images.extend(images::images_from_dir(dir_or_zip).await?);
-		} else {
-			images.extend(images::images_from_zip(dir_or_zip).await?);
-		}
-	}
-	Ok(images::combine_imageblock(images, metadata))
-}
-
 pub async fn get_patched_image_block_load_game(dir_or_zip: Option<PathBuf>, metadata: Option<Vec<ImageMetadata>>) -> Result<ImageBlock> {
-
 	let game = selectors::get_game().await.context("No game set")?;
 	let (images, base_metadata) = images::images_from_game(game.game_path()?).await?;
 	let metadata = metadata.unwrap_or(base_metadata);
-	get_patched_image_block(images, dir_or_zip, metadata).await
+	images::get_patched_image_block(images, dir_or_zip, metadata).await
 }
 
 // async fn hydrate_image_block(image_metadatas: Vec<ImageMetadata>) -> Result<()> {

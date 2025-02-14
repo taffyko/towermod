@@ -4,7 +4,7 @@ use futures::StreamExt;
 use tokio::sync::RwLock;
 use tokio_stream::wrappers::ReadDirStream;
 use tracing::instrument;
-use crate::{cstc::{self, ImageMetadata, ImageResource}, PeResource};
+use crate::{cstc::{self, ImageBlock, ImageMetadata, ImageResource}, PeResource};
 
 pub(crate) fn create_imageblock_metadata_patch(original_metadata: Vec<ImageMetadata>, new_metadata: Vec<ImageMetadata>) -> Result<Vec<u8>> {
 	let original = metadata_into_bin(original_metadata)?;
@@ -29,6 +29,18 @@ fn metadata_into_bin(metadata: Vec<ImageMetadata>) -> Result<Vec<u8>> {
 fn metadata_from_bin(bin: Vec<u8>) -> Result<Vec<ImageMetadata>> {
 	let image_block = cstc::ImageBlock::from_bin(&bin)?;
 	Ok(image_block.into_iter().map(|r| r.into()).collect())
+}
+
+/// Combine base images, a directory or zip containing custom images, and metadata, to create a patched ImageBlock
+pub(crate) async fn get_patched_image_block(mut images: HashMap<i32, Vec<u8>>, dir_or_zip: Option<PathBuf>, metadata: Vec<ImageMetadata>) -> Result<ImageBlock> {
+	if let Some(dir_or_zip) = dir_or_zip {
+		if dir_or_zip.is_dir() {
+			images.extend(images_from_dir(dir_or_zip).await?);
+		} else {
+			images.extend(images_from_zip(dir_or_zip).await?);
+		}
+	}
+	Ok(combine_imageblock(images, metadata))
 }
 
 pub(crate) fn split_imageblock(image_block: cstc::ImageBlock) -> (HashMap<i32, Vec<u8>>, Vec<ImageMetadata>) {
