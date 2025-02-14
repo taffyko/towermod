@@ -14,7 +14,10 @@ export function renderError(error: any): string {
 	let content;
 	if (error && typeof error === 'object' && 'errorChain' in error) {
 		// Tauri error
-		content = error.errorChain.join('\n')
+		content = error.errorChain.join('\n');
+		if ('backtrace' in error) {
+			content += '\n' + error.backtrace;
+		}
 	} else if (error instanceof Error) {
 		content = error.stack || String(error)
 	} else if (typeof content === 'object') {

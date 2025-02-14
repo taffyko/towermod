@@ -10,7 +10,7 @@ import { win32 as path } from "path";
 import FilePathEdit from "@/components/FilePathEdit";
 import { spin, useSpinQuery } from "../GlobalSpinner";
 import { throwOnError } from "@/components/Error";
-import { copyFile, filePicker, openFolder } from "@/util/rpc";
+import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc";
 import { assert } from "@/util";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { Project } from "@towermod";
@@ -53,6 +53,10 @@ export const Config = () => {
 	const [saveProject] = api.useSaveProjectMutation()
 	const [exportProject] = api.useExportModMutation()
 
+	const [loadManifest] = api.useLazyLoadManifestQuery()
+	const [exportFromLegacy] = api.useExportFromLegacyMutation()
+	const [exportFromFiles] = api.useExportFromFilesMutation()
+
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
 	useEffect(() => {
 		setGamePath(game?.filePath || "")
@@ -70,8 +74,8 @@ export const Config = () => {
 		<hr />
 
 		<Text>Package legacy projects as playable mods</Text>
-		<Button disabled={!game} onClick={() => {/* FIXME */}}>Export mod from legacy TCRepainter data</Button>
-		<Button disabled={!game} onClick={() => {/* FIXME */}}>Export files/images-only mod</Button>
+		<Button disabled={!game} onClick={onClickExportLegacy}>Export mod from legacy TCRepainter data</Button>
+		<Button disabled={!game} onClick={onClickExportFilesOnly}>Export files/images-only mod</Button>
 		<hr />
 
 		<Text>Towermod (New projects only)</Text>
@@ -107,29 +111,33 @@ export const Config = () => {
 		<Button className="grow" onClick={spin(onClickBrowseCache)}>Browse cache</Button>
 	</div>
 
+	async function applyProjectDetailsForm(project: Project, form: ProjectDetailsFormData): Promise<Project> {
+		const { coverPath, iconPath, ...rest } = form
+		if (form.coverPath) {
+			const coverDest = path.join(form.dirPath, 'cover.png');
+			await copyFile(form.coverPath, coverDest)
+		}
+		if (form.iconPath) {
+			const iconDest = path.join(form.dirPath, 'icon.png');
+			await copyFile(form.iconPath, iconDest)
+		}
+
+		const newProject: Project = { ...project, ...rest }
+		return newProject
+	}
+
 	async function updateProjectDetails(project: Project, confirmText = "Save"): Promise<boolean> {
 		let confirmed = false;
 		await openModal(
 			<ProjectDetailsModal project={project} confirmText={confirmText} onConfirm={spin(async (form: ProjectDetailsFormData) => {
 				form = form;
 				confirmed = true
-				const { coverPath, iconPath, ...rest } = form
-				if (form.coverPath) {
-					const coverDest = path.join(form.dirPath, 'cover.png');
-					await copyFile(form.coverPath, coverDest)
-				}
-				if (form.iconPath) {
-					const iconDest = path.join(form.dirPath, 'icon.png');
-					await copyFile(form.iconPath, iconDest)
-				}
-
-				const newProject: Project = { ...project, ...rest }
+				const newProject = await spin(applyProjectDetailsForm(project, form));
 				await throwOnError(editProjectInfo(newProject))
 			})} />
 		)
 		return confirmed
 	}
-
 
 	async function onClickExportProject() {
 		if (!project) { return }
@@ -139,8 +147,33 @@ export const Config = () => {
 		toast("Project exported")
 	}
 
+	async function onClickExportLegacy() {
+		const patchPath = await filePicker({ filters: [{ name: "TCRepainter patch", extensions: ["json", "zip"] }] });
+		if (!patchPath) { return }
+		const manifestPath = path.join(path.dirname(patchPath), 'manifest.toml');
+		const { data: project } = await throwOnError(spin(loadManifest({ manifestPath, projectType: 'Legacy' })))
+		await openModal(<ProjectDetailsModal confirmText="Export" project={project} onConfirm={async (form) => {
+			assert(project)
+			const newProject = await spin(applyProjectDetailsForm(project, form))
+			await throwOnError(spin(exportFromLegacy({ patchPath, project: newProject })))
+		}} />)
+	}
+
+	async function onClickExportFilesOnly() {
+		const dirPath = await folderPicker();
+		if (!dirPath) { return }
+		const manifestPath = path.join(dirPath, 'manifest.toml');
+		const { data: project } = await throwOnError(spin(loadManifest({ manifestPath, projectType: 'FilesOnly' })))
+		await openModal(<ProjectDetailsModal confirmText="Export" project={project} onConfirm={async (form) => {
+			assert(project)
+			const newProject = await spin(applyProjectDetailsForm(project, form))
+			await throwOnError(spin(exportFromFiles(newProject)))
+		}} />)
+
+
+	}
+
 	async function onClickSaveProject() {
-		/** FIXME */
 		if (project && project.dirPath) {
 			await throwOnError(saveProject(project.dirPath))
 			toast("Project saved")

@@ -22,6 +22,8 @@ static INITIALIZED: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
 #[command]
 pub async fn init() -> Result<()> {
 	if (!*INITIALIZED.lock().unwrap()) {
+		std::env::set_var("RUST_BACKTRACE", "1");
+
 		// Set up logging / tracing
 		use tracing_subscriber::prelude::*;
 		use tracing::level_filters::LevelFilter;
@@ -80,7 +82,7 @@ pub async fn get_installed_mods() -> Result<Vec<ModInfo>> {
 			let file_name = path.file_name().context("bad filename")?.to_string_lossy();
 			let mut mod_info = ModInfo::default();
 			let result: Result<_> = try {
-				if !file_name.ends_with(".zip") { continue }
+				if !(file_name.ends_with(".towermod") || file_name.ends_with(".zip")) { continue }
 				// TODO: make async
 				let file = fs_err::File::open(&path)?;
 				let mut zip = zip::ZipArchive::new(file)?;
@@ -191,61 +193,63 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 				anyhow::Ok(())
 			}?
 		};
-	} else if mod_info.mod_type == ModType::BinaryPatch {
+	} else {
+		let image_block = cstc::ImageBlock::read_from_pe(&game_path).await?;
+		let (images, mut metadatas) = images::split_imageblock(image_block);
 		let src_exe_path = mod_info.game.get_release_build().await?;
 		fs::copy(&src_exe_path, &output_exe_path).await?;
 
-		let level_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
-		let event_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
-		let app_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
-		let image_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+		if mod_info.mod_type == ModType::BinaryPatch {
+			let level_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+			let event_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+			let app_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+			let image_block_patch: Mutex<Option<Vec<u8>>> = Mutex::new(None);
 
-		status("Extracting patches");
-		{
-			if let Ok(mut file) = zip.by_name("levelblock.patch") {
-				let mut buf = Vec::new();
-				file.read_to_end(&mut buf)?;
-				*level_block_patch.lock().unwrap() = Some(buf);
+			status("Extracting patches");
+			{
+				if let Ok(mut file) = zip.by_name("levelblock.patch") {
+					let mut buf = Vec::new();
+					file.read_to_end(&mut buf)?;
+					*level_block_patch.lock().unwrap() = Some(buf);
+				}
+				if let Ok(mut file) = zip.by_name("appblock.patch") {
+					let mut buf = Vec::new();
+					file.read_to_end(&mut buf)?;
+					*app_block_patch.lock().unwrap() = Some(buf);
+				}
+				if let Ok(mut file) = zip.by_name("eventblock.patch") {
+					let mut buf = Vec::new();
+					file.read_to_end(&mut buf)?;
+					*event_block_patch.lock().unwrap() = Some(buf);
+				};
+				if let Ok(mut file) = zip.by_name("imageblock.patch") {
+					let mut buf = Vec::new();
+					file.read_to_end(&mut buf)?;
+					*image_block_patch.lock().unwrap() = Some(buf);
+				};
 			}
-			if let Ok(mut file) = zip.by_name("appblock.patch") {
-				let mut buf = Vec::new();
-				file.read_to_end(&mut buf)?;
-				*app_block_patch.lock().unwrap() = Some(buf);
+
+			status("Patching executable");
+			if let Some(level_block_patch) = level_block_patch.into_inner().unwrap() {
+				let level_block_bin = cstc::LevelBlock::read_bin(&game_path)?;
+				let buf = crate::apply_patch(&*level_block_bin, &*level_block_patch)?;
+				cstc::LevelBlock::write_bin(&output_exe_path, &buf)?;
 			}
-			if let Ok(mut file) = zip.by_name("eventblock.patch") {
-				let mut buf = Vec::new();
-				file.read_to_end(&mut buf)?;
-				*event_block_patch.lock().unwrap() = Some(buf);
-			};
-			if let Ok(mut file) = zip.by_name("imageblock.patch") {
-				let mut buf = Vec::new();
-				file.read_to_end(&mut buf)?;
-				*image_block_patch.lock().unwrap() = Some(buf);
-			};
+			if let Some(event_block_patch) = event_block_patch.into_inner().unwrap() {
+				let event_block_bin = cstc::EventBlock::read_bin(&game_path)?;
+				let buf = crate::apply_patch(&*event_block_bin, &*event_block_patch)?;
+				cstc::EventBlock::write_bin(&output_exe_path, &buf)?;
+			}
+			if let Some(app_block_patch) = app_block_patch.into_inner().unwrap() {
+				let app_block_bin = cstc::AppBlock::read_bin(&game_path)?;
+				let buf = crate::apply_patch(&*app_block_bin, &*app_block_patch)?;
+				cstc::AppBlock::write_bin(&output_exe_path, &buf)?;
+			}
+			if let Some(image_block_patch) = image_block_patch.into_inner().unwrap() {
+				metadatas = images::apply_imageblock_metadata_patch(metadatas, image_block_patch)?;
+			}
 		}
 
-		status("Patching executable");
-		if let Some(level_block_patch) = level_block_patch.into_inner().unwrap() {
-			let level_block_bin = cstc::LevelBlock::read_bin(&game_path)?;
-			let buf = crate::apply_patch(&*level_block_bin, &*level_block_patch)?;
-			cstc::LevelBlock::write_bin(&output_exe_path, &buf)?;
-		}
-		if let Some(event_block_patch) = event_block_patch.into_inner().unwrap() {
-			let event_block_bin = cstc::EventBlock::read_bin(&game_path)?;
-			let buf = crate::apply_patch(&*event_block_bin, &*event_block_patch)?;
-			cstc::EventBlock::write_bin(&output_exe_path, &buf)?;
-		}
-		if let Some(app_block_patch) = app_block_patch.into_inner().unwrap() {
-			let app_block_bin = cstc::AppBlock::read_bin(&game_path)?;
-			let buf = crate::apply_patch(&*app_block_bin, &*app_block_patch)?;
-			cstc::AppBlock::write_bin(&output_exe_path, &buf)?;
-		}
-
-		let image_block = cstc::ImageBlock::read_from_pe(&game_path).await?;
-		let (images, mut metadatas) = images::split_imageblock(image_block);
-		if let Some(image_block_patch) = image_block_patch.into_inner().unwrap() {
-			metadatas = images::apply_imageblock_metadata_patch(metadatas, image_block_patch)?;
-		}
 		let patched_image_block = get_patched_image_block(images, Some(zip_path), metadatas).await?;
 		patched_image_block.write_to_pe(&output_exe_path)?;
 	}

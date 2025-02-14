@@ -51,6 +51,7 @@ export class MiniEvent<T = void> {
 	}
 	subscribe(fn: (e: T) => void) {
 		this.subscriptions.add(fn)
+		return () => this.unsubscribe(fn)
 	}
 	unsubscribe(fn: (e: T) => void) {
 		this.subscriptions.delete(fn)

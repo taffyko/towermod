@@ -81,6 +81,7 @@ pub fn run() {
 				thunks::export_mod,
 				thunks::export_from_files,
 				thunks::export_from_legacy,
+				thunks::load_manifest,
 				thunks::play_mod,
 				thunks::play_project,
 				thunks::play_vanilla,

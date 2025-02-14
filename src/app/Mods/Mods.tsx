@@ -61,11 +61,14 @@ export function ModList(props: {
 		}
 		setSelectedMod(uniqueVersionName(mods[modIdx]))
 	}
+
+	const noMods = mods && mods.length === 0
+
 	return <LoadContainer
 		tabIndex={0}
 		error={error}
 		isLoading={isLoading}
-		className={Style.modList}
+		className={`${Style.modList} ${noMods ? 'centerbox' : ''}`}
 		onKeyDown={e => {
 			switch (e.key) {
 				case 'ArrowDown': nextMod(1); break
@@ -73,14 +76,18 @@ export function ModList(props: {
 			}
 		}}
 	>
-		{mods?.map((mod, i) => <ModListItem
-			key={mod.error ? i : uniqueVersionName(mod)}
-			mod={mod}
-			selected={uniqueVersionName(mod) === selectedMod}
-			onClick={() => {
-				setSelectedMod(uniqueVersionName(mod))
-			}}
-		/>)}
+		{noMods ?
+			<i>No mods installed</i>
+		:
+			mods?.map((mod, i) => <ModListItem
+				key={mod.error ? i : uniqueVersionName(mod)}
+				mod={mod}
+				selected={uniqueVersionName(mod) === selectedMod}
+				onClick={() => {
+					setSelectedMod(uniqueVersionName(mod))
+				}}
+			/>)
+		}
 	</LoadContainer>
 }
 
@@ -158,11 +165,11 @@ function uniqueName(mod: ModInfo | string) {
 		return `${author}.${name}`
 	}
 	if (mod.error) { return mod.filePath! }
-	return `${mod.author.toLowerCase()}.${mod.name.toLowerCase()}`
+	return `${mod.author}.${mod.name}`.toLowerCase().replace('_', '-');
 }
 function uniqueVersionName(mod: ModInfo) {
 	if (mod.error) { return mod.filePath! }
-	return `${mod.author.toLowerCase()}.${mod.name.toLowerCase()}.${mod.version}`
+	return `${mod.author}.${mod.name}.${mod.version}`.toLowerCase().replace('_', '-');
 }
 
 export default function Mods() {
@@ -204,7 +211,6 @@ export default function Mods() {
 			}}>
 				Play unmodified
 			</Button>
-			<div className="grow" />
 			<Button onClick={async () => {
 				openFolder(await getModsDirPath())
 				toast("Opened mods directory")

@@ -1,4 +1,4 @@
-import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import type { AppDispatch, AppStore, RootState } from '../store'
 import { MiniEvent, assert, createObjectUrl, revokeObjectUrl } from './util';
@@ -117,10 +117,8 @@ export function useMiniEvent<T>(event: MiniEvent<T> | null | undefined, cb: (e: 
 export function useMiniEventValue<T>(event: MiniEvent<T>): T
 export function useMiniEventValue(event: undefined): undefined
 export function useMiniEventValue<T>(event?: MiniEvent<T>): T | undefined {
-	const [state, setState] = useState(event?.lastValue as T)
-	useMiniEvent(event, setState, [])
-	if (!event) { return undefined; }
-	return state
+	const subscribe = useCallback(event?.subscribe.bind(event) ?? (() => () => {}), [event]);
+	return useSyncExternalStore(subscribe, () => event?.lastValue as T)
 }
 
 export function useRerender() {

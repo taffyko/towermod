@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { int } from '@/util/util';
 import { invoke } from "@tauri-apps/api/core";
-import { Game, ModInfo, ModType, Project, TowermodConfig } from '@towermod';
+import { Game, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod';
 import type { BaseEndpointDefinition } from '@reduxjs/toolkit/query'
 import { useObjectUrl } from './util/hooks';
 import { toast } from '@/app/Toast';
@@ -119,15 +119,20 @@ export const api = createApi({
 			}),
 			invalidatesTags: ['ModInfo']
 		}),
-		exportFromFiles: builder.mutation<void, void>({
-			queryFn: queryFn(async () => {
-				await invoke('export_from_files')
+		loadManifest: builder.query<Project, { manifestPath: string, projectType: ProjectType }>({
+			queryFn: queryFn(async (arg) => {
+				return await invoke('load_manifest', arg)
+			}),
+		}),
+		exportFromFiles: builder.mutation<void, Project>({
+			queryFn: queryFn(async (project) => {
+				await invoke('export_from_files', { project })
 			}),
 			invalidatesTags: ['ModInfo']
 		}),
-		exportFromLegacy: builder.mutation<void, void>({
-			queryFn: queryFn(async () => {
-				await invoke('export_from_legacy')
+		exportFromLegacy: builder.mutation<void, { patchPath: string, project: Project }>({
+			queryFn: queryFn(async (arg) => {
+				await invoke('export_from_legacy', arg)
 			}),
 			invalidatesTags: ['ModInfo']
 		}),

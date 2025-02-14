@@ -404,7 +404,10 @@ impl ModInfo {
 	}
 
 	pub fn export_path(&self) -> PathBuf {
-		crate::get_mods_dir_path().join(format!("{}.zip", self.unique_version_name()))
+		let name = self.unique_version_name();
+		// Replace dots with underscores (gamebanana doesn't like dots in filenames)
+		let name = name.replace(".", "_");
+		crate::get_mods_dir_path().join(format!("{}.towermod", name))
 	}
 
 	pub async fn from_zip_path(path: impl AsRef<Path>) -> Result<Self> {
@@ -424,8 +427,8 @@ impl ModInfo {
 }
 
 pub fn unique_name(author: &str, name: &str) -> String {
-	format!("{}.{}", author.to_ascii_lowercase(), name.to_ascii_lowercase())
+	format!("{}.{}", author, name).to_ascii_lowercase().replace("_", "-")
 }
 pub fn unique_version_name(author: &str, name: &str, version: &str) -> String {
-	format!("{}.{}.{}", author.to_ascii_lowercase(), name.to_ascii_lowercase(), version)
+	format!("{}.{}.{}", author, name, version).to_ascii_lowercase().replace("_", "-")
 }

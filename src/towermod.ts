@@ -405,11 +405,7 @@ export interface Project {
   dirPath: string
 }
 
-export declare const enum ProjectType {
-  Towermod = 0,
-  FilesOnly = 1,
-  Legacy = 2
-}
+export type ProjectType = 'Towermod' | 'FilesOnly' | 'Legacy'
 
 export declare const enum ResizeMode {
   Disabled = 0,

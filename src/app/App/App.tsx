@@ -15,6 +15,7 @@ import { ToastContainer } from '@/app/Toast';
 import { Portal } from '@/components/Portal';
 import { GlobalSpinner, useIsSpinning } from '../GlobalSpinner';
 import { useIsModalOpen } from '../Modal/modalStore';
+import { DragDropHandler } from '../DragDropHandler';
 
 const App = () => {
 	const [dataHandle, setDataHandle] = useStateRef<DataHandle>()
@@ -29,7 +30,7 @@ const App = () => {
 			data: dataHandle!,
 			tabs: tabsHandle!,
 		}
-	}, [dataHandle])
+	}, [dataHandle, tabsHandle])
 
 	const tabs: Tab[] = useMemo(() => [
 		{ name: 'Config', children: <Config /> },
@@ -60,6 +61,7 @@ const App = () => {
 					<GlobalSpinner />
 					<ToastContainer />
 					<ModalParent />
+					<DragDropHandler />
 					<div
 						// @ts-ignore
 						inert={isInert ? "" : undefined}
