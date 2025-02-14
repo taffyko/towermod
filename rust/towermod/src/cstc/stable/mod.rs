@@ -22,7 +22,6 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use serde::{Serialize, Deserialize};
 use serde_alias::serde_alias;
 
-use crate::Nt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Token {

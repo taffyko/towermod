@@ -1,12 +1,11 @@
-use std::{os::raw::c_void, mem, ffi::CStr, collections::{HashMap, HashSet}};
+use std::{ffi::CStr, collections::{HashMap, HashSet}};
 use derivative::Derivative;
 use num_derive::FromPrimitive;
 use serde::{Serialize, Deserialize};
 use serde_alias::serde_alias;
-use windows::{Win32::{Foundation::{HMODULE, FreeLibrary}, System::LibraryLoader::{LoadLibraryW, GetProcAddress}, UI::WindowsAndMessaging::LoadStringA, Graphics::Gdi::HBITMAP}, core::{PSTR, HSTRING, s}};
+use windows::{Win32::{Foundation::HMODULE, UI::WindowsAndMessaging::LoadStringA}, core::PSTR};
 use anyhow::Result;
 
-use crate::Nt;
 
 const OBJ_NAME: u32 = 1;
 const OBJ_AUTHOR: u32 = 2;

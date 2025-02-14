@@ -1,8 +1,6 @@
 use crate::app::state::select;
 use tauri::command;
-use anyhow::{Context, Result};
-use crate::{Game, Nt, Project};
-use fs_err::tokio as fs;
+use crate::{Game, Project};
 
 #[command]
 pub async fn get_project() -> Option<Project> {

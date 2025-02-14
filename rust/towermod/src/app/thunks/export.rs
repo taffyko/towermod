@@ -1,14 +1,10 @@
-use std::{collections::HashMap, io::{Cursor, Read, Write}, path::{Path, PathBuf}, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, plugin::PluginData, *}, first_time_setup, game_images, get_appdata_dir_path, get_mods_dir_path, get_temp_file, log_error, merge_copy_into, zip_merge_copy_into, Game, GameType, ModInfo, ModType, Nt, PeResource, Project, ProjectType, TcrepainterPatch, ZipWriterExt};
+use std::path::PathBuf;
+use crate::{cstc::{self, *}, game_images, merge_copy_into, GameType, PeResource, Project, ProjectType};
 use anyhow::Result;
-use async_scoped::TokioScope;
 use tauri::command;
 use anyhow::{Context};
 use fs_err::tokio as fs;
-use futures::StreamExt;
-use tokio::{io::AsyncWriteExt, sync::RwLock};
-use tracing::instrument;
-use crate::app::{state::{select, CstcData}, selectors, thunks};
+use crate::app::{state::select, selectors, thunks};
 
 /// For prepopulating the project-details form for exporting Legacy/FilesOnly projects
 #[command]

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{cstc::plugin::{AcesEntry, PluginData, PluginStringTable}, Nt};
+use crate::cstc::plugin::{AcesEntry, PluginData, PluginStringTable};
 
 /// The 'System' plugin (id: -1) is not an actual SDK plugin like the others,
 /// the APIs it exposes are hardcoded into the Construct Classic executable.

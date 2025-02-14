@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use tauri::command;
-use crate::app::state::{TowermodConfig, STORE, ConfigAction as Action};
+use crate::app::state::{STORE, ConfigAction as Action};
 use crate::app::selectors::get_config;
 use anyhow::{Context, Result};
 use fs_err::tokio as fs;

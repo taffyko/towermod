@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use crate::{cstc::{stable::*, plugin::PluginData}, Nt};
-use super::{app_state::AppStore};
+use crate::cstc::{stable::*, plugin::PluginData};
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CstcData {
@@ -57,7 +56,6 @@ impl CstcData {
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 /// Subset of state held by frontend Redux
 pub struct JsCstcData {
-	pub editor_plugins: HashMap<i32, PluginData>,
 	pub object_types: Vec<ObjectType>,
 	pub behaviors: Vec<Behavior>,
 	pub traits: Vec<ObjectTrait>,
@@ -70,7 +68,6 @@ pub struct JsCstcData {
 impl From<CstcData> for JsCstcData {
 	fn from(value: CstcData) -> Self {
 		Self {
-			editor_plugins: value.editor_plugins,
 			object_types: value.object_types,
 			behaviors: value.behaviors,
 			traits: value.traits,

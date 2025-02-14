@@ -1,4 +1,4 @@
-use std::{process::{Command}, env::{self, VarError}, path::PathBuf};
+use std::{process::{Command}, env::{self}, path::PathBuf};
 
 fn main() {
 	if let Ok(_) = env::var("CARGO_FEATURE_BUNDLED_DLLREADER") { 'bundle: {

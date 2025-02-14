@@ -1,12 +1,12 @@
 //! Methods related to files that towermod persists on disk
 
+use fs_err::tokio as fs;
 use tauri::command;
 use tracing::instrument;
 use windows::Win32::UI::Shell;
 use windows::Win32::Foundation::HANDLE;
 use anyhow::Result;
 use std::path::{Path, PathBuf};
-use fs_err::tokio as fs;
 
 /// Directory where cached data is stored
 /// Anything here should be safe to delete without data loss
