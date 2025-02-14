@@ -407,7 +407,7 @@ impl ModInfo {
 		let name = self.unique_version_name();
 		// Replace dots with underscores (gamebanana doesn't like dots in filenames)
 		let name = name.replace(".", "_");
-		crate::get_mods_dir_path().join(format!("{}.towermod", name))
+		crate::get_mods_dir_path().join(format!("{}.zip", name))
 	}
 
 	pub async fn from_zip_path(path: impl AsRef<Path>) -> Result<Self> {

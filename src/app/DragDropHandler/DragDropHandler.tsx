@@ -64,7 +64,7 @@ export function DragDropHandler() {
 						{ plural ? "Files not valid" : "File is not valid" }
 						<br/>
 						<br/>
-						Please drop a valid mod file <i>(ending in <code>.towermod</code>)</i> to install it.
+						Please drop a valid mod file <i>(ending in <code>.zip</code> or <code>.towermod</code>)</i> to install it.
 					</> }
 				</div>
 			</div>
