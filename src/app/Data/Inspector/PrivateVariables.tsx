@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from "@/util/hooks";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { InspectorDictionary } from "./base/Inspector";
 import { ArrayPropertyInfo, DictionaryPropertyInfo, SimplePropertyInfo } from "./base/inspectorUtil";
 import { findObjectTypeById } from "@/reducers/data";
@@ -10,7 +10,8 @@ import { useMemo } from "react";
 export function PrivateVariables(props: { pinfo: ArrayPropertyInfo<PrivateVariable> }) {
 	const { pinfo } = props
 	const dispatch = useAppDispatch()
-	const objPinfo = assert(pinfo.parent) as SimplePropertyInfo<ObjectInstance>
+	assert(pinfo.parent)
+	const objPinfo = pinfo.parent as SimplePropertyInfo<ObjectInstance>
 	const obj = objPinfo.value;
 
 	const objType = useAppSelector(state => findObjectTypeById(state.data, obj.objectTypeId))

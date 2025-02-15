@@ -38,7 +38,7 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorVal
 
 	const onElementChange = (key: InspectorKeyTypes, value: any) => {
 		const newArr = [...arrPinfo.value]
-		newArr[key] = value
+		newArr[key as any] = value
 		onChange(newArr)
 	}
 

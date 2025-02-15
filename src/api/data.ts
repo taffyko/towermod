@@ -1,10 +1,10 @@
 import { int, useObjectUrl } from '@/util';
-import { api } from './api';
+import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
 import { queryFn } from './apiUtil';
 import { ImageMetadata } from '@towermod';
 
-export const dataApi = api.injectEndpoints({
+export const dataApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
 		getGameImage: builder.query<Blob | null, number>({
 			queryFn: queryFn(async (id) => {

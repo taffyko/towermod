@@ -1,11 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { int } from '@/util/util';
 import { invoke } from "@tauri-apps/api/core";
-import { Game, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod';
-import type { BaseEndpointDefinition } from '@reduxjs/toolkit/query'
+import { Game, ImageMetadata, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod';
 import { useObjectUrl } from '@/util/hooks';
-import { toast } from '@/app/Toast';
-import { renderError } from '@/components/Error';
 import { queryFn } from './apiUtil';
 
 
@@ -17,7 +13,7 @@ const tagTypes = [
 	'Image', 'ImageMetadata',
 ] as const;
 
-export const api = createApi({
+export const baseApi = createApi({
 	reducerPath: 'api',
 	baseQuery: fetchBaseQuery({ baseUrl: '/' }), // Base URL for API calls
 	tagTypes,
@@ -237,6 +233,34 @@ export const api = createApi({
 	}),
 });
 
+export const dataApi = baseApi.injectEndpoints({
+	endpoints: (builder) => ({
+		getGameImage: builder.query<Blob | null, number>({
+			queryFn: queryFn(async (id) => {
+				const arrayBuffer = await _getGameImage(id)
+				let blob: Blob | null = null
+				if (arrayBuffer) {
+					blob = new Blob([arrayBuffer], { type: 'image/png' })
+				}
+				return blob
+			}),
+			providesTags: (_r, _e, arg) => ['Data', { type: 'Image', id: arg }],
+		}),
+		getImageMetadata: builder.query<ImageMetadata, number>({
+			queryFn: queryFn(async (id) => {
+				return await invoke('get_image_metadata', { id })
+			}),
+			providesTags: ['ImageMetadata']
+		}),
+		setImageMetadata: builder.mutation<void, ImageMetadata>({
+			queryFn: queryFn(async (data) => {
+				return await invoke('set_image_metadata', { data })
+			}),
+			invalidatesTags: ['ImageMetadata']
+		}),
+	}),
+})
+
 async function _getFile(path: string): Promise<Uint8Array | null> {
 	const enc = new TextEncoder();
 	const bytes = enc.encode(JSON.stringify(path))
@@ -247,8 +271,18 @@ async function _getFile(path: string): Promise<Uint8Array | null> {
 	return resp
 }
 
+async function _getGameImage(id: number): Promise<Uint8Array | null> {
+	const enc = new TextEncoder();
+	const bytes = enc.encode(JSON.stringify(id))
+	const resp = new Uint8Array(await invoke("get_image", bytes));
+	if (!resp.length) {
+		return null
+	}
+	return resp
+}
+
 export function useFileUrl(path: string | null | undefined): string | undefined {
-	const { data: blob } = api.useGetFileQuery(path)
+	const { data: blob } = baseApi.useGetFileQuery(path)
 	const href = useObjectUrl(blob);
 	return href ?? undefined
 }

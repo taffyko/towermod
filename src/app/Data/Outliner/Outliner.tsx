@@ -8,7 +8,8 @@ import {
 	NodeComponentProps,
 	FixedSizeTree,
 } from 'react-vtree';
-import { useAppSelector, useStateRef } from '@/util/hooks';
+import { useStateRef } from '@/util/hooks';
+import { useAppSelector } from '@/store';
 import { assertUnreachable, enumerate } from '@/util/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';

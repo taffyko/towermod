@@ -1,2 +1,2 @@
 export { useFileUrl } from './api'
-export { dataApi as api, useGameImageUrl } from './data';
+export { useGameImageUrl, dataApi as api } from './data'

@@ -1,6 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import type { BaseEndpointDefinition } from '@reduxjs/toolkit/query'
-
 
 type FetchBaseQueryFn = ReturnType<typeof fetchBaseQuery>
 type CustomBaseQueryFn = FetchBaseQueryFn

@@ -5,7 +5,6 @@ import { DependencyList, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event'
 import { win32 as path } from 'path';
 import { toast } from '@/app/Toast';
-import { dispatch } from '@/store';
 import { api } from '@/api';
 
 export async function openFolder(dir: string) {
@@ -17,6 +16,7 @@ export async function copyFile(src: string, dest: string) {
 }
 
 export async function installMods(files: string[]) {
+	const { dispatch } = await import('@/store');
 	const modsDirPath = await getModsDirPath()
 	for (const file of files) {
 		const fileName = path.basename(file);
