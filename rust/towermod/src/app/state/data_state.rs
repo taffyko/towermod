@@ -85,6 +85,7 @@ pub type State = CstcData;
 
 pub enum Action {
 	SetData(CstcData),
+	SetImageMetadata (ImageMetadata),
 	AddObjectInstance { object_type_id: i32, layout_layer_id: i32 },
 	RemoveObjectInstance { id: i32 },
 }
@@ -99,5 +100,15 @@ pub fn reducer(state: State, action: Action) -> State {
 		Action::SetData(state) => state,
 		Action::AddObjectInstance { layout_layer_id, object_type_id } => todo!(),
 		Action::RemoveObjectInstance { id } => todo!(),
+		Action::SetImageMetadata(metadata) => {
+			let mut state = state;
+			let index = state.image_block.iter().position(|img| img.id == metadata.id);
+			if let Some(index) = index {
+				state.image_block[index] = metadata;
+			} else {
+				state.image_block.push(metadata);
+			}
+			state
+		},
 	}
 }

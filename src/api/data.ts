@@ -2,6 +2,7 @@ import { int, useObjectUrl } from '@/util';
 import { api } from './api';
 import { invoke } from '@tauri-apps/api/core';
 import { queryFn } from './apiUtil';
+import { ImageMetadata } from '@towermod';
 
 export const dataApi = api.injectEndpoints({
 	endpoints: (builder) => ({
@@ -15,6 +16,18 @@ export const dataApi = api.injectEndpoints({
 				return blob
 			}),
 			providesTags: (_r, _e, arg) => ['Data', { type: 'Image', id: arg }],
+		}),
+		getImageMetadata: builder.query<ImageMetadata, number>({
+			queryFn: queryFn(async (id) => {
+				return await invoke('get_image_metadata', { id })
+			}),
+			providesTags: ['ImageMetadata']
+		}),
+		setImageMetadata: builder.mutation<void, ImageMetadata>({
+			queryFn: queryFn(async (data) => {
+				return await invoke('set_image_metadata', { data })
+			}),
+			invalidatesTags: ['ImageMetadata']
 		}),
 	}),
 })

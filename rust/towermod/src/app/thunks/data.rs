@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
-use crate::app::state::select;
+use tauri::command;
+use crate::{app::state::{select, DataAction, STORE}, cstc::ImageMetadata};
 use fs_err::tokio as fs;
 
 pub async fn get_image(id: i32) -> Option<Vec<u8>> {
@@ -28,4 +29,9 @@ async fn get_image_override(id: i32) -> Result<Option<Vec<u8>>> {
 		Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
 		Err(e) => Err(e)?,
 	}
+}
+
+#[command]
+pub async fn set_image_metadata(data: ImageMetadata) {
+	STORE.dispatch(DataAction::SetImageMetadata(data).into()).await;
 }

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use super::block::{BlockReader, BlockWriter};
-use super::stable::*;
+use super::super::stable::*;
 
 pub fn deserialize_imageblock(buffer: &[u8]) -> Result<Vec<ImageResource>> {
 	let mut reader = BlockReader::new(buffer);

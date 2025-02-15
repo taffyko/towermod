@@ -1,4 +1,4 @@
-use super::stable::*;
+use super::super::stable::*;
 use num_traits::{FromPrimitive};
 use anyhow::Result;
 use super::block::{BlockReader, BlockWriter};

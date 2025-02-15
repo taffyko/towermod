@@ -2,7 +2,7 @@ use num_traits::{FromPrimitive};
 use anyhow::Result;
 
 
-use super::{block::{BlockReader, BlockWriter}, stable::*};
+use super::{block::{BlockReader, BlockWriter}, super::stable::*};
 
 pub fn deserialize_levelblock(buffer: &[u8]) -> Result<LevelBlock> {
 	let mut reader = BlockReader::new(buffer);

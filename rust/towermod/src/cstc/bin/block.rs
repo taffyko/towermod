@@ -1,5 +1,5 @@
 
-use super::{stable::DataKey, Animation, AnimationFrame};
+use super::super::{stable::DataKey, Animation, AnimationFrame};
 
 pub struct BlockReader<'a> {
 	pub pos: usize,

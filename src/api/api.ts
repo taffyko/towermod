@@ -14,7 +14,7 @@ import { queryFn } from './apiUtil';
 const tagTypes = [
 	'Project', 'Game', 'Data', 'ModInfo', 'ModCache', 'TowermodConfig',
 	// game data objects
-	'Image'
+	'Image', 'ImageMetadata',
 ] as const;
 
 export const api = createApi({

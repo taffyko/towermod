@@ -266,7 +266,3 @@ impl BlockWriter {
 		self.write_i32(obj.start_frame);
 	}
 }
-
-#[path = "./system_plugin_object.rs"]
-mod system_plugin_object;
-pub use system_plugin_object::*;

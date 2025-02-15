@@ -1,8 +1,8 @@
 use anyhow::Result;
 use num_traits::{FromPrimitive};
 
-use super::{block::{BlockReader, BlockWriter}, stable::{TextureLoadingMode}};
-use super::stable::*;
+use super::{block::{BlockReader, BlockWriter}};
+use super::super::stable::*;
 
 pub fn deserialize_appblock(buffer: &[u8]) -> Result<AppBlock> {
 	let mut reader = BlockReader::new(buffer);
