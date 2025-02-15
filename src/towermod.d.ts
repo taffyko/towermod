@@ -18,6 +18,7 @@ export interface ActionPoint {
   x: int
   y: int
   string: string
+	_type: 'ActionPoint'
 }
 
 export interface Animation {

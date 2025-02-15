@@ -113,6 +113,6 @@ pub async fn play_project(debug: bool) -> Result<()> {
 	level_block.write_to_pe(&output_path)?;
 	crate::run_game(&output_path).await?;
 
-	todo!();
+	Ok(())
 }
 

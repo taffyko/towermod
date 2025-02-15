@@ -690,9 +690,14 @@ pub async fn get_patched_image_block_load_game(dir_or_zip: Option<PathBuf>, meta
 }
 
 #[command]
-pub async fn image_dump_dir_path() -> Result<PathBuf> {
+pub async fn image_dump_dir_path() -> Result<Option<PathBuf>> {
 	let game = selectors::get_game().await.context("No game set")?;
-	Ok(game.image_dump_dir_path())
+	let path = game.image_dump_dir_path();
+	if path.exists() {
+		Ok(Some(path))
+	} else {
+		Ok(None)
+	}
 }
 
 

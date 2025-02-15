@@ -15,6 +15,10 @@ export async function copyFile(src: string, dest: string) {
 	await invoke('copy_file', { src, dest })
 }
 
+export async function deleteFile(path: string) {
+	await invoke('delete_file', { path })
+}
+
 export async function installMods(files: string[]) {
 	const { dispatch } = await import('@/store');
 	const modsDirPath = await getModsDirPath()

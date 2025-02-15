@@ -1,5 +1,5 @@
 export function SpinBox(props: {
-	value: number,
+	value?: number,
 	onChange?: (v: number) => void
 }) {
 	const { value, onChange } = props

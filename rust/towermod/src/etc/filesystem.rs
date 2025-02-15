@@ -46,6 +46,12 @@ pub async fn copy_file(src: PathBuf, dest: PathBuf) -> Result<()> {
 	Ok(())
 }
 
+#[command]
+pub async fn delete_file(path: PathBuf) -> Result<()> {
+	fs::remove_file(path).await?;
+	Ok(())
+}
+
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileDialogOptions {

@@ -54,6 +54,10 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorVal
 		onChange(newArr)
 	}
 
+	if (!arrPinfo.valueTypes || arrPinfo.valueTypes[0] === 'unknown') {
+		throw new Error(`Need to define 'valueTypes' for array ${arrPinfo.parent?.type}.${arrPinfo.key}`)
+	}
+
 	const valueComponents: React.ReactNode[] = useMemo(() => arrPinfo.value.map((val, i) => {
 		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo, i);
 		const valueComponent = getValueComponent(pinfo, (v) => { onElementChange(arrPinfo.key, v) })
@@ -119,8 +123,8 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 
 	// adding properties
 	const [newKeyText, setNewKeyText] = useState("")
-	if (!dictPinfo.valueTypes) {
-		throw new Error(`Need to define 'valueTypes' for ${dictPinfo.parent?.type}.${dictPinfo.parent?.key}`)
+	if (!dictPinfo.valueTypes || dictPinfo.valueTypes[0] === 'unknown') {
+		throw new Error(`Need to define 'valueTypes' for dictionary ${dictPinfo.parent?.type}.${dictPinfo.key}`)
 	}
 	const [newValueType, setNewValueType] = useState(dictPinfo.valueTypes[0])
 	const getDefaultValue = defaultValueForType(newValueType)

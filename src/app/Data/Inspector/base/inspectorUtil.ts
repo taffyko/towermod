@@ -45,7 +45,7 @@ export type ArrayPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> =
 	value: readonly T[]
 	type: 'Array',
 	/** List of type names representing the union of types this array can contain */
-	valueTypes: Array<KeyOfValue<TypeNameToValue, T>>
+	valueTypes: Array<string & (KeyOfValue<TypeNameToValue, T> | 'unknown')>
 }
 
 export type DictionaryPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> = BasePropertyInfo & {
@@ -55,7 +55,7 @@ export type DictionaryPropertyInfo<T extends AnyInspectorValue = AnyInspectorVal
 	/** List of type names representing the union of key types this dictionary can use to key its values */
 	keyTypes: Array<KeyOfValue<TypeNameToValue, TKey>>,
 	/** List of type names representing the union of value types this dictionary can contain */
-	valueTypes: Array<KeyOfValue<TypeNameToValue, T>>,
+	valueTypes: Array<string & (KeyOfValue<TypeNameToValue, T> | 'unknown')>,
 }
 export type SimplePropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> = BasePropertyInfo & {
 	key: InspectorKeyTypes,
@@ -97,7 +97,7 @@ function speciateType(type: keyof TypeNameToValue, types: Array<keyof TypeNameTo
 			}
 	}
 	if (!types.includes(type)) {
-		console.warn(`${type} not in [${[...types]},]`)
+		console.warn(`speciateType error: '${type}' is not one of these types: [${types.join(', ')}]`)
 	}
 	return type;
 }
@@ -129,6 +129,7 @@ export function inferPropertyInfoFromValue(value: AnyInspectorValue, parent: Any
 				key,
 				value,
 				parent,
+				valueTypes: ['unknown'] as any,
 				keyTypes: ['string', 'number'] as any
 			} as DictionaryPropertyInfo
 		default:
@@ -158,6 +159,7 @@ export function inferTypeFromValue(value: AnyInspectorValue): InspectorTypeName 
 		case 'string':
 			return type
 		default:
+			console.error("Cannot infer type from value", value)
 			return 'unknown'
 	}
 }

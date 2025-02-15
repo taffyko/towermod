@@ -112,9 +112,9 @@ export const baseApi = createApi({
 			}),
 			invalidatesTags: ['ModCache']
 		}),
-		playProject: builder.mutation<void, void>({
-			queryFn: queryFn(async () => {
-				await invoke('play_project')
+		playProject: builder.mutation<void, boolean>({
+			queryFn: queryFn(async (debug) => {
+				await invoke('play_project', { debug })
 			}),
 		}),
 		playVanilla: builder.mutation<void, void>({
@@ -242,21 +242,13 @@ export const baseApi = createApi({
 
 export const dataApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
-		getGameImage: builder.query<Blob | null, number>({
-			queryFn: queryFn(async (id) => {
-				const arrayBuffer = await _getGameImage(id)
-				let blob: Blob | null = null
-				if (arrayBuffer) {
-					blob = new Blob([arrayBuffer], { type: 'image/png' })
-				}
-				return blob
-			}),
-			providesTags: (_r, _e, arg) => ['Data', { type: 'Image', id: arg }],
-		}),
 		getImageMetadata: builder.query<ImageMetadata | undefined, number>({
 			queryFn: queryFn(async (id) => {
 				const metadata: ImageMetadata = await invoke('get_image_metadata', { id }) ?? undefined
-				if (metadata) { metadata._type = 'ImageMetadata' }
+				if (metadata) {
+					metadata._type = 'ImageMetadata'
+					for (const apoint of metadata.apoints) { apoint._type = 'ActionPoint' }
+				}
 				return metadata
 			}),
 			providesTags: ['ImageMetadata']
@@ -274,16 +266,6 @@ async function _getFile(path: string): Promise<Uint8Array | null> {
 	const enc = new TextEncoder();
 	const bytes = enc.encode(JSON.stringify(path))
 	const resp = new Uint8Array(await invoke("get_file", bytes));
-	if (!resp.length) {
-		return null
-	}
-	return resp
-}
-
-async function _getGameImage(id: number): Promise<Uint8Array | null> {
-	const enc = new TextEncoder();
-	const bytes = enc.encode(JSON.stringify(id))
-	const resp = new Uint8Array(await invoke("get_image", bytes));
 	if (!resp.length) {
 		return null
 	}

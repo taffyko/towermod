@@ -501,7 +501,7 @@ impl ImageResource {
 	}
 }
 
-#[serde_alias(SnakeCase, CamelCase)]
+#[serde_alias(SnakeCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppBlock {
@@ -537,7 +537,7 @@ pub struct AppBlock {
 	pub texture_loading_mode: TextureLoadingMode,
 
 
-	#[serde(skip, default = "AppBlock::type_name")]
+	#[serde(default = "AppBlock::type_name")]
 	pub _type: String,
 }
 impl AppBlock {

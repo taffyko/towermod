@@ -32,6 +32,13 @@ async fn get_image_override(id: i32) -> Result<Option<Vec<u8>>> {
 }
 
 #[command]
+pub async fn is_image_overridden(id: i32) -> Result<bool> {
+	let mut path = select(|s| s.project.as_ref().context("No project loaded").map(|p| p.images_path())).await??;
+	path.push(format!("{id}.png"));
+	Ok(path.exists())
+}
+
+#[command]
 pub async fn set_image_metadata(data: ImageMetadata) {
 	STORE.dispatch(DataAction::SetImageMetadata(data).into()).await;
 }

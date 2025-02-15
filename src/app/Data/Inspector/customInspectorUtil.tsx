@@ -65,7 +65,10 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			})
 		break; case 'ImageMetadata':
 			override(type, {
+					id: { readonly: true },
 				collisionMask: { hidden: true },
+				collisionPitch: { readonly: true },
+				apoints: { valueTypes: ['ActionPoint'] },
 			})
 	}
 
@@ -76,7 +79,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 
 /** Provide additional virtual properties for each type, to display in the inspector */
 export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: ParentPropertyInfo): AnyPropertyInfo[] | undefined {
-	const type = obj['_type']
+	const type = (obj as any)['_type']
 	switch (type) {
 		case 'ObjectType':
 			return [
@@ -159,6 +162,7 @@ export function defaultValueForType(type: InspectorTypeName): (() => any) {
 		case 'number': case 'int': case 'float': return () => 0
 		case 'string': return () => ""
 		case 'boolean': return () => false
+		case 'ActionPoint': return () => ({ _type: 'ActionPoint', x: 0, y: 0, angle: 0, string: "" })
 	}
 	throw new Error(`No default value defined for ${type}`)
 }

@@ -15,7 +15,7 @@ export const dataApi = baseApi.injectEndpoints({
 				}
 				return blob
 			}),
-			providesTags: (_r, _e, arg) => ['Data', { type: 'Image', id: arg }],
+			providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }],
 		}),
 		getImageMetadata: builder.query<ImageMetadata, number>({
 			queryFn: queryFn(async (id) => {
@@ -29,6 +29,13 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			invalidatesTags: (_r, _e, arg) => [{ type: 'ImageMetadata', id: arg.id }]
 		}),
+		isImageOverridden: builder.query<boolean, number>({
+			queryFn: queryFn(async (id) => {
+				return await invoke('is_image_overridden', { id })
+			}),
+			providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
+		}),
+
 	}),
 })
 
