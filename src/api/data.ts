@@ -21,13 +21,13 @@ export const dataApi = baseApi.injectEndpoints({
 			queryFn: queryFn(async (id) => {
 				return await invoke('get_image_metadata', { id })
 			}),
-			providesTags: ['ImageMetadata']
+			providesTags: (r) => r ? [{ type: 'ImageMetadata', id: r.id }] : []
 		}),
 		setImageMetadata: builder.mutation<void, ImageMetadata>({
 			queryFn: queryFn(async (data) => {
 				return await invoke('set_image_metadata', { data })
 			}),
-			invalidatesTags: ['ImageMetadata']
+			invalidatesTags: (_r, _e, arg) => [{ type: 'ImageMetadata', id: arg.id }]
 		}),
 	}),
 })

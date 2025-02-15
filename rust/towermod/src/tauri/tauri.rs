@@ -74,6 +74,7 @@ pub fn run() {
 				selectors::get_editor_plugin,
 				selectors::get_image_metadata,
 				thunks::set_image_metadata,
+				thunks::image_dump_dir_path,
 				thunks::new_project,
 				thunks::load_project_preflight,
 				thunks::load_project,

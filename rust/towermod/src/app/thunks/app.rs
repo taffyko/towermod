@@ -689,6 +689,13 @@ pub async fn get_patched_image_block_load_game(dir_or_zip: Option<PathBuf>, meta
 	images::get_patched_image_block(images, dir_or_zip, metadata).await
 }
 
+#[command]
+pub async fn image_dump_dir_path() -> Result<PathBuf> {
+	let game = selectors::get_game().await.context("No game set")?;
+	Ok(game.image_dump_dir_path())
+}
+
+
 // async fn hydrate_image_block(image_metadatas: Vec<ImageMetadata>) -> Result<()> {
 // 	let game = selectors::get_game().await.context("No game set")?;
 // 	let base_image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;

@@ -2,14 +2,25 @@
  * Contains implementations for base inspector components for types that are not application-specific
  */
 import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
-import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo } from "./inspectorUtil"
+import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo, inferPropertyInfoFromValue } from "./inspectorUtil"
 import React, { useMemo, useState } from "react"
 
 export const InspectorObject = (props: {
-	pinfo: ObjectPropertyInfo,
+	pinfo?: ObjectPropertyInfo,
+	// supply value instead to infer property info from it
+	value?: InspectorObjectValue,
 	onChange: (v: InspectorObjectValue) => void
 }) => {
-	const { pinfo: objPinfo, onChange } = props
+	const { value: inputValue, pinfo, onChange } = props
+
+	let objPinfo: ObjectPropertyInfo;
+	if (pinfo) {
+		objPinfo = pinfo
+	} else if (inputValue) {
+		objPinfo = inferPropertyInfoFromValue(inputValue, undefined, 'root') as any
+	} else {
+		return null
+	}
 
 	const onPropertyChange = (key: InspectorKeyTypes, value: any) => {
 		const newObj = { ...objPinfo.value, [key]: value }
@@ -17,6 +28,7 @@ export const InspectorObject = (props: {
 	}
 
 	const propertyInfos = useMemo(() => objectPropertyInfos(objPinfo), [objPinfo.value])
+
 	const propertyComponents: React.ReactNode[] = useMemo(() => propertyInfos.map(pinfo => {
 		if (pinfo.hidden) { return null }
 
@@ -107,6 +119,9 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 
 	// adding properties
 	const [newKeyText, setNewKeyText] = useState("")
+	if (!dictPinfo.valueTypes) {
+		throw new Error(`Need to define 'valueTypes' for ${dictPinfo.parent?.type}.${dictPinfo.parent?.key}`)
+	}
 	const [newValueType, setNewValueType] = useState(dictPinfo.valueTypes[0])
 	const getDefaultValue = defaultValueForType(newValueType)
 	const addProperty = getDefaultValue ? () => {
@@ -165,7 +180,7 @@ function getValueComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): 
 	}
 	switch (pinfo.type) {
 		case 'Array':
-			return <InspectorArray pinfo={pinfo} onChange={onChange} />
+			return <InspectorArray pinfo={pinfo as any} onChange={onChange} />
 		case 'Dictionary':
 			return <InspectorDictionary pinfo={pinfo as any} onChange={onChange} />
 		case 'number': case 'int': case 'float':

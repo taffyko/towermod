@@ -13,8 +13,8 @@ export const customNumericSubtypeNames = [] as const
 export const customStringSubtypeNames = [] as const
 
 /** Provides additional property type/metadata information for each type */
-export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo, key: InspectorKeyTypes) {
-	const type = obj['type'];
+export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo, key: InspectorKeyTypes) {
+	const type = obj['_type'];
 	switch (type) {
 		case 'Animation':
 			override(type, {
@@ -63,16 +63,20 @@ export function propertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pi
 				conditions: { valueTypes: ['FeatureDescriptor'] },
 				expressions: { valueTypes: ['FeatureDescriptor'] },
 			})
+		break; case 'ImageMetadata':
+			override(type, {
+				collisionMask: { hidden: true },
+			})
 	}
 
-	function override<T extends InspectorObjectValue['type']>(_type: T, overrides: Partial<Record<keyof TypeNameToValue[T], Partial<AnyPropertyInfo>>>) {
-		Object.assign(pinfo, overrides[key])
+	function override<T extends InspectorObjectValue['_type']>(_type: T, overrides: Partial<Record<keyof TypeNameToValue[T], Partial<AnyPropertyInfo>>>) {
+		Object.assign(pinfo, (overrides as any)[key])
 	}
 }
 
 /** Provide additional virtual properties for each type, to display in the inspector */
 export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: ParentPropertyInfo): AnyPropertyInfo[] | undefined {
-	const type = obj['type']
+	const type = obj['_type']
 	switch (type) {
 		case 'ObjectType':
 			return [
@@ -111,7 +115,7 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 	}
 	if (parentPinfo && objPinfo && typeof objPinfo.value === 'object' && (objPinfo.type as any) !== 'Dictionary') {
 		const obj = objPinfo.value as InspectorObjectValue
-		const type = obj.type
+		const type = obj._type
 		switch (type) {
 			case 'AnimationFrame':
 				switch (pinfo.key) {
@@ -121,26 +125,26 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 			break; case 'ObjectInstance':
 				switch (pinfo.key) {
 					case 'objectTypeId':
-						return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
+						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
 					case 'privateVariables':
 						return <PrivateVariables pinfo={pinfo as any} />
 				}
 			break; case 'ObjectType':
 				switch (pinfo.key) {
 					case 'instances':
-						return <IdLink lookup={{ type: 'ObjectInstance', id: pinfo.value as any }} />
+						return <IdLink lookup={{ _type: 'ObjectInstance', id: pinfo.value as any }} />
 				}
 			break; case 'Behavior':
 				switch (pinfo.key) {
 					case 'objectTypeId':
-						return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
+						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
 				}
 			break; case 'Family':
 				switch (pinfo.key) {
 					case 'objectTypeIds':
 						if (collectionElement) {
 							// FIXME: this
-							return <IdLink lookup={{ type: 'ObjectType', id: pinfo.value as any }} />
+							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
 						}
 				}
 		}
@@ -150,12 +154,12 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 }
 
 export function defaultValueForType<T extends InspectorTypeName>(type: T): undefined | (() => TypeNameToValue[T])
-export function defaultValueForType(type: InspectorTypeName): undefined | (() => any) {
+export function defaultValueForType(type: InspectorTypeName): (() => any) {
 	switch (type) {
 		case 'number': case 'int': case 'float': return () => 0
 		case 'string': return () => ""
 		case 'boolean': return () => false
 	}
-	return undefined
+	throw new Error(`No default value defined for ${type}`)
 }
 

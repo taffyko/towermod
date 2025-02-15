@@ -23,7 +23,7 @@ import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';
 
 function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {
-	switch (obj.type) {
+	switch (obj._type) {
 		case 'Layout':
 			return obj.layers
 		case 'LayoutLayer':
@@ -69,7 +69,7 @@ const getNodeData = (
 
 	return {
 		data: {
-			id: `${obj.type}-${id}`,
+			id: `${obj._type}-${id}`,
 			isLeaf: !getObjChildren(obj).length,
 			isOpenByDefault: false,
 			name,
@@ -81,7 +81,7 @@ const getNodeData = (
 };
 
 const getTreeItemId = (obj: UniqueObjectLookup) => {
-	const objType = obj.type;
+	const objType = obj._type;
 	let id: string | number
 	switch (objType) {
 		case 'Layout':
@@ -107,7 +107,7 @@ const getTreeItemId = (obj: UniqueObjectLookup) => {
 		break; default:
 			assertUnreachable(objType)
 	}
-	return `${obj.type}-${id}`
+	return `${obj._type}-${id}`
 }
 
 const defaultTextStyle = {marginLeft: 10};

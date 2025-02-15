@@ -174,6 +174,13 @@ export const baseApi = createApi({
 			}),
 		}),
 
+		imageDumpDirPath: builder.query<string | undefined, void>({
+			queryFn: queryFn(async () => {
+				return await invoke('image_dump_dir_path') ?? undefined
+			}),
+			providesTags: ['Game']
+		}),
+
 		modCacheExists: builder.query<boolean, ModInfo>({
 			queryFn: queryFn(async (modInfo) => {
 				return await invoke('mod_cache_exists', { modInfo })
@@ -246,9 +253,11 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: (_r, _e, arg) => ['Data', { type: 'Image', id: arg }],
 		}),
-		getImageMetadata: builder.query<ImageMetadata, number>({
+		getImageMetadata: builder.query<ImageMetadata | undefined, number>({
 			queryFn: queryFn(async (id) => {
-				return await invoke('get_image_metadata', { id })
+				const metadata: ImageMetadata = await invoke('get_image_metadata', { id }) ?? undefined
+				if (metadata) { metadata._type = 'ImageMetadata' }
+				return metadata
 			}),
 			providesTags: ['ImageMetadata']
 		}),

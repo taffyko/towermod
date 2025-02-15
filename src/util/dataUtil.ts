@@ -2,7 +2,7 @@ import { UniqueTowermodObject, findObjectTypeById, State } from "../reducers/dat
 import { assert, assertUnreachable, unwrap } from "./util";
 
 export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
-	const objTypeName = obj.type
+	const objTypeName = obj._type
 	switch (objTypeName) {
 		case 'Layout':
 			return `Layout: ${obj.name}`

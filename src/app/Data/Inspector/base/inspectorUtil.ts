@@ -1,5 +1,5 @@
 import { float, int } from "@/util/util"
-import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, propertyInfoOverrides } from "../customInspectorUtil"
+import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, applyPropertyInfoOverrides } from "../customInspectorUtil"
 
 export type InspectorObjectValue = CustomInspectorObjects
 export type InspectorKeyTypes = string | number
@@ -26,7 +26,7 @@ export type TypeNameToValue = {
 	'Array': Array<unknown>,
 	'Dictionary': Record<string | number, unknown>
 } & {
-	[T in InspectorObjectValue as T['type']]: T
+	[T in InspectorObjectValue as T['_type']]: T
 }
 export type InspectorTypeName = keyof TypeNameToValue
 
@@ -65,7 +65,7 @@ export type SimplePropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> 
 export type ObjectPropertyInfo<T extends InspectorObjectValue = InspectorObjectValue> = BasePropertyInfo & {
 	key: keyof T,
 	value: T,
-	type: T['type'],
+	type: T['_type'],
 }
 
 
@@ -84,7 +84,8 @@ export function inferPropertyInfoFromArrayValue(element: AnyInspectorValue, pare
 	return pinfo
 }
 
-export function speciateType(type: keyof TypeNameToValue, types: Array<keyof TypeNameToValue>): keyof TypeNameToValue {
+
+function speciateType(type: keyof TypeNameToValue, types: Array<keyof TypeNameToValue>): keyof TypeNameToValue {
 	switch (type) {
 		case 'number':
 			for (const subtype of numericSubtypeNames) {
@@ -144,8 +145,8 @@ export function inferTypeFromValue(value: AnyInspectorValue): InspectorTypeName 
 	if (value instanceof Array) {
 		return 'Array'
 	} else if (value instanceof Object) {
-		if ('type' in value) {
-			return (value as InspectorObjectValue)['type']
+		if ('_type' in value) {
+			return (value as InspectorObjectValue)['_type']
 		} else {
 			return 'Dictionary'
 		}
@@ -163,11 +164,11 @@ export function inferTypeFromValue(value: AnyInspectorValue): InspectorTypeName 
 
 function objectPropertyInfo(obj: InspectorObjectValue, objPinfo: ObjectPropertyInfo | undefined, key: InspectorKeyTypes): AnyPropertyInfo
 {
-	const value = obj[key]
-	if (key === 'type') { return { key, value, type: 'string', hidden: true } }
+	const value = (obj as any)[key]
+	if (key === '_type') { return { key, value, type: 'string', hidden: true } }
 
 	const pinfo = inferPropertyInfoFromValue(value, objPinfo, key);
-	propertyInfoOverrides(obj, pinfo, key as any)
+	applyPropertyInfoOverrides(obj, pinfo, key)
 
 	return pinfo
 }

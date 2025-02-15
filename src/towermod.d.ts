@@ -33,13 +33,13 @@ export interface Animation {
   pingPong: boolean
   frames: Array<AnimationFrame>
   subAnimations: Array<Animation>
-  type: 'Animation'
+  _type: 'Animation'
 }
 
 export interface AnimationFrame {
   duration: float
   imageId: int
-  type: 'AnimationFrame'
+  _type: 'AnimationFrame'
 }
 
 export interface AppBlock {
@@ -73,7 +73,7 @@ export interface AppBlock {
   layoutIndex: int
   multisamples: int
   textureLoadingMode: TextureLoadingMode
-  type: 'AppBlock'
+  _type: 'AppBlock'
 }
 
 export interface Behavior {
@@ -83,19 +83,19 @@ export interface Behavior {
   name: string
   data: Array<number>
   descriptors?: FeatureDescriptors
-  type: 'Behavior'
+  _type: 'Behavior'
 }
 
 export interface BehaviorControl {
   name: string
   vk: int
   player: int
-  type: 'BehaviorControl'
+  _type: 'BehaviorControl'
 }
 
 export interface Container {
   objectIds: Array<number>
-  type: 'Container'
+  _type: 'Container'
 }
 
 export interface CPropItem {
@@ -171,20 +171,20 @@ export interface Family {
   name: string
   objectTypeIds: Array<number>
   privateVariables: Array<PrivateVariable>
-  type: 'Family'
+  _type: 'Family'
 }
 
 export interface FeatureDescriptor {
   scriptName: string
   paramCount: int
-  type: 'FeatureDescriptor'
+  _type: 'FeatureDescriptor'
 }
 
 export interface FeatureDescriptors {
   actions: Array<FeatureDescriptor>
   conditions: Array<FeatureDescriptor>
   expressions: Array<FeatureDescriptor>
-  type: 'FeatureDescriptors'
+  _type: 'FeatureDescriptors'
 }
 
 export declare const enum FpsMode {
@@ -214,7 +214,7 @@ export interface GlobalVariable {
   name: string
   varType: int
   value: string
-  type: 'GlobalVariable'
+  _type: 'GlobalVariable'
 }
 
 export interface ImageMetadata {
@@ -226,6 +226,7 @@ export interface ImageMetadata {
   collisionHeight: int
   collisionPitch: int
   collisionMask: Array<number>
+	_type: 'ImageMetadata'
 }
 
 export interface ImageResource {
@@ -266,7 +267,7 @@ export interface Layout {
   layers: Array<LayoutLayer>
   imageIds: Array<number>
   textureLoadingMode: TextureLoadingMode
-  type: 'Layout'
+  _type: 'Layout'
 }
 
 export interface LayoutLayer {
@@ -291,7 +292,7 @@ export interface LayoutLayer {
   enable3D: boolean
   clearDepthBuffer: boolean
   objects: Array<ObjectInstance>
-  type: 'LayoutLayer'
+  _type: 'LayoutLayer'
 }
 
 /** Metadata about an exported mod, found in its manifest.toml */
@@ -327,13 +328,13 @@ export interface ObjectInstance {
   privateVariables: Array<string>
   data: Array<number>
   key: int
-  type: 'ObjectInstance'
+  _type: 'ObjectInstance'
 }
 
 export interface ObjectTrait {
   name: string
   objectTypeIds: Array<number>
-  type: 'ObjectTrait'
+  _type: 'ObjectTrait'
 }
 
 export interface ObjectType {
@@ -345,7 +346,7 @@ export interface ObjectType {
   destroyWhen: DisableShaderWhen
   privateVariables: Array<PrivateVariable>
   descriptors?: FeatureDescriptors
-  type: 'ObjectType'
+  _type: 'ObjectType'
 }
 
 export interface Param {
@@ -380,7 +381,7 @@ export interface PluginStringTable {
 export interface PrivateVariable {
   name: string
   valueType: PrivateVariableType
-  type: 'PrivateVariable'
+  _type: 'PrivateVariable'
 }
 
 export declare const enum PrivateVariableType {

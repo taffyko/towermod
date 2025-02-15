@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable } from "@towermod";
+import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable, ImageMetadata } from "@towermod";
 // import { PrivateVariableType } from "@towermod";
 import { actions as mainActions } from './main'
 import { addRawReducers, assert, assertUnreachable, unwrap } from "@/util/util";
@@ -82,33 +82,33 @@ export function findObjectInstances(state: State, objTypeId: number) {
 	return objects
 }
 
-export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | FeatureDescriptors | FeatureDescriptor | PrivateVariable
+export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | FeatureDescriptors | FeatureDescriptor | PrivateVariable | ImageMetadata
 
 export const uniqueObjectTypes = new Set([
 	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock'
 ] as const)
 export type UniqueObjectTypes = (typeof uniqueObjectTypes) extends Set<infer T> ? T : never
 /** Towermod objects that possess unique IDs, making it possible to look them up */
-export type UniqueTowermodObject = Extract<TowermodObject, { type: UniqueObjectTypes }>
+export type UniqueTowermodObject = Extract<TowermodObject, { _type: UniqueObjectTypes }>
 /** Minimum properties needed to lookup each object */
 export type UniqueObjectLookup =
-	Pick<Layout, 'type' | 'name'>
-	| Pick<LayoutLayer, 'type' | 'id'>
-	| Pick<ObjectInstance, 'type' | 'id'>
-	| Pick<Animation, 'type' | 'id'>
-	| Pick<Behavior, 'type' | 'movIndex' | 'objectTypeId'>
-	| Pick<Container, 'type' | 'objectIds'>
-	| Pick<Family, 'type' | 'name'>
-	| Pick<ObjectType, 'type' | 'id'>
-	| Pick<ObjectTrait, 'type' | 'name'>
-	| Pick<AppBlock, 'type'>
-export type ObjectForType<T extends TowermodObject['type']> = Extract<TowermodObject, { type: T }>
-export type LookupForType<T extends UniqueObjectLookup['type']> = Extract<UniqueObjectLookup, { type: T }>
+	Pick<Layout, '_type' | 'name'>
+	| Pick<LayoutLayer, '_type' | 'id'>
+	| Pick<ObjectInstance, '_type' | 'id'>
+	| Pick<Animation, '_type' | 'id'>
+	| Pick<Behavior, '_type' | 'movIndex' | 'objectTypeId'>
+	| Pick<Container, '_type' | 'objectIds'>
+	| Pick<Family, '_type' | 'name'>
+	| Pick<ObjectType, '_type' | 'id'>
+	| Pick<ObjectTrait, '_type' | 'name'>
+	| Pick<AppBlock, '_type'>
+export type ObjectForType<T extends TowermodObject['_type']> = Extract<TowermodObject, { _type: T }>
+export type LookupForType<T extends UniqueObjectLookup['_type']> = Extract<UniqueObjectLookup, { _type: T }>
 
 
-export function findObject<T extends UniqueObjectLookup>(state: State, obj: T): ObjectForType<T['type']> {
+export function findObject<T extends UniqueObjectLookup>(state: State, obj: T): ObjectForType<T['_type']> {
 	let target: any = null
-	const type = obj.type;
+	const type = obj._type;
 	switch (type) {
 		case 'ObjectInstance':
 			target = findObjectById(state, obj.id)
@@ -170,7 +170,7 @@ export const slice = createSlice({
 				return
 			}
 			const valueType = typeof initialValue === 'number' ? 0 : 1 // PrivateVariableType.Integer : PrivateVariableType.String
-			type.privateVariables.push({ name: prop, valueType, type: 'PrivateVariable' })
+			type.privateVariables.push({ name: prop, valueType, _type: 'PrivateVariable' })
 			const instances = findObjectInstances(state, objectTypeId)
 			for (const instance of instances) {
 				instance.privateVariables.push(String(initialValue))
