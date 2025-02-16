@@ -1,0 +1,12 @@
+.previewContainer {
+	flex-grow: 1;
+}
+img.preview {
+	position: absolute;
+	object-fit: fill;
+	background-color: var(--color-bg);
+}
+canvas.preview {
+	position: absolute;
+	border: solid 1px white;
+}

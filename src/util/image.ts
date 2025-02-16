@@ -1,4 +1,4 @@
-function createCollisionMask(image: HTMLImageElement): { mask: Uint8Array, width: number, height: number, pitch: number } {
+export function createCollisionMask(image: HTMLImageElement): { mask: Uint8Array, width: number, height: number, pitch: number } {
 	// Determine size of our buffer. All buffers are rounded up to 128 bit pitch, just in case SSE can be used.
 	const alignPitchBits = 64;
 	const alignPitchBytes = alignPitchBits / 8;
@@ -58,7 +58,7 @@ function imageToCanvas(image: HTMLImageElement) {
 	return context
 }
 
-function imageFromCollisionMask(bits: Uint8Array, pitch: number, width: number, height: number): HTMLImageElement {
+export function imageFromCollisionMask(bits: Uint8Array, pitch: number, width: number, height: number): HTMLImageElement {
 	const canvas = document.createElement('canvas');
 	canvas.width = width;
 	canvas.height = height;

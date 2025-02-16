@@ -1,8 +1,8 @@
 import { api, useGameImageUrl } from "@/api";
 import { Button } from "@/components/Button";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { InspectorObject } from "../Data/Inspector";
-import { assert, copyFile, deleteFile, filePicker, openFolder, useTwoWayBinding } from "@/util";
+import { assert, copyFile, deleteFile, filePicker, imageFromCollisionMask, openFolder, useRerender, useStateRef, useTwoWayBinding } from "@/util";
 import { toast } from "../Toast";
 import { spin } from "../GlobalSpinner";
 import { throwOnError } from "@/components/Error";
@@ -10,11 +10,15 @@ import { dispatch } from "@/store";
 import { SpinBox } from "@/components/SpinBox";
 import { Toggle } from "@/components/Toggle";
 import { win32 as path } from "path";
+import { ConfirmModal, openModal } from "../Modal";
+import Style from './Images.module.scss'
 import IconButton from "@/components/IconButton";
+
 import folderOpenImg from '@/icons/folderOpen.svg'
 import uploadImg from '@/icons/upload.svg'
 import closeImg from '@/icons/close.svg'
-import { ConfirmModal, openModal } from "../Modal";
+import refreshImg from '@/icons/refresh.svg'
+import { ImageMetadata } from "@towermod";
 
 export default function Images() {
 	const [dumpImages] = api.useDumpImagesMutation();
@@ -22,7 +26,6 @@ export default function Images() {
 	const { data: project } = api.useGetProjectQuery();
 
 	const [imageId, setImageId] = useState(0)
-	const href = useGameImageUrl(imageId);
 	const { data: savedMetadata } = api.useGetImageMetadataQuery(imageId)
 	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
 	const [setSavedMetadata] = api.useSetImageMetadataMutation();
@@ -42,24 +45,23 @@ export default function Images() {
 		</div>
 		{ project ? <>
 			<div className="hbox gap">
-				{/* <Button onClick={onClickReloadSelectedImage}>Reload selected image</Button> */}
-				<Button onClick={onClickReloadAllImages}>Reload images</Button>
 				<Button onClick={onClickSetImage}>Set image</Button>
 				<Toggle /> Show collision
 			</div>
-			<SpinBox value={imageId} onChange={setImageId} />
-			<div className="hbox gap">
+			<div className="hbox gap" style={{ overflow: 'hidden' }}>
 				<div className="vbox gap grow">
-					<div className="hbox gap">
+					<div className="hbox gap center">
+						<SpinBox value={imageId} onChange={setImageId} />
 						<IconButton src={folderOpenImg} onClick={onClickBrowseOverrides} />
 						<IconButton src={uploadImg} onClick={onClickSetImage} />
+						<IconButton src={refreshImg} onClick={onClickReloadAllImages} />
 						{ isOverridden ? <IconButton src={closeImg} onClick={onClickClearImage} /> : null }
 						<Button onClick={onClickSetMask}>Set mask</Button>
 					</div>
-					{href ? <img src={href} /> : <div>No image for ID {imageId}</div>}
+					<ImagePreview imageId={imageId} metadata={metadata} />
 				</div>
 				<div className="vbox gap grow">
-					<InspectorObject value={metadata} onChange={setMetadata} />
+					<InspectorObject value={metadata} onChange={setMetadata as any} />
 				</div>
 			</div>
 		</> : null }
@@ -112,4 +114,51 @@ export default function Images() {
 		toast("Opened dumped images folder")
 		openFolder(imageDumpDir)
 	}
+}
+
+
+function useDebounce(fn: () => void, ms: number) {
+	const ref = useRef(0)
+	clearTimeout(ref.current)
+	ref.current = window.setTimeout(fn, ms)
+}
+
+function ImagePreview(props: {
+	imageId: number,
+	metadata?: ImageMetadata,
+}) {
+	const { imageId, metadata } = props;
+	const imgUrl = useGameImageUrl(imageId);
+	const rerender = useRerender();
+
+	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
+	const width = 100;
+	const height = Math.round(((imgEl?.naturalHeight ?? 0) / (imgEl?.naturalWidth ?? 0)) * width);
+
+	const collisionImg = useMemo(() => {
+		if (!metadata) { return }
+		return imageFromCollisionMask(new Uint8Array(metadata.collisionMask), metadata.collisionPitch, metadata.collisionWidth, metadata.collisionHeight)
+	}, [metadata])
+
+	const [canvasEl, setCanvasEl] = useStateRef<HTMLCanvasElement>();
+	useDebounce(() => {
+		if (canvasEl) {
+			canvasEl.width = metadata?.collisionWidth ?? width
+			canvasEl.height = metadata?.collisionHeight ?? height
+			const context = canvasEl.getContext('2d')!
+			context.clearRect(0, 0, canvasEl.width, canvasEl.height)
+			if (metadata && collisionImg) {
+				context.drawImage(collisionImg, 0, 0)
+			}
+		}
+	}, 5)
+
+	if (!imgUrl) { return <span>No image</span> }
+
+	return <div className={Style.previewContainer}>
+		<img onLoad={() => rerender()} width={width} height={height} ref={setImgEl} className={Style.preview} src={imgUrl} />
+		{ metadata ?
+			<canvas id="collisionCanvas" style={{ width, height }} ref={setCanvasEl} className={Style.preview} />
+		: null}
+	</div>
 }

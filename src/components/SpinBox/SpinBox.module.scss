@@ -1,0 +1,21 @@
+.spinbox {
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	border-radius: var(--border-radius);
+
+	&:not(:disabled) {
+		border: solid 1px var(--color-border);
+		&:not(:open) {
+			&:hover {
+				background-color: var(--color-bg-hover);
+			}
+			&:pressed {
+				background-color: var(--color-bg-hover);
+			}
+		}
+	}
+
+	padding-left: var(--gap-s);
+	height: 1.5rem;
+	appearance: none;
+}

@@ -37,12 +37,3 @@ export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
 	}
 
 }
-
-
-export function imageFromCollisionMask() {
-
-}
-
-export function createCollisionMask() {
-
-}
