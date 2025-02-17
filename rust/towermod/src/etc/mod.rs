@@ -5,6 +5,7 @@ mod tcr;
 mod util;
 mod filesystem;
 mod newtype;
+mod pipe;
 pub mod game_images;
 pub mod macros;
 
