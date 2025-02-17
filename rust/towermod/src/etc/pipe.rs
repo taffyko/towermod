@@ -55,9 +55,10 @@ fn listen_pipe() -> Result<!> {
 	}
 }
 
-fn exec_command() {
+fn exec_command(msg: &str) {
 	// TODO: Dispatch appropriate task/event
 	// TODO: Handle startup commands from argv
 
 	// tauri::async_runtime::spawn(task)
+	todo!()
 }
