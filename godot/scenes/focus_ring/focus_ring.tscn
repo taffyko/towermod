@@ -1,7 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://it66mj8cvd43"]
-
-[ext_resource type="Script" path="res://scenes/focus_ring/focus_ring.gd" id="1_54wau"]
-
-[node name="FocusRing" type="Node2D"]
-top_level = true
-script = ExtResource("1_54wau")

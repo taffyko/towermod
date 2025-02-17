@@ -1,3 +1,6 @@
+//! Structures in this module must not be changed, lest backwards compatibility with existing mods be broken.
+//! Serde is used to export and load patches, so the serialized representation must remain stable between towermod versions.
+
 pub const CAP_BEGINEVENTLIST: u8 = 1;
 pub const CAP_BEGINEVENT: u8 = 2;
 pub const CAP_BEGINCONDITIONS: u8 = 3;
@@ -17,6 +20,8 @@ pub const CAP_ENDGROUP: u8 = 16;
 
 use num_derive::{FromPrimitive, ToPrimitive};
 use serde::{Serialize, Deserialize};
+use serde_alias::serde_alias;
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Token {
@@ -86,7 +91,9 @@ pub enum TextureLoadingMode {
 	LoadOnLayoutStart,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[serde_alias(SnakeCase, CamelCase)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EventBlock {
 	pub sheet_names: Vec<String>,
 	pub layout_sheets: Vec<Vec<SomeEvent>>,
@@ -101,15 +108,18 @@ pub enum SomeEvent {
 	EventInclude(i32),
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EventGroup {
 	pub active: bool,
 	pub name: String,
 	pub events: Vec<SomeEvent>,
-
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Event {
 	pub line_number: i32,
 	pub sheet_id: i32,
@@ -118,7 +128,9 @@ pub struct Event {
 	pub events: Vec<SomeEvent>,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EventCondition {
 	pub object_id: i32,
 	pub cond_id: i32,
@@ -127,7 +139,9 @@ pub struct EventCondition {
 	pub params: Vec<Vec<Token>>,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EventAction {
 	pub object_id: i32,
 	pub action_id: i32,
@@ -135,7 +149,9 @@ pub struct EventAction {
 	pub params: Vec<Vec<Token>>,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LevelBlock {
 	pub object_types: Vec<ObjectType>,
 	pub behaviors: Vec<Behavior>,
@@ -146,7 +162,9 @@ pub struct LevelBlock {
 	pub animations: Vec<Animation>,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ObjectType {
 	pub id: i32,
 	pub name: String,
@@ -156,17 +174,32 @@ pub struct ObjectType {
 	pub destroy_when: DisableShaderWhen,
 	pub private_variables: Vec<PrivateVariable>,
 	pub descriptors: Option<FeatureDescriptors>,
+
+	#[serde(skip, default = "ObjectType::type_name")]
+	pub _type: String,
+}
+impl ObjectType {
+	pub fn type_name() -> String { String::from("ObjectType") }
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureDescriptors {
 	pub actions: Vec<FeatureDescriptor>,
 	pub conditions: Vec<FeatureDescriptor>,
 	pub expressions: Vec<FeatureDescriptor>,
+
+	#[serde(skip, default = "FeatureDescriptors::type_name")]
+	pub _type: String,
+}
+impl FeatureDescriptors {
+	pub fn type_name() -> String { String::from("FeatureDescriptors") }
 }
 
-
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Behavior {
 	pub object_type_id: i32,
 	pub new_index: i32,
@@ -174,28 +207,60 @@ pub struct Behavior {
 	pub name: String,
 	pub data: Vec<u8>,
 	pub descriptors: Option<FeatureDescriptors>,
+
+	#[serde(skip, default = "Behavior::type_name")]
+	pub _type: String,
+}
+impl Behavior {
+	pub fn type_name() -> String { String::from("Behavior") }
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Container {
 	pub object_ids: Vec<i32>,
+
+	#[serde(skip, default = "Container::type_name")]
+	pub _type: String,
+}
+impl Container {
+	pub fn type_name() -> String { String::from("Container") }
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Family {
 	// Unique name.
 	pub name: String,
 	pub object_type_ids: Vec<i32>,
 	pub private_variables: Vec<PrivateVariable>,
+
+	#[serde(skip, default = "Family::type_name")]
+	pub _type: String,
+}
+impl Family {
+	pub fn type_name() -> String { String::from("Family") }
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ObjectTrait {
 	pub name: String,
 	pub object_type_ids: Vec<i32>,
+
+	#[serde(skip, default = "ObjectTrait::type_name")]
+	pub _type: String,
+}
+impl ObjectTrait {
+	pub fn type_name() -> String { String::from("ObjectTrait") }
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Layout {
 	/// Unique name.
 	pub name: String,
@@ -208,9 +273,18 @@ pub struct Layout {
 	pub layers: Vec<LayoutLayer>,
 	pub image_ids: Vec<i32>,
 	pub texture_loading_mode: TextureLoadingMode,
+
+	#[serde(skip, default = "Layout::type_name")]
+	pub _type: String,
+}
+impl Layout {
+	pub fn type_name() -> String { String::from("Layout") }
 }
 
+
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LayoutLayer {
 	pub id: i32,
 	pub name: String,
@@ -230,10 +304,18 @@ pub struct LayoutLayer {
 	pub background_color: i32,
 	pub force_own_texture: bool,
 	pub sampler: LayerSamplerMode,
+	#[serde(alias = "enable_3d")]
 	pub enable_3d: bool,
 	pub clear_depth_buffer: bool,
 	pub objects: Vec<ObjectInstance>,
+
+	#[serde(skip, default = "LayoutLayer::type_name")]
+	pub _type: String,
 }
+impl LayoutLayer {
+	pub fn type_name() -> String { String::from("LayoutLayer") }
+}
+
 
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum LayerSamplerMode {
@@ -242,7 +324,9 @@ pub enum LayerSamplerMode {
 	Linear,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ObjectInstance {
 	pub id: i32,
 	pub object_type_id: i32,
@@ -255,9 +339,18 @@ pub struct ObjectInstance {
 	pub private_variables: Vec<String>,
 	pub data: Vec<u8>,
 	pub key: i32,
+
+	#[serde(skip, default = "ObjectInstance::type_name")]
+	pub _type: String,
+}
+impl ObjectInstance {
+	pub fn type_name() -> String { String::from("ObjectInstance") }
 }
 
+
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Animation {
 	pub id: i32,
 	pub name: String,
@@ -271,12 +364,27 @@ pub struct Animation {
 	pub ping_pong: bool,
 	pub frames: Vec<AnimationFrame>,
 	pub sub_animations: Vec<Animation>,
+
+	#[serde(skip, default = "Animation::type_name")]
+	pub _type: String,
+}
+impl Animation {
+	pub fn type_name() -> String { String::from("Animation") }
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AnimationFrame {
 	pub duration: f32,
 	pub image_id: i32,
+
+	#[serde(skip, default = "AnimationFrame::type_name")]
+	pub _type: String,
+
+}
+impl AnimationFrame {
+	pub fn type_name() -> String { String::from("AnimationFrame") }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
@@ -300,30 +408,54 @@ pub enum DisableShaderWhen {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
 pub enum PrivateVariableType {
+	/// why is this `Integer`? are you sure it can't support decimal values as well?
 	Integer,
 	String,
 }
 
+/// Record on an ObjectType that describes the names and types of each object instance
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PrivateVariable {
 	pub name: String,
 	pub value_type: PrivateVariableType,
+
+	#[serde(skip, default = "PrivateVariable::type_name")]
+	pub _type: String,
+}
+impl PrivateVariable {
+	pub fn type_name() -> String { String::from("PrivateVariable") }
 }
 
+
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureDescriptor {
 	pub script_name: String,
 	pub param_count: u32,
+
+	#[serde(skip, default = "FeatureDescriptor::type_name")]
+	pub _type: String,
+}
+impl FeatureDescriptor {
+	pub fn type_name() -> String { String::from("FeatureDescriptor") }
 }
 
+
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ActionPoint {
 	pub x: i32,
 	pub y: i32,
 	pub string: String,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImageResource {
 	pub id: i32,
 	pub hotspot_x: i32,
@@ -336,15 +468,17 @@ pub struct ImageResource {
 	pub collision_mask: Vec<u8>,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImageMetadata {
 	pub id: i32,
 	pub hotspot_x: i32,
 	pub hotspot_y: i32,
 	pub apoints: Vec<ActionPoint>,
-	// always the same as the image's width in pixels
+	// typically the same as the image's width in pixels
 	pub collision_width: u32,
-	// always the same as the image's height in pixels
+	// typically the same as the image's height in pixels
 	pub collision_height: u32,
 	pub collision_pitch: i32,
 	pub collision_mask: Vec<u8>,
@@ -352,19 +486,24 @@ pub struct ImageMetadata {
 
 impl From<ImageResource> for ImageMetadata {
 	fn from(o: ImageResource) -> Self {
-		let ImageResource { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask, .. } = o;
-		ImageMetadata { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask }
+		o.split().1
 	}
 }
 
 impl ImageResource {
-	pub fn new(metadata: ImageMetadata, data: Vec<u8>) -> Self {
+	pub fn new(data: Vec<u8>, metadata: ImageMetadata) -> Self {
 		let ImageMetadata { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask } = metadata;
 		ImageResource { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask, data }
 	}
+	pub fn split(self) -> (Vec<u8>, ImageMetadata) {
+		let ImageResource { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask, data } = self;
+		(data, ImageMetadata { id, hotspot_x, hotspot_y, apoints, collision_width, collision_height, collision_pitch, collision_mask })
+	}
 }
 
+#[serde_alias(SnakeCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AppBlock {
 	pub name: String,
 	pub window_width: i32,
@@ -396,20 +535,43 @@ pub struct AppBlock {
 	pub layout_index: i32,
 	pub multisamples: u32,
 	pub texture_loading_mode: TextureLoadingMode,
+
+
+	#[serde(default = "AppBlock::type_name")]
+	pub _type: String,
+}
+impl AppBlock {
+	pub fn type_name() -> String { String::from("AppBlock") }
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlobalVariable {
 	pub name: String,
 	pub var_type: i32,
 	pub value: String,
+
+	#[serde(skip, default = "GlobalVariable::type_name")]
+	pub _type: String,
+}
+impl GlobalVariable {
+	pub fn type_name() -> String { String::from("GlobalVariable") }
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BehaviorControl {
 	pub name: String,
 	pub vk: i32,
 	pub player: i32,
+
+	#[serde(skip, default = "BehaviorControl::type_name")]
+	pub _type: String,
+}
+impl BehaviorControl {
+	pub fn type_name() -> String { String::from("BehaviorControl") }
 }
 
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]

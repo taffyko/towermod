@@ -1,0 +1,28 @@
+
+@mixin unbutton {
+	paddding: initial;
+	border: initial;
+	color: var(--color-text);
+	background-color: transparent;
+	font-family: var(--font);
+}
+
+.treeItem {
+	@include unbutton;
+
+	&.selectable {
+		border: var(--color-border);
+
+		&:hover {
+			background-color: var(--color-bg-hover);
+		}
+
+		&:active {
+			background-color: var(--color-bg-active)
+		}
+	}
+}
+
+.expandButton {
+
+}

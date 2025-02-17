@@ -1,0 +1,36 @@
+.vbox {
+	display: flex;
+	flex-flow: column nowrap;
+}
+
+.hbox {
+	display: flex;
+	flex-flow: row nowrap;
+}
+
+.center {
+	align-items: center;
+}
+
+.stretchbox {
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: stretch;
+}
+
+.centerbox {
+	display: inline-flex;
+	flex-flow: column nowrap;
+	align-items: center;
+	justify-content: center;
+}
+
+.gap {
+	gap: var(--gap);
+}
+
+.grow {
+	flex-grow: 1;
+	flex-basis: 0;
+}

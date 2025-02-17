@@ -1,0 +1,16 @@
+.lineEdit {
+	height: 1.5rem;
+	border: solid 1px var(--color-bg-highlight);
+	padding-left: var(--gap-s);
+	background-color: var(--color-bg);
+	border-radius: 5px;
+	color: var(--color-text);
+	--a-pressable: 0.1s background-color ease-out;
+	animation: var(--a-pressable);
+
+	&:disabled {
+		border-color: var(--color-border-disabled);
+		color: var(--color-text-disabled);
+		background-color: var(--color-bg-disabled);
+	}
+}

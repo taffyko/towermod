@@ -1,0 +1,139 @@
+@mixin marching-ants-init($ant-size,$ant-width,$speed,$id){
+	padding: 5px + $ant-width;
+	margin: 20px;
+	background-size:
+		$ant-size $ant-width,
+		$ant-size $ant-width,
+		$ant-width $ant-size,
+		$ant-width $ant-size;
+	background-position:
+		0 0,
+		0 100%,
+		0 0,
+		100% 0;
+	background-repeat:
+		repeat-x,
+		repeat-x,
+		repeat-y,
+		repeat-y;
+	animation: marching-ants-#{$id} $speed;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+};
+
+@mixin marching-ants-color($a, $b){
+	background-image:
+		linear-gradient(to right, $a 50%, $b 50%),
+		linear-gradient(to right, $a 50%, $b 50%),
+		linear-gradient(to bottom, $a 50%, $b 50%),
+		linear-gradient(to bottom, $a 50%, $b 50%);
+};
+
+@mixin marching-ants-animation($ant-size, $id){
+	@keyframes marching-ants-#{$id} {
+		0% {
+			background-position:
+				0 0,
+				0 100%,
+				0 0,
+				100% 0;
+		}
+		100% {
+			background-position:
+				2*$ant-size 0,
+				-2*$ant-size 100%,
+				0 -2*$ant-size,
+				100% 2*$ant-size;
+		}
+	}
+}
+
+.backdrop {
+	position: absolute;
+	top: 0; left: 0; right: 0; bottom: 0;
+	z-index: 20;
+	padding: calc(var(--gap-l) * 2) 0;
+	overflow-y: scroll;
+	background-color: rgb(from var(--color-root-bg) r g b / 0.5);
+
+	align-items: center;
+	justify-content: center;
+
+	opacity: 0;
+	display: flex;
+	transition: opacity 0.25s cubic-bezier(0, 0.1, 0, 1);
+	pointer-events: none;
+
+	&.success {
+		transition-duration: 1s;
+	}
+
+	&.active {
+		pointer-events: all;
+		display: flex;
+		opacity: 1;
+	}
+
+}
+
+.outer {
+	height: 80%;
+	width: 80%;
+	padding: var(--gap);
+	background-color: var(--color-root-bg);
+	overflow: hidden;
+
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: stretch;
+
+	transition:
+		filter 0.25s cubic-bezier(0, 0.1, 0, 1),
+		transform 0.25s cubic-bezier(0, 0.1, 0, 1);
+	transform: scale(0.8);
+
+	.active & {
+		filter: contrast(1.0);
+		transform: scale(1);
+	}
+
+	.success & {
+		filter: contrast(0.0);
+		transition-duration: 1s, 1s;
+		transform: scale(1.2);
+	}
+
+	.failure & {
+		transition: none;
+		transform: scale(1.0);
+	}
+}
+
+.inner {
+	overflow: hidden;
+	@include marching-ants-init(20px, 2px, 1s, 1);
+	padding: var(--gap-l);
+	text-align: center;
+	flex-grow: 1;
+
+	display: flex;
+	flex-flow: column nowrap;
+	justify-content: center;
+	align-items: stretch;
+
+	text-overflow: ellipsis;
+
+	@include marching-ants-color(#00000000, var(--color-border));
+	.invalid & {
+		animation-play-state: paused;
+		@include marching-ants-color(#00000000, var(--color-error));
+	}
+
+	* {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}
+@include marching-ants-animation(20px, 1);
+

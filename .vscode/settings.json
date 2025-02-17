@@ -1,6 +1,0 @@
-{
-	"rust-analyzer.linkedProjects": [
-		"${workspaceFolder}\\rust\\Cargo.toml",
-	],
-	"rust-analyzer.cargo.target": "i686-pc-windows-msvc",
-}

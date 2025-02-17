@@ -1,0 +1,41 @@
+$iconSize: 16px;
+
+.iconButton {
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	border: none;
+	border-radius: 5px;
+
+	height: calc($iconSize + var(--gap-s));
+	aspect-ratio: 1 / 1;
+
+	align-self: center;
+	background-color: transparent;
+	color: var(--color-text);
+	transition: 0.1s background-color ease-out;
+
+	& > * {
+		height: min(100%, $iconSize);
+	}
+
+	&.big {
+		height: calc($iconSize + var(--gap-l));
+	}
+
+	&:hover {
+		background-color: var(--color-bg-hover);
+		color: var(--color-text-hover);
+		&:not(:active) img {
+			transform: scale(1.2);
+		}
+	}
+
+	&:active {
+		transform: scale(0.9);
+		transition: none;
+		background-color: var(--color-bg-pressed);
+	}
+}

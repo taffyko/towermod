@@ -1,9 +1,11 @@
-use std::{os::raw::c_void, mem, ffi::CStr, collections::{HashMap, HashSet}};
+use std::{ffi::CStr, collections::{HashMap, HashSet}};
 use derivative::Derivative;
 use num_derive::FromPrimitive;
 use serde::{Serialize, Deserialize};
-use windows::{Win32::{Foundation::{HMODULE, FreeLibrary}, System::LibraryLoader::{LoadLibraryW, GetProcAddress}, UI::WindowsAndMessaging::LoadStringA, Graphics::Gdi::HBITMAP}, core::{PSTR, HSTRING, s}};
+use serde_alias::serde_alias;
+use windows::{Win32::{Foundation::HMODULE, UI::WindowsAndMessaging::LoadStringA}, core::PSTR};
 use anyhow::Result;
+
 
 const OBJ_NAME: u32 = 1;
 const OBJ_AUTHOR: u32 = 2;
@@ -84,7 +86,10 @@ pub enum Property
 	PROPERTY_BUTTON,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 pub struct PluginStringTable {
 	pub name: String,
 	pub author: String,
@@ -94,7 +99,10 @@ pub struct PluginStringTable {
 	pub web: String,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 pub struct PluginData {
 	pub conditions: HashMap<i32, AcesEntry>,
 	pub actions: HashMap<i32, AcesEntry>,
@@ -106,7 +114,10 @@ pub struct PluginData {
 	pub string_table: PluginStringTable,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 pub struct Param {
 	pub param_type: u16,
 	pub name: String,
@@ -114,7 +125,10 @@ pub struct Param {
 	pub init_str: String,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Derivative, Debug, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 #[derivative(Default)]
 pub struct AcesEntry {
 	/// Deprecated
@@ -133,7 +147,10 @@ pub struct AcesEntry {
 /// AceList entries grouped by Category name
 pub type AceCategories = HashMap<String, HashSet<i32>>;
 
+#[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+
+#[serde(rename_all = "camelCase")]
 pub struct CPropItem {
 	pub prop_type: i32,
 	pub label: String,
@@ -212,7 +229,7 @@ pub mod x86_plugin_ffi {
 		pub ide_flags: i32,
 		pub hinst_dll: HMODULE,
 		/// Index of DLL in DLLs list
-		pub o_id: u32, 
+		pub o_id: u32,
 		pub e_size: u32,
 		#[derivative(Default(value = "ptr::null()"))]
 		pub prop_table: *const PropertyTableEntry,
@@ -340,7 +357,7 @@ pub mod x86_plugin_ffi {
 		}
 		/// `s` contains the dereferenced *value* of a property (`label`, `description`, `text`) on the `CVirtualPropItem` given to `ETOnPropertyChanged`
 		extern "thiscall" fn Assign(&mut self, s: *mut *const c_char, p: *const c_char) {
-			unsafe { 
+			unsafe {
 				*s = p;
 			}
 		}
@@ -419,7 +436,7 @@ pub mod x86_plugin_ffi {
 				expressions: exps,
 				properties,
 				string_table,
-			}) 
+			})
 		}
 	}
 }

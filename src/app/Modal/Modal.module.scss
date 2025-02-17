@@ -1,0 +1,56 @@
+.backdrop {
+	display: none;
+	position: absolute;
+	top: 0; left: 0; right: 0; bottom: 0;
+	z-index: 10;
+	padding: calc(var(--gap-l) * 2) 0;
+	overflow-y: scroll;
+
+	&.active {
+		display: block;
+		background-color: rgb(from var(--color-root-bg) r g b / 0.5);
+	}
+}
+
+.modal {
+	position: relative;
+	margin: 0 auto;
+	width: 80%;
+	min-height: 40%;
+	border-radius: 10px 10px 5px 5px;
+	box-shadow: 8px 8px rgba(0, 0, 0, 0.25);
+	background-color: var(--color-root-bg);
+	border: solid 1px var(--color-border);
+	overflow-x: auto;
+	display: flex;
+	flex-flow: column nowrap;
+
+	.content {
+		padding: var(--gap);
+		display: flex;
+		flex-flow: column nowrap;
+		flex-grow: 1;
+	}
+
+	.title {
+		border-radius: 10px 10px 0 0;
+		height: 1.75rem;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		border-bottom: solid 1px var(--color-border);
+		background-color: var(--color-bg-alternate)
+	}
+
+	.closeButton {
+		position: absolute;
+		top: var(--gap-s);
+		right: var(--gap-s);
+	}
+
+	.choices {
+		display: flex;
+		justify-content: space-evenly;
+		gap: var(--gap);
+	}
+}
