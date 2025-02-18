@@ -3,7 +3,7 @@
 macro_rules! async_cleanup {
 	(do $cleanup:block $($body:tt)*) => {
 		{
-			let result = futures::FutureExt::catch_unwind(std::panic::AssertUnwindSafe(async { $($body)* })).await;
+			let result = $crate::futures::FutureExt::catch_unwind(std::panic::AssertUnwindSafe(async { $($body)* })).await;
 			match result {
 				Ok(result) => {
 					$cleanup;

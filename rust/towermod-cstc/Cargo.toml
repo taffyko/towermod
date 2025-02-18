@@ -8,53 +8,13 @@ authors.workspace = true
 path = "src/lib.rs"
 
 [dependencies]
-towermod-util.workspace = true
-towermod-win32.workspace = true
 anyhow.workspace = true
-scopeguard.workspace = true
 serde.workspace = true
-serde_json.workspace = true
-rmp-serde.workspace = true
-libc.workspace = true
 num-traits.workspace = true
 num-derive.workspace = true
-enum-kinds.workspace = true
 derivative.workspace = true
-futures.workspace = true
-tokio.workspace = true
-tokio-stream.workspace = true
-tracing.workspace = true
-tracing-subscriber.workspace = true
-tracing-log.workspace = true
-log.workspace = true
-once_cell.workspace = true
-backtrace.workspace = true
-cached.workspace = true
-time.workspace = true
-indoc.workspace = true
-async-scoped = { workspace = true, features = ["use-tokio"] }
-zip-extract.workspace = true
-zip.workspace = true
-bidiff.workspace = true
-bipatch.workspace = true
-toml.workspace = true
-walkdir.workspace = true
-filetime.workspace = true
-async-walkdir.workspace = true
-zstd.workspace = true
 serde_alias.workspace = true
-fs-err.workspace = true
 windows.workspace = true
-glob.workspace = true
-thiserror.workspace = true
-md5.workspace = true
-reqwest.workspace = true
-console-subscriber.workspace = true
-lazy_static.workspace = true
-redux-rs.workspace = true
-static_assertions.workspace = true
-rfd.workspace = true
-itertools.workspace = true
 
 
 [build-dependencies]

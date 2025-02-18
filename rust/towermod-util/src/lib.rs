@@ -7,3 +7,6 @@ mod macros;
 mod tcr;
 pub use util::*;
 pub use tcr::*;
+
+#[doc(hidden)]
+pub use futures;
