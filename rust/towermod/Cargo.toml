@@ -40,6 +40,7 @@ tokio.workspace = true
 tokio-stream.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+tracing-log.workspace = true
 log.workspace = true
 once_cell.workspace = true
 backtrace.workspace = true
@@ -57,7 +58,7 @@ filetime.workspace = true
 async-walkdir.workspace = true
 zstd.workspace = true
 serde_alias.workspace = true
-windows = { version = "0.51.1", features = ["Data_Xml_Dom", "Win32_Foundation", "Win32_Security", "Win32_System_Threading", "Win32_System_Shutdown", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_System_ProcessStatus", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Diagnostics_Debug", "Win32_System_Memory", "Win32_System_LibraryLoader", "Win32_Graphics_Gdi", "Win32_Storage_FileSystem", "Win32_System_IO", "Win32_System_Pipes"] }
+windows = { version = "0.51.1", features = ["Data_Xml_Dom", "Win32_Foundation", "Win32_Security", "Win32_System_Threading", "Win32_System_Shutdown", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_System_ProcessStatus", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Diagnostics_Debug", "Win32_System_Memory", "Win32_System_LibraryLoader", "Win32_Graphics_Gdi", "Win32_Storage_FileSystem", "Win32_System_IO", "Win32_System_Pipes", "Win32_System_Registry"] }
 glob = "0.3.1"
 thiserror = "1.0.48"
 md5 = "0.7.0"

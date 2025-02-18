@@ -9,6 +9,7 @@ fn config_path() -> PathBuf {
 	crate::get_cache_dir_path().join("towermod-config.toml")
 }
 
+// TODO: include towermod version
 #[command]
 pub async fn save_config() -> Result<()> {
 	let path = config_path();

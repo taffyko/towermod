@@ -6,6 +6,7 @@ mod util;
 mod filesystem;
 mod newtype;
 mod pipe;
+pub mod registry;
 pub mod game_images;
 pub mod macros;
 
@@ -16,3 +17,4 @@ pub use tcr::*;
 pub use util::*;
 pub use filesystem::*;
 pub use newtype::*;
+pub use pipe::*;

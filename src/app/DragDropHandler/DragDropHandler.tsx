@@ -23,20 +23,20 @@ export function DragDropHandler() {
 
 	const appContext = useContext(AppContext);
 
-	useTauriEvent('drag-enter', (e) => {
+	useTauriEvent('tauri://drag-enter', (e) => {
 		setDragFiles(e.payload?.paths)
 		setIsDragging(true);
 		setSuccess(false);
 		setFailure(false);
 	});
 
-	useTauriEvent('drag-leave', () => {
+	useTauriEvent('tauri://drag-leave', () => {
 		setIsDragging(false);
 		setSuccess(false);
 		setFailure(false);
 	});
 
-	useTauriEvent('drag-drop', async (e) => {
+	useTauriEvent('tauri://drag-drop', async (e) => {
 		const dragFiles = e.payload?.paths;
 		setIsDragging(false);
 		if (dragFiles && isValid) {

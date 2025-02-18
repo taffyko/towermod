@@ -213,6 +213,7 @@ pub async fn remove_dir_if_exists(path: impl AsRef<Path>) -> Result<()> {
 	}
 }
 
+// TODO: replace with anyhow::Context
 pub fn log_error<T, E: std::fmt::Debug>(result: std::result::Result<T, E>, context: &str) -> std::result::Result<T, E> {
 	if let Err(e) = &result {
 		if context.is_empty() {
@@ -222,6 +223,16 @@ pub fn log_error<T, E: std::fmt::Debug>(result: std::result::Result<T, E>, conte
 		}
 	}
 	result
+}
+
+pub fn log_on_error<T>(result: std::result::Result<T, impl Into<anyhow::Error>>) -> Option<T> {
+	match result.map_err(|e| -> anyhow::Error { e.into() }) {
+		Ok(v) => Some(v),
+		Err(e) => {
+			log::error!("{:?}", e);
+			None
+		}
+	}
 }
 
 pub fn diff(old: &[u8], new: &[u8]) -> Result<Vec<u8>> {

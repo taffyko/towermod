@@ -32,7 +32,7 @@ export const TitleBar = () => {
 		return () => { result.then(unsubscribe => unsubscribe()) }
 	}, [])
 
-	let title = `TowerMod ${VERSION}`;
+	let title = `Towermod ${VERSION}`;
 	if (!isLoading) {
 		if (project) {
 			title = `${title} — ${project.displayName}`

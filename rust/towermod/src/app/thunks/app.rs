@@ -1,11 +1,10 @@
 use std::{io::{Cursor, Read, Write}, path::PathBuf, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, log_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType, TcrepainterPatch, ZipWriterExt};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, log_error, log_on_error, tauri::notify_on_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType, TcrepainterPatch, ZipWriterExt};
 use anyhow::Result;
 use async_scoped::TokioScope;
-use tauri::command;
+use tauri::{command, AppHandle, Emitter};
 use anyhow::{Context};
 use fs_err::tokio as fs;
-use futures::StreamExt;
 use tokio::io::AsyncWriteExt;
 use tracing::instrument;
 use itertools::Itertools;
@@ -20,27 +19,7 @@ static INITIALIZED: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
 
 /// Should be idempotent
 #[command]
-pub async fn init() -> Result<()> {
-	if (!*INITIALIZED.lock().unwrap()) {
-		std::env::set_var("RUST_BACKTRACE", "1");
-
-		// Set up logging / tracing
-		use tracing_subscriber::prelude::*;
-		use tracing::level_filters::LevelFilter;
-		use tracing_subscriber::fmt::format::FmtSpan;
-
-		let fmt_layer = tracing_subscriber::fmt::Layer::default()
-			.with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
-			.with_filter(LevelFilter::INFO);
-		let console_layer = console_subscriber::spawn();
-		let subscriber = tracing_subscriber::Registry::default()
-			.with(fmt_layer)
-			.with(console_layer);
-		tracing::subscriber::set_global_default(subscriber).unwrap();
-
-		let mut initialized = INITIALIZED.lock().unwrap();
-		*initialized = true;
-	}
+pub async fn init(app: AppHandle) -> Result<()> {
 
 	// Set up file structure
 	first_time_setup().await?;
@@ -68,7 +47,58 @@ pub async fn init() -> Result<()> {
 		}
 	}
 
+	if (!*INITIALIZED.lock().unwrap()) {
+		{
+			let mut initialized = INITIALIZED.lock().unwrap();
+			*initialized = true;
+		}
+
+		// Install mods passed from the command-line
+		let args: Vec<String> = std::env::args().skip(1).collect();
+		unsafe {TokioScope::scope_and_collect(|s| {
+			for arg in args {
+				s.spawn(install_mod(app.clone(), arg));
+			}
+		})}.await;
+
+		// Attempt to listen on pipe
+		std::thread::spawn(move || {
+			let app_handle = app;
+			log_on_error(crate::etc::listen_pipe(move |msg| {
+				log_on_error(app_handle.emit("towermod/toast", msg));
+			}));
+		});
+	}
+
 	Ok(())
+}
+
+
+#[command]
+async fn install_mod(app: AppHandle, resource: impl AsRef<str>) {
+	let resource = resource.as_ref();
+	let result: anyhow::Result<()> = try {
+		let towermod_prefix = resource.starts_with("towermod:");
+		let is_url = towermod_prefix || resource.starts_with("https://") || resource.starts_with("http://");
+
+		if is_url {
+			let url = if towermod_prefix {
+				let url = &resource[9..];
+				url.split(',').nth(0).context("Malformed URL")?
+			} else { resource };
+			let bytes = reqwest::get(url).await?.bytes().await?;
+			let mod_info = ModInfo::from_zip_bytes(&bytes).await?;
+			fs::write(mod_info.export_path(), &bytes).await?;
+			app.emit("towermod/mod-installed", mod_info)?;
+		} else {
+			// Resource is a file path
+			let path = PathBuf::from(resource);
+			let mod_info = ModInfo::from_zip_path(&path).await?;
+			fs::copy(&path, mod_info.export_path()).await?;
+			app.emit("towermod/mod-installed", mod_info)?;
+		}
+	};
+	notify_on_error(&app, result);
 }
 
 #[command]
@@ -118,8 +148,6 @@ pub async fn get_installed_mods() -> Result<Vec<ModInfo>> {
 #[command]
 pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
-	// TODO: gamebanana url installation
-	// TODO: cache once files are created for a given version of a mod
 	let zip_bytes = fs::read(&zip_path).await?;
 	let cursor = Cursor::new(&zip_bytes);
 	let mut zip = zip::ZipArchive::new(cursor)?;
@@ -398,7 +426,7 @@ pub async fn play_vanilla() -> Result<()> {
 pub async fn load_project_preflight(manifest_path: PathBuf) -> Result<Option<String>> {
 	let proj = Project::from_path(&manifest_path).await?;
 	if proj.project_type != ProjectType::Towermod {
-		anyhow::bail!("Project manifest of type {:?} cannot be loaded as a TowerMod project", proj.project_type);
+		anyhow::bail!("Project manifest of type {:?} cannot be loaded as a Towermod project", proj.project_type);
 	}
 	let game = selectors::get_game().await.context("No game set")?;
 	if !(proj.game.file_hash == game.file_hash) {

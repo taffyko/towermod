@@ -1,6 +1,6 @@
 import { spin } from '@/app/GlobalSpinner';
 import { invoke } from '@tauri-apps/api/core';
-import { FileDialogOptions } from '@towermod';
+import { FileDialogOptions, ModInfo } from '@towermod';
 import { DependencyList, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event'
 import { win32 as path } from 'path';
@@ -55,13 +55,20 @@ interface TauriDragPayload extends TauriPositionPayload {
 
 type EventCallback<T> = Parameters<typeof listen<T>>[1]
 
-export function useTauriEvent(type: 'drag-enter', handler: EventCallback<TauriDragPayload>, deps?: DependencyList): void
-export function useTauriEvent(type: 'drag-drop', handler: EventCallback<TauriDragPayload>, deps?: DependencyList): void
-export function useTauriEvent(type: 'drag-leave', handler: EventCallback<null>, deps?: DependencyList): void
-export function useTauriEvent(type: 'drag-over', handler: EventCallback<TauriPositionPayload>, deps?: DependencyList): void
-export function useTauriEvent(type: string, handler: (e: any) => void, deps: DependencyList = []): void {
+interface EventTypeMap {
+	'tauri://drag-enter': TauriDragPayload
+	'tauri://drag-drop': TauriDragPayload
+	'tauri://drag-leave': null
+	'tauri://drag-over': TauriPositionPayload
+	'towermod/error': unknown
+	'towermod/mod-installed': ModInfo
+	'towermod/progress': string,
+	'towermod/toast': string,
+}
+
+export function useTauriEvent<T extends keyof EventTypeMap>(type: T, handler: EventCallback<EventTypeMap[T]>, deps: DependencyList = []): void {
 	useEffect(() => {
-		const unlisten = listen(`tauri://${type}`, handler)
+		const unlisten = listen(type, handler)
 		return () => { unlisten.then(fn => fn()) };
 	}, [type, ...deps])
 }

@@ -11,11 +11,13 @@ import { useEventListener, useIsInert, useMountEffect, useStateRef } from '@/uti
 import { ModalParent } from '@/app/Modal';
 import { AppContext, AppContextState } from './appContext';
 import { api } from '@/api';
-import { ToastContainer } from '@/app/Toast';
+import { ToastContainer, toast } from '@/app/Toast';
 import { Portal } from '@/components/Portal';
 import { GlobalSpinner, useIsSpinning } from '../GlobalSpinner';
 import { useIsModalOpen } from '../Modal/modalStore';
 import { DragDropHandler } from '../DragDropHandler';
+import { useTauriEvent } from '@/util';
+import { showError } from '@/components/Error';
 
 const App = () => {
 	const [dataHandle, setDataHandle] = useStateRef<DataHandle>()
@@ -51,6 +53,18 @@ const App = () => {
 		if (e.target instanceof HTMLImageElement) {
 			e.preventDefault();
 		}
+	})
+
+	useTauriEvent('towermod/toast', (e) => {
+		toast(e.payload)
+	})
+
+	useTauriEvent('towermod/mod-installed', (e) => {
+		// TODO
+	})
+
+	useTauriEvent('towermod/error', (e) => {
+		showError(e.payload);
 	})
 
 	return <>
