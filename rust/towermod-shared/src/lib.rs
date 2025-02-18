@@ -1,7 +1,7 @@
 #![feature(try_blocks)]
 
+pub mod dllreader_client;
 pub mod game_images;
-pub mod ext;
 
 mod newtype;
 mod project;

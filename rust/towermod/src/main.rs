@@ -22,11 +22,11 @@ fn main() {
 
 	let _ = tracing_log::LogTracer::init();
 
-	if towermod_lib::pipe_exists() {
+	if towermod_win32::pipe::pipe_exists() {
 		let mut command_line = false;
 		for arg in std::env::args().skip(1) {
 			command_line = true;
-			log_on_error(towermod_lib::write_to_pipe(arg.as_bytes()));
+			log_on_error(towermod_win32::pipe::write_to_pipe(arg.as_bytes()));
 		}
 		if command_line {
 			std::process::exit(0);

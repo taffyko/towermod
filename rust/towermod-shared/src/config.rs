@@ -8,6 +8,8 @@ use anyhow::Result;
 use std::path::{Path, PathBuf};
 use towermod_util::log_on_error;
 
+use crate::dllreader_client;
+
 /// Directory where cached data is stored
 /// Anything here should be safe to delete without data loss
 pub fn get_cache_dir_path() -> PathBuf {
@@ -100,16 +102,12 @@ pub async fn first_time_setup() -> Result<()> {
 	let stable_exe_path = crate::get_stable_exe_path();
 	let stable_exe_path = stable_exe_path.to_string_lossy();
 	towermod_win32::registry::initialize_registry_settings(&stable_exe_path)?;
+	log_on_error(dllreader_client::extract_dllreader().await);
 
-	#[cfg(feature = "bundled-dllreader")]
-	{
-		fs::create_dir_all(get_mods_dir_path()).await?;
-		fs::create_dir_all(get_cache_dir_path()).await?;
-		fs::write(get_dllreader_path(), get_dllreader_exe_bytes()).await?;
-		Ok(())
-	}
-	#[cfg(not(feature = "bundled-dllreader"))]
-	anyhow::bail!("This build was not compiled with bundled dllreader");
+	fs::create_dir_all(get_mods_dir_path()).await?;
+	fs::create_dir_all(get_cache_dir_path()).await?;
+
+	Ok(())
 }
 
 async fn link_towermod_to_stable_path() -> Result<()> {
@@ -125,20 +123,6 @@ async fn link_towermod_to_stable_path() -> Result<()> {
 	Ok(())
 }
 
-pub fn get_dllreader_path() -> PathBuf {
-	let mut path = get_cache_dir_path();
-	path.push("dllreader.exe");
-	path
-}
-
-#[cfg(feature = "bundled-dllreader")]
-fn get_dllreader_exe_bytes() -> Vec<u8> {
-	#[cfg(debug_assertions)]
-	let dllreader_exe = fs_err::read(env!("DLLREADER_EXE")).unwrap();
-	#[cfg(not(debug_assertions))]
-	let dllreader_exe = include_bytes!(env!("DLLREADER_EXE")).to_vec();
-	dllreader_exe
-}
 
 /// Location where downloaded Construct Classic files are cached
 pub async fn cstc_binary_dir() -> Result<PathBuf> {

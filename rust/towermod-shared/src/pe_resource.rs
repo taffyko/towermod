@@ -25,11 +25,12 @@ use windows::Win32::System::LibraryLoader::{BeginUpdateResourceW, EndUpdateResou
 use anyhow::{bail, Context, Result};
 use windows::Win32::Foundation::{HANDLE, HMODULE, BOOL, CloseHandle, FreeLibrary};
 use windows::core::{PCWSTR, HSTRING};
+use crate::dllreader_client;
 use crate::{Game, ModInfo, ModType, Project};
 use towermod_win32::pe_resource::*;
 use towermod_cstc as cstc;
 
-use super::{cstc_binary_dir, get_dllreader_path};
+use super::{cstc_binary_dir};
 
 pub async fn read_file_plugin_string_table(path: &Path) -> Result<PluginStringTable> {
 	unsafe {
@@ -166,19 +167,6 @@ pub async fn get_runtime_plugins_path() -> Result<PathBuf> {
 }
 
 #[instrument]
-pub async fn remote_read_editor_plugin<T: AsRef<Path> + Debug>(path: T) -> Result<PluginData> {
-	let path = path.as_ref().to_owned();
-	let output = Command::new(get_dllreader_path())
-		.arg("editorplugin")
-		.arg(path)
-		.output().await?;
-	if (!output.status.success()) {
-		bail!("dllreader failed: {}", String::from_utf8_lossy(&output.stderr));
-	}
-	Ok(rmp_serde::from_slice(&output.stdout)?)
-}
-
-#[instrument]
 pub async fn export_from_legacy(file_path: PathBuf, project: &mut Project) -> Result<()> {
 	let mut buffer = vec![];
 	let mut out_zip = zip::ZipWriter::new(Cursor::new(&mut buffer));
@@ -298,7 +286,7 @@ pub async fn load_editor_plugins_by_name(names: &HashMap<i32, String>) -> Result
 				}
 				let path = entry.path();
 				log::debug!("Reading data for editor plugin: {:?}", path);
-				let data = remote_read_editor_plugin(&path).await?;
+				let data = dllreader_client::remote_read_editor_plugin(&path).await?;
 				log::debug!("Finished reading editor plugin {}", data.string_table.name);
 				anyhow::Ok(Some(data))
 			});

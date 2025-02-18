@@ -11,6 +11,7 @@ path = "src/main.rs"
 [dependencies]
 towermod-util.workspace = true
 towermod-win32.workspace = true
+towermod-cstc.workspace = true
 anyhow.workspace = true
 scopeguard.workspace = true
 serde.workspace = true

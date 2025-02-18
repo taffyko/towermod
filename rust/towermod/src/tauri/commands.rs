@@ -52,19 +52,13 @@ pub const fn get_version() -> &'static str { crate::VERSION }
 pub fn get_cache_dir_path() -> PathBuf { crate::get_cache_dir_path() }
 
 #[command]
-pub fn get_stable_exe_path() -> PathBuf { crate::get_stable_exe_path() }
-
-#[command]
-pub fn get_appdata_dir_path() -> PathBuf { crate::get_appdata_dir_path() }
-
-#[command]
 pub fn get_towermod_dir_path() -> PathBuf { crate::get_towermod_dir_path() }
 
 #[command]
-pub fn mod_cache_dir_path(mod_subpath: impl AsRef<Path>) -> PathBuf { crate::mod_cache_dir_path(mod_subpath) }
+pub fn mod_cache_dir_path(mod_subpath: &Path) -> PathBuf { crate::mod_cache_dir_path(mod_subpath) }
 
 #[command]
-pub fn mod_runtime_dir_path(mod_name: impl AsRef<Path>) -> PathBuf { crate::mod_runtime_dir_path(mod_name) }
+pub fn mod_runtime_dir_path(mod_name: &Path) -> PathBuf { crate::mod_runtime_dir_path(mod_name) }
 
 #[command]
 pub fn get_mods_dir_path() -> PathBuf { crate::get_mods_dir_path() }

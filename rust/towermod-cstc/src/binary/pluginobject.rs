@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::block::{BlockReader, BlockWriter};
 
 #[derive(Debug, Clone, Default)]

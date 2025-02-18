@@ -7,6 +7,11 @@ authors.workspace = true
 [lib]
 path = "src/lib.rs"
 
+[features]
+default = ["bundled-dllreader"]
+bundled-dllreader = []
+
+
 [dependencies]
 towermod-util.workspace = true
 towermod-win32.workspace = true
