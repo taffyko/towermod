@@ -3,7 +3,7 @@ use windows::Win32::Foundation as win;
 use anyhow::Result;
 use crate::log_on_error;
 
-use super::OpenedHandle;
+use towermod_win32::OpenedHandle;
 
 pub const fn win32_to_hresult(error: u32) -> HRESULT {
 	HRESULT(if error == 0 { 0 } else { (error & 0x0000_FFFF) | (7 << 16) | 0x8000_0000 } as i32)

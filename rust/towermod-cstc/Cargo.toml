@@ -1,30 +1,13 @@
 [package]
-name = "towermod"
+name = "towermod-cstc"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-default-run = "towermod"
 
 [lib]
-# The `_lib` suffix may seem redundant but it is necessary
-# to make the lib name unique and wouldn't conflict with the bin name.
-# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "towermod_lib"
 path = "src/lib.rs"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
-[[bin]]
-name = "dllreader"
-path = "src/dllreader.rs"
-
-[features]
-bundled-dllreader = []
-tauri = []
 
 [dependencies]
-tauri = { version = "2", features = ["unstable"] }
-tauri-plugin-opener = "2"
-tauri-bindgen-host = { git = "https://github.com/tauri-apps/tauri-bindgen" }
 towermod-util.workspace = true
 towermod-win32.workspace = true
 anyhow.workspace = true

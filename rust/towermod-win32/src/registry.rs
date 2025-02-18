@@ -6,16 +6,13 @@ use windows::Win32::System::Registry::{
 use anyhow::Result;
 
 
-pub fn initialize_registry_settings() -> Result<()> {
-	let stable_exe_path = crate::get_stable_exe_path();
-	let stable_exe_path = stable_exe_path.to_string_lossy();
-
+pub fn initialize_registry_settings(exe_path: &str) -> Result<()> {
 	reg_sz(HKCU, r"Software\Classes\towermod", "", "URL:towermod")?;
 	reg_sz(HKCU, r"Software\Classes\towermod", "URL Protocol", "Towermod Protocol")?;
 	reg_sz(HKCU, r"Software\Classes\towermod", "FriendlyTypeName", "Towermod Package")?;
 
-	reg_sz(HKCU, r"Software\Classes\towermod\DefaultIcon", "", &format!("{stable_exe_path},0"))?;
-	reg_sz(HKCU, r"Software\Classes\towermod\shell\open\command", "", &format!("\"{stable_exe_path}\" \"%1\""))?;
+	reg_sz(HKCU, r"Software\Classes\towermod\DefaultIcon", "", &format!("{exe_path},0"))?;
+	reg_sz(HKCU, r"Software\Classes\towermod\shell\open\command", "", &format!("\"{exe_path}\" \"%1\""))?;
 
 	reg_sz(HKCU, r"Software\Classes\.towermod", "", "towermod")?;
 	reg_sz(HKCU, r"Software\Classes\.towermod", "PerceivedType", "document")?;

@@ -7,8 +7,7 @@ use windows::Win32::UI::Shell;
 use windows::Win32::Foundation::HANDLE;
 use anyhow::Result;
 use std::path::{Path, PathBuf};
-
-use super::log_on_error;
+use towermod_util::log_on_error;
 
 /// Directory where cached data is stored
 /// Anything here should be safe to delete without data loss
@@ -107,7 +106,9 @@ pub fn try_find_towerclimb() -> Result<PathBuf> {
 pub async fn first_time_setup() -> Result<()> {
 	link_towermod_to_stable_path().await?;
 
-	crate::registry::initialize_registry_settings()?;
+	let stable_exe_path = crate::get_stable_exe_path();
+	let stable_exe_path = stable_exe_path.to_string_lossy();
+	towermod_win32::registry::initialize_registry_settings(&stable_exe_path)?;
 
 	#[cfg(feature = "bundled-dllreader")]
 	{

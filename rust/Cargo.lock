@@ -1355,7 +1355,7 @@ version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330c60081dcc4c72131f8eb70510f1ac07223e5d4163db481a04a0befcffa412"
 dependencies = [
- "libloading 0.8.6",
+ "libloading",
 ]
 
 [[package]]
@@ -2100,9 +2100,9 @@ dependencies = [
 
 [[package]]
 name = "h2"
-version = "0.4.7"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccae279728d634d083c00f6099cb58f01cc99c145b84b8be2f6c74618d79922e"
+checksum = "5017294ff4bb30944501348f6f8e42e6ad28f42c8bbef7a74029aff064a4e3c2"
 dependencies = [
  "atomic-waker",
  "bytes",
@@ -2828,7 +2828,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e9ec52138abedcc58dc17a7c6c0c00a2bdb4f3427c7f63fa97fd0d859155caf"
 dependencies = [
  "gtk-sys",
- "libloading 0.7.4",
+ "libloading",
  "once_cell",
 ]
 
@@ -2846,16 +2846,6 @@ checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
 dependencies = [
  "cfg-if",
  "winapi",
-]
-
-[[package]]
-name = "libloading"
-version = "0.8.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
-dependencies = [
- "cfg-if",
- "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -3500,9 +3490,9 @@ dependencies = [
 
 [[package]]
 name = "openssl"
-version = "0.10.70"
+version = "0.10.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61cfb4e166a8bb8c9b55c500bc2308550148ece889be90f609377e58140f42c6"
+checksum = "5e14130c6a98cd258fdcb0fb6d744152343ff729cbfcb28c656a9d12b999fbcd"
 dependencies = [
  "bitflags 2.8.0",
  "cfg-if",
@@ -3532,9 +3522,9 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.105"
+version = "0.9.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b22d5b84be05a8d6947c7cb71f7c849aa0f112acd4bf51c2a7c1c988ac0a9dc"
+checksum = "8bb61ea9811cc39e3c2069f40b8b8e2e70d8569b361f879786cc7ed48b777cdd"
 dependencies = [
  "cc",
  "libc",
@@ -6016,6 +6006,275 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "toml 0.8.20",
+ "towermod-util",
+ "towermod-win32",
+ "tracing",
+ "tracing-log",
+ "tracing-subscriber",
+ "walkdir",
+ "windows 0.51.1",
+ "zip 2.2.2",
+ "zip-extract",
+ "zstd 0.13.2",
+]
+
+[[package]]
+name = "towermod-cstc"
+version = "0.2.0"
+dependencies = [
+ "anyhow 1.0.95 (git+https://github.com/taffyko/anyhow-tauri)",
+ "async-scoped",
+ "async-walkdir",
+ "backtrace",
+ "bidiff",
+ "bipatch",
+ "cached",
+ "console-subscriber",
+ "derivative",
+ "enum-kinds",
+ "filetime",
+ "fs-err",
+ "futures",
+ "glob",
+ "indoc",
+ "itertools",
+ "lazy_static",
+ "libc",
+ "log",
+ "md5",
+ "num-derive",
+ "num-traits",
+ "once_cell",
+ "redux-rs",
+ "reqwest",
+ "rfd",
+ "rmp-serde",
+ "scopeguard",
+ "serde",
+ "serde_alias",
+ "serde_json",
+ "static_assertions",
+ "tauri-build",
+ "thiserror 1.0.69",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "toml 0.8.20",
+ "towermod-util",
+ "towermod-win32",
+ "tracing",
+ "tracing-log",
+ "tracing-subscriber",
+ "walkdir",
+ "windows 0.51.1",
+ "zip 2.2.2",
+ "zip-extract",
+ "zstd 0.13.2",
+]
+
+[[package]]
+name = "towermod-dllreader"
+version = "0.2.0"
+dependencies = [
+ "anyhow 1.0.95 (git+https://github.com/taffyko/anyhow-tauri)",
+ "async-scoped",
+ "async-walkdir",
+ "backtrace",
+ "bidiff",
+ "bipatch",
+ "cached",
+ "console-subscriber",
+ "derivative",
+ "enum-kinds",
+ "filetime",
+ "fs-err",
+ "futures",
+ "glob",
+ "indoc",
+ "itertools",
+ "lazy_static",
+ "libc",
+ "log",
+ "md5",
+ "num-derive",
+ "num-traits",
+ "once_cell",
+ "redux-rs",
+ "reqwest",
+ "rfd",
+ "rmp-serde",
+ "scopeguard",
+ "serde",
+ "serde_alias",
+ "serde_json",
+ "static_assertions",
+ "tauri-build",
+ "thiserror 1.0.69",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "toml 0.8.20",
+ "towermod-util",
+ "towermod-win32",
+ "tracing",
+ "tracing-log",
+ "tracing-subscriber",
+ "walkdir",
+ "windows 0.51.1",
+ "zip 2.2.2",
+ "zip-extract",
+ "zstd 0.13.2",
+]
+
+[[package]]
+name = "towermod-shared"
+version = "0.2.0"
+dependencies = [
+ "anyhow 1.0.95 (git+https://github.com/taffyko/anyhow-tauri)",
+ "async-scoped",
+ "async-walkdir",
+ "backtrace",
+ "bidiff",
+ "bipatch",
+ "cached",
+ "console-subscriber",
+ "derivative",
+ "enum-kinds",
+ "filetime",
+ "fs-err",
+ "futures",
+ "glob",
+ "indoc",
+ "itertools",
+ "lazy_static",
+ "libc",
+ "log",
+ "md5",
+ "num-derive",
+ "num-traits",
+ "once_cell",
+ "redux-rs",
+ "reqwest",
+ "rfd",
+ "rmp-serde",
+ "scopeguard",
+ "serde",
+ "serde_alias",
+ "serde_json",
+ "static_assertions",
+ "tauri-build",
+ "thiserror 1.0.69",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "toml 0.8.20",
+ "towermod-util",
+ "towermod-win32",
+ "tracing",
+ "tracing-log",
+ "tracing-subscriber",
+ "walkdir",
+ "windows 0.51.1",
+ "zip 2.2.2",
+ "zip-extract",
+ "zstd 0.13.2",
+]
+
+[[package]]
+name = "towermod-util"
+version = "0.2.0"
+dependencies = [
+ "anyhow 1.0.95 (git+https://github.com/taffyko/anyhow-tauri)",
+ "async-scoped",
+ "async-walkdir",
+ "backtrace",
+ "bidiff",
+ "bipatch",
+ "cached",
+ "console-subscriber",
+ "derivative",
+ "enum-kinds",
+ "filetime",
+ "fs-err",
+ "futures",
+ "glob",
+ "indoc",
+ "itertools",
+ "lazy_static",
+ "libc",
+ "log",
+ "md5",
+ "num-derive",
+ "num-traits",
+ "once_cell",
+ "redux-rs",
+ "reqwest",
+ "rfd",
+ "rmp-serde",
+ "scopeguard",
+ "serde",
+ "serde_alias",
+ "serde_json",
+ "static_assertions",
+ "tauri-build",
+ "thiserror 1.0.69",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "toml 0.8.20",
+ "tracing",
+ "tracing-log",
+ "tracing-subscriber",
+ "walkdir",
+ "windows 0.51.1",
+ "zip 2.2.2",
+ "zip-extract",
+ "zstd 0.13.2",
+]
+
+[[package]]
+name = "towermod-win32"
+version = "0.2.0"
+dependencies = [
+ "anyhow 1.0.95 (git+https://github.com/taffyko/anyhow-tauri)",
+ "async-scoped",
+ "async-walkdir",
+ "backtrace",
+ "bidiff",
+ "bipatch",
+ "cached",
+ "console-subscriber",
+ "derivative",
+ "enum-kinds",
+ "filetime",
+ "fs-err",
+ "futures",
+ "glob",
+ "indoc",
+ "itertools",
+ "lazy_static",
+ "libc",
+ "log",
+ "md5",
+ "num-derive",
+ "num-traits",
+ "once_cell",
+ "redux-rs",
+ "reqwest",
+ "rfd",
+ "rmp-serde",
+ "scopeguard",
+ "serde",
+ "serde_alias",
+ "serde_json",
+ "static_assertions",
+ "tauri-build",
+ "thiserror 1.0.69",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "toml 0.8.20",
+ "towermod-util",
  "tracing",
  "tracing-log",
  "tracing-subscriber",

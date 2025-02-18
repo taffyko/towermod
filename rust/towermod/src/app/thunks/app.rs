@@ -644,17 +644,17 @@ pub async fn export_mod(mod_type: ModType) -> Result<()> {
 			let ((), results) = unsafe {TokioScope::scope_and_collect(|s| {
 				s.spawn_blocking(|| {
 					let level_block_bin = level_block.to_bin()?;
-					level_block_patch = crate::etc::diff(&original_level_block_bin, &level_block_bin)?;
+					level_block_patch = towermod_util::diff(&original_level_block_bin, &level_block_bin)?;
 					anyhow::Ok(())
 				});
 				s.spawn_blocking(|| {
 					let app_block_bin = app_block.to_bin()?;
-					app_block_patch = crate::etc::diff(&original_app_block_bin, &app_block_bin)?;
+					app_block_patch = towermod_util::diff(&original_app_block_bin, &app_block_bin)?;
 					anyhow::Ok(())
 				});
 				s.spawn_blocking(|| {
 					let event_block_bin = event_block.to_bin()?;
-					event_block_patch = crate::etc::diff(&original_event_block_bin, &event_block_bin)?;
+					event_block_patch = towermod_util::diff(&original_event_block_bin, &event_block_bin)?;
 					anyhow::Ok(())
 				});
 				s.spawn_blocking(|| {

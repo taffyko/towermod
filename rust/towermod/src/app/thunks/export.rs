@@ -117,6 +117,6 @@ pub async fn play_project(debug: bool) -> Result<u32> {
 #[command]
 pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 	tokio::task::spawn_blocking(move || {
-		crate::process::wait_until_process_exits(pid)
+		towermod_win32::process::wait_until_process_exits(pid)
 	}).await?
 }

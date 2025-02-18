@@ -17,8 +17,8 @@ macro_rules! async_cleanup {
 		}
 	};
 }
-pub(crate) use async_cleanup;
 
+#[macro_export]
 macro_rules! clone {
 	(@expand_let $i:ident) => { let $i = $i.clone(); };
 	(@expand_let mut $i:ident) => { let mut $i = $i.clone(); };
@@ -27,14 +27,13 @@ macro_rules! clone {
 	(@($($($i:ident)+),*) $($body:tt)*) => {
 		{
 			$(
-				clone!(@expand_let $($i)+);
+				$crate::clone!(@expand_let $($i)+);
 			)*
 			move || { $($body)* }
 		}
 	};
 	($($body:tt)*) => { move || { $($body)* } };
 }
-pub(crate) use clone;
 
 
 #[macro_export]
@@ -56,7 +55,7 @@ macro_rules! clone_async {
 
 /// Run a block of code in a `tokio::task::spawn_blocking()` move closure
 /// and tersely list captures that should be cloned instead of moved.
+#[macro_export]
 macro_rules! blocking {
-	($($body:tt)*) => { tokio::task::spawn_blocking(clone!($($body)*)) };
+	($($body:tt)*) => { tokio::task::spawn_blocking($crate::clone!($($body)*)) };
 }
-pub(crate) use blocking;

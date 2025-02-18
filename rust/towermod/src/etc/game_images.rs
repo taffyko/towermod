@@ -9,12 +9,12 @@ use crate::{cstc::{self, ImageBlock, ImageMetadata, ImageResource}, PeResource};
 pub(crate) fn create_imageblock_metadata_patch(original_metadata: Vec<ImageMetadata>, new_metadata: Vec<ImageMetadata>) -> Result<Vec<u8>> {
 	let original = metadata_into_bin(original_metadata)?;
 	let new = metadata_into_bin(new_metadata)?;
-	crate::etc::diff(&*original, &*new)
+	crate::diff(&*original, &*new)
 }
 
 pub(crate) fn apply_imageblock_metadata_patch(original_metadata: Vec<ImageMetadata>, patch: Vec<u8>) -> Result<Vec<ImageMetadata>> {
 	let original = metadata_into_bin(original_metadata)?;
-	let new = crate::etc::apply_patch(&*original, &patch)?;
+	let new = crate::apply_patch(&*original, &patch)?;
 	metadata_from_bin(new)
 }
 

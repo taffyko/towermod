@@ -53,6 +53,7 @@ impl Game {
 	fn clear_unpersisted_fields(&mut self) {
 		self.file_path = None
 	}
+
 	pub async fn from_path(path: PathBuf) -> Result<Self> {
 		let file_name = path.file_name().ok_or(anyhow!("Unable to get file name from path"))?.to_string_lossy().to_string();
 		let bytes = fs::read(&path).await?;

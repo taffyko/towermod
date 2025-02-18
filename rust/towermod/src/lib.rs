@@ -14,6 +14,7 @@ extern crate test;
 
 mod etc;
 pub use etc::*;
+pub use towermod_util::*;
 
 pub mod cstc;
 pub mod app;

@@ -10,6 +10,7 @@ use crate::{get_temp_file, ZipWriterExt};
 use async_scoped::TokioScope;
 use ::time::OffsetDateTime;
 use tokio_stream::StreamExt;
+use towermod_util::{async_cleanup, blocking, clone};
 use zip;
 use std::path::{Path, PathBuf};
 use log::warn;
@@ -26,19 +27,8 @@ use windows::core::{PCWSTR, HSTRING};
 use crate::cstc::plugin::{PluginData, PluginStringTable};
 use crate::cstc::{self, plugin};
 use crate::{Game, ModInfo, ModType, Project};
-use crate::macros::*;
 
 use super::{cstc_binary_dir, get_dllreader_path};
-
-pub struct OpenedHandle(pub HANDLE);
-
-impl Drop for OpenedHandle {
-	fn drop(&mut self) {
-		unsafe {
-			if let Err(e) = CloseHandle(self.0) { log::error!("{}", e) }
-		}
-	}
-}
 
 unsafe fn read_hmodule_resource(hmodule: HMODULE, res_type: &ResId, res_name: &ResId) -> Result<Vec<u8>> {
 	unsafe {
