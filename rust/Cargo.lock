@@ -5364,6 +5364,7 @@ dependencies = [
 name = "towermod-dllreader"
 version = "0.2.0"
 dependencies = [
+ "anyhow 1.0.95 (git+https://github.com/taffyko/anyhow-tauri)",
  "derivative",
  "rmp-serde",
  "serde_json",

@@ -18,7 +18,7 @@ npm install
 Build the 32-bit `dllreader` binary (used to read Construct Classic plugin DLLs from a 64-bit process)
 ```powershell
 cd rust
-cargo build -p towermod --bin dllreader
+cargo build -p towermod-dllreader --target i686-pc-windows-msvc
 ```
 
 Start the Tauri dev server

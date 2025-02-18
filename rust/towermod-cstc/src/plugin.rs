@@ -19,13 +19,13 @@ const OBJ_CATEGORY: u32 = 9;
 const OBJ_ICON: u32 = 101;
 const OBJ_SICON: u32 = 102;
 
-const ACETYPE_CONDITION: i32 = 0;
-const ACETYPE_ACTION: i32 = 1;
-const ACETYPE_EXPRESSION: i32 = 2;
-const ACETYPE_CNDFUNC: i32 = 3;
-const ACETYPE_ACTFUNC: i32 = 4;
-const ACETYPE_EXPFUNC: i32 = 5;
-const ACETYPE_EXPNAME: i32 = 6;
+pub const ACETYPE_CONDITION: i32 = 0;
+pub const ACETYPE_ACTION: i32 = 1;
+pub const ACETYPE_EXPRESSION: i32 = 2;
+pub const ACETYPE_CNDFUNC: i32 = 3;
+pub const ACETYPE_ACTFUNC: i32 = 4;
+pub const ACETYPE_EXPFUNC: i32 = 5;
+pub const ACETYPE_EXPNAME: i32 = 6;
 
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, FromPrimitive)]
@@ -159,7 +159,7 @@ pub struct CPropItem {
 	pub text: String,
 }
 
-fn sort_categories(aces: &HashMap<i32, AcesEntry>) -> AceCategories {
+pub fn sort_categories(aces: &HashMap<i32, AcesEntry>) -> AceCategories {
 	let mut cats = AceCategories::new();
 	for (id, ace) in aces {
 		match cats.get_mut(&ace.ace_category) {

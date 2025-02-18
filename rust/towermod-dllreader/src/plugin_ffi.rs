@@ -1,10 +1,12 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
+#![allow(unused_variables)]
 
-use std::{ffi::{c_char, c_void, CStr}, path::Path, ptr};
+use anyhow::Result;
+use std::{ffi::{c_char, c_void, CStr}, collections::HashMap, path::Path, ptr};
 use derivative::Derivative;
-use windows::{core::{s, HSTRING}, Win32::{Foundation::{self as win, HANDLE, HMODULE}, Graphics::Gdi::HBITMAP, System::LibraryLoader::{GetProcAddress, LoadLibraryW}}};
-use towermod_cstc::plugin::*;
+use windows::{core::{s, HSTRING, PSTR}, Win32::{Foundation::{self as win, HMODULE}, UI::WindowsAndMessaging::LoadStringA, Graphics::Gdi::HBITMAP, System::LibraryLoader::{GetProcAddress, LoadLibraryW}}};
+use towermod_cstc::plugin::{self, *};
 use std::mem;
 
 unsafe fn ptr_to_string(ptr: *const c_char) -> String {
@@ -106,9 +108,9 @@ impl MicroAceTool {
 			ace.retrn = flags;
 
 			let vec = match typ {
-				ACETYPE_CONDITION => &mut self.cnds,
-				ACETYPE_ACTION => &mut self.acts,
-				ACETYPE_EXPRESSION => &mut self.exps,
+				plugin::ACETYPE_CONDITION => &mut self.cnds,
+				plugin::ACETYPE_ACTION => &mut self.acts,
+				plugin::ACETYPE_EXPRESSION => &mut self.exps,
 				_ => panic!(),
 			};
 
