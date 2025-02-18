@@ -8,6 +8,8 @@ use windows::Win32::Foundation::HANDLE;
 use anyhow::Result;
 use std::path::{Path, PathBuf};
 
+use super::log_on_error;
+
 /// Directory where cached data is stored
 /// Anything here should be safe to delete without data loss
 #[command]
@@ -80,7 +82,7 @@ pub fn try_find_towerclimb() -> Result<PathBuf> {
 	let mut path: PathBuf = [&*program_files_x86, r"Steam\steamapps\common\TowerClimb"].iter().collect();
 	// give up if installion dir doesn't exist
 	if !path.is_dir() {
-		// TODO: also search /SteamLibrary on other drives
+		// TODO: also search null/SteamLibrary on other drives
 		anyhow::bail!("Could not find TowerClimb executable");
 	}
 
@@ -123,9 +125,10 @@ async fn link_towermod_to_stable_path() -> Result<()> {
 	// FIXME: Don't copy if the version has not changed
 	let exe_path = std::env::current_exe()?;
 	let dest_path = get_stable_exe_path();
-	fs::remove_file(&dest_path).await?;
+	if exe_path == dest_path { return Ok(()) }
+	let _ = fs::remove_file(&dest_path).await;
 	if let Err(_) = fs::hard_link(&exe_path, &dest_path).await {
-		fs::copy(&exe_path, &dest_path).await?;
+		log_on_error(fs::copy(&exe_path, &dest_path).await);
 	}
 	Ok(())
 }

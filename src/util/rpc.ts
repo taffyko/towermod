@@ -3,9 +3,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { FileDialogOptions, ModInfo } from '@towermod';
 import { DependencyList, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event'
-import { win32 as path } from 'path';
 import { toast } from '@/app/Toast';
 import { api } from '@/api';
+import { throwOnError } from '@/components/Error';
+import { AppContextState, appContextStore } from '@/app/App/appContext';
+import { uniqueVersionName } from './dataUtil';
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -21,13 +23,16 @@ export async function deleteFile(path: string) {
 
 export async function installMods(files: string[]) {
 	const { dispatch } = await import('@/store');
-	const modsDirPath = await getModsDirPath()
+	const appContext = appContextStore.lastValue;
+	console.log("installMods", appContext.mods)
 	for (const file of files) {
-		const fileName = path.basename(file);
-		await copyFile(file, path.join(modsDirPath, fileName));
+		const { data: modInfo } = await throwOnError(spin(dispatch(api.endpoints.installMod.initiate(file))))
+		if (modInfo) {
+			toast(`Installed mod: "${modInfo.name}" (v${modInfo.version})`);
+			appContext?.tabs?.setCurrentTab('Mods')
+			appContext?.mods?.showMod(uniqueVersionName(modInfo))
+		}
 	}
-	files.length > 1 ? toast(`Installed ${files.length} mods`) : toast(`Installed "${path.basename(files[0])}"`)
-	dispatch(api.util.invalidateTags(['ModInfo']))
 }
 
 export async function filePicker(options?: FileDialogOptions): Promise<string | null> {
@@ -61,7 +66,7 @@ interface EventTypeMap {
 	'tauri://drag-leave': null
 	'tauri://drag-over': TauriPositionPayload
 	'towermod/error': unknown
-	'towermod/mod-installed': ModInfo
+	'towermod/request-install-mod': string,
 	'towermod/progress': string,
 	'towermod/toast': string,
 }
@@ -70,5 +75,5 @@ export function useTauriEvent<T extends keyof EventTypeMap>(type: T, handler: Ev
 	useEffect(() => {
 		const unlisten = listen(type, handler)
 		return () => { unlisten.then(fn => fn()) };
-	}, [type, ...deps])
+	}, deps ? [type, ...deps] : undefined)
 }

@@ -9,11 +9,12 @@ import { toast } from '@/app/Toast';
 import { openFolder, getModsDirPath } from '@/util/rpc';
 import { Button } from '@/components/Button';
 import { LoadContainer } from '@/components/LoadContainer';
-import { ErrorMsg, throwOnError, toastResult } from '@/components/Error';
+import { ErrorMsg, throwOnError } from '@/components/Error';
 import { posmod } from '@/util/util';
-import { useObjectUrl, useStateRef } from '@/util/hooks';
+import { useImperativeHandle, useObjectUrl, useStateRef } from '@/util/hooks';
 import { spin } from '../GlobalSpinner';
 import { Select } from '@/components/Select';
+import { uniqueName, uniqueVersionName } from '@/util';
 
 export const ModListItem = (props: {
 	selected: boolean,
@@ -159,23 +160,22 @@ function ModDetails(props: {
 	}
 }
 
-function uniqueName(mod: ModInfo | string) {
-	if (typeof mod === 'string') {
-		const [author, name] = mod.split('.')
-		return `${author}.${name}`
-	}
-	if (mod.error) { return mod.filePath! }
-	return `${mod.author}.${mod.name}`.toLowerCase().replace('_', '-');
-}
-function uniqueVersionName(mod: ModInfo) {
-	if (mod.error) { return mod.filePath! }
-	return `${mod.author}.${mod.name}.${mod.version}`.toLowerCase().replace('_', '-');
+
+export interface ModsHandle {
+	showMod(modId: string): void,
 }
 
-export default function Mods() {
+export default function Mods(props: {
+	handleRef?: React.Ref<ModsHandle>
+}) {
 	const modsList = api.useGetInstalledModsQuery();
 	const [playUnmodified] = api.usePlayVanillaMutation();
 	const [selectedModId, setSelectedModId] = useState<string>();
+	const [desiredSelectedModId, setDesiredSelectedModId] = useState<string>();
+
+	useImperativeHandle(props.handleRef, () => ({
+		showMod: setDesiredSelectedModId,
+	}), [setDesiredSelectedModId])
 
 	// mods grouped by version
 	const mods = useMemo(() => {
@@ -196,7 +196,17 @@ export default function Mods() {
 		}
 	}, [selectedModId, mods])
 	// reset selection if data disappears
-	useEffect(() => { if (!selectedMod) { setSelectedModId(undefined) } }, [selectedMod])
+	useEffect(() => {
+		if (!selectedMod) { setSelectedModId(undefined) }
+	}, [selectedMod])
+	useEffect(() => {
+		if (desiredSelectedModId) {
+			if (modsList.data?.find(m => uniqueVersionName(m) === desiredSelectedModId)) {
+				setSelectedModId(desiredSelectedModId)
+				setDesiredSelectedModId(undefined)
+			}
+		}
+	}, [desiredSelectedModId, mods])
 
 	const versions = useMemo(() => {
 		if (!selectedMod || !mods) { return }
@@ -228,14 +238,14 @@ export default function Mods() {
 			<ModList
 				mods={mods}
 				selectedMod={selectedModId}
-				setSelectedMod={setSelectedModId}
+				setSelectedMod={(id) => { setSelectedModId(id); setDesiredSelectedModId(undefined) }}
 				error={modsList.error}
 				isLoading={modsList.isFetching}
 			/>
 			<ModDetails
 				mod={selectedMod}
 				versions={versions}
-				setSelectedVersion={setSelectedModId}
+				setSelectedVersion={(id) => { setSelectedModId(id); setDesiredSelectedModId(undefined) }}
 			/>
 		</div>
 	</div>

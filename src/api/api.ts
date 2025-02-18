@@ -59,9 +59,9 @@ export const baseApi = createApi({
 			}),
 			providesTags: ['ModInfo'],
 		}),
-		installMod: builder.mutation<void, string>({
-			queryFn: queryFn(async (path) => {
-				await invoke('install_mod', { path })
+		installMod: builder.mutation<ModInfo, string>({
+			queryFn: queryFn(async (resource) => {
+				return await invoke('install_mod', { resource })
 			}),
 			invalidatesTags: ['ModInfo'],
 		}),

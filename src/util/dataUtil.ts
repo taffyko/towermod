@@ -1,3 +1,4 @@
+import { ModInfo } from "@towermod";
 import { UniqueTowermodObject, findObjectTypeById, State } from "../reducers/data";
 import { assert, assertUnreachable, unwrap } from "./util";
 
@@ -36,4 +37,18 @@ export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
 			assertUnreachable(objTypeName)
 	}
 
+}
+
+export function uniqueName(mod: ModInfo | string) {
+	if (typeof mod === 'string') {
+		const [author, name] = mod.split('.')
+		return `${author}.${name}`
+	}
+	if (mod.error) { return mod.filePath! }
+	return `${mod.author}.${mod.name}`.toLowerCase().replace('_', '-');
+}
+
+export function uniqueVersionName(mod: ModInfo) {
+	if (mod.error) { return mod.filePath! }
+	return `${mod.author}.${mod.name}.${mod.version}`.toLowerCase().replace('_', '-');
 }

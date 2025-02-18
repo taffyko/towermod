@@ -41,8 +41,7 @@ export function DragDropHandler() {
 		setIsDragging(false);
 		if (dragFiles && isValid) {
 			setSuccess(true);
-			await spin(installMods(dragFiles))
-			appContext?.tabs?.setCurrentTab('Mods')
+			await installMods(dragFiles)
 		} else {
 			setFailure(true)
 		}

@@ -85,11 +85,10 @@ export const Tabs = (props: {
 				)}
 			</div>
 		</div>
-		<div className={`${Style.tabContent} stretchbox`}>
+		{/* <div className={`${Style.tabContent} stretchbox`}>
 			{currentTab.children}
-		</div>
-
-		{/* {tabs.map(tab => {
+		</div> */}
+		{tabs.map(tab => {
 			// render all tabs simultaneously so that tab state
 			return <div
 				key={tab.name}
@@ -98,6 +97,7 @@ export const Tabs = (props: {
 			>
 				{tab.children}
 			</div>
-		})} */}
+		})}
+
 	</div>
 }

@@ -30,20 +30,20 @@ pub async fn init(app: AppHandle) -> Result<()> {
 	}
 
 	// Attempt to load existing config from disk.
-	let _ = log_error(thunks::load_config().await, "");
+	log_on_error(thunks::load_config().await);
 
 	// Attempt to load from saved game path, if set
 	let config = selectors::get_config().await;
 	let mut game_path_valid = false;
 	if let Some(game_path) = config.game_path {
-		if let Ok(_) = log_error(thunks::set_game(Some(game_path)).await, "Failed to load game at saved path") {
+		if let Some(_) = log_on_error(thunks::set_game(Some(game_path)).await.context("Failed to load game at saved path")) {
 			game_path_valid = true;
 		}
 	}
 	// Otherwise, try to autodetect and load game path
 	if !game_path_valid {
-		if let Ok(game_path) = log_error(crate::try_find_towerclimb(), "Failed to find TowerClimb executable") {
-			let _ = log_error(thunks::set_game(Some(game_path.clone())).await, "Failed to load game at detected path");
+		if let Some(game_path) = log_on_error(crate::try_find_towerclimb().context("Failed to find TowerClimb executable")) {
+			log_on_error(thunks::set_game(Some(game_path.clone())).await.context("Failed to load game at detected path"));
 		}
 	}
 
@@ -55,17 +55,15 @@ pub async fn init(app: AppHandle) -> Result<()> {
 
 		// Install mods passed from the command-line
 		let args: Vec<String> = std::env::args().skip(1).collect();
-		unsafe {TokioScope::scope_and_collect(|s| {
-			for arg in args {
-				s.spawn(install_mod(app.clone(), arg));
-			}
-		})}.await;
+		for arg in args {
+			log_on_error(app.emit("towermod/request-install-mod", arg));
+		}
 
 		// Attempt to listen on pipe
 		std::thread::spawn(move || {
 			let app_handle = app;
 			log_on_error(crate::etc::listen_pipe(move |msg| {
-				log_on_error(app_handle.emit("towermod/toast", msg));
+				log_on_error(app_handle.emit("towermod/request-install-mod", msg));
 			}));
 		});
 	}
@@ -75,30 +73,26 @@ pub async fn init(app: AppHandle) -> Result<()> {
 
 
 #[command]
-async fn install_mod(app: AppHandle, resource: impl AsRef<str>) {
-	let resource = resource.as_ref();
-	let result: anyhow::Result<()> = try {
-		let towermod_prefix = resource.starts_with("towermod:");
-		let is_url = towermod_prefix || resource.starts_with("https://") || resource.starts_with("http://");
+pub async fn install_mod(resource: &str) -> Result<ModInfo> {
+	let towermod_prefix = resource.starts_with("towermod:");
+	let is_url = towermod_prefix || resource.starts_with("https://") || resource.starts_with("http://");
 
-		if is_url {
-			let url = if towermod_prefix {
-				let url = &resource[9..];
-				url.split(',').nth(0).context("Malformed URL")?
-			} else { resource };
-			let bytes = reqwest::get(url).await?.bytes().await?;
-			let mod_info = ModInfo::from_zip_bytes(&bytes).await?;
-			fs::write(mod_info.export_path(), &bytes).await?;
-			app.emit("towermod/mod-installed", mod_info)?;
-		} else {
-			// Resource is a file path
-			let path = PathBuf::from(resource);
-			let mod_info = ModInfo::from_zip_path(&path).await?;
-			fs::copy(&path, mod_info.export_path()).await?;
-			app.emit("towermod/mod-installed", mod_info)?;
-		}
-	};
-	notify_on_error(&app, result);
+	if is_url {
+		let url = if towermod_prefix {
+			let url = &resource[9..];
+			url.split(',').nth(0).context("Malformed URL")?
+		} else { resource };
+		let bytes = reqwest::get(url).await?.bytes().await?;
+		let mod_info = ModInfo::from_zip_bytes(&bytes).await?;
+		fs::write(mod_info.export_path(), &bytes).await?;
+		Ok(mod_info)
+	} else {
+		// Resource is a file path
+		let path = PathBuf::from(resource);
+		let mod_info = ModInfo::from_zip_path(&path).await?;
+		fs::copy(&path, mod_info.export_path()).await?;
+		Ok(mod_info)
+	}
 }
 
 #[command]

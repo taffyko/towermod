@@ -91,6 +91,7 @@ pub fn run() {
 				thunks::play_mod,
 				thunks::play_project,
 				thunks::play_vanilla,
+				thunks::install_mod,
 				thunks::init,
 				thunks::set_game,
 				thunks::get_installed_mods,
