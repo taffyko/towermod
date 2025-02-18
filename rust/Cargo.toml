@@ -11,6 +11,9 @@ authors = ["taffyko"]
 towermod = { path = "towermod" }
 towermod-util = { path = "towermod-util" }
 towermod-win32 = { path = "towermod-win32" }
+towermod-cstc = { path = "towermod-cstc" }
+towermod-shared = { path = "towermod-shared" }
+towermod-dllreader = { path = "towermod-dllreader" }
 anyhow = { git = "https://github.com/taffyko/anyhow-tauri", features = ['backtrace'] }
 serde = { version = "1.0", features = ["derive"] }
 cached = { version = "0.51.4", features = ["async"] }

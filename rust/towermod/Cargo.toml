@@ -19,7 +19,6 @@ path = "src/dllreader.rs"
 
 [features]
 bundled-dllreader = []
-tauri = []
 
 [dependencies]
 tauri = { version = "2", features = ["unstable"] }
@@ -27,6 +26,8 @@ tauri-plugin-opener = "2"
 tauri-bindgen-host = { git = "https://github.com/tauri-apps/tauri-bindgen" }
 towermod-util.workspace = true
 towermod-win32.workspace = true
+towermod-cstc.workspace = true
+towermod-shared.workspace = true
 anyhow.workspace = true
 scopeguard.workspace = true
 serde.workspace = true

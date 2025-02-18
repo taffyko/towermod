@@ -1,9 +1,8 @@
 use windows::{core::{w, HRESULT}, Win32::{Foundation::{CloseHandle, ERROR_BROKEN_PIPE, GENERIC_READ, GENERIC_WRITE, HANDLE}, Storage::FileSystem::{CreateFileW, FlushFileBuffers, ReadFile, WriteFile, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_MODE, OPEN_EXISTING, PIPE_ACCESS_DUPLEX}, System::Pipes::{ConnectNamedPipe, CreateNamedPipeW, DisconnectNamedPipe, SetNamedPipeHandleState, WaitNamedPipeW, PIPE_READMODE_MESSAGE, PIPE_TYPE_MESSAGE, PIPE_UNLIMITED_INSTANCES, PIPE_WAIT}}};
 use windows::Win32::Foundation as win;
 use anyhow::Result;
-use crate::log_on_error;
-
-use towermod_win32::OpenedHandle;
+use towermod_util::log_on_error;
+use crate::OpenedHandle;
 
 pub const fn win32_to_hresult(error: u32) -> HRESULT {
 	HRESULT(if error == 0 { 0 } else { (error & 0x0000_FFFF) | (7 << 16) | 0x8000_0000 } as i32)

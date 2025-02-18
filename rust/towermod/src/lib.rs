@@ -8,16 +8,15 @@
 #![allow(unused_parens)]
 #![allow(unused_import_braces)]
 
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
 extern crate test;
 
-mod etc;
-pub use etc::*;
 pub use towermod_util::*;
+pub use towermod_shared::*;
+pub mod cstc {
+	pub use towermod_cstc::*;
+}
 
-pub mod cstc;
 pub mod app;
-#[cfg(feature = "tauri")]
+
 pub mod tauri;
 

@@ -1,6 +1,9 @@
 #![feature(try_blocks)]
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 mod util;
 mod macros;
-pub use macros::*;
+mod tcr;
 pub use util::*;
+pub use tcr::*;

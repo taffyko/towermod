@@ -33,6 +33,5 @@ fn main() {
 		}
 	}
 
-	#[cfg(feature = "tauri")]
 	towermod_lib::tauri::run()
 }

@@ -1,14 +1,16 @@
 use std::{io::{Cursor, Read, Write}, path::PathBuf, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, log_error, log_on_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType, TcrepainterPatch, ZipWriterExt};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, log_error, log_on_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType, ZipWriterExt};
 use anyhow::Result;
 use async_scoped::TokioScope;
 use tauri::{command, AppHandle, Emitter};
 use anyhow::{Context};
 use fs_err::tokio as fs;
 use tokio::io::AsyncWriteExt;
+use towermod_util::TcrepainterPatch;
+use towermod_win32::get_temp_file;
 use tracing::instrument;
 use itertools::Itertools;
-use crate::etc::game_images as images;
+use towermod_shared::game_images as images;
 use crate::app::{state::{select, CstcData}, selectors, thunks};
 
 fn status(_msg: &str) {
@@ -62,7 +64,7 @@ pub async fn init(app: AppHandle) -> Result<()> {
 		// Attempt to listen on pipe
 		std::thread::spawn(move || {
 			let app_handle = app;
-			log_on_error(crate::etc::listen_pipe(move |msg| {
+			log_on_error(towermod_win32::pipe::listen_pipe(move |msg| {
 				log_on_error(app_handle.emit("towermod/request-install-mod", msg));
 			}));
 		});

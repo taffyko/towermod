@@ -7,7 +7,7 @@
       "label": "build-tauri",
       "type": "cargo",
       "command": "build",
-      "args": ["--features=bundled-dllreader,tauri", "--target=x86_64-pc-windows-msvc"],
+      "args": ["--features=bundled-dllreader", "--target=x86_64-pc-windows-msvc"],
       "options": {
         "cwd": "${workspaceFolder}/rust/towermod"
       },

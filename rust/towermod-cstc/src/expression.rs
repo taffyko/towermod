@@ -1,7 +1,6 @@
 
 use std::fmt::Display;
-
-use super::*;
+use crate::stable::{Token, TokenKind};
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

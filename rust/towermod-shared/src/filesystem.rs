@@ -1,6 +1,5 @@
 use std::fmt::Debug;
 use serde::{Deserialize, Serialize};
-use tauri::command;
 use std::path::{Path, PathBuf};
 use tokio::task;
 use fs_err::tokio as fs;
@@ -10,45 +9,12 @@ use anyhow::Result;
 use windows::Win32::Foundation::MAX_PATH;
 use windows::core::HSTRING;
 
-#[instrument]
-pub async fn get_temp_file() -> Result<PathBuf> {
-	unsafe {
-		let buffer = task::spawn_blocking(|| {
-			let mut buffer = [0u16; MAX_PATH as usize];
-			GetTempFileNameW(
-				&HSTRING::from(&*std::env::temp_dir().as_path()),
-				&HSTRING::from("tow"),
-				0,
-				&mut buffer
-			);
-			buffer
-		}).await?;
-		let len = buffer.iter().position(|v| *v == 0).unwrap();
-		let s = String::from_utf16_lossy(&buffer[0..len]);
-		Ok(s.into())
-	}
-}
-
-#[command]
 pub fn open_folder(dir: &Path) -> Result<()> {
 	use std::process::Command;
 	let _ = Command::new("explorer.exe")
 		.arg(".")
 		.current_dir(dir)
 		.spawn()?;
-	Ok(())
-}
-
-#[command]
-pub async fn copy_file(src: PathBuf, dest: PathBuf) -> Result<()> {
-	if (src == dest) { return Ok(()) }
-	fs::copy(src, dest).await?;
-	Ok(())
-}
-
-#[command]
-pub async fn delete_file(path: PathBuf) -> Result<()> {
-	fs::remove_file(path).await?;
 	Ok(())
 }
 
@@ -91,7 +57,6 @@ fn set_file_dialog_options(mut file_dialog: rfd::FileDialog, options: &FileDialo
 	file_dialog
 }
 
-#[command]
 pub async fn folder_picker(options: Option<FileDialogOptions>) -> Result<Option<PathBuf>> {
 	let result = tokio::task::spawn_blocking(move || {
 		let mut file_dialog = rfd::FileDialog::new();
@@ -103,7 +68,6 @@ pub async fn folder_picker(options: Option<FileDialogOptions>) -> Result<Option<
 	Ok(result)
 }
 
-#[command]
 pub async fn file_picker(options: Option<FileDialogOptions>) -> Result<Option<PathBuf>> {
 	let result = tokio::task::spawn_blocking(move || {
 		let mut file_dialog = rfd::FileDialog::new();

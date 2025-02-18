@@ -5,7 +5,9 @@ use fs_err::tokio as fs;
 use serde::{Serialize, Deserialize};
 use anyhow::{anyhow, Result, Context};
 use serde_alias::serde_alias;
-use crate::{convert_to_debug_build, convert_to_release_build, cstc::{plugin::PluginData, AppBlock, EventBlock, ImageBlock, LevelBlock}, get_cache_dir_path, mod_cache_dir_path, read_pe_file_resource, PeResource, ResId};
+use towermod_win32::pe_resource::{read_pe_file_resource, ResId};
+use crate::{convert_to_debug_build, convert_to_release_build, get_cache_dir_path, mod_cache_dir_path, PeResource};
+pub use towermod_cstc::{plugin::PluginData, AppBlock, EventBlock, ImageBlock, LevelBlock};
 
 
 
@@ -166,7 +168,7 @@ impl Game {
 		let mut plugin_names = crate::read_dllblock_names(self.game_path()?).await?;
 		plugin_names.insert(-1, String::from("System"));
 		let mut editor_plugins = crate::load_editor_plugins_by_name(&plugin_names).await?;
-		editor_plugins.insert(-1, crate::cstc::get_system_plugin());
+		editor_plugins.insert(-1, towermod_cstc::get_system_plugin());
 		let data = (plugin_names, editor_plugins);
 
 		// Write to cache
@@ -262,7 +264,7 @@ impl Project {
 			version,
 			project_type: Default::default(),
 			description: Default::default(),
-			towermod_version: crate::VERSION.to_string(),
+			towermod_version: towermod_util::VERSION.to_string(),
 			dir_path: None,
 			date: time::OffsetDateTime::now_utc(),
 		}

@@ -4,17 +4,19 @@ use futures::StreamExt;
 use tokio::sync::RwLock;
 use tokio_stream::wrappers::ReadDirStream;
 use tracing::instrument;
-use crate::{cstc::{self, ImageBlock, ImageMetadata, ImageResource}, PeResource};
+use towermod_cstc::{self as cstc, ImageBlock, ImageMetadata, ImageResource};
 
-pub(crate) fn create_imageblock_metadata_patch(original_metadata: Vec<ImageMetadata>, new_metadata: Vec<ImageMetadata>) -> Result<Vec<u8>> {
+use crate::PeResource;
+
+pub fn create_imageblock_metadata_patch(original_metadata: Vec<ImageMetadata>, new_metadata: Vec<ImageMetadata>) -> Result<Vec<u8>> {
 	let original = metadata_into_bin(original_metadata)?;
 	let new = metadata_into_bin(new_metadata)?;
-	crate::diff(&*original, &*new)
+	towermod_util::diff(&*original, &*new)
 }
 
-pub(crate) fn apply_imageblock_metadata_patch(original_metadata: Vec<ImageMetadata>, patch: Vec<u8>) -> Result<Vec<ImageMetadata>> {
+pub fn apply_imageblock_metadata_patch(original_metadata: Vec<ImageMetadata>, patch: Vec<u8>) -> Result<Vec<ImageMetadata>> {
 	let original = metadata_into_bin(original_metadata)?;
-	let new = crate::apply_patch(&*original, &patch)?;
+	let new = towermod_util::apply_patch(&*original, &patch)?;
 	metadata_from_bin(new)
 }
 
@@ -32,7 +34,7 @@ fn metadata_from_bin(bin: Vec<u8>) -> Result<Vec<ImageMetadata>> {
 }
 
 /// Combine base images, a directory or zip containing custom images, and metadata, to create a patched ImageBlock
-pub(crate) async fn get_patched_image_block(mut images: HashMap<i32, Vec<u8>>, dir_or_zip: Option<PathBuf>, metadata: Vec<ImageMetadata>) -> Result<ImageBlock> {
+pub async fn get_patched_image_block(mut images: HashMap<i32, Vec<u8>>, dir_or_zip: Option<PathBuf>, metadata: Vec<ImageMetadata>) -> Result<ImageBlock> {
 	if let Some(dir_or_zip) = dir_or_zip {
 		if dir_or_zip.is_dir() {
 			images.extend(images_from_dir(dir_or_zip).await?);
@@ -43,7 +45,7 @@ pub(crate) async fn get_patched_image_block(mut images: HashMap<i32, Vec<u8>>, d
 	Ok(combine_imageblock(images, metadata))
 }
 
-pub(crate) fn split_imageblock(image_block: cstc::ImageBlock) -> (HashMap<i32, Vec<u8>>, Vec<ImageMetadata>) {
+pub fn split_imageblock(image_block: cstc::ImageBlock) -> (HashMap<i32, Vec<u8>>, Vec<ImageMetadata>) {
 	let mut metadatas = Vec::with_capacity(image_block.len());
 	let mut images = HashMap::with_capacity(image_block.len());
 	for image in image_block {
@@ -54,7 +56,7 @@ pub(crate) fn split_imageblock(image_block: cstc::ImageBlock) -> (HashMap<i32, V
 	(images, metadatas)
 }
 
-pub(crate) fn combine_imageblock(mut images: HashMap<i32, Vec<u8>>, image_metadatas: Vec<ImageMetadata>) -> cstc::ImageBlock {
+pub fn combine_imageblock(mut images: HashMap<i32, Vec<u8>>, image_metadatas: Vec<ImageMetadata>) -> cstc::ImageBlock {
 	image_metadatas.into_iter().filter_map(|metadata| {
 		if let Some(image) = images.remove(&metadata.id) {
 			Some(cstc::ImageResource::new(image, metadata))
@@ -66,7 +68,7 @@ pub(crate) fn combine_imageblock(mut images: HashMap<i32, Vec<u8>>, image_metada
 }
 
 #[instrument]
-pub(crate) async fn images_from_dir(images_dir: PathBuf) -> Result<HashMap<i32, Vec<u8>>> {
+pub async fn images_from_dir(images_dir: PathBuf) -> Result<HashMap<i32, Vec<u8>>> {
 	let images: RwLock<HashMap<i32, Vec<u8>>> = RwLock::new(HashMap::new());
 
 	let entries = ReadDirStream::new(match tokio::fs::read_dir(&images_dir).await {
@@ -104,7 +106,7 @@ pub(crate) async fn images_from_dir(images_dir: PathBuf) -> Result<HashMap<i32, 
 }
 
 #[instrument]
-pub(crate) async fn images_from_zip(zip_path: PathBuf) -> Result<HashMap<i32, Vec<u8>>> {
+pub async fn images_from_zip(zip_path: PathBuf) -> Result<HashMap<i32, Vec<u8>>> {
 	tokio::task::spawn_blocking(|| -> Result<HashMap<i32, Vec<u8>>> {
 		let archive = std::fs::File::open(zip_path)?;
 		let mut zip = zip::ZipArchive::new(archive)?;
@@ -135,7 +137,7 @@ pub(crate) async fn images_from_zip(zip_path: PathBuf) -> Result<HashMap<i32, Ve
 	}).await?
 }
 
-pub(crate) async fn images_from_game(game_path: &Path) -> Result<(HashMap<i32, Vec<u8>>, Vec<ImageMetadata>)> {
+pub async fn images_from_game(game_path: &Path) -> Result<(HashMap<i32, Vec<u8>>, Vec<ImageMetadata>)> {
 	let image_block = cstc::ImageBlock::read_from_pe(&game_path).await?;
 	Ok(split_imageblock(image_block))
 }
