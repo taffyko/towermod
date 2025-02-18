@@ -3,24 +3,15 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::c_void;
 use std::fmt::Debug;
-use std::io::{Cursor, Read, Write};
 
-use async_scoped::TokioScope;
-use ::time::OffsetDateTime;
-use tokio_stream::StreamExt;
 use towermod_util::{async_cleanup, blocking, clone};
-use zip;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use log::warn;
-use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 use tokio::task::JoinSet;
-use tokio::process::Command;
-use fs_err::tokio as fs;
-use tracing::{instrument, Instrument, info_span};
-use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
+use tracing::instrument;
 use windows::Win32::System::LibraryLoader::{BeginUpdateResourceW, EndUpdateResourceW, EnumResourceNamesW, EnumResourceTypesExW, FindResourceExW, LoadLibraryExW, LoadResource, LockResource, SizeofResource, UpdateResourceW, LOAD_LIBRARY_AS_DATAFILE};
-use anyhow::{bail, Context, Result};
-use windows::Win32::Foundation::{HANDLE, HMODULE, BOOL, CloseHandle, FreeLibrary};
+use anyhow::Result;
+use windows::Win32::Foundation::{HANDLE, HMODULE, BOOL, FreeLibrary};
 use windows::core::{PCWSTR, HSTRING};
 
 pub unsafe fn read_hmodule_resource(hmodule: HMODULE, res_type: &ResId, res_name: &ResId) -> Result<Vec<u8>> {

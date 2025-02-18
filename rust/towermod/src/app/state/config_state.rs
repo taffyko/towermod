@@ -20,7 +20,7 @@ impl From<Action> for super::app_state::Action {
 	}
 }
 
-pub fn reducer(state: State, action: Action) -> State {
+pub fn reducer(_state: State, action: Action) -> State {
 	match (action) {
 		Action::SetConfig(state) => state,
 	}

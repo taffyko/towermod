@@ -173,7 +173,7 @@ pub async fn merge_copy_into(src_dir: &Path, dst_dir: &Path, use_hardlinks: bool
 				}
 
 				// Skip if not replacing existing files
-				if (exists && !replace_existing) {
+				if exists && !replace_existing {
 					return;
 				}
 

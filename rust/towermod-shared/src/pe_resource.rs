@@ -1,17 +1,14 @@
 use core::slice;
 
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::c_void;
-use std::fmt::Debug;
 use std::io::{Cursor, Read, Write};
 use towermod_cstc::plugin::{self, PluginData, PluginStringTable};
-use towermod_win32::get_temp_file;
 
 use async_scoped::TokioScope;
 use ::time::OffsetDateTime;
 use tokio_stream::StreamExt;
-use towermod_util::{async_cleanup, blocking, clone, ZipWriterExt};
+use towermod_util::{async_cleanup, blocking, ZipWriterExt};
 use zip;
 use std::path::{Path, PathBuf};
 use log::warn;
@@ -21,10 +18,10 @@ use tokio::process::Command;
 use fs_err::tokio as fs;
 use tracing::{instrument, Instrument, info_span};
 use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
-use windows::Win32::System::LibraryLoader::{BeginUpdateResourceW, EndUpdateResourceW, EnumResourceNamesW, EnumResourceTypesExW, FindResourceExW, LoadLibraryExW, LoadResource, LockResource, SizeofResource, UpdateResourceW, LOAD_LIBRARY_AS_DATAFILE};
-use anyhow::{bail, Context, Result};
-use windows::Win32::Foundation::{HANDLE, HMODULE, BOOL, CloseHandle, FreeLibrary};
-use windows::core::{PCWSTR, HSTRING};
+use windows::Win32::System::LibraryLoader::{LoadLibraryExW, LOAD_LIBRARY_AS_DATAFILE};
+use anyhow::{Context, Result};
+use windows::Win32::Foundation::{HANDLE, FreeLibrary};
+use windows::core::HSTRING;
 use crate::dllreader_client;
 use crate::{Game, ModInfo, ModType, Project};
 use towermod_win32::pe_resource::*;
@@ -302,7 +299,7 @@ pub async fn load_editor_plugins_by_name(names: &HashMap<i32, String>) -> Result
 	}
 
 	for (i, name) in names.iter() {
-		if (!data_by_index.contains_key(&(*i as i32))) {
+		if !data_by_index.contains_key(&(*i as i32)) {
 			warn!("No editor build found for plugin {}: '{}'", i, name);
 		}
 	}

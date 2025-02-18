@@ -98,8 +98,8 @@ impl From<Action> for super::app_state::Action {
 pub fn reducer(state: State, action: Action) -> State {
 	match (action) {
 		Action::SetData(state) => state,
-		Action::AddObjectInstance { layout_layer_id, object_type_id } => todo!(),
-		Action::RemoveObjectInstance { id } => todo!(),
+		Action::AddObjectInstance { layout_layer_id: _, object_type_id: _ } => todo!(),
+		Action::RemoveObjectInstance { id: _ } => todo!(),
 		Action::SetImageMetadata(metadata) => {
 			let mut state = state;
 			let index = state.image_block.iter().position(|img| img.id == metadata.id);

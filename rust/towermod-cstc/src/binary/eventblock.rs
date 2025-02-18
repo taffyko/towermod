@@ -87,7 +87,7 @@ impl BlockReader<'_> {
 		let mut events: Vec<SomeEvent> = Vec::new();
 
 		assert_eq!(self.read_u8(), CAP_BEGINEVENTLIST);
-		while (self.check_u8() != CAP_ENDEVENTLIST) {
+		while self.check_u8() != CAP_ENDEVENTLIST {
 			let event = self.read_any_event();
 			events.push(event);
 		}
@@ -109,19 +109,19 @@ impl BlockReader<'_> {
 		let sheet_id = self.read_i32();
 		assert_eq!(self.read_u8(), CAP_BEGINCONDITIONS);
 		let mut conditions: Vec<EventCondition> = Vec::new();
-		while (self.check_u8() != CAP_ENDCONDITIONS) {
+		while self.check_u8() != CAP_ENDCONDITIONS {
 			conditions.push(self.read_condition());
 		}
 		assert_eq!(self.read_u8(), CAP_ENDCONDITIONS);
 		assert_eq!(self.read_u8(), CAP_BEGINACTIONS);
 		let mut actions: Vec<EventAction> = Vec::new();
-		while (self.check_u8() != CAP_ENDACTIONS) {
+		while self.check_u8() != CAP_ENDACTIONS {
 			actions.push(self.read_action());
 		}
 		assert_eq!(self.read_u8(), CAP_ENDACTIONS);
 		// Sub-events
 		let mut events = Vec::new();
-		while (self.check_u8() != CAP_ENDEVENT) {
+		while self.check_u8() != CAP_ENDEVENT {
 			events.push(self.read_any_event());
 		}
 		assert_eq!(self.read_u8(), CAP_ENDEVENT);
@@ -182,7 +182,7 @@ impl BlockReader<'_> {
 		let name = self.read_string();
 		// Sub-events
 		let mut events = Vec::new();
-		while (self.check_u8() != CAP_ENDGROUP) {
+		while self.check_u8() != CAP_ENDGROUP {
 			events.push(self.read_any_event());
 		}
 		assert_eq!(self.read_u8(), CAP_ENDGROUP);

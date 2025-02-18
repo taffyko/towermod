@@ -6,8 +6,8 @@ use towermod::cstc::decode_object_data;
 use towermod::cstc::ObjectData;
 use towermod::read_dllblock_names;
 use towermod::try_find_towerclimb;
-use towermod::read_pe_file_resource;
-use towermod::ResId;
+use towermod_win32::pe_resource::read_pe_file_resource;
+use towermod_win32::pe_resource::ResId;
 
 fn exe_path() -> PathBuf {
 	match std::env::var("TOWERMOD_GAME_PATH") {

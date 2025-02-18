@@ -6,7 +6,7 @@ use crate::OpenedHandle;
 pub fn wait_until_process_exits(pid: u32) -> Result<()> {
 	unsafe {
 		let handle = OpenProcess(PROCESS_SYNCHRONIZE, false, pid)?;
-		if (handle == win::INVALID_HANDLE_VALUE) {
+		if handle == win::INVALID_HANDLE_VALUE {
 			anyhow::bail!("Failed to get handle for process {}", pid);
 		}
 		let handle = OpenedHandle(handle);

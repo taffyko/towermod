@@ -1,9 +1,6 @@
-use std::path::PathBuf;
 use crate::app::{selectors, thunks};
 
 use super::commands;
-use tauri::{plugin::TauriPlugin, Runtime};
-use tauri_bindgen_host::ipc_router_wip::{BuilderExt, Router};
 
 // tauri_bindgen_host::generate!({
 //     path: "../../greet.wit",

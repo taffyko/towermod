@@ -69,6 +69,7 @@ pub enum ParamType
 	NOCAST = 1 << 10,
 }
 
+#[allow(non_camel_case_types)]
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, FromPrimitive, Default)]
 pub enum Property

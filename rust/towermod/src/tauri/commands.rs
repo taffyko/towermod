@@ -4,7 +4,7 @@ use anyhow::Result;
 use fs_err::tokio as fs;
 use towermod_shared::FileDialogOptions;
 
-use crate::{app::thunks, app::selectors, Game};
+use crate::app::thunks;
 
 // #[command]
 // pub fn greet(name: &str) -> String {

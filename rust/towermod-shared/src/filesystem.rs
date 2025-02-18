@@ -1,13 +1,7 @@
 use std::fmt::Debug;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use tokio::task;
-use fs_err::tokio as fs;
-use tracing::instrument;
-use windows::Win32::Storage::FileSystem::GetTempFileNameW;
 use anyhow::Result;
-use windows::Win32::Foundation::MAX_PATH;
-use windows::core::HSTRING;
 
 pub fn open_folder(dir: &Path) -> Result<()> {
 	use std::process::Command;
