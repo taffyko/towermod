@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import type { DataHandle } from "@/app/Data";
 import type { TabsHandle } from "@/app/Tabs";
 import { ModsHandle } from "@/app/Mods";
@@ -13,3 +13,7 @@ export interface AppContextState {
 export const AppContext = React.createContext<AppContextState | null>(null)
 
 export const appContextStore = new MiniEvent<AppContextState | null>(null);
+
+export function useAppContext() {
+	return useContext(AppContext);
+}

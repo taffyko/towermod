@@ -51,6 +51,13 @@ export function useImperativeHandle<T, R extends T>(ref: React.Ref<T> | undefine
 	return handle
 }
 
+/** Won't trigger re-renders in child components that depend on it */
+export function useStableHandle<T extends object>(value: T): T {
+	const ref = useRef<T>({} as any);
+	Object.assign(ref.current, value);
+	return ref.current
+}
+
 /** Allows you to return both a value and a cleanup function that runs before the value recomputes */
 export function useMemoWithCleanup<T>(factory: () => [T] | [T, ReturnType<EffectCallback>], deps: DependencyList): T {
 	const resultRef = useRef<null | [T] | [T, ReturnType<EffectCallback>]>(null)

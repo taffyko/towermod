@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Game, ImageMetadata, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod';
 import { useObjectUrl } from '@/util/hooks';
 import { queryFn } from './apiUtil';
+import { enhanceModInfo } from '@/util';
 
 
 
@@ -55,13 +56,14 @@ export const baseApi = createApi({
 		getInstalledMods: builder.query<ModInfo[], void>({
 			queryFn: queryFn(async () => {
 				const mods: ModInfo[] = await invoke('get_installed_mods')
+				for (const mod of mods) { enhanceModInfo(mod) }
 				return mods
 			}),
 			providesTags: ['ModInfo'],
 		}),
 		installMod: builder.mutation<ModInfo, string>({
 			queryFn: queryFn(async (resource) => {
-				return await invoke('install_mod', { resource })
+				return enhanceModInfo(await invoke('install_mod', { resource }))
 			}),
 			invalidatesTags: ['ModInfo'],
 		}),
@@ -106,20 +108,20 @@ export const baseApi = createApi({
 			}),
 			invalidatesTags: ['ModInfo']
 		}),
-		playMod: builder.mutation<void, string>({
+		playMod: builder.mutation<number, string>({
 			queryFn: queryFn(async (zipPath) => {
-				await invoke('play_mod', { zipPath })
+				return await invoke('play_mod', { zipPath })
 			}),
 			invalidatesTags: ['ModCache']
 		}),
-		playProject: builder.mutation<void, boolean>({
+		playProject: builder.mutation<number, boolean>({
 			queryFn: queryFn(async (debug) => {
-				await invoke('play_project', { debug })
+				return await invoke('play_project', { debug })
 			}),
 		}),
-		playVanilla: builder.mutation<void, void>({
+		playVanilla: builder.mutation<number, void>({
 			queryFn: queryFn(async () => {
-				await invoke('play_vanilla')
+				return await invoke('play_vanilla')
 			}),
 		}),
 		getText: builder.query<string, string>({

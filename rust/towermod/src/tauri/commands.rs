@@ -43,3 +43,6 @@ pub async fn get_file(
 		Err(anyhow::anyhow!("Invalid request").into())
 	}
 }
+
+#[command]
+pub const fn get_version() -> &'static str { crate::VERSION }

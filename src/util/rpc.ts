@@ -7,7 +7,6 @@ import { toast } from '@/app/Toast';
 import { api } from '@/api';
 import { throwOnError } from '@/components/Error';
 import { AppContextState, appContextStore } from '@/app/App/appContext';
-import { uniqueVersionName } from './dataUtil';
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -21,16 +20,19 @@ export async function deleteFile(path: string) {
 	await invoke('delete_file', { path })
 }
 
+export async function waitUntilProcessExits(pid: number) {
+	await invoke('wait_until_process_exits', { pid })
+}
+
 export async function installMods(files: string[]) {
 	const { dispatch } = await import('@/store');
 	const appContext = appContextStore.lastValue;
-	console.log("installMods", appContext.mods)
 	for (const file of files) {
 		const { data: modInfo } = await throwOnError(spin(dispatch(api.endpoints.installMod.initiate(file))))
 		if (modInfo) {
 			toast(`Installed mod: "${modInfo.name}" (v${modInfo.version})`);
 			appContext?.tabs?.setCurrentTab('Mods')
-			appContext?.mods?.showMod(uniqueVersionName(modInfo))
+			appContext?.mods?.setDesiredSelectedModId(modInfo.id)
 		}
 	}
 }
@@ -45,6 +47,10 @@ export async function folderPicker(options?: FileDialogOptions): Promise<string 
 
 export async function getModsDirPath(): Promise<string> {
 	return await invoke('get_mods_dir_path')
+}
+
+export async function getVersion(): Promise<string> {
+	return await invoke('get_version');
 }
 
 

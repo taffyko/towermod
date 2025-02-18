@@ -1,5 +1,5 @@
 use std::{io::{Cursor, Read, Write}, path::PathBuf, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, log_error, log_on_error, tauri::notify_on_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType, TcrepainterPatch, ZipWriterExt};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, get_temp_file, log_error, log_on_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType, TcrepainterPatch, ZipWriterExt};
 use anyhow::Result;
 use async_scoped::TokioScope;
 use tauri::{command, AppHandle, Emitter};
@@ -140,7 +140,7 @@ pub async fn get_installed_mods() -> Result<Vec<ModInfo>> {
 }
 
 #[command]
-pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
+pub async fn play_mod(zip_path: PathBuf) -> Result<u32> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let zip_bytes = fs::read(&zip_path).await?;
 	let cursor = Cursor::new(&zip_bytes);
@@ -159,8 +159,8 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 	mod_info.game = game.clone();
 
 	// run existing mod if it's already been patched
-	if let Ok(()) = run_patched_mod(&mod_info).await {
-		return Ok(())
+	if let Ok(pid) = run_patched_mod(&mod_info).await {
+		return Ok(pid)
 	}
 
 	let game_path = mod_info.game.game_path()?.clone();
@@ -284,8 +284,7 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<()> {
 	}
 
 	status("Running executable");
-	run_patched_mod(&mod_info).await?;
-	Ok(())
+	Ok(run_patched_mod(&mod_info).await?)
 }
 
 #[command]
@@ -300,14 +299,13 @@ pub async fn clear_mod_cache(mod_info: ModInfo) -> Result<()> {
 }
 
 
-async fn run_patched_mod(mod_info: &ModInfo) -> Result<()> {
+async fn run_patched_mod(mod_info: &ModInfo) -> Result<u32> {
 	let game_path = mod_info.game.game_path()?.clone();
 	let runtime_dir = mod_info.mod_runtime_dir().await?;
 	let game_name = game_path.file_name().unwrap();
 	let output_exe_path = runtime_dir.join(game_name);
 
-	crate::run_game(&output_exe_path).await?;
-	Ok(())
+	Ok(crate::run_game(&output_exe_path).await?)
 }
 
 
@@ -410,10 +408,9 @@ pub async fn new_project() -> Result<()> {
 }
 
 #[command]
-pub async fn play_vanilla() -> Result<()> {
+pub async fn play_vanilla() -> Result<u32> {
 	let game = selectors::get_game().await.context("No game set")?;
-	crate::run_game(game.game_path()?).await?;
-	Ok(())
+	Ok(crate::run_game(game.game_path()?).await?)
 }
 
 #[command]
@@ -721,11 +718,3 @@ pub async fn image_dump_dir_path() -> Result<Option<PathBuf>> {
 		Ok(None)
 	}
 }
-
-
-// async fn hydrate_image_block(image_metadatas: Vec<ImageMetadata>) -> Result<()> {
-// 	let game = selectors::get_game().await.context("No game set")?;
-// 	let base_image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;
-// 	let mut images = base_image_block.into_iter().map(|d| d.data);
-// 	todo!()
-// }

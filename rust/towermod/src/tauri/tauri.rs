@@ -66,6 +66,7 @@ pub fn run() {
 				crate::etc::get_default_project_dir_path,
 				crate::etc::copy_file,
 				crate::etc::delete_file,
+				commands::get_version,
 				commands::get_image,
 				commands::get_file,
 				selectors::get_game,
@@ -100,6 +101,7 @@ pub fn run() {
 				thunks::dump_images,
 				thunks::mod_cache_exists,
 				thunks::clear_mod_cache,
+				thunks::wait_until_process_exits,
 			]
 		)
 		// TODO: once tauri-bindgen properly supports windows

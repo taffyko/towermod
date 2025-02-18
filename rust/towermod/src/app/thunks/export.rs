@@ -39,7 +39,7 @@ pub async fn export_from_legacy(patch_path: PathBuf, mut project: Project) -> Re
 }
 
 #[command]
-pub async fn play_project(debug: bool) -> Result<()> {
+pub async fn play_project(debug: bool) -> Result<u32> {
 	let data = select(|s| s.data.clone()).await;
 	let (level_block, app_block, mut event_block, image_metadatas) = data.into_blocks();
 	let project = selectors::get_project().await;
@@ -111,8 +111,12 @@ pub async fn play_project(debug: bool) -> Result<()> {
 	app_block.write_to_pe(&output_path)?;
 	event_block.write_to_pe(&output_path)?;
 	level_block.write_to_pe(&output_path)?;
-	crate::run_game(&output_path).await?;
-
-	Ok(())
+	Ok(crate::run_game(&output_path).await?)
 }
 
+#[command]
+pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
+	tokio::task::spawn_blocking(move || {
+		crate::process::wait_until_process_exits(pid)
+	}).await?
+}

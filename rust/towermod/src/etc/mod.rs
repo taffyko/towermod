@@ -6,6 +6,7 @@ mod util;
 mod filesystem;
 mod newtype;
 mod pipe;
+pub mod process;
 pub mod registry;
 pub mod game_images;
 pub mod macros;

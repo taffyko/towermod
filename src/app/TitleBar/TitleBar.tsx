@@ -11,8 +11,9 @@ import Text from '@/components/Text';
 import chime from '@/audio/chime.ogg';
 import { api } from '@/api';
 import { ConfirmModal, openModal } from '../Modal';
+import { getVersion } from '@/util';
 
-const VERSION = "v0.2.0"; // FIXME
+const VERSION = await getVersion();
 
 export const TitleBar = () => {
 	const { data: project, isLoading: isLoading1 } = api.useGetProjectQuery();

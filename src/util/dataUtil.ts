@@ -39,7 +39,7 @@ export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
 
 }
 
-export function uniqueName(mod: ModInfo | string) {
+function uniqueName(mod: ModInfo | string) {
 	if (typeof mod === 'string') {
 		const [author, name] = mod.split('.')
 		return `${author}.${name}`
@@ -48,7 +48,22 @@ export function uniqueName(mod: ModInfo | string) {
 	return `${mod.author}.${mod.name}`.toLowerCase().replace('_', '-');
 }
 
-export function uniqueVersionName(mod: ModInfo) {
+function uniqueVersionName(mod: ModInfo) {
 	if (mod.error) { return mod.filePath! }
 	return `${mod.author}.${mod.name}.${mod.version}`.toLowerCase().replace('_', '-');
+}
+
+export function enhanceModInfo(modInfo: ModInfo): ModInfo {
+	Object.assign(modInfo, {
+		get uniqueName() { return uniqueName(modInfo) },
+		get id() { return uniqueVersionName(modInfo) },
+	})
+	return modInfo
+}
+
+declare module "@towermod" {
+	interface ModInfo {
+		uniqueName: string
+		id: string
+	}
 }

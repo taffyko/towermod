@@ -28,6 +28,7 @@ const App = () => {
 	const [init] = api.useInitMutation();
 	const { data: game } = api.useGetGameQuery();
 
+	// TODO: lift into store
 	const appContext = useMemo<AppContextState>(() => {
 		return {
 			data: dataHandle!,
@@ -36,7 +37,6 @@ const App = () => {
 		}
 	}, [dataHandle, tabsHandle])
 	useEffect(() => {
-		console.log(appContext);
 		appContextStore.fire(appContext);
 	}, [appContext])
 

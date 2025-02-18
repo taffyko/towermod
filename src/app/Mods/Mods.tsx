@@ -6,15 +6,15 @@ import Text from '@/components/Text'
 import { api } from "@/api";
 import { win32 as path } from 'path';
 import { toast } from '@/app/Toast';
-import { openFolder, getModsDirPath } from '@/util/rpc';
+import { openFolder, getModsDirPath, waitUntilProcessExits } from '@/util/rpc';
 import { Button } from '@/components/Button';
 import { LoadContainer } from '@/components/LoadContainer';
 import { ErrorMsg, throwOnError } from '@/components/Error';
-import { posmod } from '@/util/util';
+import { assert, posmod } from '@/util/util';
 import { useImperativeHandle, useObjectUrl, useStateRef } from '@/util/hooks';
 import { spin } from '../GlobalSpinner';
 import { Select } from '@/components/Select';
-import { uniqueName, uniqueVersionName } from '@/util';
+import { appContextStore } from '../App/appContext';
 
 export const ModListItem = (props: {
 	selected: boolean,
@@ -37,13 +37,13 @@ export const ModListItem = (props: {
 }
 
 export function ModList(props: {
-	mods?: Record<string, ModInfo[]>,
+	handle: ModsHandle,
 	isLoading?: boolean,
 	error?: any,
-	selectedMod?: string
-	setSelectedMod: (mod: string | undefined) => void,
 }) {
-	const { mods: modsGroupedByVersion, selectedMod, setSelectedMod, error, isLoading } = props;
+	const { isLoading, handle, error } = props;
+
+	const { mods: modsGroupedByVersion, selectedMod, setSelectedModId: setSelectedMod } = handle;
 
 	const mods = useMemo(() => {
 		if (!modsGroupedByVersion) { return }
@@ -54,13 +54,13 @@ export function ModList(props: {
 
 	function nextMod(offset: number) {
 		if (!mods?.length) { return }
-		let modIdx = mods.findIndex(m => uniqueVersionName(m) === selectedMod);
+		let modIdx = mods.findIndex(m => m.id === selectedMod?.id);
 		if (modIdx === -1) {
 			modIdx = 0
 		} else {
 			modIdx = posmod(modIdx + offset, mods.length);
 		}
-		setSelectedMod(uniqueVersionName(mods[modIdx]))
+		setSelectedMod(mods[modIdx].id)
 	}
 
 	const noMods = mods && mods.length === 0
@@ -80,24 +80,27 @@ export function ModList(props: {
 		{noMods ?
 			<i>No mods installed</i>
 		:
-			mods?.map((mod, i) => <ModListItem
-				key={mod.error ? i : uniqueVersionName(mod)}
-				mod={mod}
-				selected={uniqueVersionName(mod) === selectedMod}
-				onClick={() => {
-					setSelectedMod(uniqueVersionName(mod))
-				}}
-			/>)
+			mods?.map((mod, i) => {
+				const key = mod.error ? i : mod.id;
+				console.log("KEY", key)
+				return <ModListItem
+					key={key}
+					mod={mod}
+					selected={mod.id === selectedMod?.id}
+					onClick={() => {
+						setSelectedMod(mod.id)
+					}}
+				/>
+			})
 		}
 	</LoadContainer>
 }
 
 function ModDetails(props: {
-	mod?: ModInfo,
-	versions?: ModInfo[],
-	setSelectedVersion?: (modId: string) => void,
+	handle: ModsHandle,
 }) {
-	const { mod, versions, setSelectedVersion } = props;
+	const { handle } = props
+	const { selectedMod: mod, selectedModVersions: versions, setSelectedModId: setSelectedVersion } = handle
 	const [el, setEl] = useStateRef<HTMLDivElement>();
 	const [playMod] = api.usePlayModMutation();
 	const { data: modCacheExists } = api.useModCacheExistsQuery(mod ?? skipToken);
@@ -111,6 +114,11 @@ function ModDetails(props: {
 
 	const icon = useObjectUrl(mod?.icon, { type: 'image/png' })
 	const logo = useObjectUrl(mod?.cover, { type: 'image/png' })
+
+	const modIsRunning = useMemo(() => {
+		if (!mod) { return false }
+		return handle.runningMods.includes(mod.id)
+	}, [handle.runningMods, mod])
 
 	if (!mod) { return <div className={Style.modDetails} /> }
 	if (mod.error) {
@@ -131,7 +139,7 @@ function ModDetails(props: {
 					<Select disabled={(versions?.length||0) <= 1} options={versions?.map(m => m.version) ?? []} value={mod?.version} onChange={(version) => {
 						const mod = versions?.find(m => m.version === version)
 						if (mod && mod.filePath) {
-							setSelectedVersion?.(uniqueVersionName(mod))
+							setSelectedVersion?.(mod.id)
 						}
 					}} />
 					<Text className={Style.date}>{mod.date.split('T')[0]}</Text>
@@ -141,14 +149,19 @@ function ModDetails(props: {
 			<Text>{mod.description}</Text>
 			<div className="grow" />
 			<div className="hbox gap">
-				<Button className="grow" onClick={async () => {
-					await throwOnError(spin(playMod(mod.filePath!)))
+				<Button disabled={modIsRunning} className="grow" onClick={async () => {
+					const { data: pid } = await throwOnError(spin(playMod(mod.filePath!)));
+					assert(pid)
 					toast(`Started "${mod.displayName}"`)
+
+					handle.setModRunning(mod.id, true);
+					await waitUntilProcessExits(pid)
+					appContextStore.lastValue?.mods?.setModRunning(mod.id, false)
 				}}>
-					Play
+					{ modIsRunning ? "Running..." : "Play" }
 				</Button>
 				{ modCacheExists ?
-					<Button onClick={async () => {
+					<Button disabled={modIsRunning} onClick={async () => {
 						await throwOnError(spin(clearModCache(mod)))
 						toast(`Cleared cache for "${mod.displayName}"`)
 					}}>
@@ -162,7 +175,13 @@ function ModDetails(props: {
 
 
 export interface ModsHandle {
-	showMod(modId: string): void,
+	mods?: Record<string, ModInfo[]>,
+	setSelectedModId(modId: string | undefined): void,
+	selectedMod?: ModInfo,
+	selectedModVersions?: ModInfo[],
+	setDesiredSelectedModId(modId: string): void,
+	runningMods: string[],
+	setModRunning(modId: string, running: boolean): void,
 }
 
 export default function Mods(props: {
@@ -170,19 +189,28 @@ export default function Mods(props: {
 }) {
 	const modsList = api.useGetInstalledModsQuery();
 	const [playUnmodified] = api.usePlayVanillaMutation();
-	const [selectedModId, setSelectedModId] = useState<string>();
+	const [selectedModId, _setSelectedModId] = useState<string>();
 	const [desiredSelectedModId, setDesiredSelectedModId] = useState<string>();
+	const [runningMods, setRunningMods] = useState<string[]>([])
 
-	useImperativeHandle(props.handleRef, () => ({
-		showMod: setDesiredSelectedModId,
-	}), [setDesiredSelectedModId])
+	const setModRunning = useCallback((modId: string, running: boolean) => {
+		const idx = runningMods.indexOf(modId)
+		const newRunningMods = [...runningMods]
+		if (running && idx === -1) {
+			newRunningMods.push(modId)
+			setRunningMods(newRunningMods)
+		} else if (!running && idx !== -1) {
+			newRunningMods.splice(idx, 1)
+			setRunningMods(newRunningMods)
+		}
+	}, [runningMods, setRunningMods])
 
 	// mods grouped by version
 	const mods = useMemo(() => {
 		if (!modsList.data) { return }
 		const mods: Record<string, ModInfo[]> = {}
 		for (const mod of modsList.data) {
-			const name = uniqueName(mod)
+			const name = mod.uniqueName
 			if (!mods[name]) { mods[name] = [] }
 			mods[name].push(mod)
 		}
@@ -192,26 +220,43 @@ export default function Mods(props: {
 	// selectedModId -> selectedMod
 	const selectedMod = useMemo(() => {
 		if (selectedModId && modsList.data) {
-			return modsList.data.find(m => uniqueVersionName(m) === selectedModId)
+			return modsList.data.find(m => m.id === selectedModId)
 		}
 	}, [selectedModId, mods])
 	// reset selection if data disappears
 	useEffect(() => {
-		if (!selectedMod) { setSelectedModId(undefined) }
+		if (!selectedMod) { _setSelectedModId(undefined) }
 	}, [selectedMod])
+
+	// clear desiredSelectedModId if the user manually selects something else
+	const setSelectedModId = useCallback((id: string | undefined) => {
+		_setSelectedModId(id)
+		setDesiredSelectedModId(undefined)
+	}, [_setSelectedModId, setDesiredSelectedModId]);
+	// select desiredSelectedModId as soon as the mods list contains that mod
 	useEffect(() => {
 		if (desiredSelectedModId) {
-			if (modsList.data?.find(m => uniqueVersionName(m) === desiredSelectedModId)) {
+			if (modsList.data?.find(m => m.id === desiredSelectedModId)) {
 				setSelectedModId(desiredSelectedModId)
-				setDesiredSelectedModId(undefined)
 			}
 		}
-	}, [desiredSelectedModId, mods])
+	}, [setSelectedModId, desiredSelectedModId, mods])
 
-	const versions = useMemo(() => {
+	// all available versions of the selected mod
+	const selectedModVersions = useMemo(() => {
 		if (!selectedMod || !mods) { return }
-		return mods[uniqueName(selectedMod)]
+		return mods[selectedMod.uniqueName]
 	}, [selectedMod, mods])
+
+	const handle = useImperativeHandle(props.handleRef, () => ({
+		mods,
+		setSelectedModId,
+		selectedMod,
+		selectedModVersions,
+		setDesiredSelectedModId,
+		runningMods,
+		setModRunning,
+	}), [mods, setDesiredSelectedModId, selectedMod, selectedModVersions, setDesiredSelectedModId, runningMods, setModRunning])
 
 	return <div className="vbox gap grow" style={{ isolation: 'isolate', overflow: 'hidden' }}>
 		<div className="hbox gap">
@@ -236,16 +281,12 @@ export default function Mods(props: {
 		</div>
 		<div className="hbox gap grow" style={{ overflow: 'hidden' }}>
 			<ModList
-				mods={mods}
-				selectedMod={selectedModId}
-				setSelectedMod={(id) => { setSelectedModId(id); setDesiredSelectedModId(undefined) }}
+				handle={handle}
 				error={modsList.error}
 				isLoading={modsList.isFetching}
 			/>
 			<ModDetails
-				mod={selectedMod}
-				versions={versions}
-				setSelectedVersion={(id) => { setSelectedModId(id); setDesiredSelectedModId(undefined) }}
+				handle={handle}
 			/>
 		</div>
 	</div>

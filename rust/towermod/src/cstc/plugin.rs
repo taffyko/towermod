@@ -203,8 +203,10 @@ pub unsafe fn read_plugin_string_table(hmodule: HMODULE) -> Result<PluginStringT
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
 pub mod x86_plugin_ffi {
-	use std::{ffi::c_char, path::Path, ptr};
+	use std::{ffi::{c_char, c_void}, path::Path, ptr};
+	use windows::{core::{s, HSTRING}, Win32::{Foundation::{self as win, HANDLE}, Graphics::Gdi::HBITMAP, System::LibraryLoader::{GetProcAddress, LoadLibraryW}}};
 	use super::*;
+	use std::mem;
 
 	unsafe fn ptr_to_string(ptr: *const c_char) -> String {
 		if (ptr == ptr::null()) {
@@ -421,7 +423,7 @@ pub mod x86_plugin_ffi {
 			// let hLargeIcon = LoadBitmapW(oinfo.hinst_dll, PCWSTR(OBJ_ICON as *const _));
 			// let hSmallIcon = LoadBitmapW(oinfo.hinst_dll, PCWSTR(OBJ_SICON as *const _));
 
-			FreeLibrary(hmodule)?;
+			win::FreeLibrary(hmodule)?;
 
 			let cnds = to_hash_map(mat.cnds);
 			let acts = to_hash_map(mat.acts);
