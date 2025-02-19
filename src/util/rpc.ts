@@ -1,12 +1,11 @@
 import { spin } from '@/app/GlobalSpinner';
 import { invoke } from '@tauri-apps/api/core';
-import { FileDialogOptions, ModInfo } from '@towermod';
+import { FileDialogOptions } from '@towermod';
 import { DependencyList, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event'
 import { toast } from '@/app/Toast';
 import { api } from '@/api';
 import { throwOnError } from '@/components/Error';
-import { AppContextState, appContextStore } from '@/app/App/appContext';
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -25,14 +24,13 @@ export async function waitUntilProcessExits(pid: number) {
 }
 
 export async function installMods(files: string[]) {
-	const { dispatch } = await import('@/redux');
-	const appContext = appContextStore.lastValue;
+	const { dispatch, actions } = await import('@/redux');
 	for (const file of files) {
 		const { data: modInfo } = await throwOnError(spin(dispatch(api.endpoints.installMod.initiate(file))))
 		if (modInfo) {
 			toast(`Installed mod: "${modInfo.name}" (v${modInfo.version})`);
-			appContext?.tabs?.setCurrentTab('Mods')
-			appContext?.mods?.setDesiredSelectedModId(modInfo.id)
+			dispatch(actions.setCurrentTab('Mods'))
+			dispatch(actions.selectMod(modInfo.id))
 		}
 	}
 }

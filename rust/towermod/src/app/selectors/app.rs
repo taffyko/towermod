@@ -11,8 +11,3 @@ pub async fn get_project() -> Option<Project> {
 pub async fn get_game() -> Option<Game> {
 	select(|s| s.game.clone()).await
 }
-
-#[command]
-pub async fn is_data_loaded() -> bool {
-	select(|s| !s.data.editor_plugins.is_empty()).await
-}

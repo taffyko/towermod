@@ -1,4 +1,4 @@
-import { ModInfo } from "@towermod";
+import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata } from "@towermod";
 import { UniqueTowermodObject, findObjectTypeById, DataState } from "../redux/reducers/data";
 import { assert, assertUnreachable, unwrap } from "./util";
 
@@ -60,6 +60,80 @@ export function enhanceModInfo(modInfo: ModInfo): ModInfo {
 	})
 	return modInfo
 }
+
+export function enhanceLayout(layout: Layout): Layout {
+	layout._type = 'Layout'
+	for (const layer of layout.layers) {
+		enhanceLayoutLayer(layer)
+	}
+	return layout
+}
+
+export function enhanceLayoutLayer(layer: LayoutLayer): LayoutLayer {
+	layer._type = 'LayoutLayer'
+	for (const obj of layer.objects) {
+		enhanceObjectInstance(obj)
+	}
+	return layer
+}
+
+export function enhanceObjectInstance(obj: ObjectInstance): ObjectInstance {
+	obj._type = 'ObjectInstance'
+	return obj
+}
+
+export function enhanceAnimation(animation: Animation): Animation {
+	animation._type = 'Animation'
+	for (const frame of animation.frames) {
+		frame._type = 'AnimationFrame'
+	}
+	for (const subAnimation of animation.subAnimations) {
+		enhanceAnimation(subAnimation)
+	}
+	return animation
+}
+
+export function enhanceBehavior(behavior: Behavior): Behavior {
+	behavior._type = 'Behavior'
+	return behavior
+}
+
+export function enhanceContainer(container: Container): Container {
+	container._type = 'Container'
+	return container
+}
+
+export function enhanceFamily(family: Family): Family {
+	family._type = 'Family'
+	return family
+}
+
+export function enhanceObjectType(objType: ObjectType): ObjectType {
+	objType._type = 'ObjectType'
+	for (const privateVariable of objType.privateVariables) {
+		privateVariable._type = 'PrivateVariable'
+	}
+	return objType
+}
+
+export function enhanceObjectTrait(trait: ObjectTrait): ObjectTrait {
+	trait._type = 'ObjectTrait'
+	return trait
+}
+
+export function enhanceAppBlock(appBlock: AppBlock): AppBlock {
+	appBlock._type = 'AppBlock'
+	return appBlock
+}
+
+export function enhanceImageMetadata(imageMetadata: ImageMetadata): ImageMetadata {
+	imageMetadata._type = 'ImageMetadata'
+	for (const actionPoint of imageMetadata.apoints) {
+		actionPoint._type = 'ActionPoint'
+	}
+	return imageMetadata
+}
+
 
 declare module "@towermod" {
 	interface ModInfo {

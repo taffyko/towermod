@@ -75,6 +75,8 @@ pub fn run() {
 				selectors::is_data_loaded,
 				selectors::get_editor_plugin,
 				selectors::get_image_metadata,
+				selectors::get_data,
+				thunks::update_data,
 				thunks::is_image_overridden,
 				thunks::set_image_metadata,
 				thunks::image_dump_dir_path,

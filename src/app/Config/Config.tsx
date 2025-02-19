@@ -14,7 +14,7 @@ import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc";
 import { assert } from "@/util";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { Project } from "@towermod";
-import { AppContext } from "../App/appContext";
+import { actions, dispatch } from "@/redux";
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -57,8 +57,6 @@ export const Config = () => {
 	const [loadManifest] = api.useLazyLoadManifestQuery()
 	const [exportFromLegacy] = api.useExportFromLegacyMutation()
 	const [exportFromFiles] = api.useExportFromFilesMutation()
-
-	const appContext = useContext(AppContext);
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
 	useEffect(() => {
@@ -148,7 +146,7 @@ export const Config = () => {
 		if (!confirmed) { return }
 		await throwOnError(spin(exportProject('BinaryPatch')))
 		toast("Project exported")
-		appContext?.tabs?.setCurrentTab('Mods');
+		dispatch(actions.setCurrentTab('Mods'));
 	}
 
 	async function onClickExportLegacy() {
@@ -161,7 +159,7 @@ export const Config = () => {
 			const newProject = await spin(applyProjectDetailsForm(project, form))
 			await throwOnError(spin(exportFromLegacy({ patchPath, project: newProject })))
 			toast("Project exported")
-			appContext?.tabs?.setCurrentTab('Mods');
+			dispatch(actions.setCurrentTab('Mods'));
 		}} />)
 	}
 
@@ -175,7 +173,7 @@ export const Config = () => {
 			const newProject = await spin(applyProjectDetailsForm(project, form))
 			await throwOnError(spin(exportFromFiles(newProject)))
 			toast("Project exported")
-			appContext?.tabs?.setCurrentTab('Mods');
+			dispatch(actions.setCurrentTab('Mods'));
 		}} />)
 
 

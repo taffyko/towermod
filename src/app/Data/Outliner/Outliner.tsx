@@ -9,13 +9,12 @@ import {
 	FixedSizeTree,
 } from 'react-vtree';
 import { useStateRef } from '@/util/hooks';
-import { useAppSelector } from '@/redux';
+import { actions, dispatch, useAppSelector } from '@/redux';
 import { assertUnreachable, enumerate } from '@/util/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject } from '@/redux';
-import { AppContext } from '@/app/App/appContext';
 import { objectDisplayName } from '@/util/dataUtil';
 import { store } from '@/redux';
 import IconButton from '@/components/IconButton';
@@ -105,7 +104,7 @@ const getTreeItemId = (obj: UniqueObjectLookup) => {
 		break; case 'AppBlock':
 			id = ''
 		break; default:
-			assertUnreachable(objType)
+			assertUnreachable(objType, obj)
 	}
 	return `${obj._type}-${id}`
 }
@@ -121,7 +120,6 @@ type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicSta
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {isLeaf, name, nestingLevel, obj}, isOpen, style, setOpen} = props
 	const tree = useContext(TreeContext)
-	const app = useContext(AppContext)
 
 	const selectable = !!obj;
 
@@ -132,7 +130,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 		`}
 		onClick={() => {
 			if (selectable) {
-				app?.data?.setValue(obj!)
+				dispatch(actions.setOutlinerValue(obj))
 			}
 		}}
 		style={{
@@ -168,10 +166,9 @@ export interface OutlinerHandle {
 	setOpenRecursive(obj: UniqueObjectLookup, open: boolean): void
 }
 
-const OutlinerContext = createContext<OutlinerHandle>(null!);
+export const OutlinerContext = createContext<OutlinerHandle>(null!);
 
 export interface OutlinerProps {
-	setValue: (value: UniqueTowermodObject) => void,
 	handleRef?: React.Ref<OutlinerHandle>,
 }
 

@@ -82,7 +82,7 @@ export function findObjectInstances(state: DataState, objTypeId: number) {
 	return objects
 }
 
-export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | FeatureDescriptors | FeatureDescriptor | PrivateVariable | ImageMetadata | ActionPoint
+export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | PrivateVariable | ImageMetadata | ActionPoint
 
 export const uniqueObjectTypes = new Set([
 	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock'
@@ -207,8 +207,6 @@ addRawReducers(dataSlice, {
 	setData: (_state, action) => {
 		return action.payload
 	},
-	[appActions.setActiveGame.type]: () => { return initialState },
-	[appActions.setActiveProject.type]: () => { return initialState },
 })
 export const dataReducer = dataSlice.reducer;
 export const dataActions = dataSlice.actions;

@@ -1,8 +1,8 @@
-import { int, useObjectUrl } from '@/util';
+import { enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceObjectTrait, enhanceObjectType, int, useObjectUrl } from '@/util';
 import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
 import { queryFn } from './apiUtil';
-import { ImageMetadata } from '@towermod';
+import { CstcData, ImageMetadata } from '@towermod';
 
 export const dataApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
@@ -19,7 +19,9 @@ export const dataApi = baseApi.injectEndpoints({
 		}),
 		getImageMetadata: builder.query<ImageMetadata, number>({
 			queryFn: queryFn(async (id) => {
-				return await invoke('get_image_metadata', { id })
+				const metadata: ImageMetadata = await invoke('get_image_metadata', { id })
+				enhanceImageMetadata(metadata)
+				return metadata
 			}),
 			providesTags: (r) => r ? [{ type: 'ImageMetadata', id: r.id }] : []
 		}),
@@ -35,6 +37,30 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
 		}),
+
+
+		getData: builder.query<CstcData, void>({
+			queryFn: queryFn(async () => {
+				const data: CstcData = await invoke('get_data');
+				for (const animation of data.animations) { enhanceAnimation(animation) }
+				// for (const objectType of data.objectTypes) { enhanceObjectType(objectType) }
+				// for (const behavior of data.behaviors) { enhanceBehavior(behavior) }
+				// for (const trait of data.traits) { enhanceObjectTrait(trait) }
+				// for (const family of data.families) { enhanceFamily(family) }
+				// for (const layout of data.layouts) { enhanceLayout(layout) }
+				// for (const container of data.containers) { enhanceContainer(container) }
+				enhanceAppBlock(data.appBlock)
+				return data;
+			}),
+			providesTags: ['Data'],
+			keepUnusedDataFor: Infinity,
+		}),
+		updateData: builder.mutation<void, CstcData>({
+			queryFn: queryFn(async (data) => {
+				await invoke('update_data', { data })
+			}),
+			invalidatesTags: ['Data']
+		})
 
 	}),
 })

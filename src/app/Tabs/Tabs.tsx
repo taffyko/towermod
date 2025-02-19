@@ -1,53 +1,18 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react"
+import React, { useCallback } from "react"
 import Style from './Tabs.module.scss'
-import { useEventListener, useImperativeHandle, useIsInert } from "@/util/hooks";
-import { posmod } from "@/util/util";
+import { useEventListener, useIsInert } from "@/util/hooks";
 import Text from '@/components/Text'
-
-export interface Tab {
-	name: string;
-	children: React.ReactNode;
-	disabled?: boolean;
-}
-
-export interface TabsHandle {
-	currentTab: string,
-	setCurrentTab(name: string): void,
-	nextTab(offset: number): void,
-}
+import { actions, selectTabs, useAppDispatch, useAppSelector } from "@/redux";
 
 export const Tabs = (props: {
-	tabs: Tab[],
-	handleRef?: React.Ref<TabsHandle>,
+	tabs: Record<string, React.ReactNode>,
 }) => {
-	const { tabs: allTabs } = props;
-	const tabs = useMemo(() => allTabs.filter(tab => !tab.disabled), [allTabs])
-	const [currentTab, setCurrentTab] = useState(tabs[0]);
-
-	useEffect(() => {
-		if (!tabs.includes(currentTab)) {
-			setCurrentTab(tabs.find(tab => tab.name === currentTab?.name) ?? tabs[0])
-		}
-	}, [tabs, currentTab, setCurrentTab])
-
-	const handle = useImperativeHandle(props.handleRef, () => ({
-		currentTab: currentTab.name,
-		setCurrentTab(name) {
-			for (const tab of tabs) {
-				if (tab.name === name) {
-					setCurrentTab(tab)
-				}
-			}
-		},
-		nextTab(offset) {
-			let tabIdx = tabs.indexOf(currentTab) + offset;
-			tabIdx = posmod(tabIdx, tabs.length);
-			setCurrentTab(tabs[tabIdx])
-		},
-	}), [tabs, setCurrentTab, currentTab])
+	const dispatch = useAppDispatch();
+	const tabs = useAppSelector(selectTabs);
+	const currentTab = useAppSelector(s => s.app.currentTab);
+	const tabChildren = props.tabs[currentTab]
 
 	const isInert = useIsInert();
-
 	const onKeyDown = useCallback((e: KeyboardEvent | React.KeyboardEvent) => {
 		if (isInert) {
 			return
@@ -55,9 +20,9 @@ export const Tabs = (props: {
 
 		if (e.code === 'Tab' && e.ctrlKey) {
 			if (e.shiftKey) {
-				handle.nextTab(-1)
+				dispatch(actions.nextTab(-1))
 			} else {
-				handle.nextTab(1)
+				dispatch(actions.nextTab(1))
 			}
 			e.stopPropagation()
 		}
@@ -70,8 +35,8 @@ export const Tabs = (props: {
 			<div className={Style.tabBar}>
 				{tabs.map((tab) =>
 					<div
-						key={tab.name}
-						onClick={() => setCurrentTab(tab)}
+						key={tab}
+						onClick={() => dispatch(actions.setCurrentTab(tab))}
 						onKeyDown={onKeyDown}
 						tabIndex={-1}
 
@@ -80,24 +45,13 @@ export const Tabs = (props: {
 							${tab === currentTab ? Style.active : ""}
 						`}
 					>
-						<Text>{tab.name}</Text>
+						<Text>{tab}</Text>
 					</div>
 				)}
 			</div>
 		</div>
-		{/* <div className={`${Style.tabContent} stretchbox`}>
-			{currentTab.children}
-		</div> */}
-		{tabs.map(tab => {
-			// render all tabs simultaneously so that tab state
-			return <div
-				key={tab.name}
-				style={{ display: tab === currentTab ? '' : 'none' }}
-				className={`${Style.tabContent} stretchbox`}
-			>
-				{tab.children}
-			</div>
-		})}
-
+		<div className={`${Style.tabContent} stretchbox`}>
+			{tabChildren}
+		</div>
 	</div>
 }

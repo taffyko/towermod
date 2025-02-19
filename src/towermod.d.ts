@@ -116,7 +116,7 @@ export interface CstcData {
   layouts: Array<Layout>
   containers: Array<Container>
   animations: Array<Animation>
-  appBlock?: AppBlock
+  appBlock: AppBlock
 }
 
 export type DataKey =
@@ -178,14 +178,12 @@ export interface Family {
 export interface FeatureDescriptor {
   scriptName: string
   paramCount: int
-  _type: 'FeatureDescriptor'
 }
 
 export interface FeatureDescriptors {
   actions: Array<FeatureDescriptor>
   conditions: Array<FeatureDescriptor>
   expressions: Array<FeatureDescriptor>
-  _type: 'FeatureDescriptors'
 }
 
 export declare const enum FpsMode {

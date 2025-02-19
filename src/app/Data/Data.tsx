@@ -1,8 +1,8 @@
 import Outliner, { OutlinerHandle } from './Outliner/Outliner'
 import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
-import { useState } from 'react'
-import { UniqueObjectLookup, UniqueTowermodObject, dataActions, findObject } from '@/redux'
+import { useEffect, useState } from 'react'
+import { UniqueObjectLookup, UniqueTowermodObject, actions, dataActions, findObject } from '@/redux'
 import { useImperativeHandle, useStateRef } from '@/util/hooks'
 import { useAppDispatch, useAppSelector } from '@/redux'
 import { api } from '@/api'
@@ -12,27 +12,19 @@ import { throwOnError } from '@/components/Error'
 import { toast } from '../Toast'
 import { Toggle } from '@/components/Toggle'
 
-export interface DataHandle {
-	outliner: OutlinerHandle | null,
-	setValue(v: UniqueObjectLookup | null): void,
-	value: UniqueTowermodObject | null,
-}
-
-export function Data(props: {
-	handleRef?: React.Ref<DataHandle>
-}) {
-	const [searchValue, setSearchValue] = useState<UniqueObjectLookup | null>(null)
+export function Data() {
 	const dispatch = useAppDispatch()
+	const searchValue = useAppSelector((s) => s.app.outlinerValue);
 	const value = useAppSelector((state) => searchValue ? findObject(state.data, searchValue) : null)
 
-	const [outliner, setOutlinerRef] = useStateRef<OutlinerHandle>()
-	useImperativeHandle(props.handleRef, () => {
-		return {
-			outliner,
-			setValue: setSearchValue,
-			value,
+	const { data } = api.useGetDataQuery()
+	useEffect(() => {
+		if (data) {
+			dispatch(actions.setData(data))
 		}
-	}, [outliner, value])
+	}, [data])
+
+
 
 	const onChange = (obj: UniqueTowermodObject) => {
 		dispatch(dataActions.editObject(obj))
@@ -41,10 +33,7 @@ export function Data(props: {
 	return <div className="vbox gap grow">
 		<PlayProject />
 		<div className="hbox gap grow">
-			<Outliner
-				handleRef={setOutlinerRef}
-				setValue={(value) => setSearchValue(value)}
-			/>
+			<Outliner />
 			{ value ?
 				<Inspector pinfo={inferPropertyInfoFromValue(value, undefined, 'root') as any} onChange={onChange as any} />
 			: null }

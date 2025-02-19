@@ -1,8 +1,6 @@
 import { installMods, useTauriEvent } from '@/util'
 import Style from './DragDropHandler.module.scss'
-import { useContext, useMemo, useState } from 'react';
-import { AppContext } from '../App/appContext';
-import { spin } from '../GlobalSpinner';
+import { useMemo, useState } from 'react';
 
 export function DragDropHandler() {
 	const [dragFiles, setDragFiles] = useState<string[] | undefined>(undefined)
@@ -20,8 +18,6 @@ export function DragDropHandler() {
 		}
 		return false
 	}, [dragFiles])
-
-	const appContext = useContext(AppContext);
 
 	useTauriEvent('tauri://drag-enter', (e) => {
 		setDragFiles(e.payload?.paths)
@@ -45,7 +41,7 @@ export function DragDropHandler() {
 		} else {
 			setFailure(true)
 		}
-	}, [isValid, dragFiles, appContext]);
+	}, [isValid, dragFiles]);
 
 	return <div className={`
 		${Style.backdrop}

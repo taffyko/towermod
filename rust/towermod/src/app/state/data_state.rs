@@ -54,6 +54,7 @@ impl CstcData {
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 /// Subset of state held by frontend Redux
 pub struct JsCstcData {
 	pub object_types: Vec<ObjectType>,
@@ -65,18 +66,28 @@ pub struct JsCstcData {
 	pub animations: Vec<Animation>,
 	pub app_block: Option<AppBlock>,
 }
-impl From<CstcData> for JsCstcData {
-	fn from(value: CstcData) -> Self {
+impl JsCstcData {
+	pub fn get(value: &CstcData) -> Self {
 		Self {
-			object_types: value.object_types,
-			behaviors: value.behaviors,
-			traits: value.traits,
-			families: value.families,
-			layouts: value.layouts,
-			containers: value.containers,
-			animations: value.animations,
-			app_block: value.app_block,
+			object_types: value.object_types.clone(),
+			behaviors: value.behaviors.clone(),
+			traits: value.traits.clone(),
+			families: value.families.clone(),
+			layouts: value.layouts.clone(),
+			containers: value.containers.clone(),
+			animations: value.animations.clone(),
+			app_block: value.app_block.clone(),
 		}
+	}
+	pub fn set(self, value: &mut CstcData) {
+		value.object_types = self.object_types;
+		value.behaviors = self.behaviors;
+		value.traits = self.traits;
+		value.families = self.families;
+		value.layouts = self.layouts;
+		value.containers = self.containers;
+		value.animations = self.animations;
+		value.app_block = self.app_block;
 	}
 }
 
@@ -84,6 +95,7 @@ impl From<CstcData> for JsCstcData {
 pub type State = CstcData;
 
 pub enum Action {
+	UpdateData(JsCstcData),
 	SetData(CstcData),
 	SetImageMetadata (ImageMetadata),
 	AddObjectInstance { object_type_id: i32, layout_layer_id: i32 },
@@ -97,6 +109,11 @@ impl From<Action> for super::app_state::Action {
 
 pub fn reducer(state: State, action: Action) -> State {
 	match (action) {
+		Action::UpdateData(data) => {
+			let mut state = state;
+			data.set(&mut state);
+			state
+		},
 		Action::SetData(state) => state,
 		Action::AddObjectInstance { layout_layer_id: _, object_type_id: _ } => todo!(),
 		Action::RemoveObjectInstance { id: _ } => todo!(),

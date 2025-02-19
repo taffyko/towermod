@@ -8,8 +8,15 @@ export function* enumerate<T>(iterable: Iterable<T>) {
 	}
 }
 
-export function assertUnreachable(a: never): never {
-	throw new Error(`Deliberately unreachable case occurred: ${a}`);
+const None = Symbol('None');
+export function assertUnreachable(a: never, obj: any = None): never {
+	const msg = `Deliberately unreachable case occurred: ${a}`
+	if (obj !== None) {
+		console.error(`${msg}, Relevant object:`, obj)
+		throw new Error(`${msg}, Relevant object: ${JSON.stringify(obj, null, 4)}`);
+	} else {
+		throw new Error(msg);
+	}
 }
 
 export function unwrap<T>(value: T, msg?: string): NonNullable<T> {

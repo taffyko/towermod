@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use tauri::command;
-use crate::{app::state::{select, DataAction, STORE}, cstc::ImageMetadata};
+use crate::{app::state::{data_state::JsCstcData, select, DataAction, STORE}, cstc::ImageMetadata};
 use fs_err::tokio as fs;
 
 pub async fn get_image(id: i32) -> Option<Vec<u8>> {
@@ -41,4 +41,9 @@ pub async fn is_image_overridden(id: i32) -> Result<bool> {
 #[command]
 pub async fn set_image_metadata(data: ImageMetadata) {
 	STORE.dispatch(DataAction::SetImageMetadata(data).into()).await;
+}
+
+#[command]
+pub async fn update_data(new_data: JsCstcData) {
+	STORE.dispatch(DataAction::UpdateData(new_data).into()).await;
 }
