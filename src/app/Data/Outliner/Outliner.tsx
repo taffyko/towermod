@@ -9,15 +9,15 @@ import {
 	FixedSizeTree,
 } from 'react-vtree';
 import { useStateRef } from '@/util/hooks';
-import { useAppSelector } from '@/store';
+import { useAppSelector } from '@/redux';
 import { assertUnreachable, enumerate } from '@/util/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
-import { UniqueObjectLookup, UniqueTowermodObject } from '@/reducers/data';
+import { UniqueObjectLookup, UniqueTowermodObject } from '@/redux';
 import { AppContext } from '@/app/App/appContext';
 import { objectDisplayName } from '@/util/dataUtil';
-import { store } from '@/store';
+import { store } from '@/redux';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';

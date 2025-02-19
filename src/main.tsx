@@ -3,7 +3,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './app/App/App'
 import { Provider } from 'react-redux'
-import { store } from './store'
+import { store } from './redux/store'
 import { getCurrentWindow, PhysicalSize } from '@tauri-apps/api/window'
 import { getCurrentWebview } from '@tauri-apps/api/webview'
 

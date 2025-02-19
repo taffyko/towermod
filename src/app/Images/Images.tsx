@@ -6,7 +6,7 @@ import { assert, copyFile, deleteFile, filePicker, imageFromCollisionMask, openF
 import { toast } from "../Toast";
 import { spin } from "../GlobalSpinner";
 import { throwOnError } from "@/components/Error";
-import { dispatch } from "@/store";
+import { dispatch } from "@/redux";
 import { SpinBox } from "@/components/SpinBox";
 import { Toggle } from "@/components/Toggle";
 import { win32 as path } from "path";

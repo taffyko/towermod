@@ -1,10 +1,10 @@
 import React from 'react'
-import { TowermodObject, findObjectInstances } from "@/reducers/data";
+import { TowermodObject, findObjectInstances } from "@/redux";
 import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName, ParentPropertyInfo } from "./base/inspectorUtil";
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
 import { PrivateVariables } from './PrivateVariables';
-import { store } from '@/store';
+import { store } from '@/redux';
 
 
 export type CustomInspectorObjects = TowermodObject
@@ -79,7 +79,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 
 /** Provide additional virtual properties for each type, to display in the inspector */
 export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: ParentPropertyInfo): AnyPropertyInfo[] | undefined {
-	const type = (obj as any)['_type']
+	const type = obj['_type']
 	switch (type) {
 		case 'ObjectType':
 			return [

@@ -1,6 +1,6 @@
 import { combineSlices, configureStore } from '@reduxjs/toolkit';
-import { slices } from '@/reducers';
-import { api } from './api';
+import { slices } from './reducers';
+import { api } from '../api';
 import { useStore, useSelector, useDispatch } from 'react-redux';
 
 const rootReducer = combineSlices(...slices, api)

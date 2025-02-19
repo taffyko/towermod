@@ -1,20 +1,20 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { Game, ModInfo, Project } from "@towermod";
 
-export interface SliceState {
+export interface AppState {
 	modList: ModInfo[],
 	game: Game | null,
 	project: Project | null,
 }
 
-const initialState: SliceState = {
+const initialState: AppState = {
 	modList: [],
 	game: null,
 	project: null,
 }
 
-export const slice = createSlice({
-	name: "main",
+export const appSlice = createSlice({
+	name: "app",
 	initialState,
 	reducers: {
 		setModList(state, { payload }: PayloadAction<ModInfo[]>) {
@@ -29,5 +29,5 @@ export const slice = createSlice({
 		},
 	},
 });
-export const reducer = slice.reducer;
-export const actions = slice.actions;
+export const appReducer = appSlice.reducer;
+export const appActions = appSlice.actions;

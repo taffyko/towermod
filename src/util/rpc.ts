@@ -25,7 +25,7 @@ export async function waitUntilProcessExits(pid: number) {
 }
 
 export async function installMods(files: string[]) {
-	const { dispatch } = await import('@/store');
+	const { dispatch } = await import('@/redux');
 	const appContext = appContextStore.lastValue;
 	for (const file of files) {
 		const { data: modInfo } = await throwOnError(spin(dispatch(api.endpoints.installMod.initiate(file))))

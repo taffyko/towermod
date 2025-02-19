@@ -2,9 +2,9 @@ import Outliner, { OutlinerHandle } from './Outliner/Outliner'
 import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
 import { useState } from 'react'
-import { UniqueObjectLookup, UniqueTowermodObject, actions, findObject } from '@/reducers/data'
+import { UniqueObjectLookup, UniqueTowermodObject, dataActions, findObject } from '@/redux'
 import { useImperativeHandle, useStateRef } from '@/util/hooks'
-import { useAppDispatch, useAppSelector } from '@/store'
+import { useAppDispatch, useAppSelector } from '@/redux'
 import { api } from '@/api'
 import { Button } from '@/components/Button'
 import { spin } from '../GlobalSpinner'
@@ -35,7 +35,7 @@ export function Data(props: {
 	}, [outliner, value])
 
 	const onChange = (obj: UniqueTowermodObject) => {
-		dispatch(actions.editObject(obj))
+		dispatch(dataActions.editObject(obj))
 	}
 
 	return <div className="vbox gap grow">

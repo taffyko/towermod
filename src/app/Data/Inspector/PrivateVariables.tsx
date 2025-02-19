@@ -1,9 +1,9 @@
-import { useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/redux";
 import { InspectorDictionary } from "./base/Inspector";
 import { ArrayPropertyInfo, DictionaryPropertyInfo, SimplePropertyInfo } from "./base/inspectorUtil";
-import { findObjectTypeById } from "@/reducers/data";
+import { findObjectTypeById } from "@/redux";
 import { ObjectInstance, PrivateVariable } from "@towermod";
-import { actions } from "@/reducers";
+import { actions } from "@/redux";
 import { assert } from "@/util/util";
 import { useMemo } from "react";
 

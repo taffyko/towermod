@@ -1,12 +1,12 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable, ImageMetadata, ActionPoint } from "@towermod";
 // import { PrivateVariableType } from "@towermod";
-import { actions as mainActions } from './main'
+import { appActions as appActions } from './app'
 import { addRawReducers, assert, assertUnreachable, unwrap } from "@/util/util";
 
-export type State = CstcData
+export type DataState = CstcData
 
-const initialState: State = {
+const initialState: DataState = {
 	editorPlugins: {},
 	layouts: [],
 	objectTypes: [],
@@ -17,7 +17,7 @@ const initialState: State = {
 	animations: [],
 }
 
-export function findObjectById(state: State, id: number) {
+export function findObjectById(state: DataState, id: number) {
 	for (const layout of state.layouts) {
 		for (const layer of layout.layers) {
 			for (const object of layer.objects) {
@@ -27,14 +27,14 @@ export function findObjectById(state: State, id: number) {
 	}
 	return assert(false)
 }
-export function findObjectTypeById(state: State, id: number) {
+export function findObjectTypeById(state: DataState, id: number) {
 	return unwrap(state.objectTypes.find(s => id === s.id))
 }
 
-export function findLayoutByName(state: State, name: string) {
+export function findLayoutByName(state: DataState, name: string) {
 	return state.layouts.find(s => s.name === name)
 }
-export function findLayoutLayerById(state: State, id: number) {
+export function findLayoutLayerById(state: DataState, id: number) {
 	for (const layout of state.layouts) {
 		for (const layer of layout.layers) {
 			if (layer.id === id) { return layer }
@@ -42,7 +42,7 @@ export function findLayoutLayerById(state: State, id: number) {
 	}
 	return assert(false)
 }
-export function findAnimationById(state: State, id: number) {
+export function findAnimationById(state: DataState, id: number) {
 	function recurse(animations: Animation[]): Animation | undefined {
 		for (const a of animations) {
 			if (a.id === id) {
@@ -57,20 +57,20 @@ export function findAnimationById(state: State, id: number) {
 	}
 	return assert(recurse(state.animations))
 }
-export function findContainerByFirstObjectId(state: State, id: number) {
+export function findContainerByFirstObjectId(state: DataState, id: number) {
 	return assert(state.containers.find(c => c.objectIds[0] === id))
 }
-export function findBehaviorByObjectTypeAndIdx(state: State, objectTypeId: number, idx: number) {
+export function findBehaviorByObjectTypeAndIdx(state: DataState, objectTypeId: number, idx: number) {
 	return assert(state.behaviors.find(b => b.objectTypeId === objectTypeId && b.movIndex === idx))
 }
-export function findFamilyByName(state: State, name: string) {
+export function findFamilyByName(state: DataState, name: string) {
 	return assert(state.families.find(b => b.name === name))
 }
-export function findObjectTraitByName(state: State, name: string) {
+export function findObjectTraitByName(state: DataState, name: string) {
 	return assert(state.traits.find(o => o.name === name))
 }
 
-export function findObjectInstances(state: State, objTypeId: number) {
+export function findObjectInstances(state: DataState, objTypeId: number) {
 	const objects: ObjectInstance[] = []
 	for (const layout of state.layouts) {
 		for (const layer of layout.layers) {
@@ -106,7 +106,7 @@ export type ObjectForType<T extends TowermodObject['_type']> = Extract<TowermodO
 export type LookupForType<T extends UniqueObjectLookup['_type']> = Extract<UniqueObjectLookup, { _type: T }>
 
 
-export function findObject<T extends UniqueObjectLookup>(state: State, obj: T): ObjectForType<T['_type']> {
+export function findObject<T extends UniqueObjectLookup>(state: DataState, obj: T): ObjectForType<T['_type']> {
 	let target: any = null
 	const type = obj._type;
 	switch (type) {
@@ -137,11 +137,11 @@ export function findObject<T extends UniqueObjectLookup>(state: State, obj: T): 
 }
 
 
-export const slice = createSlice({
+export const dataSlice = createSlice({
 	name: "data",
 	initialState,
 	reducers: {
-		setData(_state, _action: PayloadAction<State>) { /* stub */ },
+		setData(_state, _action: PayloadAction<DataState>) { /* stub */ },
 		editObject(state, { payload }: PayloadAction<UniqueTowermodObject>) {
 			const target = findObject(state, payload)
 			if (target) { Object.assign(target, payload) }
@@ -203,13 +203,13 @@ export const slice = createSlice({
 });
 
 // needlessly using immer to replace very large objects was causing blocking in excess of >1000ms
-addRawReducers(slice, {
+addRawReducers(dataSlice, {
 	setData: (_state, action) => {
 		return action.payload
 	},
-	[mainActions.setActiveGame.type]: () => { return initialState },
-	[mainActions.setActiveProject.type]: () => { return initialState },
+	[appActions.setActiveGame.type]: () => { return initialState },
+	[appActions.setActiveProject.type]: () => { return initialState },
 })
-export const reducer = slice.reducer;
-export const actions = slice.actions;
+export const dataReducer = dataSlice.reducer;
+export const dataActions = dataSlice.actions;
 

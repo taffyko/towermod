@@ -1,8 +1,8 @@
 import { ModInfo } from "@towermod";
-import { UniqueTowermodObject, findObjectTypeById, State } from "../reducers/data";
+import { UniqueTowermodObject, findObjectTypeById, DataState } from "../redux/reducers/data";
 import { assert, assertUnreachable, unwrap } from "./util";
 
-export function objectDisplayName(data: State, obj: UniqueTowermodObject) {
+export function objectDisplayName(data: DataState, obj: UniqueTowermodObject) {
 	const objTypeName = obj._type
 	switch (objTypeName) {
 		case 'Layout':
