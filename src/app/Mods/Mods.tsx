@@ -9,7 +9,7 @@ import { toast } from '@/app/Toast';
 import { openFolder, getModsDirPath, waitUntilProcessExits } from '@/util/rpc';
 import { Button } from '@/components/Button';
 import { LoadContainer } from '@/components/LoadContainer';
-import { ErrorMsg, throwOnError } from '@/components/Error';
+import { ErrorMsg } from '@/components/Error';
 import { assert, posmod } from '@/util/util';
 import { useImperativeHandle, useObjectUrl, useStateRef } from '@/util/hooks';
 import { spin } from '../GlobalSpinner';
@@ -17,6 +17,7 @@ import { Select } from '@/components/Select';
 import { State, actions, dispatch, useAppSelector } from '@/redux';
 import { createSelector } from '@reduxjs/toolkit';
 import { useSelector } from 'react-redux';
+import { awaitRtk } from '@/api/helpers';
 
 const selectIsModRunning = createSelector((s: State) => s.app.runningMods, (_, modId: string) => modId, (runningMods, modId) => {
 	return runningMods.includes(modId)
@@ -176,7 +177,7 @@ function ModDetails() {
 			<div className="grow" />
 			<div className="hbox gap">
 				<Button disabled={modIsRunning} className="grow" onClick={async () => {
-					const { data: pid } = await throwOnError(spin(playMod(mod.filePath!)));
+					const pid = await awaitRtk(spin(playMod(mod.filePath!)));
 					assert(pid)
 					toast(`Started "${mod.displayName}"`)
 
@@ -189,7 +190,7 @@ function ModDetails() {
 				</Button>
 				{ modCacheExists ?
 					<Button disabled={modIsRunning} onClick={async () => {
-						await throwOnError(spin(clearModCache(mod)))
+						await awaitRtk(spin(clearModCache(mod)))
 						toast(`Cleared cache for "${mod.displayName}"`)
 					}}>
 						Clear cache
@@ -208,7 +209,7 @@ export default function Mods() {
 	return <div className="vbox gap grow" style={{ isolation: 'isolate', overflow: 'hidden' }}>
 		<div className="hbox gap">
 			<Button onClick={async () => {
-				await throwOnError(spin(playUnmodified()))
+				await awaitRtk(spin(playUnmodified()))
 				toast("Game started")
 			}}>
 				Play unmodified
@@ -220,7 +221,7 @@ export default function Mods() {
 				Browse
 			</Button>
 			<Button disabled={modsList.isFetching} onClick={async () => {
-				await throwOnError(modsList.refetch())
+				await awaitRtk(modsList.refetch())
 				toast("Mods list reloaded")
 			}}>
 				Refresh

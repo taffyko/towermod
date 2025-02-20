@@ -9,12 +9,13 @@ import { openModal } from "@/app/Modal";
 import { win32 as path } from "path";
 import FilePathEdit from "@/components/FilePathEdit";
 import { spin, useSpinQuery } from "../GlobalSpinner";
-import { renderError, showError, throwOnError } from "@/components/Error";
+import { renderError, showError } from "@/components/Error";
 import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc";
 import { assert } from "@/util";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { Project } from "@towermod";
 import { actions, dispatch, store } from "@/redux";
+import { awaitRtk } from "@/api/helpers";
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -121,7 +122,7 @@ export const Config = () => {
 			)
 			if (!confirmed) { return }
 		}
-		await throwOnError(spin(newProject()))
+		await awaitRtk(spin(newProject()))
 		toast("New project initialized")
 	}
 
@@ -147,7 +148,7 @@ export const Config = () => {
 				form = form;
 				confirmed = true
 				const newProject = await spin(applyProjectDetailsForm(project, form));
-				await throwOnError(editProjectInfo(newProject))
+				await awaitRtk(editProjectInfo(newProject))
 			})} />
 		)
 		return confirmed
@@ -157,7 +158,7 @@ export const Config = () => {
 		if (!project) { return }
 		const confirmed = await updateProjectDetails(project, "Export");
 		if (!confirmed) { return }
-		await throwOnError(spin(exportProject('BinaryPatch')))
+		await awaitRtk(spin(exportProject('BinaryPatch')))
 		toast("Project exported")
 		dispatch(actions.setCurrentTab('Mods'));
 	}
@@ -166,11 +167,11 @@ export const Config = () => {
 		const patchPath = await filePicker({ filters: [{ name: "TCRepainter patch", extensions: ["json", "zip"] }] });
 		if (!patchPath) { return }
 		const manifestPath = path.join(path.dirname(patchPath), 'manifest.toml');
-		const { data: project } = await throwOnError(spin(loadManifest({ manifestPath, projectType: 'Legacy' })))
+		const project = await awaitRtk(spin(loadManifest({ manifestPath, projectType: 'Legacy' })))
 		await openModal(<ProjectDetailsModal confirmText="Export" project={project} onConfirm={async (form) => {
 			assert(project)
 			const newProject = await spin(applyProjectDetailsForm(project, form))
-			await throwOnError(spin(exportFromLegacy({ patchPath, project: newProject })))
+			await awaitRtk(spin(exportFromLegacy({ patchPath, project: newProject })))
 			toast("Project exported")
 			dispatch(actions.setCurrentTab('Mods'));
 		}} />)
@@ -180,11 +181,11 @@ export const Config = () => {
 		const dirPath = await folderPicker();
 		if (!dirPath) { return }
 		const manifestPath = path.join(dirPath, 'manifest.toml');
-		const { data: project } = await throwOnError(spin(loadManifest({ manifestPath, projectType: 'FilesOnly' })))
+		const project = await awaitRtk(spin(loadManifest({ manifestPath, projectType: 'FilesOnly' })))
 		await openModal(<ProjectDetailsModal confirmText="Export" project={project} onConfirm={async (form) => {
 			assert(project)
 			const newProject = await spin(applyProjectDetailsForm(project, form))
-			await throwOnError(spin(exportFromFiles(newProject)))
+			await awaitRtk(spin(exportFromFiles(newProject)))
 			toast("Project exported")
 			dispatch(actions.setCurrentTab('Mods'));
 		}} />)
@@ -193,13 +194,13 @@ export const Config = () => {
 	}
 
 	async function onClickSaveProject() {
-		await throwOnError(spin(updateData(store.getState().data)))
+		await awaitRtk(spin(updateData(store.getState().data)))
 		if (project && project.dirPath) {
-			await throwOnError(saveProject(project.dirPath))
+			await awaitRtk(saveProject(project.dirPath))
 			toast("Project saved")
 		} else {
 			openModal(<ProjectDetailsModal confirmText="Save" newProject onConfirm={async (form) => {
-				await throwOnError(saveNewProject(form));
+				await awaitRtk(saveNewProject(form));
 				toast("Project saved")
 			}} />)
 		}
@@ -213,7 +214,7 @@ export const Config = () => {
 	}
 
 	async function onClickBrowseCache() {
-		const { data: cachePath } = await throwOnError(getCachePath());
+		const cachePath = await awaitRtk(getCachePath());
 		assert(cachePath)
 		await openFolder(cachePath)
 		toast("Cache folder opened")
@@ -226,7 +227,7 @@ export const Config = () => {
 			</ConfirmModal>
 		)
 		async function onConfirm() {
-			await throwOnError(clearGameCache())
+			await awaitRtk(clearGameCache())
 			await new Promise((resolve) => {
 				toast("Game cache deleted. Reloading...")
 				window.onload = resolve
@@ -242,7 +243,7 @@ export const Config = () => {
 			</ConfirmModal>
 		)
 		async function onConfirm() {
-			await throwOnError(nukeCache())
+			await awaitRtk(nukeCache())
 			await new Promise((resolve) => {
 				toast("Cache nuked. Reloading...")
 				window.onload = resolve
@@ -252,14 +253,14 @@ export const Config = () => {
 	}
 
 	async function onClickLoadProject() {
-		const { data: projectsPath } = await getProjectsPath();
+		const projectsPath = await awaitRtk(getProjectsPath());
 		const manifestPath = await filePicker({
 			filters: [{ name: "Towermod Project (manifest.toml)", extensions: ["toml"] }],
 			startingDirectory: projectsPath,
 		});
 		if (!manifestPath) { return }
 
-		const { data: warningMsg } = await throwOnError(loadProjectPreflight(manifestPath))
+		const warningMsg = await awaitRtk(loadProjectPreflight(manifestPath))
 		if (warningMsg) {
 			<ConfirmModal title="Warning" onConfirm={spin(onConfirm)}>
 				<pre>{warningMsg}</pre>
@@ -270,7 +271,7 @@ export const Config = () => {
 
 		async function onConfirm() {
 			assert(manifestPath)
-			await throwOnError(loadProject(manifestPath))
+			await awaitRtk(loadProject(manifestPath))
 			toast("Project loaded")
 		}
 	}

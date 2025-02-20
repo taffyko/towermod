@@ -16,8 +16,9 @@ import { GlobalSpinner, spin, useIsSpinning } from '../GlobalSpinner';
 import { useIsModalOpen } from '../Modal/modalStore';
 import { DragDropHandler } from '../DragDropHandler';
 import { installMods, useTauriEvent } from '@/util';
-import { showError, throwOnError } from '@/components/Error';
+import { awaitRtk } from '@/api/helpers';
 import { actions, dispatch } from '@/redux';
+import { showError } from '@/components/Error';
 
 const App = () => {
 	const { data: dataIsLoaded } = api.useIsDataLoadedQuery()
@@ -42,7 +43,7 @@ const App = () => {
 	), [dataIsLoaded, game])
 
 	useMountEffect(async () => {
-		throwOnError(spin(init()))
+		awaitRtk(spin(init()))
 	})
 
 	const [titleRef, setTitleRef] = useStateRef<HTMLDivElement>();

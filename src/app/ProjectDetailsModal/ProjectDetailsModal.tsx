@@ -3,7 +3,6 @@ import { useState } from "react";
 import { api, useFileUrl } from "@/api";
 import { ConfirmModal } from "../Modal";
 import { spin } from "@/app/GlobalSpinner";
-import { throwOnError } from "@/components/Error";
 import { LineEdit } from "@/components/LineEdit";
 import FilePathEdit from "@/components/FilePathEdit";
 import Style from './ProjectDetailsModal.module.scss';

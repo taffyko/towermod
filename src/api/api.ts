@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { invoke } from "@tauri-apps/api/core";
 import { Game, ImageMetadata, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod';
 import { useObjectUrl } from '@/util/hooks';
-import { queryFn } from './apiUtil';
+import { queryFn } from './baseApiUtil';
 import { enhanceModInfo } from '@/util';
 
 
@@ -39,17 +39,17 @@ export const baseApi = createApi({
 		}),
 
 
-		getGame: builder.query<Game | undefined, void>({
+		getGame: builder.query<Game | null, void>({
 			queryFn: queryFn(async () => {
 				const game: Game = await invoke('get_game')
-				return game ?? undefined
+				return game ?? null
 			}),
 			providesTags: ['Game'],
 		}),
-		getProject: builder.query<Project | undefined, void>({
+		getProject: builder.query<Project | null, void>({
 			queryFn: queryFn(async () => {
 				const project: Project = await invoke('get_project')
-				return project ?? undefined
+				return project ?? null
 			}),
 			providesTags: ['Project'],
 		}),
@@ -135,7 +135,7 @@ export const baseApi = createApi({
 			invalidatesTags: tagTypes
 		}),
 
-		loadProjectPreflight: builder.mutation<void, string>({
+		loadProjectPreflight: builder.mutation<string, string>({
 			queryFn: queryFn(async (manifestPath) => {
 				return await invoke('load_project_preflight', { manifestPath })
 			}),
@@ -176,9 +176,9 @@ export const baseApi = createApi({
 			}),
 		}),
 
-		imageDumpDirPath: builder.query<string | undefined, void>({
+		imageDumpDirPath: builder.query<string | null, void>({
 			queryFn: queryFn(async () => {
-				return await invoke('image_dump_dir_path') ?? undefined
+				return await invoke('image_dump_dir_path') ?? null
 			}),
 			providesTags: ['Game']
 		}),
@@ -244,9 +244,9 @@ export const baseApi = createApi({
 
 export const dataApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
-		getImageMetadata: builder.query<ImageMetadata | undefined, number>({
+		getImageMetadata: builder.query<ImageMetadata | null, number>({
 			queryFn: queryFn(async (id) => {
-				const metadata: ImageMetadata = await invoke('get_image_metadata', { id }) ?? undefined
+				const metadata: ImageMetadata = await invoke('get_image_metadata', { id }) ?? null
 				if (metadata) {
 					metadata._type = 'ImageMetadata'
 					for (const apoint of metadata.apoints) { apoint._type = 'ActionPoint' }

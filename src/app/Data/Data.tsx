@@ -8,9 +8,9 @@ import { useAppDispatch, useAppSelector } from '@/redux'
 import { api } from '@/api'
 import { Button } from '@/components/Button'
 import { spin } from '../GlobalSpinner'
-import { throwOnError } from '@/components/Error'
 import { toast } from '../Toast'
 import { Toggle } from '@/components/Toggle'
+import { awaitRtk } from '@/api/helpers'
 
 export function Data() {
 	const dispatch = useAppDispatch()
@@ -59,8 +59,8 @@ function PlayProject() {
 	</div>
 
 	async function onClickPlayProject() {
-		await throwOnError(spin(updateData(store.getState().data)))
-		await throwOnError(spin(playProject(debug)))
+		await awaitRtk(spin(updateData(store.getState().data)))
+		await awaitRtk(spin(playProject(debug)))
 		toast("Project launched")
 	}
 

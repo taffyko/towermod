@@ -5,7 +5,7 @@ import { DependencyList, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event'
 import { toast } from '@/app/Toast';
 import { api } from '@/api';
-import { throwOnError } from '@/components/Error';
+import { awaitRtk } from '@/api/helpers';
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -26,7 +26,7 @@ export async function waitUntilProcessExits(pid: number) {
 export async function installMods(files: string[]) {
 	const { dispatch, actions } = await import('@/redux');
 	for (const file of files) {
-		const { data: modInfo } = await throwOnError(spin(dispatch(api.endpoints.installMod.initiate(file))))
+		const modInfo = await awaitRtk(spin(dispatch(api.endpoints.installMod.initiate(file))))
 		if (modInfo) {
 			toast(`Installed mod: "${modInfo.name}" (v${modInfo.version})`);
 			dispatch(actions.setCurrentTab('Mods'))

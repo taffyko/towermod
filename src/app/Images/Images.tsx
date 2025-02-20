@@ -5,7 +5,7 @@ import { InspectorObject } from "../Data/Inspector";
 import { assert, copyFile, deleteFile, filePicker, imageFromCollisionMask, openFolder, useRerender, useStateRef, useTwoWayBinding } from "@/util";
 import { toast } from "../Toast";
 import { spin } from "../GlobalSpinner";
-import { throwOnError } from "@/components/Error";
+import { awaitRtk } from "@/api/helpers";
 import { actions, dispatch, useAppSelector } from "@/redux";
 import { SpinBox } from "@/components/SpinBox";
 import { Toggle } from "@/components/Toggle";
@@ -115,7 +115,7 @@ export default function Images() {
 	}
 
 	async function onClickDumpImages() {
-		await throwOnError(spin(dumpImages()));
+		await awaitRtk(spin(dumpImages()));
 		toast("Dumped images")
 	}
 

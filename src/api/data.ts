@@ -1,7 +1,7 @@
 import { enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceObjectTrait, enhanceObjectType, int, useObjectUrl } from '@/util';
 import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
-import { queryFn } from './apiUtil';
+import { queryFn } from './baseApiUtil';
 import { CstcData, ImageMetadata, PluginData } from '@towermod';
 
 export const dataApi = baseApi.injectEndpoints({
