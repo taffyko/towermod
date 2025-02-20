@@ -6,11 +6,6 @@ use towermod_cstc::ImageMetadata;
 use towermod_shared::{app::state::{data_state::JsCstcData}, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType};
 use towermod_util::log_on_error;
 
-// #[command]
-// pub fn greet(name: &str) -> String {
-// 	format!("Hello, {}! You've been greeted from Rust!", name)
-// }
-
 #[command]
 pub async fn get_image(
 	_window: tauri::Window,

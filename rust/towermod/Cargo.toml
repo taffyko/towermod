@@ -21,24 +21,14 @@ towermod-win32.workspace = true
 towermod-cstc.workspace = true
 towermod-shared.workspace = true
 anyhow.workspace = true
-serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 tracing-log.workspace = true
 log.workspace = true
-time.workspace = true
-indoc.workspace = true
-async-scoped = { workspace = true, features = ["use-tokio"] }
-zip.workspace = true
-toml.workspace = true
 fs-err.workspace = true
-reqwest.workspace = true
 console-subscriber.workspace = true
-lazy_static.workspace = true
-redux-rs.workspace = true
-itertools.workspace = true
 
 
 [build-dependencies]

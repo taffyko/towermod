@@ -5322,23 +5322,14 @@ name = "towermod"
 version = "0.2.0"
 dependencies = [
  "anyhow 1.0.95 (git+https://github.com/taffyko/anyhow-tauri)",
- "async-scoped",
  "console-subscriber",
  "fs-err",
- "indoc",
- "itertools",
- "lazy_static",
  "log",
- "redux-rs",
- "reqwest",
- "serde",
  "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
- "time",
  "tokio",
- "toml 0.8.20",
  "towermod-cstc",
  "towermod-shared",
  "towermod-util",
@@ -5346,7 +5337,6 @@ dependencies = [
  "tracing",
  "tracing-log",
  "tracing-subscriber",
- "zip 2.2.2",
 ]
 
 [[package]]
@@ -5382,7 +5372,6 @@ version = "0.2.0"
 dependencies = [
  "anyhow 1.0.95 (git+https://github.com/taffyko/anyhow-tauri)",
  "async-scoped",
- "console-subscriber",
  "derivative",
  "fs-err",
  "futures",
@@ -5409,8 +5398,6 @@ dependencies = [
  "towermod-util",
  "towermod-win32",
  "tracing",
- "tracing-log",
- "tracing-subscriber",
  "windows 0.51.1",
  "zip 2.2.2",
  "zip-extract",
