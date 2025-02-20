@@ -105,13 +105,13 @@ impl<'a> BlockReader<'a> {
 
 		let sub_animations = self.read_collection(Self::read_animation);
 
-		Animation { id, name, tag, speed, is_angle, angle, repeat_count, repeat_to, ping_pong, frames, sub_animations, _type: Animation::type_name() }
+		Animation { id, name, tag, speed, is_angle, angle, repeat_count, repeat_to, ping_pong, frames, sub_animations }
 	}
 
 	fn read_animation_frame(&mut self) -> AnimationFrame {
 		let duration = self.read_f32();
 		let image_id = self.read_i32();
-		AnimationFrame { duration, image_id, _type: AnimationFrame::type_name() }
+		AnimationFrame { duration, image_id }
 	}
 }
 

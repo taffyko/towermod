@@ -5,12 +5,37 @@ import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
 import { PrivateVariables } from './PrivateVariables';
 import { store } from '@/redux';
+import { DisableShaderWhen, FpsMode, LayerSamplerMode, LayerType, ResizeMode, SamplerMode, SimulateShadersMode, TextRenderingMode, TextureLoadingMode } from '@towermod';
 
 
 export type CustomInspectorObjects = TowermodObject
 
 export const customNumericSubtypeNames = [] as const
-export const customStringSubtypeNames = [] as const
+
+export const customEnumSubtypes: Record<keyof CustomEnumToValue, string[]> = {
+	TextureLoadingMode: ['LoadOnAppStart', 'LoadOnLayoutStart'],
+	TextRenderingMode: ['Aliased', 'AntiAliased', 'ClearType'],
+	ResizeMode: ['Disabled', 'ShowMore', 'Stretch'],
+	SamplerMode: ['Point', 'Linear'],
+	SimulateShadersMode: ['NoSimulation', 'Ps14', 'Ps11', 'Ps00'],
+	LayerSamplerMode: ['Default', 'Point', 'Linear'],
+	LayerType: ['Normal', 'WindowCtrls', 'NonFrame', 'Include'],
+	DisableShaderWhen: ['NoSetting', 'Ps20Unavailable', 'Ps20Available', 'Ps14Unavailable', 'Ps14Available', 'Ps11Unavailable', 'Ps11Available'],
+	FpsMode: ['VSync', 'Unlimited', 'Fixed']
+}
+export const customStringSubtypeNames = Object.getOwnPropertyNames(customEnumSubtypes) as (keyof CustomEnumToValue)[]
+
+export type CustomEnumToValue = {
+	TextureLoadingMode: TextureLoadingMode
+	TextRenderingMode: TextRenderingMode
+	ResizeMode: ResizeMode
+	SamplerMode: SamplerMode
+	SimulateShadersMode: SimulateShadersMode
+	LayerSamplerMode: LayerSamplerMode
+	LayerType: LayerType
+	DisableShaderWhen: DisableShaderWhen
+	FpsMode: FpsMode,
+}
 
 /** Provide additional virtual properties for each type, to display in the inspector */
 export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: ParentPropertyInfo): AnyPropertyInfo[] | undefined {
@@ -102,6 +127,7 @@ export function defaultValueForType(type: InspectorTypeName): (() => any) {
 		case 'DataKey': return (): TypeNameToValue['DataKey'] => ({ _type: 'DataKey', type: "String", field0: "name", field1: "" })
 		case 'BehaviorControl': return (): TypeNameToValue['BehaviorControl'] => ({ _type: 'BehaviorControl', name: "name", vk: 0, player: 0 })
 		case 'PrivateVariable': return (): TypeNameToValue['PrivateVariable'] => ({ _type: 'PrivateVariable', name: "name", valueType: 'String' })
+		case 'GlobalVariable': return (): TypeNameToValue['GlobalVariable'] => ({ _type: 'GlobalVariable', name: "name", varType: 0, value: "" })
 	}
 	throw new Error(`No default value defined for ${type}`)
 }
@@ -120,10 +146,13 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			override(type, {
 				layers: { hidden: true },
 				imageIds: { hidden: true, },
-				dataKeys: { valueTypes: ['DataKey'] }
+				dataKeys: { valueTypes: ['DataKey'] },
+				textureLoadingMode: { type: 'TextureLoadingMode' }
 			})
 		break; case 'LayoutLayer':
 			override(type, {
+				layerType: { type: 'LayerType' },
+				sampler: { type: 'LayerSamplerMode' },
 				id: { readonly: true },
 				objects: { hidden: true },
 			})
@@ -137,6 +166,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				id: { readonly: true },
 				descriptors: { hidden: true, },
 				privateVariables: { hidden: true },
+				destroyWhen: { type: 'DisableShaderWhen' }
 			})
 		break; case 'Behavior':
 			override(type, {
@@ -163,7 +193,14 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'AppBlock':
 			override(type, {
 				dataKeys: { valueTypes: ['DataKey'] },
-				behaviorControls: { valueTypes: ['BehaviorControl'] }
+				behaviorControls: { valueTypes: ['BehaviorControl'] },
+				globalVariables: { valueTypes: ['GlobalVariable'] },
+				fpsMode: { type: 'FpsMode' },
+				samplerMode: { type: 'SamplerMode' },
+				simulateShaders: { type: 'SimulateShadersMode' },
+				textRenderingMode: { type: 'TextRenderingMode' },
+				resizeMode: { type: 'ResizeMode' },
+				textureLoadingMode: { type: 'TextureLoadingMode' },
 			})
 	}
 

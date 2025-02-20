@@ -38,7 +38,7 @@ export default function Images() {
 
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
 
-	return <div className="vbox gap">
+	return <div className="vbox gap grow">
 		<div className="hbox gap">
 			<Button onClick={onClickDumpImages}>Dump images</Button>
 			<Button disabled={!imageDumpDir} onClick={onClickBrowseDumpedImages}>Browse dumped images</Button>
@@ -48,7 +48,7 @@ export default function Images() {
 				<Button onClick={onClickSetImage}>Set image</Button>
 				<Toggle /> Show collision
 			</div>
-			<div className="hbox gap" style={{ overflow: 'hidden' }}>
+			<div className="hbox gap grow" style={{ overflow: 'hidden' }}>
 				<div className="vbox gap grow">
 					<div className="hbox gap center">
 						<SpinBox value={imageId} onChange={setImageId} />

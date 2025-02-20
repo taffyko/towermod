@@ -1,5 +1,5 @@
 import { float, int } from "@/util/util"
-import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, applyPropertyInfoOverrides } from "../customInspectorUtil"
+import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, applyPropertyInfoOverrides, customEnumSubtypes, CustomEnumToValue } from "../customInspectorUtil"
 
 export type InspectorObjectValue = CustomInspectorObjects
 export type InspectorKeyTypes = string | number
@@ -11,10 +11,7 @@ export type AnyInspectorValue = SizedInspectorValue | InspectorArrayValue | Insp
 
 const numericSubtypeNames = ['int', 'float', ...customNumericSubtypeNames] as const
 const stringSubtypeNames = [...customStringSubtypeNames] as const
-
-/** Represents a list of selectable options / enum values */
-export type OptionsList<T extends string | number> = (T)[] | { name: string, value: T }[]
-
+export const enumSubtypes = {...customEnumSubtypes} as const;
 
 export type TypeNameToValue = {
 	'unknown': unknown,
@@ -25,7 +22,7 @@ export type TypeNameToValue = {
 	'int': int,
 	'Array': Array<unknown>,
 	'Dictionary': Record<string | number, unknown>
-} & {
+} & CustomEnumToValue & {
 	[T in InspectorObjectValue as T['_type']]: T
 }
 export type InspectorTypeName = keyof TypeNameToValue

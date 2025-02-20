@@ -76,6 +76,10 @@ code {
 	color: var(--color-text);
 }
 
+::-webkit-scrollbar-corner {
+	background-color: transparent;
+}
+
 ::-webkit-scrollbar {
 	width: 5px;
 	height: 5px;

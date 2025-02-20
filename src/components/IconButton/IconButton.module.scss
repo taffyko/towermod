@@ -17,6 +17,8 @@ $iconSize: 16px;
 	color: var(--color-text);
 	transition: 0.1s background-color ease-out;
 
+	vertical-align: bottom;
+
 	& > * {
 		height: min(100%, $iconSize);
 	}

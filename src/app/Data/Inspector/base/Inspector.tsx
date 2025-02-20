@@ -3,7 +3,7 @@
  */
 import { Select } from "@/components/Select"
 import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
-import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo, inferPropertyInfoFromValue } from "./inspectorUtil"
+import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo, inferPropertyInfoFromValue, enumSubtypes } from "./inspectorUtil"
 import React, { useMemo, useState } from "react"
 import IconButton from "@/components/IconButton"
 import addImg from '@/icons/add.svg'
@@ -11,6 +11,7 @@ import closeImg from '@/icons/close.svg'
 import { LineEdit } from "@/components/LineEdit"
 import { SpinBox } from "@/components/SpinBox"
 import { Toggle } from "@/components/Toggle"
+import Style from '../Inspector.module.scss'
 
 export const InspectorObject = (props: {
 	pinfo?: ObjectPropertyInfo,
@@ -28,6 +29,7 @@ export const InspectorObject = (props: {
 	} else {
 		return null
 	}
+	const root = !objPinfo.parent
 
 	const onPropertyChange = (key: InspectorKeyTypes, value: any) => {
 		const newObj = { ...objPinfo.value, [key]: value }
@@ -41,13 +43,13 @@ export const InspectorObject = (props: {
 
 		const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
 
-		return <div className="hbox gap" key={pinfo.key}>
+		return <React.Fragment key={pinfo.key}>
 			<div>{pinfo.key}:</div>
-			<div className="hbox grow">{valueComponent}</div>
-		</div>
+			<div className="hbox">{valueComponent}</div>
+		</React.Fragment>
 	}), [objPinfo.value])
 
-	return <div className="vbox grow">
+	return <div className={`${Style.grid} ${root ? Style.root : ''}`}>
 		{propertyComponents}
 	</div>
 }
@@ -65,14 +67,22 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorVal
 		throw new Error(`Need to define 'valueTypes' for array ${arrPinfo.parent?.type}.${arrPinfo.key}`)
 	}
 
+	const removeElement = (idx: number) => {
+		const newArr = [ ...arrPinfo.value ]
+		newArr.splice(idx, 1)
+		onChange(newArr)
+	}
+
 	const valueComponents: React.ReactNode[] = useMemo(() => arrPinfo.value.map((val, i) => {
 		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo, i);
 		const valueComponent = getValueComponent(pinfo, (v) => { onElementChange(arrPinfo.key, v) })
 
-		return <div className="hbox gap" key={pinfo.key}>
-			<div>{i}:</div>
+		return <React.Fragment key={i}>
+			<div>
+				<IconButton src={closeImg} onClick={() => removeElement(i)} /> {pinfo.key}
+			</div>
 			<div className="hbox grow">{valueComponent}</div>
-		</div>
+		</React.Fragment>
 	}), [arrPinfo.value])
 
 	// adding elements
@@ -83,7 +93,7 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorVal
 		onChange(newArr)
 	} : undefined
 
-	return <div className="vbox grow">
+	return <div className={Style.grid}>
 		{valueComponents}
 		{addElement ?
 			<div className="hbox">
@@ -118,13 +128,13 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 
 		const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
 
-		return <div className="hbox gap" key={pinfo.key}>
+		return <React.Fragment key={pinfo.key}>
 			<div>
 				{pinfo.key}:
 				<IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />
 			</div>
-			<div className="hbox grow">{valueComponent}</div>
-		</div>
+			<div className="hbox">{valueComponent}</div>
+		</React.Fragment>
 	}), [dictPinfo.value])
 
 	// adding properties
@@ -146,7 +156,9 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 	} : undefined
 
 	return <div className="vbox grow" key={dictPinfo.key}>
-		{propertyComponents}
+		<div className={Style.grid}>
+			{propertyComponents}
+		</div>
 		{addProperty ?
 			<div className="hbox gap">
 				<LineEdit value={newKeyText} onChange={e => setNewKeyText(e.target.value)} />
@@ -175,15 +187,17 @@ export const InspectorNumeric = (props: { pinfo: SimplePropertyInfo<number>, onC
 	if (pinfo.readonly) {
 		return <div>{pinfo.value}</div>
 	}
-	return <SpinBox value={pinfo.value} onChange={onChange} />
+	return <SpinBox value={pinfo.value} onChange={onChange} int={pinfo.type === 'int'} />
 }
 
 export const InspectorBoolean = (props: { pinfo: SimplePropertyInfo<boolean>, onChange: (v: boolean) => void }) => {
 	const { pinfo, onChange } = props
-	if (pinfo.readonly) {
-		return <div>{pinfo.value}</div>
-	}
-	return <Toggle value={pinfo.value} onChange={onChange} />
+	return <Toggle disabled={pinfo.readonly} value={pinfo.value} onChange={onChange} />
+}
+
+function InspectorSelect(props: { pinfo: SimplePropertyInfo<string>, options: string[], onChange: (v: string) => void }) {
+	const { pinfo, options, onChange } = props
+	return <Select disabled={pinfo.readonly} value={pinfo.value} onChange={onChange} options={options} />
 }
 
 function getValueComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): React.ReactNode {
@@ -206,6 +220,10 @@ function getValueComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): 
 		case 'unknown':
 			return <div>(unknown) {String(pinfo.value)}</div>
 		default:
+			if (pinfo.type in enumSubtypes) {
+				const options: string[] = (enumSubtypes as any)[pinfo.type]
+				return <InspectorSelect pinfo={pinfo as any} options={options} onChange={onChange} />
+			}
 			return <InspectorObject pinfo={pinfo as any} onChange={onChange} />
 	}
 }

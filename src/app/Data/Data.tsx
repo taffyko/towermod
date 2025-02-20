@@ -1,7 +1,7 @@
-import Outliner, { OutlinerHandle } from './Outliner/Outliner'
+import Outliner, { OutlinerContext, OutlinerHandle } from './Outliner/Outliner'
 import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { UniqueObjectLookup, UniqueTowermodObject, actions, dataActions, findObject } from '@/redux'
 import { useImperativeHandle, useStateRef } from '@/util/hooks'
 import { useAppDispatch, useAppSelector } from '@/redux'
@@ -26,6 +26,7 @@ export function Data() {
 	}, [data, editorPlugins])
 
 
+	const [outlinerRef, setOutlinerRef] = useStateRef<OutlinerHandle>();
 
 	const onChange = (obj: UniqueTowermodObject) => {
 		dispatch(dataActions.editObject(obj))
@@ -33,12 +34,16 @@ export function Data() {
 
 	return <div className="vbox gap grow">
 		<PlayProject />
-		<div className="hbox gap grow">
-			<Outliner />
-			{ value ?
-				<Inspector pinfo={inferPropertyInfoFromValue(value, undefined, 'root') as any} onChange={onChange as any} />
-			: null }
-		</div>
+		<OutlinerContext.Provider value={outlinerRef!}>
+			<div style={{ overflow: 'hidden' }} className="hbox gap grow">
+				<Outliner handleRef={setOutlinerRef} />
+				{ value ?
+					<div className="vbox grow" style={{ flexBasis: 0, overflow: 'hidden' }}>
+						<Inspector pinfo={inferPropertyInfoFromValue(value, undefined, 'root') as any} onChange={onChange as any} />
+					</div>
+				: null }
+			</div>
+		</OutlinerContext.Provider>
 	</div>
 }
 

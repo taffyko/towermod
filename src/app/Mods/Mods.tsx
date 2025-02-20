@@ -110,7 +110,6 @@ export function ModList() {
 		:
 			mods?.map((mod, i) => {
 				const key = mod.error ? i : mod.id;
-				console.log("KEY", key)
 				return <ModListItem
 					key={key}
 					mod={mod}

@@ -1,0 +1,17 @@
+.grid {
+	display: grid;
+	flex-basis: 0;
+	flex-grow: 1;
+	align-content: start;
+	grid-template-columns: max-content 1fr;
+	gap: var(--gap) var(--gap-l);
+
+	background-color: rgba(68, 50, 68, 0.2);
+	border: solid 1px var(--color-border-subtle);
+	padding: var(--gap);
+	border-radius: var(--border-radius);
+
+	&.root {
+		overflow: auto;
+	}
+}

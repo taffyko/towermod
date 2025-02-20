@@ -174,12 +174,6 @@ pub struct ObjectType {
 	pub destroy_when: DisableShaderWhen,
 	pub private_variables: Vec<PrivateVariable>,
 	pub descriptors: Option<FeatureDescriptors>,
-
-	#[serde(skip, default = "ObjectType::type_name")]
-	pub _type: String,
-}
-impl ObjectType {
-	pub fn type_name() -> String { String::from("ObjectType") }
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
@@ -189,12 +183,6 @@ pub struct FeatureDescriptors {
 	pub actions: Vec<FeatureDescriptor>,
 	pub conditions: Vec<FeatureDescriptor>,
 	pub expressions: Vec<FeatureDescriptor>,
-
-	#[serde(skip, default = "FeatureDescriptors::type_name")]
-	pub _type: String,
-}
-impl FeatureDescriptors {
-	pub fn type_name() -> String { String::from("FeatureDescriptors") }
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
@@ -207,12 +195,6 @@ pub struct Behavior {
 	pub name: String,
 	pub data: Vec<u8>,
 	pub descriptors: Option<FeatureDescriptors>,
-
-	#[serde(skip, default = "Behavior::type_name")]
-	pub _type: String,
-}
-impl Behavior {
-	pub fn type_name() -> String { String::from("Behavior") }
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
@@ -220,12 +202,6 @@ impl Behavior {
 #[serde(rename_all = "camelCase")]
 pub struct Container {
 	pub object_ids: Vec<i32>,
-
-	#[serde(skip, default = "Container::type_name")]
-	pub _type: String,
-}
-impl Container {
-	pub fn type_name() -> String { String::from("Container") }
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
@@ -236,12 +212,6 @@ pub struct Family {
 	pub name: String,
 	pub object_type_ids: Vec<i32>,
 	pub private_variables: Vec<PrivateVariable>,
-
-	#[serde(skip, default = "Family::type_name")]
-	pub _type: String,
-}
-impl Family {
-	pub fn type_name() -> String { String::from("Family") }
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
@@ -250,12 +220,6 @@ impl Family {
 pub struct ObjectTrait {
 	pub name: String,
 	pub object_type_ids: Vec<i32>,
-
-	#[serde(skip, default = "ObjectTrait::type_name")]
-	pub _type: String,
-}
-impl ObjectTrait {
-	pub fn type_name() -> String { String::from("ObjectTrait") }
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
@@ -273,14 +237,7 @@ pub struct Layout {
 	pub layers: Vec<LayoutLayer>,
 	pub image_ids: Vec<i32>,
 	pub texture_loading_mode: TextureLoadingMode,
-
-	#[serde(skip, default = "Layout::type_name")]
-	pub _type: String,
 }
-impl Layout {
-	pub fn type_name() -> String { String::from("Layout") }
-}
-
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -308,14 +265,7 @@ pub struct LayoutLayer {
 	pub enable_3d: bool,
 	pub clear_depth_buffer: bool,
 	pub objects: Vec<ObjectInstance>,
-
-	#[serde(skip, default = "LayoutLayer::type_name")]
-	pub _type: String,
 }
-impl LayoutLayer {
-	pub fn type_name() -> String { String::from("LayoutLayer") }
-}
-
 
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum LayerSamplerMode {
@@ -339,14 +289,7 @@ pub struct ObjectInstance {
 	pub private_variables: Vec<String>,
 	pub data: Vec<u8>,
 	pub key: i32,
-
-	#[serde(skip, default = "ObjectInstance::type_name")]
-	pub _type: String,
 }
-impl ObjectInstance {
-	pub fn type_name() -> String { String::from("ObjectInstance") }
-}
-
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -364,12 +307,6 @@ pub struct Animation {
 	pub ping_pong: bool,
 	pub frames: Vec<AnimationFrame>,
 	pub sub_animations: Vec<Animation>,
-
-	#[serde(skip, default = "Animation::type_name")]
-	pub _type: String,
-}
-impl Animation {
-	pub fn type_name() -> String { String::from("Animation") }
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
@@ -379,12 +316,6 @@ pub struct AnimationFrame {
 	pub duration: f32,
 	pub image_id: i32,
 
-	#[serde(skip, default = "AnimationFrame::type_name")]
-	pub _type: String,
-
-}
-impl AnimationFrame {
-	pub fn type_name() -> String { String::from("AnimationFrame") }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
@@ -420,14 +351,7 @@ pub enum PrivateVariableType {
 pub struct PrivateVariable {
 	pub name: String,
 	pub value_type: PrivateVariableType,
-
-	#[serde(skip, default = "PrivateVariable::type_name")]
-	pub _type: String,
 }
-impl PrivateVariable {
-	pub fn type_name() -> String { String::from("PrivateVariable") }
-}
-
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -435,14 +359,7 @@ impl PrivateVariable {
 pub struct FeatureDescriptor {
 	pub script_name: String,
 	pub param_count: u32,
-
-	#[serde(skip, default = "FeatureDescriptor::type_name")]
-	pub _type: String,
 }
-impl FeatureDescriptor {
-	pub fn type_name() -> String { String::from("FeatureDescriptor") }
-}
-
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -535,13 +452,6 @@ pub struct AppBlock {
 	pub layout_index: i32,
 	pub multisamples: u32,
 	pub texture_loading_mode: TextureLoadingMode,
-
-
-	#[serde(default = "AppBlock::type_name")]
-	pub _type: String,
-}
-impl AppBlock {
-	pub fn type_name() -> String { String::from("AppBlock") }
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
@@ -551,12 +461,6 @@ pub struct GlobalVariable {
 	pub name: String,
 	pub var_type: i32,
 	pub value: String,
-
-	#[serde(skip, default = "GlobalVariable::type_name")]
-	pub _type: String,
-}
-impl GlobalVariable {
-	pub fn type_name() -> String { String::from("GlobalVariable") }
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
@@ -566,12 +470,6 @@ pub struct BehaviorControl {
 	pub name: String,
 	pub vk: i32,
 	pub player: i32,
-
-	#[serde(skip, default = "BehaviorControl::type_name")]
-	pub _type: String,
-}
-impl BehaviorControl {
-	pub fn type_name() -> String { String::from("BehaviorControl") }
 }
 
 #[derive(Debug, Clone, Copy, FromPrimitive, ToPrimitive, Serialize, Deserialize)]

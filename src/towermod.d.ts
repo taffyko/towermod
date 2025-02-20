@@ -123,15 +123,7 @@ export type DataKey =
   | { _type: 'DataKey', type: 'Pointer', field0: string, field1: number }
   | { _type: 'DataKey', type: 'String', field0: string, field1: string }
 
-export declare const enum DisableShaderWhen {
-  NoSetting = 0,
-  Ps20Unavailable = 1,
-  Ps20Available = 2,
-  Ps14Unavailable = 3,
-  Ps14Available = 4,
-  Ps11Unavailable = 5,
-  Ps11Available = 6
-}
+export type DisableShaderWhen = 'NoSetting' | 'Ps20Unavailable' | 'Ps20Available' | 'Ps14Unavailable' | 'Ps14Available' | 'Ps11Unavailable' | 'Ps11Available';
 
 export interface Event {
   lineNumber: int
@@ -186,11 +178,7 @@ export interface FeatureDescriptors {
   expressions: Array<FeatureDescriptor>
 }
 
-export declare const enum FpsMode {
-  VSync = 0,
-  Unlimited = 1,
-  Fixed = 2
-}
+export type FpsMode = 'VSync' | 'Unlimited' | 'Fixed'
 
 /** Metadata about a game */
 export interface Game {
@@ -241,18 +229,9 @@ export interface ImageResource {
 }
 
 
-export declare const enum LayerSamplerMode {
-  Default = 0,
-  Point = 1,
-  Linear = 2
-}
+export type LayerSamplerMode = 'Default' | 'Point' | 'Linear';
 
-export declare const enum LayerType {
-  Normal = 0,
-  WindowCtrls = 1,
-  NonFrame = 2,
-  Include = 3
-}
+export type LayerType = 'Normal' | 'WindowCtrls' | 'NonFrame' | 'Include';
 
 export interface Layout {
   /** Unique name. */
@@ -403,39 +382,20 @@ export interface Project {
 
 export type ProjectType = 'Towermod' | 'FilesOnly' | 'Legacy'
 
-export declare const enum ResizeMode {
-  Disabled = 0,
-  ShowMore = 1,
-  Stretch = 2
-}
+export type ResizeMode = 'Disabled' | 'ShowMore' | 'Stretch'
 
-export declare const enum SamplerMode {
-  Point = 0,
-  Linear = 1
-}
+export type SamplerMode = 'Point' | 'Linear'
 
-export declare const enum SimulateShadersMode {
-  NoSimulation = 0,
-  Ps14 = 1,
-  Ps11 = 2,
-  Ps00 = 3
-}
+export type SimulateShadersMode = 'NoSimulation' | 'Ps14' | 'Ps11' | 'Ps00'
 
 export type SomeEvent =
   | { type: 'Event', field0: Event }
   | { type: 'EventGroup', field0: EventGroup }
   | { type: 'EventInclude', field0: number }
 
-export declare const enum TextRenderingMode {
-  Aliased = 0,
-  AntiAliased = 1,
-  ClearType = 2
-}
+export type TextRenderingMode = 'Aliased' | 'AntiAliased' | 'ClearType';
 
-export declare const enum TextureLoadingMode {
-  LoadOnAppStart = 0,
-  LoadOnLayoutStart = 1
-}
+export type TextureLoadingMode = 'LoadOnAppStart' | 'LoadOnLayoutStart';
 
 export type Token =
   | { type: 'Integer', field0: number }
