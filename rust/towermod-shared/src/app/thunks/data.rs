@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use tauri::command;
-use crate::{app::state::{data_state::JsCstcData, select, DataAction, STORE}, cstc::ImageMetadata};
+use towermod_cstc::ImageMetadata;
+use crate::{app::state::{data_state::JsCstcData, select, DataAction, STORE}};
 use fs_err::tokio as fs;
 
 pub async fn get_image(id: i32) -> Option<Vec<u8>> {
@@ -31,19 +31,16 @@ async fn get_image_override(id: i32) -> Result<Option<Vec<u8>>> {
 	}
 }
 
-#[command]
 pub async fn is_image_overridden(id: i32) -> Result<bool> {
 	let mut path = select(|s| s.project.as_ref().context("No project loaded").map(|p| p.images_path())).await??;
 	path.push(format!("{id}.png"));
 	Ok(path.exists())
 }
 
-#[command]
 pub async fn set_image_metadata(data: ImageMetadata) {
 	STORE.dispatch(DataAction::SetImageMetadata(data).into()).await;
 }
 
-#[command]
 pub async fn update_data(new_data: JsCstcData) {
 	STORE.dispatch(DataAction::UpdateData(new_data).into()).await;
 }

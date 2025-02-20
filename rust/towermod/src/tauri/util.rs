@@ -1,6 +1,6 @@
 use tauri::{AppHandle, Emitter};
 use anyhow::Result;
-use crate::log_on_error;
+use towermod_util::log_on_error;
 
 /// Log error, send error event to the frontend
 fn notify_error(app: &AppHandle, err: anyhow::Error) -> Result<()> {

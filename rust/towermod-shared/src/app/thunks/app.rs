@@ -1,28 +1,25 @@
 use std::{io::{Cursor, Read, Write}, path::PathBuf, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, async_cleanup, convert_to_release_build, cstc::{self, *}, first_time_setup, get_appdata_dir_path, get_mods_dir_path, log_error, log_on_error, zip_merge_copy_into, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType, ZipWriterExt};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, convert_to_release_build, first_time_setup, get_appdata_dir_path, get_mods_dir_path, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType };
 use anyhow::Result;
 use async_scoped::TokioScope;
-use tauri::{command, AppHandle, Emitter};
 use anyhow::{Context};
 use fs_err::tokio as fs;
 use tokio::io::AsyncWriteExt;
-use towermod_util::TcrepainterPatch;
+use towermod_cstc::{self as cstc, AppBlock, EventBlock, LevelBlock};
+use towermod_util::{async_cleanup, log_on_error, zip_merge_copy_into, TcrepainterPatch, ZipWriterExt};
 use towermod_win32::get_temp_file;
 use tracing::instrument;
 use itertools::Itertools;
-use towermod_shared::game_images as images;
+use crate::game_images as images;
 use crate::app::{state::{select, CstcData}, selectors, thunks};
+use towermod_cstc::{self, *};
 
 fn status(_msg: &str) {
 	// TODO
 }
 
-static INITIALIZED: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
-
 /// Should be idempotent
-#[command]
-pub async fn init(app: AppHandle) -> Result<()> {
-
+pub async fn init() -> Result<()> {
 	// Set up file structure
 	first_time_setup().await?;
 
@@ -49,32 +46,10 @@ pub async fn init(app: AppHandle) -> Result<()> {
 		}
 	}
 
-	if (!*INITIALIZED.lock().unwrap()) {
-		{
-			let mut initialized = INITIALIZED.lock().unwrap();
-			*initialized = true;
-		}
-
-		// Install mods passed from the command-line
-		let args: Vec<String> = std::env::args().skip(1).collect();
-		for arg in args {
-			log_on_error(app.emit("towermod/request-install-mod", arg));
-		}
-
-		// Attempt to listen on pipe
-		std::thread::spawn(move || {
-			let app_handle = app;
-			log_on_error(towermod_win32::pipe::listen_pipe(move |msg| {
-				log_on_error(app_handle.emit("towermod/request-install-mod", msg));
-			}));
-		});
-	}
-
 	Ok(())
 }
 
 
-#[command]
 pub async fn install_mod(resource: &str) -> Result<ModInfo> {
 	let towermod_prefix = resource.starts_with("towermod:");
 	let is_url = towermod_prefix || resource.starts_with("https://") || resource.starts_with("http://");
@@ -97,7 +72,6 @@ pub async fn install_mod(resource: &str) -> Result<ModInfo> {
 	}
 }
 
-#[command]
 pub async fn get_installed_mods() -> Result<Vec<ModInfo>> {
 	let mut stream = fs::read_dir(get_mods_dir_path()).await?;
 	let mut mods: Vec<ModInfo> = Vec::new();
@@ -141,7 +115,6 @@ pub async fn get_installed_mods() -> Result<Vec<ModInfo>> {
 	Ok(mods)
 }
 
-#[command]
 pub async fn play_mod(zip_path: PathBuf) -> Result<u32> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let zip_bytes = fs::read(&zip_path).await?;
@@ -169,7 +142,7 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<u32> {
 	let runtime_dir = mod_info.mod_runtime_dir().await?;
 
 	status("Copying base game files");
-	crate::merge_copy_into(&game_path.parent().context("game_path.parent()")?, &runtime_dir, true, true).await?;
+	towermod_util::merge_copy_into(&game_path.parent().context("game_path.parent()")?, &runtime_dir, true, true).await?;
 
 	status("Writing custom files");
 	let is_towerclimb = mod_info.game.game_type == GameType::Towerclimb;
@@ -256,17 +229,17 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<u32> {
 			status("Patching executable");
 			if let Some(level_block_patch) = level_block_patch.into_inner().unwrap() {
 				let level_block_bin = cstc::LevelBlock::read_bin(&game_path)?;
-				let buf = crate::apply_patch(&*level_block_bin, &*level_block_patch)?;
+				let buf = towermod_util::apply_patch(&*level_block_bin, &*level_block_patch)?;
 				cstc::LevelBlock::write_bin(&output_exe_path, &buf)?;
 			}
 			if let Some(event_block_patch) = event_block_patch.into_inner().unwrap() {
 				let event_block_bin = cstc::EventBlock::read_bin(&game_path)?;
-				let buf = crate::apply_patch(&*event_block_bin, &*event_block_patch)?;
+				let buf = towermod_util::apply_patch(&*event_block_bin, &*event_block_patch)?;
 				cstc::EventBlock::write_bin(&output_exe_path, &buf)?;
 			}
 			if let Some(app_block_patch) = app_block_patch.into_inner().unwrap() {
 				let app_block_bin = cstc::AppBlock::read_bin(&game_path)?;
-				let buf = crate::apply_patch(&*app_block_bin, &*app_block_patch)?;
+				let buf = towermod_util::apply_patch(&*app_block_bin, &*app_block_patch)?;
 				cstc::AppBlock::write_bin(&output_exe_path, &buf)?;
 			}
 			if let Some(image_block_patch) = image_block_patch.into_inner().unwrap() {
@@ -289,12 +262,10 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<u32> {
 	Ok(run_patched_mod(&mod_info).await?)
 }
 
-#[command]
 pub fn mod_cache_exists(mod_info: ModInfo) -> bool {
 	mod_info.mod_runtime_dir_path().exists()
 }
 
-#[command]
 pub async fn clear_mod_cache(mod_info: ModInfo) -> Result<()> {
 	fs::remove_dir_all(mod_info.mod_runtime_dir_path()).await?;
 	Ok(())
@@ -362,13 +333,12 @@ pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_n
 	let settings_dir_dest_path = PathBuf::from_iter([crate::get_appdata_dir_path(), PathBuf::from_iter([&*appdata_suffix, "Settings"])]);
 
 	// Copy settings from vanilla game if none exists for the mod
-	crate::merge_copy_into(&settings_dir_path, &settings_dir_dest_path, false, false).await?;
+	towermod_util::merge_copy_into(&settings_dir_path, &settings_dir_dest_path, false, false).await?;
 	Ok(())
 }
 
 
 #[instrument]
-#[command]
 pub async fn set_game(file_path: Option<PathBuf>) -> Result<()> {
 	if let Some(file_path) = file_path {
 		let game = Game::from_path(file_path.clone()).await?;
@@ -378,7 +348,7 @@ pub async fn set_game(file_path: Option<PathBuf>) -> Result<()> {
 			game_path: Some(file_path)
 		}).into()).await;
 		// Attempt to save updated config
-		let _ = log_error(thunks::save_config().await, "");
+		let _ = towermod_util::log_error(thunks::save_config().await, "");
 	} else {
 		STORE.dispatch(AppAction::SetGame(None)).await;
 	}
@@ -386,7 +356,6 @@ pub async fn set_game(file_path: Option<PathBuf>) -> Result<()> {
 }
 
 #[instrument]
-#[command]
 pub async fn new_project() -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let game_path = game.game_path()?;
@@ -409,13 +378,11 @@ pub async fn new_project() -> Result<()> {
 	Ok(())
 }
 
-#[command]
 pub async fn play_vanilla() -> Result<u32> {
 	let game = selectors::get_game().await.context("No game set")?;
 	Ok(crate::run_game(game.game_path()?).await?)
 }
 
-#[command]
 pub async fn load_project_preflight(manifest_path: PathBuf) -> Result<Option<String>> {
 	let proj = Project::from_path(&manifest_path).await?;
 	if proj.project_type != ProjectType::Towermod {
@@ -444,7 +411,6 @@ pub async fn load_project_preflight(manifest_path: PathBuf) -> Result<Option<Str
 	Ok(None)
 }
 
-#[command]
 pub async fn dump_images() -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let image_dump_dir = game.image_dump_dir().await?;
@@ -461,7 +427,6 @@ pub async fn dump_images() -> Result<()> {
 	Ok(())
 }
 
-#[command]
 pub async fn load_project(manifest_path: PathBuf) -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let proj_dir = manifest_path.parent().unwrap();
@@ -503,7 +468,6 @@ pub async fn load_project(manifest_path: PathBuf) -> Result<()> {
 	Ok(())
 }
 
-#[command]
 pub async fn save_new_project(dir_path: PathBuf, author: String, name: String, display_name: String) -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let mut project = Project::new(author, name, display_name, "0.0.1".to_string(), game);
@@ -516,7 +480,6 @@ pub async fn save_new_project(dir_path: PathBuf, author: String, name: String, d
 	Ok(())
 }
 
-#[command]
 pub async fn save_project(dir_path: PathBuf) -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let mut project = selectors::get_project().await.context("No project set")?;
@@ -524,7 +487,7 @@ pub async fn save_project(dir_path: PathBuf) -> Result<()> {
 	// Update date & version
 	project.dir_path = Some(dir_path.clone());
 	project.date = time::OffsetDateTime::now_utc().replace_nanosecond(0)?.replace_second(0)?;
-	project.towermod_version = crate::VERSION.to_string();
+	project.towermod_version = towermod_util::VERSION.to_string();
 	project.game = game;
 	// Save manifest.toml
 	project.save().await?;
@@ -572,20 +535,17 @@ pub async fn save_project(dir_path: PathBuf) -> Result<()> {
 	Ok(())
 }
 
-#[command]
 pub async fn edit_project_info(project: Project) {
 	STORE.dispatch(AppAction::EditProjectInfo(project)).await;
 }
 
 
-#[command]
 pub async fn clear_game_cache() -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	game.clear_cache().await?;
 	Ok(())
 }
 
-#[command]
 pub async fn nuke_cache() -> Result<()> {
 	let path = crate::get_cache_dir_path();
 	fs::remove_dir_all(path).await?;
@@ -612,7 +572,6 @@ async fn ensure_base_data(mut data: CstcData, game: &Game) -> Result<CstcData> {
 	Ok(data)
 }
 
-#[command]
 pub async fn export_mod(mod_type: ModType) -> Result<()> {
 	status("Exporting");
 	let mod_type: ModType = From::from(mod_type);
@@ -710,7 +669,6 @@ pub async fn get_patched_image_block_load_game(dir_or_zip: Option<PathBuf>, meta
 	images::get_patched_image_block(images, dir_or_zip, metadata).await
 }
 
-#[command]
 pub async fn image_dump_dir_path() -> Result<Option<PathBuf>> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let path = game.image_dump_dir_path();

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use crate::cstc::{stable::*, plugin::PluginData};
+use towermod_cstc::{stable::*, plugin::PluginData};
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CstcData {

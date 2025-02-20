@@ -1,13 +1,13 @@
 use std::path::PathBuf;
-use crate::{cstc::{self, *}, game_images, merge_copy_into, GameType, PeResource, Project, ProjectType};
+use crate::{game_images, GameType, PeResource, Project, ProjectType};
 use anyhow::Result;
-use tauri::command;
 use anyhow::{Context};
 use fs_err::tokio as fs;
+use towermod_cstc::{self as cstc};
+use towermod_util::merge_copy_into;
 use crate::app::{state::select, selectors, thunks};
 
 /// For prepopulating the project-details form for exporting Legacy/FilesOnly projects
-#[command]
 pub async fn load_manifest(manifest_path: PathBuf, project_type: ProjectType) -> Result<Project> {
 	if manifest_path.exists() {
 		return Ok(Project::from_path(&manifest_path).await?)
@@ -20,7 +20,6 @@ pub async fn load_manifest(manifest_path: PathBuf, project_type: ProjectType) ->
 	}
 }
 
-#[command]
 pub async fn export_from_files(mut project: Project) -> Result<()> {
 	project.date = time::OffsetDateTime::now_utc().replace_nanosecond(0)?.replace_second(0)?;
 	crate::export_from_files(&project).await?;
@@ -28,7 +27,6 @@ pub async fn export_from_files(mut project: Project) -> Result<()> {
 	Ok(())
 }
 
-#[command]
 pub async fn export_from_legacy(patch_path: PathBuf, mut project: Project) -> Result<()> {
 	// take a path to a patch.zip or patch.json
 	// expect "files" dir in same directory
@@ -38,7 +36,6 @@ pub async fn export_from_legacy(patch_path: PathBuf, mut project: Project) -> Re
 	Ok(())
 }
 
-#[command]
 pub async fn play_project(debug: bool) -> Result<u32> {
 	let data = select(|s| s.data.clone()).await;
 	let (level_block, app_block, mut event_block, image_metadatas) = data.into_blocks();
@@ -53,7 +50,7 @@ pub async fn play_project(debug: bool) -> Result<u32> {
 	}
 
 	let original_image_block_bin = cstc::ImageBlock::read_bin(&game_path)?;
-	let image_block = ImageBlock::from_bin(&original_image_block_bin)?;
+	let image_block = cstc::ImageBlock::from_bin(&original_image_block_bin)?;
 	let (images, _original_metadata) = game_images::split_imageblock(image_block);
 	let patched_image_block = game_images::get_patched_image_block(images, images_dir, image_metadatas).await?;
 
@@ -83,7 +80,7 @@ pub async fn play_project(debug: bool) -> Result<u32> {
 		// for unnamed projects, delete and recreate a fresh save directory on every run
 		if game.game_type == GameType::Towerclimb {
 			let towerclimb_savefiles_dir = PathBuf::from_iter([crate::get_appdata_dir_path(), PathBuf::from_iter(["TowerClimb/Mods", &*unique_name])]);
-			crate::remove_dir_if_exists(towerclimb_savefiles_dir).await?;
+			towermod_util::remove_dir_if_exists(towerclimb_savefiles_dir).await?;
 		}
 		runtime_dir = crate::get_cache_dir_path();
 		runtime_dir.push("mods/unnamed project/runtime");
@@ -114,7 +111,6 @@ pub async fn play_project(debug: bool) -> Result<u32> {
 	Ok(crate::run_game(&output_path).await?)
 }
 
-#[command]
 pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 	tokio::task::spawn_blocking(move || {
 		towermod_win32::process::wait_until_process_exits(pid)

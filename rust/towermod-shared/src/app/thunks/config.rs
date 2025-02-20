@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use tauri::command;
 use crate::app::state::{STORE, ConfigAction as Action};
 use crate::app::selectors::get_config;
 use anyhow::{Context, Result};
@@ -10,7 +9,6 @@ fn config_path() -> PathBuf {
 }
 
 // TODO: include towermod version
-#[command]
 pub async fn save_config() -> Result<()> {
 	let path = config_path();
 	let config = get_config().await;
@@ -19,7 +17,6 @@ pub async fn save_config() -> Result<()> {
 	Ok(())
 }
 
-#[command]
 pub async fn load_config() -> Result<()> {
 	let path = config_path();
 	let s = fs::read_to_string(path).await.context("Failed to read config")?;

@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use towermod_lib::log_on_error;
+use towermod_util::log_on_error;
 
 fn main() {
 	std::env::set_var("RUST_BACKTRACE", "1");
