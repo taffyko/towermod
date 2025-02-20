@@ -70,8 +70,8 @@ export const dataApi = baseApi.injectEndpoints({
 			keepUnusedDataFor: Infinity,
 		}),
 		updateData: builder.mutation<void, CstcData>({
-			queryFn: queryFn(async (data) => {
-				await invoke('update_data', { data })
+			queryFn: queryFn(async (newData) => {
+				await invoke('update_data', { newData })
 			}),
 			invalidatesTags: ['Data']
 		})

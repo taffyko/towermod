@@ -10,7 +10,6 @@ export const Tabs = (props: {
 	const dispatch = useAppDispatch();
 	const tabs = useAppSelector(selectTabs);
 	const currentTab = useAppSelector(s => s.app.currentTab);
-	const tabChildren = props.tabs[currentTab]
 
 	const isInert = useIsInert();
 	const onKeyDown = useCallback((e: KeyboardEvent | React.KeyboardEvent) => {
@@ -50,8 +49,16 @@ export const Tabs = (props: {
 				)}
 			</div>
 		</div>
-		<div className={`${Style.tabContent} stretchbox`}>
-			{tabChildren}
-		</div>
+		{tabs.map(tab => {
+			// render all tabs simultaneously so that tab state
+			const children = props.tabs[tab]
+			return <div
+				key={tab}
+				style={{ display: tab === currentTab ? '' : 'none' }}
+				className={`${Style.tabContent} stretchbox`}
+			>
+				{children}
+			</div>
+		})}
 	</div>
 }

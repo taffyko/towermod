@@ -182,6 +182,7 @@ function ModDetails() {
 
 					dispatch(actions.setModRunning({ modId: mod.id, running: true }))
 					await waitUntilProcessExits(pid)
+					toast(`"${mod.displayName}" exited`)
 					dispatch(actions.setModRunning({ modId: mod.id, running: false }))
 				}}>
 					{ modIsRunning ? "Running..." : "Play" }

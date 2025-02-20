@@ -6,7 +6,7 @@ import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
 import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo, inferPropertyInfoFromValue, enumSubtypes } from "./inspectorUtil"
 import React, { useMemo, useState } from "react"
 import IconButton from "@/components/IconButton"
-import addImg from '@/icons/add.svg'
+import plusImg from '@/icons/plus.svg'
 import closeImg from '@/icons/close.svg'
 import { LineEdit } from "@/components/LineEdit"
 import { SpinBox } from "@/components/SpinBox"
@@ -105,7 +105,7 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorVal
 						options={arrPinfo.valueTypes}
 					/>
 				: null}
-				<IconButton src={addImg} onClick={() => addElement()} />
+				<IconButton src={plusImg} onClick={() => addElement()} />
 			</div>
 		: null}
 	</div>
@@ -170,7 +170,7 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 						options={dictPinfo.valueTypes}
 					/>
 				: null}
-				<IconButton src={addImg} disabled={!newKeyText} onClick={() => addProperty()} />
+				<IconButton src={plusImg} disabled={!newKeyText} onClick={() => addProperty()} />
 			</div>
 		: null}
 	</div>

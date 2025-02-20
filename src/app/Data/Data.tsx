@@ -55,11 +55,15 @@ function PlayProject() {
 	return <div className="hbox gap">
 		<Button onClick={onClickPlayProject}>Play</Button>
 		<Toggle value={debug} onChange={setDebug}>Debug</Toggle>
+		<Button onClick={onClickRevertChanges}>Revert changes</Button>
 	</div>
 
 	async function onClickPlayProject() {
 		await throwOnError(spin(updateData(store.getState().data)))
 		await throwOnError(spin(playProject(debug)))
 		toast("Project launched")
+	}
+
+	async function onClickRevertChanges() {
 	}
 }
