@@ -1,7 +1,7 @@
 .imagePicker {
 	display: block;
 	object-fit: contain;
-	border: solid 1px var(--color-border-alternate);
+	border: solid 1px var(--color-border-subtle);
 	border-radius: var(--border-radius);
 
 	&:hover {

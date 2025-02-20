@@ -86,6 +86,7 @@ export function inferPropertyInfoFromArrayValue(element: AnyInspectorValue, pare
 
 
 function speciateType(type: keyof TypeNameToValue, types: Array<keyof TypeNameToValue>): keyof TypeNameToValue {
+	if (types.length === 1) { return types[0] }
 	switch (type) {
 		case 'number':
 			for (const subtype of numericSubtypeNames) {
@@ -112,8 +113,8 @@ export function inferPropertyInfoFromDictionaryValue(element: AnyInspectorValue,
 	return pinfo
 }
 
-export function inferPropertyInfoFromValue(value: AnyInspectorValue, parent: AnyPropertyInfo | undefined, key: InspectorKeyTypes): AnyPropertyInfo {
-	const type = inferTypeFromValue(value);
+export function inferPropertyInfoFromValue(value: AnyInspectorValue, parent: AnyPropertyInfo | undefined, key: InspectorKeyTypes, unknownOk = false): AnyPropertyInfo {
+	const type = inferTypeFromValue(value, unknownOk);
 	switch (type) {
 		case 'Array':
 			return {
@@ -142,7 +143,7 @@ export function inferPropertyInfoFromValue(value: AnyInspectorValue, parent: Any
 	}
 }
 
-export function inferTypeFromValue(value: AnyInspectorValue): InspectorTypeName {
+export function inferTypeFromValue(value: AnyInspectorValue, unknownOk = false): InspectorTypeName {
 	if (value instanceof Array) {
 		return 'Array'
 	} else if (value instanceof Object) {
@@ -159,7 +160,9 @@ export function inferTypeFromValue(value: AnyInspectorValue): InspectorTypeName 
 		case 'string':
 			return type
 		default:
-			console.error("Cannot infer type from value", value)
+			if (!unknownOk) {
+				console.error("Cannot infer type from value", value)
+			}
 			return 'unknown'
 	}
 }
@@ -169,8 +172,12 @@ function objectPropertyInfo(obj: InspectorObjectValue, objPinfo: ObjectPropertyI
 	const value = (obj as any)[key]
 	if (key === '_type') { return { key, value, type: 'string', hidden: true } }
 
-	const pinfo = inferPropertyInfoFromValue(value, objPinfo, key);
+	const pinfo = inferPropertyInfoFromValue(value, objPinfo, key, true);
 	applyPropertyInfoOverrides(obj, pinfo, key)
+
+	if (!pinfo.hidden && pinfo.type === 'unknown') {
+		console.error(`Cannot determine type of ${obj._type}.${key}, value`, value)
+	}
 
 	return pinfo
 }

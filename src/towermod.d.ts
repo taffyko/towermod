@@ -108,7 +108,7 @@ export interface CPropItem {
 
 /** Subset of state held by frontend Redux */
 export interface CstcData {
-  editorPlugins: Record<number, PluginData>
+	editorPlugins: Record<number, PluginData>
   objectTypes: Array<ObjectType>
   behaviors: Array<Behavior>
   traits: Array<ObjectTrait>
@@ -383,11 +383,7 @@ export interface PrivateVariable {
   _type: 'PrivateVariable'
 }
 
-export declare const enum PrivateVariableType {
-  /** why is this `Integer`? are you sure it can't support decimal values as well? */
-  Integer = 0,
-  String = 1
-}
+export type PrivateVariableType = 'Integer' | 'String'
 
 /** Metadata about a project, found in its manifest.toml */
 export interface Project {

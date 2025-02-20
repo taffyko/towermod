@@ -4,7 +4,7 @@
 	border-radius: var(--border-radius);
 
 	&:not(:disabled) {
-		border: solid 1px var(--color-border);
+		border: solid 1px var(--color-bg-highlight);
 		&:not(:open) {
 			&:hover {
 				background-color: var(--color-bg-hover);

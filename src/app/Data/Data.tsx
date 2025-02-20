@@ -18,11 +18,12 @@ export function Data() {
 	const value = useAppSelector((state) => searchValue ? findObject(state.data, searchValue) : null)
 
 	const { data } = api.useGetDataQuery()
+	const { data: editorPlugins } = api.useGetEditorPluginsQuery()
 	useEffect(() => {
-		if (data) {
-			dispatch(actions.setData(data))
+		if (data && editorPlugins) {
+			dispatch(actions.setData({ ...data, editorPlugins }))
 		}
-	}, [data])
+	}, [data, editorPlugins])
 
 
 

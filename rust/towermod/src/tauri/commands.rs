@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::{collections::HashMap, path::{Path, PathBuf}};
 use tauri::{command, AppHandle, Emitter};
 use anyhow::Result;
 use fs_err::tokio as fs;
@@ -130,9 +130,9 @@ pub async fn is_data_loaded() -> bool {
 }
 
 #[command]
-pub async fn get_editor_plugin(id: i32) -> Option<PluginData> {
-	selectors::get_editor_plugin(id).await
-}
+pub async fn get_editor_plugin(id: i32) -> Option<PluginData> { selectors::get_editor_plugin(id).await }
+#[command]
+pub async fn get_editor_plugins() -> HashMap<i32, PluginData> { selectors::get_editor_plugins().await }
 
 #[command]
 pub async fn get_image_metadata(id: i32) -> Option<ImageMetadata> {

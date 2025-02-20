@@ -72,6 +72,7 @@ pub fn run() {
 				commands::get_project,
 				commands::is_data_loaded,
 				commands::get_editor_plugin,
+				commands::get_editor_plugins,
 				commands::get_image_metadata,
 				commands::get_data,
 				commands::update_data,

@@ -2,7 +2,7 @@ import { enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, e
 import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
 import { queryFn } from './apiUtil';
-import { CstcData, ImageMetadata } from '@towermod';
+import { CstcData, ImageMetadata, PluginData } from '@towermod';
 
 export const dataApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
@@ -37,6 +37,20 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
 		}),
+		getEditorPlugin: builder.query<PluginData, number>({
+			queryFn: queryFn(async (id) => {
+				return await invoke('get_editor_plugin', { id })
+			}),
+			providesTags: ['Data']
+		}),
+		getEditorPlugins: builder.query<Record<number, PluginData>, void>({
+			queryFn: queryFn(async () => {
+				return await invoke('get_editor_plugins')
+			}),
+			providesTags: ['Data']
+		}),
+
+
 
 
 		getData: builder.query<CstcData, void>({

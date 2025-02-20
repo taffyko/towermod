@@ -1,6 +1,6 @@
 import Style from './Select.module.scss'
 
-export function Select(props: React.ComponentProps<'div'> & {
+export function Select(props: Omit<React.ComponentProps<'div'>, 'onChange'> & {
 	options: Record<string, string> | string[],
 	onChange?: (value: string) => void,
 	value?: string,

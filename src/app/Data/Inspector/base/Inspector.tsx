@@ -1,9 +1,16 @@
 /**
  * Contains implementations for base inspector components for types that are not application-specific
  */
+import { Select } from "@/components/Select"
 import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
 import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo, inferPropertyInfoFromValue } from "./inspectorUtil"
 import React, { useMemo, useState } from "react"
+import IconButton from "@/components/IconButton"
+import addImg from '@/icons/add.svg'
+import closeImg from '@/icons/close.svg'
+import { LineEdit } from "@/components/LineEdit"
+import { SpinBox } from "@/components/SpinBox"
+import { Toggle } from "@/components/Toggle"
 
 export const InspectorObject = (props: {
 	pinfo?: ObjectPropertyInfo,
@@ -81,13 +88,12 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorVal
 		{addElement ?
 			<div className="hbox">
 				{arrPinfo.valueTypes.length > 1 ?
-					<select onChange={e => setNewValueType(e.target.value as any)}>
-						{arrPinfo.valueTypes.map(typeName =>
-							<option key={typeName} value={typeName}>{typeName}</option>
-						)}
-					</select>
+					<Select
+						onChange={v => setNewValueType(v as any)}
+						options={arrPinfo.valueTypes}
+					/>
 				: null}
-				<button onClick={() => addElement()}>+</button>
+				<IconButton src={addImg} onClick={() => addElement()} />
 			</div>
 		: null}
 	</div>
@@ -115,7 +121,7 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		return <div className="hbox gap" key={pinfo.key}>
 			<div>
 				{pinfo.key}:
-				<button onClick={() => removeProperty(pinfo.key)}>X</button>
+				<IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />
 			</div>
 			<div className="hbox grow">{valueComponent}</div>
 		</div>
@@ -124,7 +130,12 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 	// adding properties
 	const [newKeyText, setNewKeyText] = useState("")
 	if (!dictPinfo.valueTypes || dictPinfo.valueTypes[0] === 'unknown') {
-		throw new Error(`Need to define 'valueTypes' for dictionary ${dictPinfo.parent?.type}.${dictPinfo.key}`)
+		if (dictPinfo.parent?.type === 'Array') {
+			const obj = dictPinfo.parent.parent
+			throw new Error(`Need to define 'valueTypes' for dictionary at ${obj?.type}.${dictPinfo.parent.key}[${dictPinfo.key}]`)
+		} else {
+			throw new Error(`Need to define 'valueTypes' for dictionary ${dictPinfo.parent?.type}.${dictPinfo.key}`)
+		}
 	}
 	const [newValueType, setNewValueType] = useState(dictPinfo.valueTypes[0])
 	const getDefaultValue = defaultValueForType(newValueType)
@@ -137,16 +148,15 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 	return <div className="vbox grow" key={dictPinfo.key}>
 		{propertyComponents}
 		{addProperty ?
-			<div className="hbox">
-				<input className="grow" type="text" value={newKeyText} onChange={e => setNewKeyText(e.target.value)} />
+			<div className="hbox gap">
+				<LineEdit value={newKeyText} onChange={e => setNewKeyText(e.target.value)} />
 				{dictPinfo.valueTypes.length > 1 ?
-					<select onChange={e => setNewValueType(e.target.value as any)}>
-						{dictPinfo.valueTypes.map(typeName =>
-							<option key={typeName} value={typeName}>{typeName}</option>
-						)}
-					</select>
+					<Select
+						onChange={v => setNewValueType(v as any)}
+						options={dictPinfo.valueTypes}
+					/>
 				: null}
-				<button disabled={!newKeyText} onClick={() => addProperty()}>+</button>
+				<IconButton src={addImg} disabled={!newKeyText} onClick={() => addProperty()} />
 			</div>
 		: null}
 	</div>
@@ -157,7 +167,7 @@ export const InspectorString = (props: { pinfo: SimplePropertyInfo<string>, onCh
 	if (pinfo.readonly) {
 		return <div>{pinfo.value}</div>
 	}
-	return <input className="grow" type="string" value={pinfo.value} onChange={(e) => onChange(e.target.value)} />
+	return <LineEdit value={pinfo.value} onChange={e => onChange(e.target.value)} />
 }
 
 export const InspectorNumeric = (props: { pinfo: SimplePropertyInfo<number>, onChange: (v: number) => void}) => {
@@ -165,7 +175,7 @@ export const InspectorNumeric = (props: { pinfo: SimplePropertyInfo<number>, onC
 	if (pinfo.readonly) {
 		return <div>{pinfo.value}</div>
 	}
-	return <input className="grow" type="number" value={pinfo.value} onChange={(e) => onChange(Number(e.target.value))} />
+	return <SpinBox value={pinfo.value} onChange={onChange} />
 }
 
 export const InspectorBoolean = (props: { pinfo: SimplePropertyInfo<boolean>, onChange: (v: boolean) => void }) => {
@@ -173,7 +183,7 @@ export const InspectorBoolean = (props: { pinfo: SimplePropertyInfo<boolean>, on
 	if (pinfo.readonly) {
 		return <div>{pinfo.value}</div>
 	}
-	return <input className="grow" type="checkbox" checked={pinfo.value} onChange={(e) => onChange(e.target.checked)} />
+	return <Toggle value={pinfo.value} onChange={onChange} />
 }
 
 function getValueComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): React.ReactNode {

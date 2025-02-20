@@ -25,17 +25,23 @@ $iconSize: 16px;
 		height: calc($iconSize + var(--gap-l));
 	}
 
-	&:hover {
-		background-color: var(--color-bg-hover);
-		color: var(--color-text-hover);
-		&:not(:active) img {
-			transform: scale(1.2);
+	&:not(:disabled) {
+		&:hover {
+			background-color: var(--color-bg-hover);
+			color: var(--color-text-hover);
+			&:not(:active) img {
+				transform: scale(1.2);
+			}
+		}
+
+		&:active {
+			transform: scale(0.9);
+			transition: none;
+			background-color: var(--color-bg-pressed);
 		}
 	}
 
-	&:active {
-		transform: scale(0.9);
-		transition: none;
-		background-color: var(--color-bg-pressed);
+	&:disabled {
+		opacity: 0.5;
 	}
 }

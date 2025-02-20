@@ -67,7 +67,10 @@ pub async fn install_mod(resource: &str) -> Result<ModInfo> {
 		// Resource is a file path
 		let path = PathBuf::from(resource);
 		let mod_info = ModInfo::from_zip_path(&path).await?;
-		fs::copy(&path, mod_info.export_path()).await?;
+		let dest = mod_info.export_path();
+		if (&path != &dest) {
+			fs::copy(&path, &dest).await?;
+		}
 		Ok(mod_info)
 	}
 }

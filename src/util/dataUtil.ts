@@ -1,8 +1,8 @@
-import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata } from "@towermod";
-import { UniqueTowermodObject, findObjectTypeById, DataState } from "../redux/reducers/data";
-import { assert, assertUnreachable, unwrap } from "./util";
+import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData } from "@towermod";
+import { UniqueTowermodObject, findObjectTypeById } from "../redux/reducers/data";
+import { assertUnreachable, unwrap } from "./util";
 
-export function objectDisplayName(data: DataState, obj: UniqueTowermodObject) {
+export function getObjectDisplayName(data: CstcData, obj: UniqueTowermodObject) {
 	const objTypeName = obj._type
 	switch (objTypeName) {
 		case 'Layout':

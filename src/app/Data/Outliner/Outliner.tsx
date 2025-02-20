@@ -8,14 +8,14 @@ import {
 	NodeComponentProps,
 	FixedSizeTree,
 } from 'react-vtree';
-import { useStateRef } from '@/util/hooks';
+import { useMemoAsync, useStateRef } from '@/util/hooks';
 import { actions, dispatch, useAppSelector } from '@/redux';
 import { assertUnreachable, enumerate } from '@/util/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject } from '@/redux';
-import { objectDisplayName } from '@/util/dataUtil';
+import { getObjectDisplayName } from '@/util/dataUtil';
 import { store } from '@/redux';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
@@ -120,7 +120,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const tree = useContext(TreeContext)
 	const selectable = !!obj;
 
-	const objName = useAppSelector(s => obj && objectDisplayName(s.data, obj))
+	const objName = useAppSelector(s => obj && getObjectDisplayName(s.data, obj))
 	const name = nameOverride ?? objName
 
 	return <div

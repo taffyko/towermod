@@ -12,66 +12,6 @@ export type CustomInspectorObjects = TowermodObject
 export const customNumericSubtypeNames = [] as const
 export const customStringSubtypeNames = [] as const
 
-/** Provides additional property type/metadata information for each type */
-export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo, key: InspectorKeyTypes) {
-	const type = obj['_type'];
-	switch (type) {
-		case 'Animation':
-			override(type, {
-				subAnimations: { hidden: true },
-				id: { readonly: true },
-				frames: { valueTypes: ['AnimationFrame'] },
-			})
-		break; case 'Layout':
-			override(type, {
-				layers: { hidden: true },
-				imageIds: { hidden: true, },
-				dataKeys: { valueTypes: ['DataKey'] }
-			})
-		break; case 'LayoutLayer':
-			override(type, {
-				id: { readonly: true },
-				objects: { hidden: true },
-			})
-		break; case 'ObjectInstance':
-			override(type, {
-				id: { readonly: true },
-				data: { hidden: true }, // TODO
-			})
-		break; case 'ObjectType':
-			override(type, {
-				id: { readonly: true },
-				descriptors: { hidden: true, },
-				privateVariables: { hidden: true },
-			})
-		break; case 'Behavior':
-			override(type, {
-				objectTypeId: { readonly: true },
-				data: { hidden: true }, // TODO
-				descriptors: { hidden: true, }
-			})
-		break; case 'Container':
-			override(type, {
-				objectIds: { valueTypes: ['int'] }
-			})
-		break; case 'Family':
-			override(type, {
-				objectTypeIds: { valueTypes: ['int'] }
-			})
-		break; case 'ImageMetadata':
-			override(type, {
-					id: { readonly: true },
-				collisionMask: { hidden: true },
-				collisionPitch: { readonly: true },
-				apoints: { valueTypes: ['ActionPoint'] },
-			})
-	}
-
-	function override<T extends InspectorObjectValue['_type']>(_type: T, overrides: Partial<Record<keyof TypeNameToValue[T], Partial<AnyPropertyInfo>>>) {
-		Object.assign(pinfo, (overrides as any)[key])
-	}
-}
-
 /** Provide additional virtual properties for each type, to display in the inspector */
 export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: ParentPropertyInfo): AnyPropertyInfo[] | undefined {
 	const type = obj['_type']
@@ -159,8 +99,76 @@ export function defaultValueForType(type: InspectorTypeName): (() => any) {
 		case 'boolean': return () => false
 		case 'ActionPoint': return () => ({ _type: 'ActionPoint', x: 0, y: 0, angle: 0, string: "" })
 		case 'AnimationFrame': return () => ({ _type: 'AnimationFrame', imageId: 0, duration: 0 })
-		case 'DataKey': return (): TypeNameToValue['DataKey'] => ({ _type: 'DataKey', type: "String", field0: "key", field1: "" })
+		case 'DataKey': return (): TypeNameToValue['DataKey'] => ({ _type: 'DataKey', type: "String", field0: "name", field1: "" })
+		case 'BehaviorControl': return (): TypeNameToValue['BehaviorControl'] => ({ _type: 'BehaviorControl', name: "name", vk: 0, player: 0 })
+		case 'PrivateVariable': return (): TypeNameToValue['PrivateVariable'] => ({ _type: 'PrivateVariable', name: "name", valueType: 'String' })
 	}
 	throw new Error(`No default value defined for ${type}`)
+}
+
+/** Provides additional property type/metadata information for each type */
+export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo, key: InspectorKeyTypes) {
+	const type = obj['_type'];
+	switch (type) {
+		case 'Animation':
+			override(type, {
+				subAnimations: { hidden: true },
+				id: { readonly: true },
+				frames: { valueTypes: ['AnimationFrame'] },
+			})
+		break; case 'Layout':
+			override(type, {
+				layers: { hidden: true },
+				imageIds: { hidden: true, },
+				dataKeys: { valueTypes: ['DataKey'] }
+			})
+		break; case 'LayoutLayer':
+			override(type, {
+				id: { readonly: true },
+				objects: { hidden: true },
+			})
+		break; case 'ObjectInstance':
+			override(type, {
+				id: { readonly: true },
+				data: { hidden: true }, // TODO
+			})
+		break; case 'ObjectType':
+			override(type, {
+				id: { readonly: true },
+				descriptors: { hidden: true, },
+				privateVariables: { hidden: true },
+			})
+		break; case 'Behavior':
+			override(type, {
+				objectTypeId: { readonly: true },
+				data: { hidden: true }, // TODO
+				descriptors: { hidden: true, }
+			})
+		break; case 'Container':
+			override(type, {
+				objectIds: { valueTypes: ['int'] }
+			})
+		break; case 'Family':
+			override(type, {
+				objectTypeIds: { valueTypes: ['int'] },
+				privateVariables: { valueTypes: ['PrivateVariable'] },
+			})
+		break; case 'ImageMetadata':
+			override(type, {
+				id: { readonly: true },
+				collisionMask: { hidden: true },
+				collisionPitch: { readonly: true },
+				apoints: { valueTypes: ['ActionPoint'] },
+			})
+		break; case 'AppBlock':
+			override(type, {
+				dataKeys: { valueTypes: ['DataKey'] },
+				behaviorControls: { valueTypes: ['BehaviorControl'] }
+			})
+	}
+
+	function override<T extends InspectorObjectValue['_type']>(_type: T, overrides: Partial<Record<keyof TypeNameToValue[T], Partial<AnyPropertyInfo>>>) {
+		Object.assign(pinfo, (overrides as any)[key])
+	}
 }
 

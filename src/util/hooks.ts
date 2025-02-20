@@ -58,6 +58,17 @@ export function useStableHandle<T extends object>(value: T): T {
 	return ref.current
 }
 
+export function useMemoAsync<T>(fn: () => Promise<T> | T, deps?: DependencyList): T | undefined {
+	const [result, setResult] = useState<T | undefined>(undefined)
+	useEffect(() => {
+		(async () => {
+			const result = await fn()
+			setResult(result)
+		})()
+	}, deps)
+	return result
+}
+
 /** Allows you to return both a value and a cleanup function that runs before the value recomputes */
 export function useMemoWithCleanup<T>(factory: () => [T] | [T, ReturnType<EffectCallback>], deps: DependencyList): T {
 	const resultRef = useRef<null | [T] | [T, ReturnType<EffectCallback>]>(null)
