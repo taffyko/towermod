@@ -1,12 +1,51 @@
 .previewContainer {
+	display: flex;
+	overflow: hidden;
 	flex-grow: 1;
+	align-items: center;
+	justify-content: center;
+	will-change: transform;
+
+	transition: opacity 0.25s cubic-bezier(0, 0.1, 0, 1);
+}
+.loading {
+	opacity: 0;
+	transition: none;
 }
 img.preview {
 	position: absolute;
 	object-fit: fill;
-	background-color: var(--color-bg);
+	background: url('@/images/transparent.png');
 }
-canvas.preview {
+.points {
 	position: absolute;
-	border: solid 1px white;
+	> div {
+		$size: 12px;
+		$borderWidth: 1px;
+		width: $size;
+		height: $size;
+		transform: translate(-50%, -50%);
+		border-radius: $size;
+		border: solid $borderWidth var(--color-border);
+		position: absolute;
+		background-color: #00ff00bb;
+		&:first-child {
+			background-color: #ff00ffbb;
+		}
+		> div {
+			$centerSize: 2px;
+			position: absolute;
+			transform: translate(-50%, -50%);
+			left: calc($size/2 - $centerSize/2);
+			top: calc($size/2 - $centerSize/2);
+			width: $centerSize;
+			height: $centerSize;
+			background-color: white;
+		}
+	}
+}
+canvas.collision {
+	position: absolute;
+	filter: brightness(50%) sepia(100%) saturate(10000%);
+	opacity: 0.5;
 }

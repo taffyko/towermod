@@ -93,8 +93,10 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorVal
 		onChange(newArr)
 	} : undefined
 
-	return <div className={Style.grid}>
-		{valueComponents}
+	return <div className="vbox grow gap">
+		{valueComponents.length ? <div className={Style.grid}>
+			{valueComponents}
+		</div> : null}
 		{addElement ?
 			<div className="hbox">
 				{arrPinfo.valueTypes.length > 1 ?
@@ -155,10 +157,10 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		onChange(newObj)
 	} : undefined
 
-	return <div className="vbox grow" key={dictPinfo.key}>
-		<div className={Style.grid}>
+	return <div className="vbox grow gap" key={dictPinfo.key}>
+		{propertyComponents.length ? <div className={Style.grid}>
 			{propertyComponents}
-		</div>
+		</div> : null}
 		{addProperty ?
 			<div className="hbox gap">
 				<LineEdit value={newKeyText} onChange={e => setNewKeyText(e.target.value)} />

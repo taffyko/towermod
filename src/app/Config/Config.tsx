@@ -14,7 +14,7 @@ import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc";
 import { assert } from "@/util";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { Project } from "@towermod";
-import { actions, dispatch } from "@/redux";
+import { actions, dispatch, store } from "@/redux";
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -53,6 +53,7 @@ export const Config = () => {
 	const [saveNewProject] = api.useSaveNewProjectMutation()
 	const [saveProject] = api.useSaveProjectMutation()
 	const [exportProject] = api.useExportModMutation()
+	const [updateData] = api.useUpdateDataMutation()
 
 	const [loadManifest] = api.useLazyLoadManifestQuery()
 	const [exportFromLegacy] = api.useExportFromLegacyMutation()
@@ -85,10 +86,7 @@ export const Config = () => {
 			<Button
 				className="grow"
 				disabled={!game}
-				onClick={async () => {
-					await spin(newProject())
-					toast("New project initialized")
-				}}
+				onClick={onClickNewProject}
 			>
 				New project
 			</Button>
@@ -112,6 +110,20 @@ export const Config = () => {
 		</div>
 		<Button className="grow" onClick={spin(onClickBrowseCache)}>Browse cache</Button>
 	</div>
+
+	async function onClickNewProject() {
+		if (project) {
+			let confirmed = false
+			await openModal(
+				<ConfirmModal onConfirm={() => { confirmed = true }}>
+					Any unsaved project changes will be lost
+				</ConfirmModal>
+			)
+			if (!confirmed) { return }
+		}
+		await throwOnError(spin(newProject()))
+		toast("New project initialized")
+	}
 
 	async function applyProjectDetailsForm(project: Project, form: ProjectDetailsFormData): Promise<Project> {
 		const { coverPath, iconPath, ...rest } = form
@@ -181,6 +193,7 @@ export const Config = () => {
 	}
 
 	async function onClickSaveProject() {
+		await throwOnError(spin(updateData(store.getState().data)))
 		if (project && project.dirPath) {
 			await throwOnError(saveProject(project.dirPath))
 			toast("Project saved")

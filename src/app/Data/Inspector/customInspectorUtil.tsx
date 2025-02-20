@@ -139,31 +139,52 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		case 'Animation':
 			override(type, {
 				subAnimations: { hidden: true },
-				id: { readonly: true },
+				id: { type: 'int', readonly: true },
 				frames: { valueTypes: ['AnimationFrame'] },
+				tag: { type: 'int' },
+				repeatCount: { type: 'int' },
+				repeatTo: { type: 'int' },
+			})
+		break; case 'AnimationFrame':
+			override(type, {
+				imageId: { type: 'int' },
+				duration: { type: 'float' },
 			})
 		break; case 'Layout':
 			override(type, {
 				layers: { hidden: true },
 				imageIds: { hidden: true, },
 				dataKeys: { valueTypes: ['DataKey'] },
-				textureLoadingMode: { type: 'TextureLoadingMode' }
+				textureLoadingMode: { type: 'TextureLoadingMode' },
+				width: { type: 'int' },
+				height: { type: 'int' },
+				color: { type: 'int' },
 			})
 		break; case 'LayoutLayer':
 			override(type, {
 				layerType: { type: 'LayerType' },
 				sampler: { type: 'LayerSamplerMode' },
-				id: { readonly: true },
+				id: { type: 'int', readonly: true },
 				objects: { hidden: true },
+				filterColor: { type: 'int' },
+				backgroundColor: { type: 'int' },
 			})
 		break; case 'ObjectInstance':
 			override(type, {
-				id: { readonly: true },
+				id: { type: 'int', readonly: true },
 				data: { hidden: true }, // TODO
+				objectTypeId: { type: 'int' },
+				x: { type: 'int' },
+				y: { type: 'int' },
+				width: { type: 'int' },
+				height: { type: 'int' },
+				filter: { type: 'int' },
+				key: { type: 'int' },
 			})
 		break; case 'ObjectType':
 			override(type, {
-				id: { readonly: true },
+				id: { type: 'int', readonly: true },
+				pluginId: { type: 'int', readonly: true },
 				descriptors: { hidden: true, },
 				privateVariables: { hidden: true },
 				destroyWhen: { type: 'DisableShaderWhen' }
@@ -171,8 +192,15 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'Behavior':
 			override(type, {
 				objectTypeId: { readonly: true },
+				newIndex: { type: 'int', readonly: true },
+				movIndex: { type: 'int', readonly: true },
 				data: { hidden: true }, // TODO
 				descriptors: { hidden: true, }
+			})
+		break; case 'BehaviorControl':
+			override(type, {
+				vk: { type: 'int' },
+				player: { type: 'int' },
 			})
 		break; case 'Container':
 			override(type, {
@@ -188,7 +216,14 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				id: { readonly: true },
 				collisionMask: { hidden: true },
 				collisionPitch: { readonly: true },
+				collisionWidth: { readonly: true },
+				collisionHeight: { readonly: true },
 				apoints: { valueTypes: ['ActionPoint'] },
+			})
+		break; case 'ActionPoint':
+			override(type, {
+				x: { type: 'int' },
+				y: { type: 'int' },
 			})
 		break; case 'AppBlock':
 			override(type, {
@@ -201,6 +236,13 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				textRenderingMode: { type: 'TextRenderingMode' },
 				resizeMode: { type: 'ResizeMode' },
 				textureLoadingMode: { type: 'TextureLoadingMode' },
+				windowHeight: { type: 'int' },
+				windowWidth: { type: 'int' },
+				fps: { type: 'int' },
+				fpsInCaption: { type: 'int' },
+				motionBlurSteps: { type: 'int' },
+				layoutIndex: { type: 'int' },
+				multisamples: { type: 'int' },
 			})
 	}
 

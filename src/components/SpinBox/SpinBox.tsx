@@ -7,5 +7,5 @@ export function SpinBox(props: {
 }) {
 	const { value, int, onChange } = props
 
-	return <input className={Style.spinbox} type="number" value={value} onChange={e => onChange?.(int ? Math.round(Number(e.target.value)) : Number(e.target.value))} />
+	return <input className={Style.spinbox} type="number" step={int ? '1' : 'any'}value={value} onChange={e => onChange?.(int ? Math.round(Number(e.target.value)) : Number(e.target.value))} />
 }

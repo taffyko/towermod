@@ -1,4 +1,9 @@
 import React from "react"
+import checkboxOnImg from '@/images/checkboxOn.png'
+import checkboxOffImg from '@/images/checkboxOff.png'
+import { useTwoWayBinding } from "@/util"
+import IconButton from "../IconButton"
+import Style from './Toggle.module.scss'
 
 export function Toggle(props: {
 	value?: boolean,
@@ -6,7 +11,18 @@ export function Toggle(props: {
 	disabled?: boolean,
 	children?: React.ReactNode
 }) {
-	const { value, onChange, disabled, children } = props
+	const { value: externalValue, onChange, disabled, children } = props
 
-	return <span style={{ alignSelf: 'center' }}><input style={{ verticalAlign: 'top' }} type="checkbox" disabled={disabled} checked={value} onChange={e => onChange?.(e.target.checked)} /> {children}</span>
+	const [checked, setChecked] = useTwoWayBinding(externalValue, onChange, false)
+
+	const src = checked ? checkboxOnImg : checkboxOffImg
+
+	return <button
+		disabled={disabled}
+		onClick={() => setChecked(!checked)}
+		className={`${Style.toggle}`}
+	>
+		<img src={src} />
+		{children}
+	</button>
 }

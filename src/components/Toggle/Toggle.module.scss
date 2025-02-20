@@ -1,0 +1,41 @@
+.toggle {
+	padding: 0;
+	display: inline-flex;
+	gap: var(--gap-s);
+	align-items: center;
+
+	border: none;
+	border-radius: 5px;
+
+	align-self: center;
+	background-color: transparent;
+	color: var(--color-text);
+	transition: 0.1s background-color ease-out;
+
+	vertical-align: bottom;
+
+	> img {
+		margin-top: -2px;
+	}
+
+	&:not(:disabled) {
+		&:hover {
+			color: var(--color-text-hover);
+			filter: brightness(1.2);
+
+			&:not(:active) img {
+				transform: scale(1.2);
+			}
+		}
+
+		&:active {
+			// transform: scale(0.9);
+			transition: none;
+			filter: brightness(0.9);
+		}
+	}
+
+	&:disabled {
+		opacity: 0.5;
+	}
+}

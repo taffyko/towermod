@@ -3,7 +3,7 @@
 	flex-basis: 0;
 	flex-grow: 1;
 	align-content: start;
-	grid-template-columns: max-content 1fr;
+	grid-template-columns: max-content max-content;
 	gap: var(--gap) var(--gap-l);
 
 	background-color: rgba(68, 50, 68, 0.2);

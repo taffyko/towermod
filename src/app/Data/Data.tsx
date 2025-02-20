@@ -2,7 +2,7 @@ import Outliner, { OutlinerContext, OutlinerHandle } from './Outliner/Outliner'
 import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
 import { useContext, useEffect, useState } from 'react'
-import { UniqueObjectLookup, UniqueTowermodObject, actions, dataActions, findObject } from '@/redux'
+import { UniqueObjectLookup, UniqueTowermodObject, actions, dataActions, findObject, store } from '@/redux'
 import { useImperativeHandle, useStateRef } from '@/util/hooks'
 import { useAppDispatch, useAppSelector } from '@/redux'
 import { api } from '@/api'
@@ -49,6 +49,7 @@ export function Data() {
 
 
 function PlayProject() {
+	const [updateData] = api.useUpdateDataMutation()
 	const [playProject] = api.usePlayProjectMutation();
 	const [debug, setDebug] = useState(false);
 	return <div className="hbox gap">
@@ -57,6 +58,7 @@ function PlayProject() {
 	</div>
 
 	async function onClickPlayProject() {
+		await throwOnError(spin(updateData(store.getState().data)))
 		await throwOnError(spin(playProject(debug)))
 		toast("Project launched")
 	}

@@ -376,6 +376,7 @@ pub async fn new_project() -> Result<()> {
 	data.set_eventblock(event_block);
 	data.set_levelblock(level_block);
 
+	STORE.dispatch(AppAction::SetProject(None).into()).await;
 	STORE.dispatch(DataAction::SetData(data).into()).await;
 
 	Ok(())

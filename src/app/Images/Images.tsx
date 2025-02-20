@@ -6,13 +6,14 @@ import { assert, copyFile, deleteFile, filePicker, imageFromCollisionMask, openF
 import { toast } from "../Toast";
 import { spin } from "../GlobalSpinner";
 import { throwOnError } from "@/components/Error";
-import { dispatch } from "@/redux";
+import { actions, dispatch, useAppSelector } from "@/redux";
 import { SpinBox } from "@/components/SpinBox";
 import { Toggle } from "@/components/Toggle";
 import { win32 as path } from "path";
 import { ConfirmModal, openModal } from "../Modal";
 import Style from './Images.module.scss'
 import IconButton from "@/components/IconButton";
+import { revealItemInDir } from '@tauri-apps/plugin-opener'
 
 import folderOpenImg from '@/icons/folderOpen.svg'
 import uploadImg from '@/icons/upload.svg'
@@ -25,7 +26,7 @@ export default function Images() {
 	const { data: imageDumpDir } = api.useImageDumpDirPathQuery();
 	const { data: project } = api.useGetProjectQuery();
 
-	const [imageId, setImageId] = useState(0)
+	const imageId = useAppSelector(s => s.app.imageId)
 	const { data: savedMetadata } = api.useGetImageMetadataQuery(imageId)
 	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
 	const [setSavedMetadata] = api.useSetImageMetadataMutation();
@@ -34,7 +35,8 @@ export default function Images() {
 		// FIXME
 		setSavedMetadata
 	}, [])
-	const [metadata, setMetadata] = useTwoWayBinding(savedMetadata, onChange)
+	const [metadata, setMetadata] = useTwoWayBinding(savedMetadata ?? null, onChange)
+	const showCollision = useAppSelector(s => s.app.showImageCollisionPreview)
 
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
 
@@ -46,29 +48,31 @@ export default function Images() {
 		{ project ? <>
 			<div className="hbox gap">
 				<Button onClick={onClickSetImage}>Set image</Button>
-				<Toggle /> Show collision
+				<Toggle value={showCollision} onChange={(v) => dispatch(actions.setShowImageCollisionPreview(v))} /> Show collision
 			</div>
 			<div className="hbox gap grow" style={{ overflow: 'hidden' }}>
 				<div className="vbox gap grow">
 					<div className="hbox gap center">
-						<SpinBox value={imageId} onChange={setImageId} />
-						<IconButton src={folderOpenImg} onClick={onClickBrowseOverrides} />
+						<SpinBox value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
+						<IconButton src={folderOpenImg} onClick={onClickBrowseImage} />
 						<IconButton src={uploadImg} onClick={onClickSetImage} />
 						<IconButton src={refreshImg} onClick={onClickReloadAllImages} />
 						{ isOverridden ? <IconButton src={closeImg} onClick={onClickClearImage} /> : null }
 						<Button onClick={onClickSetMask}>Set mask</Button>
 					</div>
-					<ImagePreview imageId={imageId} metadata={metadata} />
+					<ImagePreview showCollision={showCollision} imageId={imageId} metadata={metadata ?? undefined} />
 				</div>
 				<div className="vbox gap grow">
-					<InspectorObject value={metadata} onChange={setMetadata as any} />
+					<InspectorObject value={metadata ?? undefined} onChange={setMetadata as any} />
 				</div>
 			</div>
 		</> : null }
 	</div>
 
 	async function onClickSetMask() {
-
+		const filePath = await filePicker({ filters: [{ name: 'PNG Image', extensions: ['png'] }] })
+		if (!filePath) { return }
+		// TODO
 	}
 
 	async function onClickClearImage() {
@@ -84,10 +88,16 @@ export default function Images() {
 		toast(`Deleted custom image '${imageId}'`)
 	}
 
-	async function onClickBrowseOverrides() {
-		assert(projectImagesDir)
-		openFolder(projectImagesDir)
-		toast("Opened project images folder")
+	async function onClickBrowseImage() {
+		if (isOverridden) {
+			assert(projectImagesDir)
+			revealItemInDir(path.join(projectImagesDir, `${imageId}.png`))
+			toast("Opened image in file explorer")
+		} else {
+			assert(imageDumpDir)
+			revealItemInDir(path.join(imageDumpDir, `${imageId}.png`))
+			toast("Opened image in file explorer")
+		}
 	}
 
 	async function onClickSetImage() {
@@ -116,7 +126,6 @@ export default function Images() {
 	}
 }
 
-
 function useDebounce(fn: () => void, ms: number) {
 	const ref = useRef(0)
 	clearTimeout(ref.current)
@@ -125,14 +134,15 @@ function useDebounce(fn: () => void, ms: number) {
 
 function ImagePreview(props: {
 	imageId: number,
+	showCollision: boolean,
 	metadata?: ImageMetadata,
 }) {
-	const { imageId, metadata } = props;
+	const { imageId, metadata, showCollision } = props;
 	const imgUrl = useGameImageUrl(imageId);
 	const rerender = useRerender();
 
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
-	const width = 100;
+	const width = imgEl?.naturalWidth ? imgEl.naturalWidth * 5 : 100;
 	const height = Math.round(((imgEl?.naturalHeight ?? 0) / (imgEl?.naturalWidth ?? 0)) * width);
 
 	const collisionImg = useMemo(() => {
@@ -140,7 +150,10 @@ function ImagePreview(props: {
 		return imageFromCollisionMask(new Uint8Array(metadata.collisionMask), metadata.collisionPitch, metadata.collisionWidth, metadata.collisionHeight)
 	}, [metadata])
 
+	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
+
 	const [canvasEl, setCanvasEl] = useStateRef<HTMLCanvasElement>();
+	const [pointsCanvasEl, setPointsCanvasEl] = useStateRef<HTMLCanvasElement>();
 	useDebounce(() => {
 		if (canvasEl) {
 			canvasEl.width = metadata?.collisionWidth ?? width
@@ -151,14 +164,57 @@ function ImagePreview(props: {
 				context.drawImage(collisionImg, 0, 0)
 			}
 		}
+		if (pointsCanvasEl) {
+
+		}
 	}, 5)
 
-	if (!imgUrl) { return <span>No image</span> }
+	useEffect(() => {
+		setNaturalWidth(undefined)
+		imgEl?.parentElement?.classList.add(Style.loading)
+	}, [imgUrl])
+
+	if (!imgUrl) { return <div className="centerbox grow">No image</div> }
 
 	return <div className={Style.previewContainer}>
-		<img onLoad={() => rerender()} width={width} height={height} ref={setImgEl} className={Style.preview} src={imgUrl} />
-		{ metadata ?
-			<canvas id="collisionCanvas" style={{ width, height }} ref={setCanvasEl} className={Style.preview} />
+		<img onLoad={onImageLoad} width={width} height={height} ref={setImgEl} className={Style.preview} src={imgUrl} />
+		{ metadata && showCollision ?
+			<canvas style={{ width, height }} ref={setCanvasEl} className={Style.collision} />
 		: null}
+		<ImagePoints naturalWidth={naturalWidth} width={width} height={height} metadata={metadata} />
+	</div>
+
+	function onImageLoad() {
+		setNaturalWidth(imgEl?.naturalWidth)
+		imgEl?.parentElement?.offsetTop
+		imgEl?.parentElement?.classList.remove(Style.loading)
+		rerender()
+	}
+}
+
+function ImagePoints(props: {
+	width: number,
+	height: number,
+	naturalWidth?: number,
+	metadata?: ImageMetadata,
+}) {
+	const { width, height, naturalWidth, metadata } = props;
+
+	if (!metadata || !naturalWidth) { return null }
+
+	const coords = useMemo(() => {
+		const arr: Array<[number, number]> = []
+		const fac = width / naturalWidth;
+		arr.push([metadata.hotspotX * fac, metadata.hotspotY * fac])
+		for (const apoint of metadata.apoints) {
+			arr.push([apoint.x * fac, apoint.y * fac])
+		}
+		return arr
+	}, [width, height, metadata, naturalWidth])
+
+	return <div style={{ width, height }} className={Style.points}>
+		{ coords.map(([x, y], i) =>
+			<div key={i} style={{ left: x, top: y }}><div /></div>
+		)}
 	</div>
 }

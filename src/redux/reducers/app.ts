@@ -10,6 +10,8 @@ export interface AppState {
 	selectedModId: string | undefined,
 	runningMods: string[],
 	outlinerValue: UniqueObjectLookup | undefined,
+	showImageCollisionPreview: boolean,
+	imageId: number,
 }
 
 const initialState: AppState = {
@@ -19,6 +21,8 @@ const initialState: AppState = {
 	selectedModId: undefined,
 	runningMods: [],
 	outlinerValue: undefined,
+	showImageCollisionPreview: true,
+	imageId: 0,
 }
 
 const selectTabsInternal = createDraftSafeSelector([
@@ -76,6 +80,14 @@ export const appSlice = createSlice({
 
 		setOutlinerValue(state, action: PayloadAction<UniqueObjectLookup | undefined>) {
 			state.outlinerValue = action.payload;
+		},
+
+		setShowImageCollisionPreview(state, action: PayloadAction<boolean>) {
+			state.showImageCollisionPreview = action.payload;
+		},
+
+		setImageId(state, action: PayloadAction<number>) {
+			state.imageId = action.payload;
 		},
 	},
 });
