@@ -36,7 +36,7 @@ function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {
 type OutlinerNodeData = FixedSizeNodeData &
 	{
 		isLeaf: boolean;
-		name: string;
+		name?: string;
 		nestingLevel: number;
 		obj: UniqueTowermodObject | null;
 	};
@@ -64,14 +64,12 @@ const getNodeData = (
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
 
 	const id: string | number = getTreeItemId(obj);
-	const name = objectDisplayName(store.getState().data, obj)
 
 	return {
 		data: {
 			id: `${obj._type}-${id}`,
 			isLeaf: !getObjChildren(obj).length,
 			isOpenByDefault: false,
-			name,
 			nestingLevel,
 			obj,
 		},
@@ -118,10 +116,12 @@ type OutlinerNodeMeta = Readonly<{
 
 type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
-	const {data: {isLeaf, name, nestingLevel, obj}, isOpen, style, setOpen} = props
+	const {data: {isLeaf, name: nameOverride, nestingLevel, obj}, isOpen, style, setOpen} = props
 	const tree = useContext(TreeContext)
-
 	const selectable = !!obj;
+
+	const objName = useAppSelector(s => obj && objectDisplayName(s.data, obj))
+	const name = nameOverride ?? objName
 
 	return <div
 		className={`
@@ -204,8 +204,8 @@ export const Outliner = (props: OutlinerProps) => {
 	useImperativeHandle(props.handleRef, () => handle, [handle])
 
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
-		yield getRootContainerData('Animations')
 		yield getRootContainerData('Layouts')
+		yield getRootContainerData('Animations')
 		yield getRootContainerData('Behaviors')
 		yield getRootContainerData('Containers')
 		yield getRootContainerData('Families')

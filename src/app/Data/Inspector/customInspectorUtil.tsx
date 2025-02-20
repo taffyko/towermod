@@ -26,6 +26,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			override(type, {
 				layers: { hidden: true },
 				imageIds: { hidden: true, },
+				dataKeys: { valueTypes: ['DataKey'] }
 			})
 		break; case 'LayoutLayer':
 			override(type, {
@@ -40,14 +41,14 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'ObjectType':
 			override(type, {
 				id: { readonly: true },
-				descriptors: { hidden: true, valueTypes: ['FeatureDescriptors'] },
+				descriptors: { hidden: true, },
 				privateVariables: { hidden: true },
 			})
 		break; case 'Behavior':
 			override(type, {
 				objectTypeId: { readonly: true },
 				data: { hidden: true }, // TODO
-				descriptors: { hidden: true, valueTypes: ['FeatureDescriptors'] }
+				descriptors: { hidden: true, }
 			})
 		break; case 'Container':
 			override(type, {
@@ -56,12 +57,6 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'Family':
 			override(type, {
 				objectTypeIds: { valueTypes: ['int'] }
-			})
-		break; case 'FeatureDescriptors':
-			override(type, {
-				actions: { valueTypes: ['FeatureDescriptor'] },
-				conditions: { valueTypes: ['FeatureDescriptor'] },
-				expressions: { valueTypes: ['FeatureDescriptor'] },
 			})
 		break; case 'ImageMetadata':
 			override(type, {
@@ -163,6 +158,8 @@ export function defaultValueForType(type: InspectorTypeName): (() => any) {
 		case 'string': return () => ""
 		case 'boolean': return () => false
 		case 'ActionPoint': return () => ({ _type: 'ActionPoint', x: 0, y: 0, angle: 0, string: "" })
+		case 'AnimationFrame': return () => ({ _type: 'AnimationFrame', imageId: 0, duration: 0 })
+		case 'DataKey': return (): TypeNameToValue['DataKey'] => ({ _type: 'DataKey', type: "String", field0: "key", field1: "" })
 	}
 	throw new Error(`No default value defined for ${type}`)
 }

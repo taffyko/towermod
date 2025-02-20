@@ -9,7 +9,7 @@ import { openModal } from "@/app/Modal";
 import { win32 as path } from "path";
 import FilePathEdit from "@/components/FilePathEdit";
 import { spin, useSpinQuery } from "../GlobalSpinner";
-import { throwOnError } from "@/components/Error";
+import { renderError, showError, throwOnError } from "@/components/Error";
 import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc";
 import { assert } from "@/util";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
@@ -64,6 +64,7 @@ export const Config = () => {
 	}, [game])
 
 	return <div className="vbox gap">
+		<Button onClick={onClickOpenTracingWindow}>Open Tracing Window</Button>
 		<div className="hbox">
 			{game ? <span>Valid game selected</span> : <span style={{ color: 'var(--color-warn)' }}>Please set a valid game path</span>}
 			<div className="grow" />
@@ -259,5 +260,23 @@ export const Config = () => {
 			await throwOnError(loadProject(manifestPath))
 			toast("Project loaded")
 		}
+	}
+
+	async function onClickOpenTracingWindow() {
+		const { Window } = await import('@tauri-apps/api/window')
+		const { Webview } = await import('@tauri-apps/api/webview')
+
+		// TODO: figure out how to get multiple webviews working
+		const tracingWindow = new Window('tracing', { title: "Tracing" });
+		tracingWindow.once('tauri://created', function () {
+			toast("Tracing window opened")
+			const tracingWebview = new Webview(tracingWindow, 'tracing', { x: 0, y: 0, width: 600, height: 600, url: 'edge://tracing' })
+			tracingWebview.once('tauri://error', function (e) {
+				showError(e.payload)
+			})
+		})
+		tracingWindow.once('tauri://error', function (e) {
+			showError(e.payload)
+		})
 	}
 }

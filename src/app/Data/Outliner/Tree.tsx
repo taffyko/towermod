@@ -17,11 +17,11 @@ export const TreeComponent = <
 	return <div className="grow">
 		<AutoSizer disableWidth>
 			{({height}) => (
-				<div style={{ height }}>
+				<div style={{ height: 100 }}>
 					<TreeContext.Provider value={treeRef.current}>
 						<FixedSizeTree
 							async
-							outerElementType={CustomScrollbarsVirtualList}
+							// outerElementType={CustomScrollbarsVirtualList}
 							{...props}
 							width="100%"
 							ref={treeRef}

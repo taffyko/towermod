@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable, ImageMetadata, ActionPoint } from "@towermod";
+import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable, ImageMetadata, ActionPoint, DataKey } from "@towermod";
 // import { PrivateVariableType } from "@towermod";
 import { appActions as appActions } from './app'
 import { addRawReducers, assert, assertUnreachable, unwrap } from "@/util/util";
@@ -7,6 +7,7 @@ import { addRawReducers, assert, assertUnreachable, unwrap } from "@/util/util";
 export type DataState = CstcData
 
 const initialState: DataState = {
+	appBlock: null as any,
 	editorPlugins: {},
 	layouts: [],
 	objectTypes: [],
@@ -82,7 +83,7 @@ export function findObjectInstances(state: DataState, objTypeId: number) {
 	return objects
 }
 
-export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | PrivateVariable | ImageMetadata | ActionPoint
+export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | PrivateVariable | ImageMetadata | ActionPoint | DataKey
 
 export const uniqueObjectTypes = new Set([
 	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock'

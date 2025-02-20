@@ -120,8 +120,8 @@ export interface CstcData {
 }
 
 export type DataKey =
-  | { type: 'Pointer', field0: string, field1: number }
-  | { type: 'String', field0: string, field1: string }
+  | { _type: 'DataKey', type: 'Pointer', field0: string, field1: number }
+  | { _type: 'DataKey', type: 'String', field0: string, field1: string }
 
 export declare const enum DisableShaderWhen {
   NoSetting = 0,

@@ -17,7 +17,7 @@ export function objectDisplayName(data: DataState, obj: UniqueTowermodObject) {
 			return `Instance: ${pluginName} (${objectName}: ${obj.id})`
 		} case 'Animation':
 			// TODO: animations
-			return `Animation ${obj.id}`
+			return `Animation ${obj.id}: ${obj.name}`
 		case 'Behavior':
 			return `Behavior: ${obj.name}`
 		case 'Container':
@@ -36,7 +36,6 @@ export function objectDisplayName(data: DataState, obj: UniqueTowermodObject) {
 		default:
 			assertUnreachable(objTypeName)
 	}
-
 }
 
 function uniqueName(mod: ModInfo | string) {
