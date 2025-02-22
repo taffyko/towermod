@@ -38,24 +38,32 @@ export function getObjectDisplayName(data: CstcData, obj: UniqueTowermodObject) 
 	}
 }
 
-function uniqueName(mod: ModInfo | string) {
+export function getUniqueName(author: string, name: string) : string
+export function getUniqueName(mod: ModInfo | string): string
+export function getUniqueName(a: any, b?: string)
+{
+	if (b !== undefined) { return _getUniqueName(a, b) }
+	const mod = a;
 	if (typeof mod === 'string') {
 		const [author, name] = mod.split('.')
 		return `${author}.${name}`
 	}
 	if (mod.error) { return mod.filePath! }
-	return `${mod.author}.${mod.name}`.toLowerCase().replace('_', '-');
+	return _getUniqueName(mod.author, mod.name)
+}
+function _getUniqueName(author: string, name: string) {
+	return `${author}.${name}`.toLowerCase().replace(/_ /, '-');
 }
 
-function uniqueVersionName(mod: ModInfo) {
+function getUniqueVersionName(mod: ModInfo) {
 	if (mod.error) { return mod.filePath! }
-	return `${mod.author}.${mod.name}.${mod.version}`.toLowerCase().replace('_', '-');
+	return `${mod.author}.${mod.name}.${mod.version}`.toLowerCase().replace(/_ /, '-');
 }
 
 export function enhanceModInfo(modInfo: ModInfo): ModInfo {
 	Object.assign(modInfo, {
-		get uniqueName() { return uniqueName(modInfo) },
-		get id() { return uniqueVersionName(modInfo) },
+		get uniqueName() { return getUniqueName(modInfo) },
+		get id() { return getUniqueVersionName(modInfo) },
 	})
 	return modInfo
 }

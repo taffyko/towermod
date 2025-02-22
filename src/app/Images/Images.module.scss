@@ -20,28 +20,28 @@ img.preview {
 .points {
 	position: absolute;
 	> div {
-		$size: 12px;
+		$size: 8px;
 		$borderWidth: 1px;
 		width: $size;
 		height: $size;
 		transform: translate(-50%, -50%);
 		border-radius: $size;
-		border: solid $borderWidth var(--color-border);
+		border: solid $borderWidth black;
 		position: absolute;
-		background-color: #00ff00bb;
+		background-color: #ffffff;
 		&:first-child {
-			background-color: #ff00ffbb;
+			background-color: #00ff00;
 		}
-		> div {
-			$centerSize: 2px;
-			position: absolute;
-			transform: translate(-50%, -50%);
-			left: calc($size/2 - $centerSize/2);
-			top: calc($size/2 - $centerSize/2);
-			width: $centerSize;
-			height: $centerSize;
-			background-color: white;
-		}
+		// > div {
+		// 	$centerSize: 2px;
+		// 	position: absolute;
+		// 	transform: translate(-50%, -50%);
+		// 	left: calc($size/2 - $centerSize/2);
+		// 	top: calc($size/2 - $centerSize/2);
+		// 	width: $centerSize;
+		// 	height: $centerSize;
+		// 	background-color: white;
+		// }
 	}
 }
 canvas.collision {

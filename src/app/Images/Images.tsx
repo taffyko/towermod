@@ -142,8 +142,8 @@ function ImagePreview(props: {
 	const rerender = useRerender();
 
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
-	const width = imgEl?.naturalWidth ? imgEl.naturalWidth * 5 : 100;
-	const height = Math.round(((imgEl?.naturalHeight ?? 0) / (imgEl?.naturalWidth ?? 0)) * width);
+	const width = !isNaN(imgEl?.naturalWidth as any) ? imgEl!.naturalWidth * 5 : 100;
+	const height = Math.round(((imgEl?.naturalHeight ?? 100) / (imgEl?.naturalWidth ?? 100)) * width);
 
 	const collisionImg = useMemo(() => {
 		if (!metadata) { return }
@@ -153,7 +153,6 @@ function ImagePreview(props: {
 	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
 
 	const [canvasEl, setCanvasEl] = useStateRef<HTMLCanvasElement>();
-	const [pointsCanvasEl, setPointsCanvasEl] = useStateRef<HTMLCanvasElement>();
 	useDebounce(() => {
 		if (canvasEl) {
 			canvasEl.width = metadata?.collisionWidth ?? width
@@ -163,9 +162,6 @@ function ImagePreview(props: {
 			if (metadata && collisionImg) {
 				context.drawImage(collisionImg, 0, 0)
 			}
-		}
-		if (pointsCanvasEl) {
-
 		}
 	}, 5)
 

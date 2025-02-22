@@ -6,7 +6,7 @@ import { useModalContext } from "./modalStore";
 
 export function ChoiceModal<TOption extends string>(props: {
 	children?: React.ReactNode,
-	options: Record<TOption, string>,
+	options: Record<TOption, string | { name: string, disabled?: boolean }>,
 	onChoose?: (option: TOption | 'cancel') => void,
 	title?: string,
 }) {
@@ -18,8 +18,10 @@ export function ChoiceModal<TOption extends string>(props: {
 			{children}
 			<div className="grow" />
 			<div className={Style.choices}>
-				{Object.entries(options).map(([key, value]) =>
-					<Button key={key} onClick={() => { onChoose?.(key as TOption); close() }}>{value as string}</Button>
+				{Object.entries(options).map(([key, value]: any) =>
+					typeof value === 'string'
+						? <Button key={key} onClick={() => { onChoose?.(key as TOption); close() }}>{value}</Button>
+						: <Button disabled={value.disabled} key={key} onClick={() => { onChoose?.(key as TOption); close() }}>{value.name}</Button>
 				)}
 			</div>
 		</div>
@@ -47,11 +49,12 @@ export function ConfirmModal(props: {
 	onConfirm?: () => void,
 	onCancel?: () => void,
 	title?: string,
+	disabled?: boolean,
 }) {
-	const { children, title } = props
+	const { children, title, disabled } = props
 	const cancelText = props.cancelText ?? "Cancel"
 	const confirmText = props.confirmText ?? "OK"
-	const options = useMemo(() => ({ cancel: cancelText, confirm: confirmText }), [cancelText, confirmText])
+	const options = useMemo(() => ({ cancel: { name: cancelText }, confirm: { disabled, name: confirmText } }), [cancelText, confirmText, disabled])
 	return <ChoiceModal title={title ?? "Confirm"} options={options} onChoose={choice => {
 		switch (choice) {
 			case 'cancel': props.onCancel?.(); break;

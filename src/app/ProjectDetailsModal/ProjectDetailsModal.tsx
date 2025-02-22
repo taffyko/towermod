@@ -10,6 +10,7 @@ import ImagePathEdit from "@/components/ImagePathEdit/ImagePathEdit";
 import { TextEdit } from "@/components/TextEdit";
 import Text from '@/components/Text'
 import { Project } from "@towermod";
+import { getUniqueName } from "@/util";
 
 export interface ProjectDetailsFormData {
 	author: string,
@@ -24,8 +25,52 @@ export interface ProjectDetailsFormData {
 
 // TODO: validation
 
+
+function StatusLabel(props: {
+	error?: boolean | React.ReactNode,
+	warning?: boolean | React.ReactNode,
+	children?: React.ReactNode
+}) {
+	const { error, warning, children } = props;
+	let color = ''
+	if (warning) { color = 'var(--color-warn)' }
+	if (error) { color = 'var(--color-error)' }
+	const errorContent = typeof error !== 'boolean' ? error : undefined
+	const warningContent = typeof warning !== 'boolean' ? warning : undefined
+
+	if (!children && !errorContent && !warningContent) {
+		return null
+	}
+	return <div>
+		{ children && <div style={{ color }}>{children}</div> }
+		{ errorContent && <pre style={{ color: 'var(--color-error)' }}>{errorContent}</pre> }
+		{ warningContent && <pre style={{ color: 'var(--color-warn)' }}>{warningContent}</pre> }
+	</div>
+}
+
+
+/** Positive if a > b */
+function compareVersions(a: string, b: string): number {
+	const [a1, a2, a3] = a.split('.').map(Number)
+	const [b1, b2, b3] = b.split('.').map(Number)
+	if (a1 !== b1) return a1 - b1
+	if (a2 !== b2) return a2 - b2
+	return a3 - b3
+}
+
+const forbiddenCharacters = /[^a-zA-Z0-9-_ ]/g
+
+function stripForbiddenCharacters(s: string) {
+	return s.replace(forbiddenCharacters, '')
+}
+function processModName(name: string) {
+	return stripForbiddenCharacters(name).toLowerCase().replace(' ', '-')
+}
+
 export function ProjectDetailsModal(props: { project?: Project, newProject?: boolean, confirmText?: string, onConfirm?: (data: ProjectDetailsFormData) => void }) {
 	const { project: originalProject } = props;
+
+	const { data: mods } = api.useGetInstalledModsQuery();
 
 	const [author, setAuthor] = useState(originalProject?.author ?? "");
 	const [name, setName] = useState(originalProject?.name ?? "");
@@ -36,21 +81,37 @@ export function ProjectDetailsModal(props: { project?: Project, newProject?: boo
 	const [iconPath, setIconPath] = useState(originalProject?.dirPath ? path.join(originalProject.dirPath, "icon.png") : "")
 	const [description, setDescription] = useState(originalProject?.description ?? "");
 
-	return <ConfirmModal title="Project Details" onConfirm={onConfirm} confirmText={props.confirmText}>
+	const versionValid = /[0-9]+\.[0-9]+\.[0-9]+/.test(version)
+	const valid = !!(dirPath && versionValid && name && displayName)
+
+	let versionWarning: React.ReactNode = null
+	if (versionValid && mods) {
+		const uniqueName = getUniqueName(author, name);
+		for (const mod of mods) {
+			if (uniqueName === mod.uniqueName && compareVersions(version, mod.version) <= 0) {
+				versionWarning = <div>A mod with ID <code>{uniqueName}.{version}</code> or newer already exists.<br/>Be sure to increment the version number before publishing a new version.</div>
+			}
+		}
+	}
+
+	return <ConfirmModal disabled={!valid} title="Project Details" onConfirm={onConfirm} confirmText={props.confirmText}>
 		<div className={Style.form}>
-			<Text>Author</Text>
-			<LineEdit placeholder="yourusername" value={author} onChange={e => setAuthor(e.target.value)} />
-			<Text>Mod ID</Text>
-			<LineEdit placeholder="your-mod" value={name} onChange={e => setName(e.target.value)} />
-			<Text>Name</Text>
+			<StatusLabel error={!author}>Author</StatusLabel>
+			<LineEdit placeholder="yourusername" value={author} onChange={e => setAuthor(stripForbiddenCharacters(e.target.value))} />
+			<StatusLabel error={!name}>Mod ID</StatusLabel>
+			<LineEdit placeholder="your-mod" value={name} onChange={e => setName(processModName(e.target.value))} />
+			<StatusLabel error={!displayName}>Name</StatusLabel>
 			<LineEdit placeholder="Your Mod" value={displayName} onChange={e => setDisplayName(e.target.value)} />
 		{ props.newProject ? <>
-			<Text>Save to location</Text>
+			<StatusLabel error={!dirPath}>Save to location</StatusLabel>
 			<FilePathEdit folder value={dirPath} onChange={setDirPath} />
 		</> : null}
 		{ !props.newProject ? <>
-				<Text>Version</Text>
-				<LineEdit placeholder="0.1.0" value={version} onChange={e => setVersion(e.target.value)} />
+				<StatusLabel error={!versionValid} warning={!!versionWarning}>Version</StatusLabel>
+				<div className="vbox gap">
+					<LineEdit placeholder="0.1.0" value={version} onChange={e => setVersion(e.target.value)} />
+					<StatusLabel warning={versionWarning} />
+				</div>
 				<Text>Description</Text>
 				<TextEdit value={description} onChange={e => setDescription(e.target.value)} />
 				<Text>Cover</Text>

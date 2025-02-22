@@ -36,6 +36,8 @@ export const baseApi = createApi({
 				}
 				return blob
 			}),
+			// should discard data from the cache almost immediately after use, as files on-disk can always change
+			keepUnusedDataFor: 1,
 		}),
 
 
