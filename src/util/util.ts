@@ -24,6 +24,10 @@ export function unwrap<T>(value: T, msg?: string): NonNullable<T> {
 	return value!
 }
 
+export function notNaN<T>(val: T | null | undefined): val is T {
+	return !isNaN(val as any)
+}
+
 export function assert(value: false): never
 export function assert(condition: unknown, msg?: string): asserts condition
 export function assert(condition: unknown, msg?: string) {

@@ -1,3 +1,18 @@
+export async function blobToImage(blob: Blob) {
+	const url = URL.createObjectURL(blob);
+	const free = () => URL.revokeObjectURL(url)
+	return [free, await urlToImage(url)] as const
+}
+
+export function urlToImage(url: string): Promise<HTMLImageElement> {
+	const img = new Image()
+	const promise = new Promise<HTMLImageElement>((resolve) => {
+		img.onload = () => { resolve(img) }
+		img.src = url
+	})
+	return promise
+}
+
 export function createCollisionMask(image: HTMLImageElement): { mask: Uint8Array, width: number, height: number, pitch: number } {
 	// Determine size of our buffer. All buffers are rounded up to 128 bit pitch, just in case SSE can be used.
 	const alignPitchBits = 64;
@@ -31,7 +46,7 @@ export function createCollisionMask(image: HTMLImageElement): { mask: Uint8Array
 	for (let x = 0; x < width; x++) {
 		for (let y = 0; y < height; y++) {
 			// Set the bit (check alpha component)
-			const bit = getPixelColor(context, x, y)[3] > 0 ? 1 : 0;
+			const bit = getPixelColor(context, x, y)[3] > 0.5 ? 1 : 0;
 			bits[y * pitch + Math.floor(x / 8)] |= bit << (7 - (x % 8));
 		}
 	}
@@ -58,7 +73,7 @@ function imageToCanvas(image: HTMLImageElement) {
 	return context
 }
 
-export function imageFromCollisionMask(bits: Uint8Array, pitch: number, width: number, height: number): HTMLImageElement {
+export async function imageFromCollisionMask(bits: Uint8Array, pitch: number, width: number, height: number): Promise<HTMLImageElement> {
 	const canvas = document.createElement('canvas');
 	canvas.width = width;
 	canvas.height = height;
@@ -79,8 +94,5 @@ export function imageFromCollisionMask(bits: Uint8Array, pitch: number, width: n
 	}
 
 	context.putImageData(imageData, 0, 0);
-	const image = new Image();
-	image.src = canvas.toDataURL();
-
-	return image;
+	return await urlToImage(canvas.toDataURL());
 }

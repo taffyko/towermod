@@ -2,7 +2,7 @@ import { api, useGameImageUrl } from "@/api";
 import { Button } from "@/components/Button";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { InspectorObject } from "../Data/Inspector";
-import { assert, copyFile, deleteFile, filePicker, imageFromCollisionMask, openFolder, useRerender, useStateRef, useTwoWayBinding } from "@/util";
+import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, useMemoAsync, useRerender, useStateRef, useTwoWayBinding, useTwoWaySubmitBinding } from "@/util";
 import { toast } from "../Toast";
 import { spin } from "../GlobalSpinner";
 import { awaitRtk } from "@/api/helpers";
@@ -20,6 +20,8 @@ import uploadImg from '@/icons/upload.svg'
 import closeImg from '@/icons/close.svg'
 import refreshImg from '@/icons/refresh.svg'
 import { ImageMetadata } from "@towermod";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
 
 export default function Images() {
 	const [dumpImages] = api.useDumpImagesMutation();
@@ -29,13 +31,9 @@ export default function Images() {
 	const imageId = useAppSelector(s => s.app.imageId)
 	const { data: savedMetadata } = api.useGetImageMetadataQuery(imageId)
 	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
-	const [setSavedMetadata] = api.useSetImageMetadataMutation();
+	const [setImageMetadata] = api.useSetImageMetadataMutation();
 
-	const onChange = useCallback(() => {
-		// FIXME
-		setSavedMetadata
-	}, [])
-	const [metadata, setMetadata] = useTwoWayBinding(savedMetadata ?? null, onChange)
+	const [metadata, setMetadata, isMetadataDirty, submitMetadata] = useTwoWaySubmitBinding(savedMetadata, setImageMetadata)
 	const showCollision = useAppSelector(s => s.app.showImageCollisionPreview)
 
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
@@ -53,16 +51,18 @@ export default function Images() {
 			<div className="hbox gap grow" style={{ overflow: 'hidden' }}>
 				<div className="vbox gap grow">
 					<div className="hbox gap center">
-						<SpinBox value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
+						<SpinBox int value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
 						<IconButton src={folderOpenImg} onClick={onClickBrowseImage} />
 						<IconButton src={uploadImg} onClick={onClickSetImage} />
 						<IconButton src={refreshImg} onClick={onClickReloadAllImages} />
 						{ isOverridden ? <IconButton src={closeImg} onClick={onClickClearImage} /> : null }
-						<Button onClick={onClickSetMask}>Set mask</Button>
+						<Button disabled={!metadata} onClick={onClickSetMask}>Set mask</Button>
+						<Button disabled={!metadata} onClick={onClickExportMask}>Export mask</Button>
 					</div>
 					<ImagePreview showCollision={showCollision} imageId={imageId} metadata={metadata ?? undefined} />
 				</div>
 				<div className="vbox gap grow">
+					<Button disabled={!isMetadataDirty} onClick={submitMetadata}>Save metadata</Button>
 					<InspectorObject value={metadata ?? undefined} onChange={setMetadata as any} />
 				</div>
 			</div>
@@ -72,7 +72,29 @@ export default function Images() {
 	async function onClickSetMask() {
 		const filePath = await filePicker({ filters: [{ name: 'PNG Image', extensions: ['png'] }] })
 		if (!filePath) { return }
-		// TODO
+		const blob = await awaitRtk(spin(dispatch(api.endpoints.getFile.initiate(filePath))))
+		if (!blob) { toast("No data", { type: 'error' }); return }
+		const [free, img] = await blobToImage(blob)
+		try {
+			const collision = createCollisionMask(img)
+			setImageMetadata({...metadata, collisionMask: Array.from(collision.mask), collisionPitch: collision.pitch, collisionWidth: collision.width, collisionHeight: collision.height})
+		} finally {
+			free()
+		}
+	}
+
+	async function onClickExportMask() {
+		const filePath = await spin(save({
+			title: "Save mask image",
+			filters: [{ name: 'PNG image', extensions: ['png' ]}]
+		}), true)
+		if (!filePath) { return }
+		const img = await imageFromCollisionMask(new Uint8Array(metadata.collisionMask), metadata.collisionPitch, metadata.collisionWidth, metadata.collisionHeight)
+		const res = await fetch(img.src);
+		const blob = await res.blob()
+		const bytes = new Uint8Array(await blob.arrayBuffer())
+		await writeFile(filePath, bytes)
+		toast(`Saved mask image to "${path.basename(filePath)}"`)
 	}
 
 	async function onClickClearImage() {
@@ -142,18 +164,23 @@ function ImagePreview(props: {
 	const rerender = useRerender();
 
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
-	const width = !isNaN(imgEl?.naturalWidth as any) ? imgEl!.naturalWidth * 5 : 100;
-	const height = Math.round(((imgEl?.naturalHeight ?? 100) / (imgEl?.naturalWidth ?? 100)) * width);
-
-	const collisionImg = useMemo(() => {
-		if (!metadata) { return }
-		return imageFromCollisionMask(new Uint8Array(metadata.collisionMask), metadata.collisionPitch, metadata.collisionWidth, metadata.collisionHeight)
-	}, [metadata])
-
 	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
 
+	const width = notNaN(naturalWidth) ? naturalWidth * 5 : 100;
+	let heightOverWidth = 1
+	if (notNaN(imgEl?.naturalHeight) && notNaN(imgEl?.naturalWidth) && imgEl.naturalWidth !== 0) {
+		heightOverWidth = imgEl.naturalHeight / imgEl.naturalWidth
+	}
+
+	const height = Math.round(heightOverWidth * width);
+
+	const collisionImg = useMemoAsync(async () => {
+		if (!metadata) { return }
+		return await imageFromCollisionMask(new Uint8Array(metadata.collisionMask), metadata.collisionPitch, metadata.collisionWidth, metadata.collisionHeight)
+	}, [metadata])
+
 	const [canvasEl, setCanvasEl] = useStateRef<HTMLCanvasElement>();
-	useDebounce(() => {
+	// useDebounce(() => {
 		if (canvasEl) {
 			canvasEl.width = metadata?.collisionWidth ?? width
 			canvasEl.height = metadata?.collisionHeight ?? height
@@ -163,7 +190,7 @@ function ImagePreview(props: {
 				context.drawImage(collisionImg, 0, 0)
 			}
 		}
-	}, 5)
+	// }, 5)
 
 	useEffect(() => {
 		setNaturalWidth(undefined)

@@ -24,6 +24,9 @@ pub fn run() {
 	// greet::add_to_router(&mut router, |ctx| ctx).unwrap();
 
 	tauri::Builder::default()
+		.plugin(tauri_plugin_opener::init())
+		.plugin(tauri_plugin_dialog::init())
+		.plugin(tauri_plugin_fs::init())
 		.setup(|app| {
 			let window = tauri::window::WindowBuilder::new(app, "main")
 				.title("towermod")
@@ -49,7 +52,6 @@ pub fn run() {
 			let _webview = window.add_child(webview_builder, tauri::LogicalPosition::new(0, 0), window.inner_size().unwrap())?;
 			Ok(())
 		})
-		.plugin(tauri_plugin_opener::init())
 		.invoke_handler(
 			tauri::generate_handler![
 				commands::get_mods_dir_path,

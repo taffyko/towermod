@@ -228,6 +228,34 @@ export function useTwoWayBinding<T>(externalValue?: T, onChange?: (value: T) => 
 	return [internalValue, setInternalValue]
 }
 
+/**
+ * `useTwoWayBinding` variant that allows its value to be edited internally, only propagating changes to the external value when `submit` is called.
+ */
+export function useTwoWaySubmitBinding<T>(externalValue?: T, onSubmit?: (value: T) => void, initialValue?: T): [T, (value: T) => void, boolean, () => void] {
+	const [internalValue, _setInternalValue] = useState(externalValue ?? initialValue as T);
+	const [dirty, setDirty] = useState(false);
+
+	const setInternalValue = useCallback((value: T) => {
+		if (externalValue !== undefined && value !== externalValue) { setDirty(true) }
+		_setInternalValue(value)
+	}, [setDirty, _setInternalValue, externalValue])
+
+
+	useEffect(() => {
+		// If an external value is provided, update the internal value.
+		if (externalValue !== undefined) { _setInternalValue(externalValue) }
+		setDirty(false)
+	}, [setDirty, _setInternalValue, externalValue])
+
+	const submit = useCallback(() => { internalValue !== undefined && onSubmit?.(internalValue) }, [internalValue, onSubmit])
+
+	return [internalValue, setInternalValue, dirty, submit]
+}
+
+
+
+
+
 export function useIsInert() {
 	const isSpinning = useIsSpinning();
 	const isModalOpen = useIsModalOpen();

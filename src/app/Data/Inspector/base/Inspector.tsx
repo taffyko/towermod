@@ -75,7 +75,7 @@ export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorVal
 
 	const valueComponents: React.ReactNode[] = useMemo(() => arrPinfo.value.map((val, i) => {
 		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo, i);
-		const valueComponent = getValueComponent(pinfo, (v) => { onElementChange(arrPinfo.key, v) })
+		const valueComponent = getValueComponent(pinfo, (v) => { onElementChange(pinfo.key, v) })
 
 		return <React.Fragment key={i}>
 			<div>
@@ -163,7 +163,7 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		</div> : null}
 		{addProperty ?
 			<div className="hbox gap">
-				<LineEdit value={newKeyText} onChange={e => setNewKeyText(e.target.value)} />
+				<LineEdit placeholder="Add new entry..." value={newKeyText} onChange={e => setNewKeyText(e.target.value)} />
 				{dictPinfo.valueTypes.length > 1 ?
 					<Select
 						onChange={v => setNewValueType(v as any)}
