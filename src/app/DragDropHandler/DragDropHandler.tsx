@@ -1,4 +1,5 @@
-import { installMods, useTauriEvent } from '@/util'
+import { useTauriEvent } from '@/util'
+import { installMods } from '@/appUtil'
 import Style from './DragDropHandler.module.scss'
 import { useMemo, useState } from 'react';
 

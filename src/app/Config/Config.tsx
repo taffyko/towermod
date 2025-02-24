@@ -16,6 +16,7 @@ import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetail
 import { Project } from "@towermod";
 import { actions, dispatch, store } from "@/redux";
 import { awaitRtk } from "@/api/helpers";
+import { saveProject } from "@/appUtil";
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -51,10 +52,7 @@ export const Config = () => {
 	const [editProjectInfo] = api.useEditProjectInfoMutation()
 	const [loadProjectPreflight] = api.useLoadProjectPreflightMutation()
 	const [loadProject] = api.useLoadProjectMutation()
-	const [saveNewProject] = api.useSaveNewProjectMutation()
-	const [saveProject] = api.useSaveProjectMutation()
 	const [exportProject] = api.useExportModMutation()
-	const [updateData] = api.useUpdateDataMutation()
 
 	const [loadManifest] = api.useLazyLoadManifestQuery()
 	const [exportFromLegacy] = api.useExportFromLegacyMutation()
@@ -194,16 +192,7 @@ export const Config = () => {
 	}
 
 	async function onClickSaveProject() {
-		await awaitRtk(spin(updateData(store.getState().data)))
-		if (project && project.dirPath) {
-			await awaitRtk(saveProject(project.dirPath))
-			toast("Project saved")
-		} else {
-			openModal(<ProjectDetailsModal confirmText="Save" newProject onConfirm={async (form) => {
-				await awaitRtk(saveNewProject(form));
-				toast("Project saved")
-			}} />)
-		}
+		await saveProject();
 	}
 
 	async function onClickBrowseProject() {

@@ -1,9 +1,9 @@
 import Outliner, { OutlinerContext, OutlinerHandle } from './Outliner/Outliner'
 import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
-import { useContext, useEffect, useState } from 'react'
-import { UniqueObjectLookup, UniqueTowermodObject, actions, dataActions, findObject, store } from '@/redux'
-import { useImperativeHandle, useStateRef } from '@/util/hooks'
+import { useEffect, useState } from 'react'
+import { UniqueTowermodObject, actions, dataActions, dispatch, findObject, store } from '@/redux'
+import { useStateRef } from '@/util/hooks'
 import { useAppDispatch, useAppSelector } from '@/redux'
 import { api } from '@/api'
 import { Button } from '@/components/Button'
@@ -11,19 +11,20 @@ import { spin } from '../GlobalSpinner'
 import { toast } from '../Toast'
 import { Toggle } from '@/components/Toggle'
 import { awaitRtk } from '@/api/helpers'
+import { saveProject } from '@/appUtil'
 
 export function Data() {
 	const dispatch = useAppDispatch()
 	const searchValue = useAppSelector((s) => s.app.outlinerValue);
 	const value = useAppSelector((state) => searchValue ? findObject(state.data, searchValue) : null)
 
-	const { data } = api.useGetDataQuery()
+	const { data: backendData } = api.useGetDataQuery()
 	const { data: editorPlugins } = api.useGetEditorPluginsQuery()
 	useEffect(() => {
-		if (data && editorPlugins) {
-			dispatch(actions.setData({ ...data, editorPlugins }))
+		if (backendData && editorPlugins) {
+			dispatch(actions.setData({ ...backendData, editorPlugins }))
 		}
-	}, [data, editorPlugins])
+	}, [backendData, editorPlugins])
 
 
 	const [outlinerRef, setOutlinerRef] = useStateRef<OutlinerHandle>();
@@ -50,12 +51,14 @@ export function Data() {
 
 function PlayProject() {
 	const [updateData] = api.useUpdateDataMutation()
-	const [playProject] = api.usePlayProjectMutation();
-	const [debug, setDebug] = useState(false);
+	const [playProject] = api.usePlayProjectMutation()
+	const { data: backendData } = api.useGetDataQuery()
+	const [debug, setDebug] = useState(false)
+
 	return <div className="hbox gap">
 		<Button onClick={onClickPlayProject}>Play</Button>
 		<Toggle value={debug} onChange={setDebug}>Debug</Toggle>
-		<Button onClick={onClickRevertChanges}>Revert changes</Button>
+		<Button onClick={onClickSaveProject}>Save</Button>
 	</div>
 
 	async function onClickPlayProject() {
@@ -64,6 +67,7 @@ function PlayProject() {
 		toast("Project launched")
 	}
 
-	async function onClickRevertChanges() {
+	async function onClickSaveProject() {
+		await saveProject()
 	}
 }

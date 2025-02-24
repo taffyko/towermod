@@ -3,9 +3,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { FileDialogOptions } from '@towermod';
 import { DependencyList, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event'
-import { toast } from '@/app/Toast';
-import { api } from '@/api';
-import { awaitRtk } from '@/api/helpers';
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -21,18 +18,6 @@ export async function deleteFile(path: string) {
 
 export async function waitUntilProcessExits(pid: number) {
 	await invoke('wait_until_process_exits', { pid })
-}
-
-export async function installMods(files: string[]) {
-	const { dispatch, actions } = await import('@/redux');
-	for (const file of files) {
-		const modInfo = await awaitRtk(spin(dispatch(api.endpoints.installMod.initiate(file))))
-		if (modInfo) {
-			toast(`Installed mod: "${modInfo.name}" (v${modInfo.version})`);
-			dispatch(actions.setCurrentTab('Mods'))
-			dispatch(actions.selectMod(modInfo.id))
-		}
-	}
 }
 
 export async function filePicker(options?: FileDialogOptions): Promise<string | null> {

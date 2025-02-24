@@ -152,6 +152,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			})
 		break; case 'Layout':
 			override(type, {
+				name: { readonly: true },
 				layers: { hidden: true },
 				imageIds: { hidden: true, },
 				dataKeys: { valueTypes: ['DataKey'] },

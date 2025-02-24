@@ -21,7 +21,7 @@ import closeImg from '@/icons/close.svg'
 import refreshImg from '@/icons/refresh.svg'
 import { ImageMetadata } from "@towermod";
 import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile } from "@tauri-apps/plugin-fs";
+import { exists, writeFile } from "@tauri-apps/plugin-fs";
 
 export default function Images() {
 	const [dumpImages] = api.useDumpImagesMutation();
@@ -29,6 +29,7 @@ export default function Images() {
 	const { data: project } = api.useGetProjectQuery();
 
 	const imageId = useAppSelector(s => s.app.imageId)
+	const imgUrl = useGameImageUrl(imageId);
 	const { data: savedMetadata } = api.useGetImageMetadataQuery(imageId)
 	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
 	const [setImageMetadata] = api.useSetImageMetadataMutation();
@@ -41,18 +42,21 @@ export default function Images() {
 	return <div className="vbox gap grow">
 		<div className="hbox gap">
 			<Button onClick={onClickDumpImages}>Dump images</Button>
-			<Button disabled={!imageDumpDir} onClick={onClickBrowseDumpedImages}>Browse dumped images</Button>
+			<Button disabled={!imageDumpDir} onClick={onClickBrowseDumpedImages}>Browse dump</Button>
+			<Button disabled={!projectImagesDir} onClick={onClickBrowseProjectImages}>Browse project images</Button>
 		</div>
 		{ project ? <>
 			<div className="hbox gap">
 				<Button onClick={onClickSetImage}>Set image</Button>
-				<Toggle value={showCollision} onChange={(v) => dispatch(actions.setShowImageCollisionPreview(v))} /> Show collision
+				<Toggle value={showCollision} onChange={(v) => dispatch(actions.setShowImageCollisionPreview(v))}>
+					Show collision
+				</Toggle>
 			</div>
 			<div className="hbox gap grow" style={{ overflow: 'hidden' }}>
 				<div className="vbox gap grow">
 					<div className="hbox gap center">
-						<SpinBox int value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
-						<IconButton src={folderOpenImg} onClick={onClickBrowseImage} />
+						<SpinBox style={{ width: '5rem' }} int value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
+						<IconButton disabled={!imgUrl} src={folderOpenImg} onClick={onClickBrowseImage} />
 						<IconButton src={uploadImg} onClick={onClickSetImage} />
 						<IconButton src={refreshImg} onClick={onClickReloadAllImages} />
 						{ isOverridden ? <IconButton src={closeImg} onClick={onClickClearImage} /> : null }
@@ -62,22 +66,30 @@ export default function Images() {
 					<ImagePreview showCollision={showCollision} imageId={imageId} metadata={metadata ?? undefined} />
 				</div>
 				<div className="vbox gap grow">
-					<Button disabled={!isMetadataDirty} onClick={submitMetadata}>Save metadata</Button>
+					{ metadata
+						? <Button disabled={!isMetadataDirty} onClick={() => submitMetadata()}>Save metadata</Button>
+						: <Button style={{ alignSelf: 'stretch' }} onClick={onClickSetImage}>{ imgUrl ? "Add metadata" : "Add image" }</Button>
+					}
 					<InspectorObject value={metadata ?? undefined} onChange={setMetadata as any} />
 				</div>
 			</div>
-		</> : null }
+		</> : <div className="subtle">Load a saved Towermod project to see more options</div> }
 	</div>
 
 	async function onClickSetMask() {
 		const filePath = await filePicker({ filters: [{ name: 'PNG Image', extensions: ['png'] }] })
 		if (!filePath) { return }
+		const newMetadata = await applyMaskFromImagePath(metadata, filePath);
+		setImageMetadata(newMetadata)
+	}
+
+	async function applyMaskFromImagePath(metadata: ImageMetadata, filePath: string): Promise<ImageMetadata> {
 		const blob = await awaitRtk(spin(dispatch(api.endpoints.getFile.initiate(filePath))))
-		if (!blob) { toast("No data", { type: 'error' }); return }
+		if (!blob) { throw new Error("No data") }
 		const [free, img] = await blobToImage(blob)
 		try {
 			const collision = createCollisionMask(img)
-			setImageMetadata({...metadata, collisionMask: Array.from(collision.mask), collisionPitch: collision.pitch, collisionWidth: collision.width, collisionHeight: collision.height})
+			return {...metadata, collisionMask: Array.from(collision.mask), collisionPitch: collision.pitch, collisionWidth: collision.width, collisionHeight: collision.height}
 		} finally {
 			free()
 		}
@@ -106,7 +118,7 @@ export default function Images() {
 		assert(projectImagesDir, "Project not set")
 		const imgPath = path.join(projectImagesDir, `${imageId}.png`)
 		await deleteFile(imgPath)
-		dispatch(api.util.invalidateTags([{ type: 'Image', id: String(imageId) }]))
+		await dispatch(api.util.invalidateTags([{ type: 'Image', id: String(imageId) }]))
 		toast(`Deleted custom image '${imageId}'`)
 	}
 
@@ -124,11 +136,34 @@ export default function Images() {
 
 	async function onClickSetImage() {
 		assert(projectImagesDir, "Project not set")
-		const imgPath = await filePicker({ filters: [{ name: 'PNG Image', extensions: ['png'] }] })
-		if (!imgPath) { return }
-		copyFile(imgPath, path.join(projectImagesDir, `${imageId}.png`))
+		const destImgPath = path.join(projectImagesDir, `${imageId}.png`)
+		let imgPath
+		if (!metadata && await exists(destImgPath)) {
+			// If metadata is not set, but a custom image *has* been provided, generate metadata from that image instead of prompting for a new image
+			imgPath = destImgPath
+		} else {
+			imgPath = await filePicker({ title: "Select image", filters: [{ name: 'PNG Image', extensions: ['png'] }] })
+			if (!imgPath) { return }
+			copyFile(imgPath, destImgPath)
+		}
 		dispatch(api.util.invalidateTags([{ type: 'Image', id: String(imageId) }]))
+		if (!metadata) {
+			let newMetadata: ImageMetadata = {
+				_type: 'ImageMetadata',
+				id: imageId,
+				hotspotX: 0,
+				hotspotY: 0,
+				apoints: [],
+				collisionWidth: 0,
+				collisionHeight: 0,
+				collisionPitch: 0,
+				collisionMask: [],
+			}
+			newMetadata = await applyMaskFromImagePath(newMetadata, imgPath);
+			submitMetadata(newMetadata);
+		}
 		toast(`Updated image ${imageId}`)
+		return imgPath
 	}
 
 	async function onClickReloadAllImages() {
@@ -146,12 +181,12 @@ export default function Images() {
 		toast("Opened dumped images folder")
 		openFolder(imageDumpDir)
 	}
-}
 
-function useDebounce(fn: () => void, ms: number) {
-	const ref = useRef(0)
-	clearTimeout(ref.current)
-	ref.current = window.setTimeout(fn, ms)
+	async function onClickBrowseProjectImages() {
+		if (!projectImagesDir) { return }
+		toast("Opened custom images folder")
+		openFolder(projectImagesDir)
+	}
 }
 
 function ImagePreview(props: {
@@ -161,7 +196,6 @@ function ImagePreview(props: {
 }) {
 	const { imageId, metadata, showCollision } = props;
 	const imgUrl = useGameImageUrl(imageId);
-	const rerender = useRerender();
 
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
 	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
@@ -180,17 +214,15 @@ function ImagePreview(props: {
 	}, [metadata])
 
 	const [canvasEl, setCanvasEl] = useStateRef<HTMLCanvasElement>();
-	// useDebounce(() => {
-		if (canvasEl) {
-			canvasEl.width = metadata?.collisionWidth ?? width
-			canvasEl.height = metadata?.collisionHeight ?? height
-			const context = canvasEl.getContext('2d')!
-			context.clearRect(0, 0, canvasEl.width, canvasEl.height)
-			if (metadata && collisionImg) {
-				context.drawImage(collisionImg, 0, 0)
-			}
+	if (canvasEl) {
+		canvasEl.width = metadata?.collisionWidth ?? width
+		canvasEl.height = metadata?.collisionHeight ?? height
+		const context = canvasEl.getContext('2d')!
+		context.clearRect(0, 0, canvasEl.width, canvasEl.height)
+		if (metadata && collisionImg) {
+			context.drawImage(collisionImg, 0, 0)
 		}
-	// }, 5)
+	}
 
 	useEffect(() => {
 		setNaturalWidth(undefined)
@@ -211,7 +243,6 @@ function ImagePreview(props: {
 		setNaturalWidth(imgEl?.naturalWidth)
 		imgEl?.parentElement?.offsetTop
 		imgEl?.parentElement?.classList.remove(Style.loading)
-		rerender()
 	}
 }
 

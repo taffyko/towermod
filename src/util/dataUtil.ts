@@ -141,7 +141,6 @@ export function enhanceImageMetadata(imageMetadata: ImageMetadata): ImageMetadat
 	return imageMetadata
 }
 
-
 declare module "@towermod" {
 	interface ModInfo {
 		uniqueName: string

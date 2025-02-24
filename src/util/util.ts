@@ -24,6 +24,10 @@ export function unwrap<T>(value: T, msg?: string): NonNullable<T> {
 	return value!
 }
 
+declare global {
+	function isNaN(value: unknown): boolean
+}
+
 export function notNaN<T>(val: T | null | undefined): val is T {
 	return !isNaN(val as any)
 }

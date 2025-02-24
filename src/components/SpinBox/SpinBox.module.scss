@@ -2,6 +2,7 @@
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	border-radius: var(--border-radius);
+	font-family: var(--font-monospace);
 
 	&:not(:disabled) {
 		border: solid 1px var(--color-bg-highlight);

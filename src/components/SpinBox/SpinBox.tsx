@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
 import Style from './SpinBox.module.scss'
-import { useEventListener, useStateRef } from '@/util';
+import { useEventListener, useStateRef, useTwoWaySubmitBinding } from '@/util';
 
-export function SpinBox(props: {
+export function SpinBox(props: Omit<React.ComponentProps<'input'>, 'onChange' | 'value'> & {
 	value?: number,
 	int?: boolean,
 	onChange?: (v: number) => void
 }) {
-	const { value: externalValue, int, onChange: externalOnChange } = props
+	const { value: externalValue, int, onChange: externalOnChange, ...htmlProps } = props
 
 	const [value, setValue] = useState(() => String(externalValue ?? 0))
 	const onChange = useCallback((value: string) => {
 		setValue(value)
 		const processedValue = int ? Math.round(Number(value)) : Number(value)
+		if (isNaN(processedValue)) { return }
 		externalOnChange?.(processedValue)
 	}, [setValue, externalOnChange])
 
@@ -31,7 +32,7 @@ export function SpinBox(props: {
 		}
 	})
 	useEffect(() => {
-		if (externalValue !== undefined) {
+		if (externalValue !== undefined && el !== document.activeElement) {
 			setValue(String(externalValue))
 		}
 	}, [externalValue])
@@ -42,5 +43,6 @@ export function SpinBox(props: {
 		type="number" step={int ? '1' : 'any'}
 		value={value}
 		onChange={e => onChange?.(e.target.value)}
+		{...htmlProps}
 	/>
 }

@@ -231,9 +231,10 @@ export function useTwoWayBinding<T>(externalValue?: T, onChange?: (value: T) => 
 /**
  * `useTwoWayBinding` variant that allows its value to be edited internally, only propagating changes to the external value when `submit` is called.
  */
-export function useTwoWaySubmitBinding<T>(externalValue?: T, onSubmit?: (value: T) => void, initialValue?: T): [T, (value: T) => void, boolean, () => void] {
+export function useTwoWaySubmitBinding<T>(externalValue?: T, onSubmit?: (value: T) => void, initialValue?: T): [T, (value: T) => void, boolean, (value?: T) => void] {
 	const [internalValue, _setInternalValue] = useState(externalValue ?? initialValue as T);
 	const [dirty, setDirty] = useState(false);
+	const [resetToExternalValue, setResetToExternalValue] = useState(false);
 
 	const setInternalValue = useCallback((value: T) => {
 		if (externalValue !== undefined && value !== externalValue) { setDirty(true) }
@@ -244,10 +245,19 @@ export function useTwoWaySubmitBinding<T>(externalValue?: T, onSubmit?: (value: 
 	useEffect(() => {
 		// If an external value is provided, update the internal value.
 		if (externalValue !== undefined) { _setInternalValue(externalValue) }
+		setResetToExternalValue(false)
 		setDirty(false)
-	}, [setDirty, _setInternalValue, externalValue])
+	}, [setDirty, _setInternalValue, externalValue, resetToExternalValue])
 
-	const submit = useCallback(() => { internalValue !== undefined && onSubmit?.(internalValue) }, [internalValue, onSubmit])
+	const submit = useCallback((customNewValue?: T) => {
+		let newValue = internalValue
+		if (customNewValue !== undefined) {
+			newValue = customNewValue
+			_setInternalValue(newValue)
+		}
+		newValue !== undefined && onSubmit?.(newValue)
+		setResetToExternalValue(true)
+	}, [internalValue, onSubmit])
 
 	return [internalValue, setInternalValue, dirty, submit]
 }
