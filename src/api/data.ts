@@ -57,7 +57,7 @@ export const dataApi = baseApi.injectEndpoints({
 			queryFn: queryFn(async () => {
 				const data: CstcData = await invoke('get_data');
 				for (const animation of data.animations) { enhanceAnimation(animation) }
-				for (const objectType of data.objectTypes) { enhanceObjectType(objectType) }
+				for (const objectType of Object.values(data.objectTypes)) { enhanceObjectType(objectType) }
 				for (const behavior of data.behaviors) { enhanceBehavior(behavior) }
 				for (const trait of data.traits) { enhanceObjectTrait(trait) }
 				for (const family of data.families) { enhanceFamily(family) }

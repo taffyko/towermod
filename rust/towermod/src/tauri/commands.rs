@@ -3,7 +3,7 @@ use tauri::{command, AppHandle, Emitter};
 use anyhow::Result;
 use fs_err::tokio as fs;
 use towermod_cstc::ImageMetadata;
-use towermod_shared::{app::state::{data_state::JsCstcData}, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType};
+use towermod_shared::{app::state::{data_state::JsCstcData, select}, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType};
 use towermod_util::log_on_error;
 
 #[command]

@@ -93,7 +93,6 @@ pub enum TextureLoadingMode {
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct EventBlock {
 	pub sheet_names: Vec<String>,
 	pub layout_sheets: Vec<Vec<SomeEvent>>,
@@ -110,7 +109,6 @@ pub enum SomeEvent {
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct EventGroup {
 	pub active: bool,
 	pub name: String,
@@ -119,7 +117,6 @@ pub struct EventGroup {
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Event {
 	pub line_number: i32,
 	pub sheet_id: i32,
@@ -130,7 +127,6 @@ pub struct Event {
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct EventCondition {
 	pub object_id: i32,
 	pub cond_id: i32,
@@ -141,7 +137,6 @@ pub struct EventCondition {
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct EventAction {
 	pub object_id: i32,
 	pub action_id: i32,
@@ -222,7 +217,7 @@ pub struct ObjectTrait {
 	pub object_type_ids: Vec<i32>,
 }
 
-#[serde_alias(SnakeCase, CamelCase)]
+#[serde_alias(SnakeCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Layout {
@@ -239,7 +234,7 @@ pub struct Layout {
 	pub texture_loading_mode: TextureLoadingMode,
 }
 
-#[serde_alias(SnakeCase, CamelCase)]
+#[serde_alias(SnakeCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LayoutLayer {

@@ -1,5 +1,8 @@
 #![allow(dead_code)]
 
+use serde::{Deserialize, Serialize};
+use serde_alias::serde_alias;
+
 use super::block::{BlockReader, BlockWriter};
 
 #[derive(Debug, Clone, Default)]
@@ -19,42 +22,53 @@ pub struct ObjHeader {
 	pub filter: Color,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum ObjectData {
 	Text(TextObjectData),
 	Sprite(SpriteObjectData),
-	Unknown,
+	Unknown(Vec<u8>),
 }
 
-/// Decode structured object data based on associated plugin name
-pub fn decode_object_data(data: &[u8], plugin_name: &str) -> ObjectData {
-	use ObjectData as E;
-	match plugin_name {
-		"XAudio2" => E::Unknown,
-		"Canvas" => E::Unknown,
-		"Mouse & Keyboard" => E::Unknown,
-		"Custom Movement" => E::Unknown,
-		"Clipboard" => E::Unknown,
-		"Hash table" => E::Unknown,
-		"Window" => E::Unknown,
-		"Input System" => E::Unknown,
-		"Sprite" => E::Sprite(SpriteObjectData::from_bin(data)),
-		"Tiled Background" => E::Unknown,
-		"Image manipulator" => E::Unknown,
-		"Platform" => E::Unknown,
-		"Common Dialog" => E::Unknown,
-		"Sine" => E::Unknown,
-		"INI" => E::Unknown,
-		"Gradient" => E::Unknown,
-		"Panel" => E::Unknown,
-		"Text" => E::Text(TextObjectData::from_bin(data)),
-		"HTTP" => E::Unknown,
-		"Array" => E::Unknown,
-		"CRC32" => E::Unknown,
-		"File" => E::Unknown,
-		"Path" => E::Unknown,
-		"Sys Info" => E::Unknown,
-		"Function" => E::Unknown,
-		_ => E::Unknown,
+impl ObjectData {
+	/// Decode structured object data based on associated plugin name
+	pub fn decode(data: Vec<u8>, plugin_name: &str) -> Self {
+		use ObjectData as E;
+		match plugin_name {
+			"XAudio2" => E::Unknown(data),
+			"Canvas" => E::Unknown(data),
+			"Mouse & Keyboard" => E::Unknown(data),
+			"Custom Movement" => E::Unknown(data),
+			"Clipboard" => E::Unknown(data),
+			"Hash table" => E::Unknown(data),
+			"Window" => E::Unknown(data),
+			"Input System" => E::Unknown(data),
+			"Sprite" => E::Sprite(SpriteObjectData::from_bin(&data)),
+			"Tiled Background" => E::Unknown(data),
+			"Image manipulator" => E::Unknown(data),
+			"Platform" => E::Unknown(data),
+			"Common Dialog" => E::Unknown(data),
+			"Sine" => E::Unknown(data),
+			"INI" => E::Unknown(data),
+			"Gradient" => E::Unknown(data),
+			"Panel" => E::Unknown(data),
+			"Text" => E::Text(TextObjectData::from_bin(&data)),
+			"HTTP" => E::Unknown(data),
+			"Array" => E::Unknown(data),
+			"CRC32" => E::Unknown(data),
+			"File" => E::Unknown(data),
+			"Path" => E::Unknown(data),
+			"Sys Info" => E::Unknown(data),
+			"Function" => E::Unknown(data),
+			_ => E::Unknown(data),
+		}
+	}
+	pub fn encode(self) -> Vec<u8> {
+		match self {
+			ObjectData::Text(data) => data.to_bin(),
+			ObjectData::Sprite(data) => data.to_bin(),
+			ObjectData::Unknown(data) => data,
+		}
 	}
 }
 
@@ -80,7 +94,9 @@ pub struct Color {
 	pub b: f32,
 }
 
-#[derive(Debug, Clone)]
+#[serde_alias(SnakeCase)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TextObjectData {
 	pub version: i32,
 	pub text: String,
@@ -201,7 +217,9 @@ impl BlockWriter {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[serde_alias(SnakeCase)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SpriteObjectData {
 	pub version: i32,
 	pub coll_mode: i32,

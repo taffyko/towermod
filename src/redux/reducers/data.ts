@@ -10,7 +10,7 @@ const initialState: DataState = {
 	appBlock: null as any,
 	editorPlugins: {},
 	layouts: [],
-	objectTypes: [],
+	objectTypes: {},
 	behaviors: [],
 	traits: [],
 	families: [],
@@ -29,7 +29,7 @@ export function findObjectById(state: DataState, id: number) {
 	return assert(false)
 }
 export function findObjectTypeById(state: DataState, id: number) {
-	return unwrap(state.objectTypes.find(s => id === s.id))
+	return unwrap(state.objectTypes[id])
 }
 
 export function findLayoutByName(state: DataState, name: string) {

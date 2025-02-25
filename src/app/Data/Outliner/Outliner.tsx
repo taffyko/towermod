@@ -178,7 +178,7 @@ export const Outliner = (props: OutlinerProps) => {
 	const behaviors = useAppSelector(s => s.data.behaviors) || []
 	const containers = useAppSelector(s => s.data.containers) || []
 	const families = useAppSelector(s => s.data.families) || []
-	const objectTypes = useAppSelector(s => s.data.objectTypes) || []
+	const objectTypes = useAppSelector(s => s.data.objectTypes) || {}
 	const traits = useAppSelector(s => s.data.traits) || []
 	const appBlock = useAppSelector(s => s.data.appBlock)
 
@@ -218,7 +218,7 @@ export const Outliner = (props: OutlinerProps) => {
 			'Behaviors': behaviors,
 			'Containers': containers,
 			'Families': families,
-			'Object Types': objectTypes,
+			'Object Types': Object.values(objectTypes),
 			'Traits': traits,
 		}
 

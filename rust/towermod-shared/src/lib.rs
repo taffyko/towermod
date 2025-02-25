@@ -10,6 +10,7 @@
 
 pub mod dllreader_client;
 pub mod game_images;
+pub mod cstc_editing;
 
 pub mod app;
 mod newtype;

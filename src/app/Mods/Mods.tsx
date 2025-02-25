@@ -161,7 +161,7 @@ function ModDetails() {
 				{ icon ? <img className={Style.icon} src={icon} /> : null}
 				<div className="vbox">
 					<Text>{mod.displayName}</Text>
-					<Text style={{ fontStyle: 'italic' }}>— by {mod.author}</Text>
+					<div className="subtle">— by {mod.author}</div>
 				</div>
 				<div className="grow" />
 				<div className="vbox gap">

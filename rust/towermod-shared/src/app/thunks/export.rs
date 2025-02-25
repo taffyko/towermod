@@ -38,7 +38,7 @@ pub async fn export_from_legacy(patch_path: PathBuf, mut project: Project) -> Re
 
 pub async fn play_project(debug: bool) -> Result<u32> {
 	let data = select(|s| s.data.clone()).await;
-	let (level_block, app_block, mut event_block, image_metadatas) = data.into_blocks();
+	let (_editor_plugins, app_block, image_metadatas, level_block, mut event_block) = data.to_stable();
 	let project = selectors::get_project().await;
 	let game = selectors::get_game().await.context("Game not set")?;
 	let game_path = game.game_path()?.clone();

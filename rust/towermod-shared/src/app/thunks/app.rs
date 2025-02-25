@@ -1,5 +1,5 @@
-use std::{io::{Cursor, Read, Write}, path::PathBuf, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, convert_to_release_build, first_time_setup, get_appdata_dir_path, get_mods_dir_path, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType };
+use std::{collections::HashMap, io::{Cursor, Read, Write}, path::PathBuf, sync::Mutex};
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, convert_to_release_build, cstc_editing::CstcData, first_time_setup, get_appdata_dir_path, get_mods_dir_path, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType };
 use anyhow::Result;
 use async_scoped::TokioScope;
 use anyhow::{Context};
@@ -11,7 +11,7 @@ use towermod_win32::get_temp_file;
 use tracing::instrument;
 use itertools::Itertools;
 use crate::game_images as images;
-use crate::app::{state::{select, CstcData}, selectors, thunks};
+use crate::app::{state::{select}, selectors, thunks};
 use towermod_cstc::{self, *};
 
 fn status(_msg: &str) {
@@ -362,24 +362,30 @@ pub async fn set_game(file_path: Option<PathBuf>) -> Result<()> {
 pub async fn new_project() -> Result<()> {
 	let game = selectors::get_game().await.context("No game set")?;
 	let game_path = game.game_path()?;
-	let data = CstcData::default();
-	// dump_images().await?;
 
 	let result: anyhow::Result<_> = tokio::try_join!(
 		LevelBlock::read_from_pe(&game_path),
 		AppBlock::read_from_pe(&game_path),
 		EventBlock::read_from_pe(&game_path),
-		ensure_base_data(data, &game),
 	);
-	let (level_block, app_block, event_block, mut data) = result?;
-	data.set_appblock(app_block);
-	data.set_eventblock(event_block);
-	data.set_levelblock(level_block);
+	let (level_block, app_block, event_block) = result?;
+	let editor_plugins = get_editor_plugins(&game).await?;
+	let image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;
+	let (_images, image_block) = images::split_imageblock(image_block);
 
+	let data = CstcData::from_stable((editor_plugins, app_block, image_block, level_block, event_block))?;
 	STORE.dispatch(AppAction::SetProject(None).into()).await;
 	STORE.dispatch(DataAction::SetData(data).into()).await;
 
 	Ok(())
+}
+
+async fn get_editor_plugins(game: &Game) -> Result<HashMap<i32, plugin::PluginData>> {
+	status("Loading Construct Classic plugin data");
+	let (mut editor_plugins, _) = game.load_editor_plugins().await?;
+	editor_plugins.insert(-1, cstc::get_system_plugin());
+	status("Loading");
+	Ok(editor_plugins.into_iter().map(|(k, v)| (k, v)).collect())
 }
 
 pub async fn play_vanilla() -> Result<u32> {
@@ -451,21 +457,22 @@ pub async fn load_project(manifest_path: PathBuf) -> Result<()> {
 	);
 	let (level_block_json, app_block_json, event_block_json, image_block_json) = result?;
 
-	let mut data = CstcData::default();
-
 	let level_block: cstc::LevelBlock = serde_json::from_slice(&level_block_json)?;
 	let app_block: cstc::AppBlock = serde_json::from_slice(&app_block_json)?;
 	let event_block: cstc::EventBlock = serde_json::from_slice(&event_block_json)?;
 	let image_block: Option<Vec<cstc::ImageMetadata>> = image_block_json.map(|o| serde_json::from_slice(&o)).transpose()?;
 
-	if let Some(image_block) = image_block {
-		data.image_block = image_block;
-	}
-	data.set_appblock(app_block);
-	data.set_eventblock(event_block);
-	data.set_levelblock(level_block);
+	let image_block = match image_block {
+		Some(v) => v,
+		None => {
+			let image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;
+			let (_images, image_block) = images::split_imageblock(image_block);
+			image_block
+		},
+	};
+	let editor_plugins = get_editor_plugins(&game).await?;
 
-	let data = ensure_base_data(data, &game).await?;
+	let data = CstcData::from_stable((editor_plugins, app_block, image_block, level_block, event_block))?;
 
 	STORE.dispatch(AppAction::SetProject(Some(project)).into()).await;
 	STORE.dispatch(DataAction::SetData(data).into()).await;
@@ -498,7 +505,7 @@ pub async fn save_project(dir_path: PathBuf) -> Result<()> {
 	STORE.dispatch(AppAction::EditProjectInfo(project)).await;
 
 	let data = select(|s| s.data.clone()).await;
-	let (level_block, app_block, event_block, image_block) = data.into_blocks();
+	let (_editor_plugins, app_block, image_block, level_block, event_block) = data.to_stable();
 
 	let ((), results) = unsafe {TokioScope::scope_and_collect(|s| {
 		s.spawn_blocking(|| serde_json::to_vec(&level_block));
@@ -557,25 +564,6 @@ pub async fn nuke_cache() -> Result<()> {
 	Ok(())
 }
 
-#[instrument(skip(data, game))]
-async fn ensure_base_data(mut data: CstcData, game: &Game) -> Result<CstcData> {
-	if data.image_block.is_empty() {
-		status("Initializing image data");
-		let image_block = cstc::ImageBlock::read_from_pe(game.game_path()?).await?;
-		data.set_imageblock(image_block);
-	}
-	if data.editor_plugins.is_empty() {
-		status("Loading Construct Classic plugin data");
-		let (mut editor_plugins, _) = game.load_editor_plugins().await?;
-
-		editor_plugins.insert(-1, cstc::get_system_plugin());
-
-		status("Loading");
-		data.editor_plugins = editor_plugins.into_iter().map(|(k, v)| (k, v)).collect();
-	}
-	Ok(data)
-}
-
 pub async fn export_mod(mod_type: ModType) -> Result<()> {
 	status("Exporting");
 	let mod_type: ModType = From::from(mod_type);
@@ -603,7 +591,7 @@ pub async fn export_mod(mod_type: ModType) -> Result<()> {
 			let original_image_block_bin = cstc::ImageBlock::read_bin(&game_path)?;
 
 			let data = select(|s| s.data.clone()).await;
-			let (level_block, app_block, event_block, image_metadatas) = data.into_blocks();
+			let (_editor_plugins, app_block, image_metadatas, level_block, event_block) = data.to_stable();
 
 			status("Generating patches");
 			let ((), results) = unsafe {TokioScope::scope_and_collect(|s| {
