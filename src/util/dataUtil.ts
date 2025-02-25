@@ -86,6 +86,10 @@ export function enhanceLayoutLayer(layer: LayoutLayer): LayoutLayer {
 
 export function enhanceObjectInstance(obj: ObjectInstance): ObjectInstance {
 	obj._type = 'ObjectInstance'
+	if (!(obj.data instanceof Array)) {
+		if ('animation' in obj.data) { obj.data._type = 'SpriteObjectData' }
+		if ('fontFace' in obj.data) { obj.data._type = 'TextObjectData' }
+	}
 	return obj
 }
 

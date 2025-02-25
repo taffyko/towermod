@@ -67,7 +67,7 @@ export const ModListItem = (props: {
 }
 
 export function ModList() {
-	const { data: allMods, isLoading, error } = api.useGetInstalledModsQuery();
+	const { data: allMods, isFetching, error } = api.useGetInstalledModsQuery();
 
 	const selectedModId = useAppSelector(s => s.app.selectedModId)
 	const selectedMod = useSelector(() => selectMod(allMods, selectedModId))
@@ -97,7 +97,7 @@ export function ModList() {
 	return <LoadContainer
 		tabIndex={0}
 		error={error}
-		isLoading={isLoading}
+		isLoading={isFetching}
 		className={`${Style.modList} ${noMods ? 'centerbox' : ''}`}
 		onKeyDown={e => {
 			switch (e.key) {

@@ -23,7 +23,7 @@ pub struct EdObjectInstance {
 	pub key: i32,
 }
 impl EdObjectInstance {
-	fn from_stable(obj: cstc::ObjectInstance, object_types: &HashMap<i32, cstc::ObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
+	fn from_stable(obj: cstc::ObjectInstance, object_types: &HashMap<i32, &cstc::ObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
 		let obj_type = object_types.get(&obj.object_type_id).context("Object type not found")?;
 		let plugin_name = &plugins.get(&obj_type.plugin_id).context("Plugin not found")?.string_table.name;
 		let data = cstc::ObjectData::decode(obj.data, &plugin_name);
@@ -54,7 +54,7 @@ pub struct EdLayout {
 	pub texture_loading_mode: cstc::TextureLoadingMode,
 }
 impl EdLayout {
-	fn from_stable(layout: cstc::Layout, object_types: &HashMap<i32, cstc::ObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
+	fn from_stable(layout: cstc::Layout, object_types: &HashMap<i32, &cstc::ObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
 		let cstc::Layout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode } = layout;
 		let layers = layers.into_iter()
 			.map(|layer| EdLayoutLayer::from_stable(layer, object_types, plugins))
@@ -96,7 +96,7 @@ pub struct EdLayoutLayer {
 	pub objects: Vec<EdObjectInstance>,
 }
 impl EdLayoutLayer {
-	fn from_stable(layer: cstc::LayoutLayer, object_types: &HashMap<i32, cstc::ObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
+	fn from_stable(layer: cstc::LayoutLayer, object_types: &HashMap<i32, &cstc::ObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
 		let cstc::LayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects } = layer;
 		let objects = objects.into_iter()
 			.map(|obj| EdObjectInstance::from_stable(obj, object_types, plugins))
@@ -116,7 +116,7 @@ impl EdLayoutLayer {
 #[serde(rename_all = "camelCase")]
 pub struct CstcData {
 	pub editor_plugins: HashMap<i32, cstc::plugin::PluginData>,
-	pub object_types: HashMap<i32, cstc::ObjectType>,
+	pub object_types: Vec<cstc::ObjectType>,
 	pub behaviors: Vec<cstc::Behavior>,
 	pub traits: Vec<cstc::ObjectTrait>,
 	pub families: Vec<cstc::Family>,
@@ -135,16 +135,15 @@ impl CstcData {
 	pub fn from_stable(value: StableData) -> Result<Self> {
 		let (editor_plugins, app_block, image_block, level_block, event_block) = value;
 		let cstc::LevelBlock { object_types, behaviors, traits, families, containers, layouts, animations } = level_block;
-		let object_types = object_types.into_iter().map(|obj_type| (obj_type.id, obj_type)).collect();
+		let object_types_map = object_types.iter().map(|obj_type| (obj_type.id, obj_type)).collect();
 		let layouts = layouts.into_iter()
-			.map(|layout| EdLayout::from_stable(layout, &object_types, &editor_plugins))
+			.map(|layout| EdLayout::from_stable(layout, &object_types_map, &editor_plugins))
 			.collect::<Result<Vec<_>>>()?;
 		Ok(CstcData { editor_plugins, object_types, behaviors, traits, families, containers, layouts, animations, app_block: Some(app_block), event_block: Some(event_block), image_block })
 	}
 
 	pub fn to_stable(self) -> StableData {
 		let CstcData { editor_plugins, object_types, behaviors, traits, families, containers, layouts, animations, app_block, event_block, image_block } = self;
-		let object_types = object_types.into_iter().map(|(_, obj_type)| obj_type).collect();
 		let layouts = layouts.into_iter().map(|layout| layout.to_stable()).collect();
 		let level_block = cstc::LevelBlock { object_types, behaviors, traits, families, containers, layouts, animations };
 		(editor_plugins, app_block.unwrap(), image_block, level_block, event_block.unwrap())

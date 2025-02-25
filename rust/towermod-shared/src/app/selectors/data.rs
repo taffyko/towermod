@@ -7,9 +7,7 @@ use towermod_cstc::{plugin::PluginData, ImageMetadata, ObjectType};
 
 
 pub fn select_editor_plugin(plugin_id: i32) -> impl Fn(&State) -> Option<&PluginData> {
-	move |s| {
-		s.data.editor_plugins.get(&plugin_id)
-	}
+	move |s| { s.data.editor_plugins.get(&plugin_id) }
 }
 
 pub async fn get_editor_plugin(id: i32) -> Option<PluginData> {
@@ -29,9 +27,7 @@ pub async fn is_data_loaded() -> bool {
 }
 
 pub fn select_object_type(object_type_id: i32) -> impl Fn(&State) -> Option<&ObjectType> {
-	move |s: &State| {
-		s.data.object_types.get(&object_type_id)
-	}
+	move |s: &State| { s.data.object_types.iter().find(|ot| ot.id == object_type_id) }
 }
 pub fn select_object_instance(object_instance_id: i32) -> impl Fn(&State) -> Option<&EdObjectInstance> {
 	move |s: &State| {

@@ -109,7 +109,7 @@ export interface CPropItem {
 /** Subset of state held by frontend Redux */
 export interface CstcData {
 	editorPlugins: Record<number, PluginData>
-  objectTypes: Record<number, ObjectType>
+  objectTypes: Array<ObjectType>
   behaviors: Array<Behavior>
   traits: Array<ObjectTrait>
   families: Array<Family>
@@ -304,9 +304,41 @@ export interface ObjectInstance {
   angle: float
   filter: int
   privateVariables: Array<string>
-  data: Array<number>
+	data: TextObjectData | SpriteObjectData | number[]
   key: int
   _type: 'ObjectInstance'
+}
+
+export interface TextObjectData {
+	version: number;
+	text: string;
+	fontFace: string;
+	pxSize: number;
+	italics: number;
+	bold: number;
+	color: number;
+	opacity: number;
+	horizAlign: number;
+	vertAlign: number;
+	hideAtStart: boolean;
+	_type: 'TextObjectData';
+}
+
+export interface SpriteObjectData {
+	version: number;
+	collMode: number;
+	autoMirror: number;
+	autoFlip: number;
+	autoRotations: number;
+	autoRotationsCombo: number;
+	hideAtStart: boolean;
+	animation: number;
+	skewX: number;
+	skewY: number;
+	lockedAnimationAngles: boolean;
+	startAnim: string;
+	startFrame: number;
+	_type: 'SpriteObjectData';
 }
 
 export interface ObjectTrait {

@@ -8,7 +8,7 @@ use crate::cstc_editing::{CstcData, EdLayout};
 #[serde(rename_all = "camelCase")]
 /// Subset of state held by frontend Redux
 pub struct JsCstcData {
-	pub object_types: HashMap<i32, ObjectType>,
+	pub object_types: Vec<ObjectType>,
 	pub behaviors: Vec<Behavior>,
 	pub traits: Vec<ObjectTrait>,
 	pub families: Vec<Family>,

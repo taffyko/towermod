@@ -171,9 +171,13 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				backgroundColor: { type: 'int' },
 			})
 		break; case 'ObjectInstance':
+			let dataPinfo: Partial<AnyPropertyInfo> = { hidden: true }
+			if (!(obj.data instanceof Array)){
+				dataPinfo = { type: obj.data._type }
+			}
 			override(type, {
 				id: { type: 'int', readonly: true },
-				data: { hidden: true }, // TODO
+				data: dataPinfo,
 				objectTypeId: { type: 'int' },
 				x: { type: 'int' },
 				y: { type: 'int' },

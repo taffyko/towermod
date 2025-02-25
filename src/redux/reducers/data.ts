@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable, ImageMetadata, ActionPoint, DataKey, BehaviorControl, GlobalVariable } from "@towermod";
+import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable, ImageMetadata, ActionPoint, DataKey, BehaviorControl, GlobalVariable, TextObjectData, SpriteObjectData } from "@towermod";
 // import { PrivateVariableType } from "@towermod";
 import { appActions as appActions } from './app'
 import { addRawReducers, assert, assertUnreachable, unwrap } from "@/util/util";
@@ -10,7 +10,7 @@ const initialState: DataState = {
 	appBlock: null as any,
 	editorPlugins: {},
 	layouts: [],
-	objectTypes: {},
+	objectTypes: [],
 	behaviors: [],
 	traits: [],
 	families: [],
@@ -84,6 +84,7 @@ export function findObjectInstances(state: DataState, objTypeId: number) {
 }
 
 export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | PrivateVariable | ImageMetadata | ActionPoint | DataKey | BehaviorControl | GlobalVariable
+	| TextObjectData | SpriteObjectData
 
 export const uniqueObjectTypes = new Set([
 	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock'
@@ -107,8 +108,8 @@ export type ObjectForType<T extends TowermodObject['_type']> = Extract<TowermodO
 export type LookupForType<T extends UniqueObjectLookup['_type']> = Extract<UniqueObjectLookup, { _type: T }>
 
 
-export function findObject<T extends UniqueObjectLookup>(state: DataState, obj: T): ObjectForType<T['_type']> {
-	let target: any = null
+	export function findObject<T extends UniqueObjectLookup>(state: DataState, obj: T): ObjectForType<T['_type']> {
+		let target: any = null
 	const type = obj._type;
 	switch (type) {
 		case 'ObjectInstance':
