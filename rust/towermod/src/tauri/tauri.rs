@@ -77,7 +77,6 @@ pub fn run() {
 				commands::get_editor_plugins,
 				commands::get_image_metadata,
 				commands::get_data,
-				commands::update_data,
 				commands::is_image_overridden,
 				commands::set_image_metadata,
 				commands::image_dump_dir_path,
@@ -121,9 +120,34 @@ pub fn run() {
 
 				commands::get_layouts,
 				commands::get_layout,
+				commands::update_layout,
 
 				commands::get_layout_layers,
 				commands::get_layout_layer,
+				commands::update_layout_layer,
+
+				commands::get_animations,
+				commands::get_animation,
+				commands::update_animation,
+
+				commands::get_behaviors,
+				commands::get_behavior,
+				commands::update_behavior,
+
+				commands::get_container,
+				commands::get_containers,
+				commands::update_container,
+
+				commands::get_families,
+				commands::get_family,
+				commands::update_family,
+
+				commands::get_traits,
+				commands::get_trait,
+				commands::update_trait,
+
+				commands::get_app_block,
+				commands::update_app_block,
 			]
 		)
 		// TODO: once tauri-bindgen properly supports windows

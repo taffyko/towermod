@@ -1,6 +1,7 @@
 import React from "react";
 import { ErrorInfo } from "react";
 import { showError, ErrorMsg } from "@/components/Error";
+import Style from '@/components/Error/Error.module.scss';
 
 export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 	state: { error: any } = {
@@ -29,7 +30,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 
 	render() {
 		if (this.state.error) {
-			return <div style={{ padding: 'var(--gap-m)' }}>
+			return <div className={Style.errorContainer}>
 				<ErrorMsg error={this.state.error} />
 			</div>
 		} else {

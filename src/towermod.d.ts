@@ -33,7 +33,6 @@ export interface Animation {
   repeatTo: int
   pingPong: boolean
   frames: Array<AnimationFrame>
-  subAnimations: Array<Animation>
   _type: 'Animation'
 }
 
@@ -241,7 +240,6 @@ export interface Layout {
   unboundedScrolling: boolean
   applicationBackground: boolean
   dataKeys: Array<DataKey>
-  layers: Array<LayoutLayer>
   imageIds: Array<number>
   textureLoadingMode: TextureLoadingMode
   _type: 'Layout'
@@ -268,7 +266,6 @@ export interface LayoutLayer {
   sampler: LayerSamplerMode
   enable3D: boolean
   clearDepthBuffer: boolean
-  objects: Array<ObjectInstance>
   _type: 'LayoutLayer'
 }
 

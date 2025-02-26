@@ -1,9 +1,8 @@
 //! APIs for requesting data from the state
 
 use std::collections::HashMap;
-
-use crate::{app::state::{app_state::State, data_state::JsCstcData, select}, cstc_editing::{EdLayout, EdLayoutLayer, EdObjectInstance}};
-use towermod_cstc::{plugin::PluginData, ImageMetadata, ObjectType};
+use crate::{select, app::state::{app_state::State, data_state::JsCstcData, select}, cstc_editing::{EdLayout, EdLayoutLayer, EdObjectInstance}};
+use towermod_cstc::{plugin::PluginData, Animation, Behavior, Container, Family, ImageMetadata, ObjectTrait, ObjectType};
 
 
 pub fn select_editor_plugin(plugin_id: i32) -> impl Fn(&State) -> Option<&PluginData> {
@@ -35,6 +34,9 @@ pub async fn is_data_loaded() -> bool {
 
 pub fn select_object_type(object_type_id: i32) -> impl Fn(&State) -> Option<&ObjectType> {
 	move |s: &State| { s.data.object_types.iter().find(|ot| ot.id == object_type_id) }
+}
+pub fn select_object_type_mut(object_type_id: i32) -> impl Fn(&mut State) -> Option<&mut ObjectType> {
+	move |s: &mut State| { s.data.object_types.iter_mut().find(|ot| ot.id == object_type_id) }
 }
 pub fn select_object_type_plugin_name<'a>(object_type_id: i32) -> impl Fn(&'a State) -> Option<&'a String> {
 	move |s| {
@@ -78,6 +80,21 @@ pub fn select_object_instance(object_instance_id: i32) -> impl Fn(&State) -> Opt
 		None
 	}
 }
+pub fn select_object_instance_mut(object_instance_id: i32) -> impl Fn(&mut State) -> Option<&mut EdObjectInstance> {
+	move |s: &mut State| {
+		for layout in &mut s.data.layouts {
+			for layer in &mut layout.layers {
+				for obj in &mut layer.objects {
+					if obj.id == object_instance_id {
+						return Some(obj)
+					}
+				}
+			}
+		}
+		None
+	}
+}
+
 pub fn select_object_instance_plugin(object_instance_id: i32) -> impl Fn(&State) -> Option<&PluginData> {
 	move |s: &State| {
 		let obj = select_object_instance(object_instance_id)(s)?;
@@ -99,7 +116,7 @@ pub async fn get_object_types() -> Vec<i32> {
 	select(|s| s.data.object_types.iter().map(|ot| ot.id).collect()).await
 }
 pub async fn get_object_type(object_type_id: i32) -> Option<ObjectType> {
-	select(move |s| s.data.object_types.iter().find(|ot| ot.id == object_type_id).cloned()).await
+	select!(select_object_type(object_type_id), |r| r.cloned()).await
 }
 pub async fn search_object_types(txt: String) -> Vec<i32> {
 	select(move |s| s.data.object_types.iter().filter(|ot| ot.name.contains(&txt)).map(|ot| ot.id).collect()).await
@@ -116,6 +133,10 @@ pub fn select_layouts() -> impl Fn(&State) -> Vec<String> {
 pub fn select_layout(name: String) -> impl Fn(&State) -> Option<&EdLayout> {
 	move |s| s.data.layouts.iter().find(|l| l.name == name)
 }
+pub fn select_layout_mut(name: String) -> impl Fn(&mut State) -> Option<&mut EdLayout> {
+	move |s| s.data.layouts.iter_mut().find(|l| l.name == name)
+}
+
 pub fn select_layout_layers(layout_name: String) -> impl Fn(&State) -> Vec<i32> {
 	move |s| {
 		for layout in &s.data.layouts {
@@ -137,4 +158,66 @@ pub fn select_layout_layer(layer_id: i32) -> impl Fn(&State) -> Option<&EdLayout
 		}
 		None
 	}
+}
+pub fn select_layout_layer_mut(layer_id: i32) -> impl Fn(&mut State) -> Option<&mut EdLayoutLayer> {
+	move |s| {
+		for layout in &mut s.data.layouts {
+			for layer in &mut layout.layers {
+				if layer.id == layer_id {
+					return Some(layer)
+				}
+			}
+		}
+		None
+	}
+}
+
+pub fn select_animations() -> impl Fn(&State) -> Vec<i32> {
+	move |s| s.data.animations.iter().map(|a| a.id).collect()
+}
+pub fn select_animation(animation_id: i32) -> impl Fn(&State) -> Option<&Animation> {
+	move |s| s.data.animations.iter().find(|a| a.id == animation_id)
+}
+pub fn select_animation_mut(animation_id: i32) -> impl Fn(&mut State) -> Option<&mut Animation> {
+		move |s| s.data.animations.iter_mut().find(|a| a.id == animation_id)
+}
+
+pub fn select_behaviors() -> impl Fn(&State) -> Vec<(i32, i32)> {
+	move |s| s.data.behaviors.iter().map(|b| (b.object_type_id, b.mov_index)).collect()
+}
+pub fn select_behavior(object_type_id: i32, mov_index: i32) -> impl Fn(&State) -> Option<&Behavior> {
+	move |s| s.data.behaviors.iter().find(|b| b.object_type_id == object_type_id && b.mov_index == mov_index)
+}
+pub fn select_behavior_mut(object_type_id: i32, mov_index: i32) -> impl Fn(&mut State) -> Option<&mut Behavior> {
+	move |s| s.data.behaviors.iter_mut().find(|b| b.object_type_id == object_type_id && b.mov_index == mov_index)
+}
+
+pub fn select_containers() -> impl Fn(&State) -> Vec<i32> {
+	move |s| s.data.containers.iter().map(|c| c.object_ids[0]).collect()
+}
+pub fn select_container(object_id: i32) -> impl Fn(&State) -> Option<&Container> {
+	move |s| s.data.containers.iter().find(|c| c.object_ids[0] == object_id)
+}
+pub fn select_container_mut(object_id: i32) -> impl Fn(&mut State) -> Option<&mut Container> {
+	move |s| s.data.containers.iter_mut().find(|c| c.object_ids[0] == object_id)
+}
+
+pub fn select_families() -> impl Fn(&State) -> Vec<&String> {
+	move |s| s.data.families.iter().map(|f| &f.name).collect()
+}
+pub fn select_family(name: String) -> impl Fn(&State) -> Option<&Family> {
+	move |s| s.data.families.iter().find(|f| f.name == name)
+}
+pub fn select_family_mut(name: String) -> impl Fn(&mut State) -> Option<&mut Family> {
+	move |s| s.data.families.iter_mut().find(|f| f.name == name)
+}
+
+pub fn select_traits() -> impl Fn(&State) -> Vec<&String> {
+	move |s| s.data.traits.iter().map(|f| &f.name).collect()
+}
+pub fn select_trait(name: String) -> impl Fn(&State) -> Option<&ObjectTrait> {
+	move |s| s.data.traits.iter().find(|f| f.name == name)
+}
+pub fn select_trait_mut(name: String) -> impl Fn(&mut State) -> Option<&mut ObjectTrait> {
+	move |s| s.data.traits.iter_mut().find(|f| f.name == name)
 }

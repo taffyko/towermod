@@ -10,3 +10,9 @@
 	border: solid 1px var(--color-border-subtle);
 	border-radius: 5px;
 }
+
+.errorContainer {
+	padding: var(--gap-m);
+	overflow: auto;
+	max-height: 100%;
+}

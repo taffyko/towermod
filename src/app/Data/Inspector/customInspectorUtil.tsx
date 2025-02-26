@@ -1,10 +1,9 @@
 import React from 'react'
-import { TowermodObject, findObjectInstances } from "@/redux";
+import { TowermodObject } from "@/util";
 import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName, ParentPropertyInfo } from "./base/inspectorUtil";
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
 import { PrivateVariables } from './PrivateVariables';
-import { store } from '@/redux';
 import { DisableShaderWhen, FpsMode, LayerSamplerMode, LayerType, ResizeMode, SamplerMode, SimulateShadersMode, TextRenderingMode, TextureLoadingMode } from '@towermod';
 
 
@@ -44,10 +43,11 @@ export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: 
 		case 'ObjectType':
 			return [
 				{
-					// FIXME: this
 					key: 'instances',
 					get value() {
-						return findObjectInstances(store.getState().data, obj.id).map(instance => instance.id)
+						// FIXME: instances list
+						// return findObjectInstances(store.getState().data, obj.id).map(instance => instance.id)
+						return []
 					},
 					readonly: true,
 					type: 'Array',
@@ -57,7 +57,9 @@ export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: 
 				{
 					key: 'plugin',
 					get value() {
-						return store.getState().data.editorPlugins[obj.pluginId]?.stringTable.name
+						// FIXME: plugin name
+						// return store.getState().data.editorPlugins[obj.pluginId]?.stringTable.name
+						return "todo"
 					},
 					readonly: true,
 					type: 'string',
@@ -138,7 +140,6 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 	switch (type) {
 		case 'Animation':
 			override(type, {
-				subAnimations: { hidden: true },
 				id: { type: 'int', readonly: true },
 				frames: { valueTypes: ['AnimationFrame'] },
 				tag: { type: 'int' },
@@ -153,7 +154,6 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'Layout':
 			override(type, {
 				name: { readonly: true },
-				layers: { hidden: true },
 				imageIds: { hidden: true, },
 				dataKeys: { valueTypes: ['DataKey'] },
 				textureLoadingMode: { type: 'TextureLoadingMode' },
@@ -166,7 +166,6 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				layerType: { type: 'LayerType' },
 				sampler: { type: 'LayerSamplerMode' },
 				id: { type: 'int', readonly: true },
-				objects: { hidden: true },
 				filterColor: { type: 'int' },
 				backgroundColor: { type: 'int' },
 			})

@@ -1,4 +1,29 @@
-import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData } from "@towermod";
+import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData, TextObjectData, SpriteObjectData, AnimationFrame, PrivateVariable, ActionPoint, DataKey, BehaviorControl, GlobalVariable } from "@towermod";
+
+export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | PrivateVariable | ImageMetadata | ActionPoint | DataKey | BehaviorControl | GlobalVariable
+	| TextObjectData | SpriteObjectData
+
+export const uniqueObjectTypes = new Set([
+	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock'
+] as const)
+export type UniqueObjectTypes = (typeof uniqueObjectTypes) extends Set<infer T> ? T : never
+/** Towermod objects that possess unique IDs, making it possible to look them up */
+export type UniqueTowermodObject = Extract<TowermodObject, { _type: UniqueObjectTypes }>
+/** Minimum properties needed to lookup each object (type and primary key) */
+export type UniqueObjectLookup =
+	Pick<Layout, '_type' | 'name'>
+	| Pick<LayoutLayer, '_type' | 'id'>
+	| Pick<ObjectInstance, '_type' | 'id'>
+	| Pick<Animation, '_type' | 'id'>
+	| Pick<Behavior, '_type' | 'movIndex' | 'objectTypeId'>
+	| Pick<Container, '_type' | 'objectIds'>
+	| Pick<Family, '_type' | 'name'>
+	| Pick<ObjectType, '_type' | 'id'>
+	| Pick<ObjectTrait, '_type' | 'name'>
+	| Pick<AppBlock, '_type'>
+export type ObjectForType<T extends TowermodObject['_type']> = Extract<TowermodObject, { _type: T }>
+export type LookupForType<T extends UniqueObjectLookup['_type']> = Extract<UniqueObjectLookup, { _type: T }>
+
 
 export function getUniqueName(author: string, name: string) : string
 export function getUniqueName(mod: ModInfo | string): string
@@ -32,17 +57,15 @@ export function enhanceModInfo(modInfo: ModInfo): ModInfo {
 
 export function enhanceLayout(layout: Layout): Layout {
 	layout._type = 'Layout'
-	for (const layer of layout.layers) {
-		enhanceLayoutLayer(layer)
-	}
+	// @ts-ignore
+	delete layout.layers;
 	return layout
 }
 
 export function enhanceLayoutLayer(layer: LayoutLayer): LayoutLayer {
 	layer._type = 'LayoutLayer'
-	for (const obj of layer.objects) {
-		enhanceObjectInstance(obj)
-	}
+	// @ts-ignore
+	delete layer.objects;
 	return layer
 }
 
@@ -55,33 +78,37 @@ export function enhanceObjectInstance(obj: ObjectInstance): ObjectInstance {
 	return obj
 }
 
-export function enhanceAnimation(animation: Animation): Animation {
+export function enhanceAnimation<T extends Animation>(animation: T): T {
+	if (!animation) { return animation }
 	animation._type = 'Animation'
+	// @ts-ignore
+	delete animation.subAnimations;
 	for (const frame of animation.frames) {
 		frame._type = 'AnimationFrame'
-	}
-	for (const subAnimation of animation.subAnimations) {
-		enhanceAnimation(subAnimation)
 	}
 	return animation
 }
 
-export function enhanceBehavior(behavior: Behavior): Behavior {
+export function enhanceBehavior<T extends Behavior>(behavior: T): T {
+	if (!behavior) { return behavior }
 	behavior._type = 'Behavior'
 	return behavior
 }
 
-export function enhanceContainer(container: Container): Container {
+export function enhanceContainer<T extends Container>(container: T): T {
+	if (!container) { return container }
 	container._type = 'Container'
 	return container
 }
 
-export function enhanceFamily(family: Family): Family {
+export function enhanceFamily<T extends Family>(family: T): T {
+	if (!family) { return family }
 	family._type = 'Family'
 	return family
 }
 
-export function enhanceObjectType(objType: ObjectType): ObjectType {
+export function enhanceObjectType<T extends ObjectType>(objType: T): T {
+	if (!objType) { return objType }
 	objType._type = 'ObjectType'
 	for (const privateVariable of objType.privateVariables) {
 		privateVariable._type = 'PrivateVariable'
@@ -89,17 +116,20 @@ export function enhanceObjectType(objType: ObjectType): ObjectType {
 	return objType
 }
 
-export function enhanceObjectTrait(trait: ObjectTrait): ObjectTrait {
+export function enhanceObjectTrait<T extends ObjectTrait>(trait: T): T {
+	if (!trait) { return trait }
 	trait._type = 'ObjectTrait'
 	return trait
 }
 
-export function enhanceAppBlock(appBlock: AppBlock): AppBlock {
+export function enhanceAppBlock<T extends AppBlock>(appBlock: T): T {
+	if (!appBlock) { return appBlock }
 	appBlock._type = 'AppBlock'
 	return appBlock
 }
 
-export function enhanceImageMetadata(imageMetadata: ImageMetadata): ImageMetadata {
+export function enhanceImageMetadata<T extends ImageMetadata>(imageMetadata: T): T {
+	if (!imageMetadata) { return imageMetadata }
 	imageMetadata._type = 'ImageMetadata'
 	for (const actionPoint of imageMetadata.apoints) {
 		actionPoint._type = 'ActionPoint'

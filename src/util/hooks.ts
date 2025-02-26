@@ -69,6 +69,42 @@ export function useMemoAsync<T>(fn: () => Promise<T> | T, deps?: DependencyList)
 	return result
 }
 
+export function useMemoAsyncWithCleanup<T>(factory: () => [Promise<T> | undefined] | [Promise<T> | undefined, () => void], deps: DependencyList): T | undefined {
+	const resultRef = useRef<null | [Promise<T> | undefined] | [Promise<T> | undefined, ReturnType<EffectCallback>]>(null)
+	const [result, setResult] = useState<T | undefined>(undefined)
+	const rerender = useRerender();
+
+	// recompute value
+	if (!resultRef.current) {
+		resultRef.current = factory()
+	}
+
+	useEffect(() => {
+		if (!resultRef.current) { return }
+		const [promise, ] = resultRef.current
+		;(async () => {
+			const result = await promise;
+			// only use result if the promise hasn't been invalidated
+			if (promise === resultRef.current?.[0]) {
+				setResult(result)
+			}
+		})()
+		return () => {
+			if (resultRef.current) {
+				const [, cleanup] = resultRef.current
+				if (cleanup) {
+					setTimeout(() => cleanup(), 0)
+				}
+				// invalidate value to trigger recompute on next render
+				resultRef.current = null
+				setResult(undefined)
+				rerender()
+			}
+		}
+	}, deps)
+	return result
+}
+
 /** Allows you to return both a value and a cleanup function that runs before the value recomputes */
 export function useMemoWithCleanup<T>(factory: () => [T] | [T, ReturnType<EffectCallback>], deps: DependencyList): T {
 	const resultRef = useRef<null | [T] | [T, ReturnType<EffectCallback>]>(null)

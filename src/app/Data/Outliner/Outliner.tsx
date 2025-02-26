@@ -8,22 +8,22 @@ import {
 	NodeComponentProps,
 	FixedSizeTree,
 } from 'react-vtree';
-import { useMemoAsync, useStateRef } from '@/util/hooks';
-import { actions, dispatch, findAnimationById, findLayoutByName, findLayoutLayerById, findObject, useAppSelector } from '@/redux';
+import { useStateRef } from '@/util/hooks';
+import { actions, dispatch } from '@/redux';
 import { assertUnreachable, enumerate } from '@/util/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
-import { UniqueObjectLookup, UniqueTowermodObject } from '@/redux';
+import { UniqueObjectLookup, UniqueTowermodObject } from '@/util';
 import { useObjectDisplayName } from '@/appUtil';
-import { store } from '@/redux';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';
 import { api } from '@/api';
 
 function getObjChildren(obj: UniqueObjectLookup): UniqueTowermodObject[] {
-	// FIXME: mixture of full objects and lookups being used
+	// FIXME: fetch children asynchronously from API
+	return []
 	// const data = store.getState().data;
 	switch (obj._type) {
 		case 'Layout':
@@ -182,19 +182,14 @@ export interface OutlinerProps {
 }
 
 export const Outliner = (props: OutlinerProps) => {
-	const layouts = useAppSelector(s => s.data.layouts) || []
-	const animations = useAppSelector(s => s.data.animations) || []
-	const behaviors = useAppSelector(s => s.data.behaviors) || []
-	const containers = useAppSelector(s => s.data.containers) || []
-	const families = useAppSelector(s => s.data.families) || []
-	// const objectTypes = useAppSelector(s => s.data.objectTypes) || []
-	const _objectTypes = api.useGetObjectTypesQuery().data || []
-	const objectTypes = useMemo(() => {
-		return _objectTypes.map(id => ({ _type: 'ObjectType' as const, id }))
-	}, [_objectTypes]);
-
-	const traits = useAppSelector(s => s.data.traits) || []
-	const appBlock = useAppSelector(s => s.data.appBlock)
+	const layouts = api.useGetLayoutsQuery().data || []
+	const animations = api.useGetAnimationsQuery().data || []
+	const behaviors = api.useGetBehaviorsQuery().data || []
+	const containers = api.useGetContainersQuery().data || []
+	const families = api.useGetFamiliesQuery().data || []
+	const objectTypes = api.useGetObjectTypesQuery().data || []
+	const traits = api.useGetObjectTraitsQuery().data || []
+	const appBlock = api.useGetAppBlockQuery().data
 
 	const [tree, setTreeRef] = useStateRef<FixedSizeTree<OutlinerNodeData>>()
 

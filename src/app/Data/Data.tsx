@@ -1,36 +1,26 @@
 import Outliner, { OutlinerContext, OutlinerHandle } from './Outliner/Outliner'
 import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
-import { useEffect, useState } from 'react'
-import { UniqueTowermodObject, actions, dataActions, dispatch, findObject, store } from '@/redux'
+import { useState } from 'react'
+import { UniqueTowermodObject } from '@/util'
 import { useStateRef } from '@/util/hooks'
-import { useAppDispatch, useAppSelector } from '@/redux'
+import { useAppSelector } from '@/redux'
 import { api } from '@/api'
 import { Button } from '@/components/Button'
 import { spin } from '../GlobalSpinner'
 import { toast } from '../Toast'
 import { Toggle } from '@/components/Toggle'
 import { awaitRtk } from '@/api/helpers'
-import { saveProject } from '@/appUtil'
+import { saveProject, useTowermodObject } from '@/appUtil'
 
 export function Data() {
-	const dispatch = useAppDispatch()
 	const searchValue = useAppSelector((s) => s.app.outlinerValue);
-	const value = useAppSelector((state) => searchValue ? findObject(state.data, searchValue) : null)
-
-	const { data: backendData } = api.useGetDataQuery()
-	const { data: editorPlugins } = api.useGetEditorPluginsQuery()
-	useEffect(() => {
-		if (backendData && editorPlugins) {
-			dispatch(actions.setData({ ...backendData, editorPlugins }))
-		}
-	}, [backendData, editorPlugins])
-
+	const value = useTowermodObject(searchValue);
 
 	const [outlinerRef, setOutlinerRef] = useStateRef<OutlinerHandle>();
 
 	const onChange = (obj: UniqueTowermodObject) => {
-		dispatch(dataActions.editObject(obj))
+		// FIXME: dispatch object changes to API
 	}
 
 	return <div className="vbox gap grow">
@@ -50,9 +40,7 @@ export function Data() {
 
 
 function PlayProject() {
-	const [updateData] = api.useUpdateDataMutation()
 	const [playProject] = api.usePlayProjectMutation()
-	const { data: backendData } = api.useGetDataQuery()
 	const [debug, setDebug] = useState(false)
 
 	return <div className="hbox gap">
@@ -62,7 +50,6 @@ function PlayProject() {
 	</div>
 
 	async function onClickPlayProject() {
-		await awaitRtk(spin(updateData(store.getState().data)))
 		await awaitRtk(spin(playProject(debug)))
 		toast("Project launched")
 	}

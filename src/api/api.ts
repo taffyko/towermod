@@ -11,7 +11,7 @@ import { enhanceModInfo } from '@/util';
 const tagTypes = [
 	'Project', 'Game', 'Data', 'ModInfo', 'ModCache', 'TowermodConfig',
 	// game data objects
-	'Image', 'ImageMetadata', 'ObjectType'
+	'Image', 'ImageMetadata', 'ObjectType', 'ObjectInstance', 'Behavior', 'Container', 'Family', 'ObjectTrait', 'AppBlock', 'Layout', 'LayoutLayer', 'Animation'
 ] as const;
 
 export const baseApi = createApi({

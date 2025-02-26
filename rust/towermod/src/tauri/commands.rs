@@ -145,11 +145,6 @@ pub async fn get_data() -> Option<JsCstcData> {
 }
 
 #[command]
-pub async fn update_data(new_data: JsCstcData) {
-	thunks::update_data(new_data).await
-}
-
-#[command]
 pub async fn is_image_overridden(id: i32) -> Result<bool> {
 	thunks::is_image_overridden(id).await
 }
@@ -316,14 +311,87 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_layouts() -> Vec<String> {
 	select(selectors::select_layouts()).await
 }
-
 #[command] pub async fn get_layout(name: String) -> Option<cstc_editing::EdLayout> {
-	select!(selectors::select_layout(name), |r| r.cloned()).await
+	select!(selectors::select_layout(name), |r| r.map(|l| {
+		let cstc_editing::EdLayout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode } = l;
+		cstc_editing::EdLayout { name: name.clone(), width: width.clone(), height: height.clone(), color: color.clone(), unbounded_scrolling: unbounded_scrolling.clone(), application_background: application_background.clone(), data_keys: data_keys.clone(), layers: Default::default(), image_ids: image_ids.clone(), texture_loading_mode: texture_loading_mode.clone() }
+	})).await
+}
+#[command] pub async fn update_layout(layout: cstc_editing::EdLayout) {
+	dispatch(DataAction::UpdateLayout(layout)).await
 }
 
 #[command] pub async fn get_layout_layers(layout_name: String) -> Vec<i32> {
 	select(selectors::select_layout_layers(layout_name)).await
 }
 #[command] pub async fn get_layout_layer(id: i32) -> Option<cstc_editing::EdLayoutLayer> {
-	select!(selectors::select_layout_layer(id), |r| r.cloned()).await
+	select!(selectors::select_layout_layer(id), |r| r.map(|l| {
+		let cstc_editing::EdLayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects } = l;
+		cstc_editing::EdLayoutLayer { id: id.clone(), name: name.clone(), layer_type: layer_type.clone(), filter_color: filter_color.clone(), opacity: opacity.clone(), angle: angle.clone(), scroll_x_factor: scroll_x_factor.clone(), scroll_y_factor: scroll_y_factor.clone(), scroll_x: scroll_x.clone(), scroll_y: scroll_y.clone(), zoom_x_factor: zoom_x_factor.clone(), zoom_y_factor: zoom_y_factor.clone(), zoom_x: zoom_x.clone(), zoom_y: zoom_y.clone(), clear_background_color: clear_background_color.clone(), background_color: background_color.clone(), force_own_texture: force_own_texture.clone(), sampler: sampler.clone(), enable_3d: enable_3d.clone(), clear_depth_buffer: clear_depth_buffer.clone(), objects: Default::default() }
+	})).await
 }
+#[command] pub async fn update_layout_layer(layer: cstc_editing::EdLayoutLayer) {
+	dispatch(DataAction::UpdateLayoutLayer(layer)).await
+}
+
+#[command] pub async fn get_animations() -> Vec<i32> {
+	select(selectors::select_animations()).await
+}
+#[command] pub async fn get_animation(id: i32) -> Option<towermod_cstc::Animation> {
+	select!(selectors::select_animation(id), |r| r.map(|a| {
+		let towermod_cstc::Animation { id, name, tag, speed, is_angle, angle, repeat_count, repeat_to, ping_pong, frames, sub_animations } = a;
+		towermod_cstc::Animation { id: id.clone(), name: name.clone(), tag: tag.clone(), speed: speed.clone(), is_angle: is_angle.clone(), angle: angle.clone(), repeat_count: repeat_count.clone(), repeat_to: repeat_to.clone(), ping_pong: ping_pong.clone(), frames: frames.clone(), sub_animations: Default::default() }
+	})).await
+}
+#[command] pub async fn update_animation(animation: towermod_cstc::Animation) {
+	dispatch(DataAction::UpdateAnimation(animation)).await
+}
+
+#[command] pub async fn get_behaviors() -> Vec<(i32, i32)> {
+	select(selectors::select_behaviors()).await
+}
+#[command] pub async fn get_behavior(object_type_id: i32, mov_index: i32) -> Option<towermod_cstc::Behavior> {
+	select!(selectors::select_behavior(object_type_id, mov_index), |r| r.cloned()).await
+}
+#[command] pub async fn update_behavior(behavior: towermod_cstc::Behavior) {
+	dispatch(DataAction::UpdateBehavior(behavior)).await
+}
+
+#[command] pub async fn get_containers() -> Vec<i32> {
+	select(selectors::select_containers()).await
+}
+#[command] pub async fn get_container(id: i32) -> Option<towermod_cstc::Container> {
+	select!(selectors::select_container(id), |r| r.cloned()).await
+}
+#[command] pub async fn update_container(container: towermod_cstc::Container) {
+	dispatch(DataAction::UpdateContainer(container)).await
+}
+
+#[command] pub async fn get_families() -> Vec<String> {
+	select!(selectors::select_families(), |r| r.into_iter().map(|name| name.clone()).collect()).await
+}
+#[command] pub async fn get_family(name: String) -> Option<towermod_cstc::Family> {
+	select!(selectors::select_family(name), |r| r.cloned()).await
+}
+#[command] pub async fn update_family(family: towermod_cstc::Family) {
+	dispatch(DataAction::UpdateFamily(family)).await
+}
+
+#[command] pub async fn get_traits() -> Vec<String> {
+	select!(selectors::select_traits(), |r| r.into_iter().map(|name| name.clone()).collect()).await
+}
+#[command] pub async fn get_trait(name: String) -> Option<towermod_cstc::ObjectTrait> {
+	select!(selectors::select_trait(name), |r| r.cloned()).await
+}
+#[command] pub async fn update_trait(object_trait: towermod_cstc::ObjectTrait) {
+	dispatch(DataAction::UpdateTrait(object_trait)).await
+}
+
+#[command] pub async fn get_app_block() -> Option<towermod_cstc::AppBlock> {
+	select(|s| s.data.app_block.as_ref().cloned()).await
+}
+#[command] pub async fn update_app_block(app_block: towermod_cstc::AppBlock) {
+	dispatch(DataAction::UpdateAppBlock(app_block)).await;
+}
+
+

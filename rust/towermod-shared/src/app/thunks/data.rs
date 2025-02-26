@@ -40,8 +40,3 @@ pub async fn is_image_overridden(id: i32) -> Result<bool> {
 pub async fn set_image_metadata(data: ImageMetadata) {
 	STORE.dispatch(DataAction::SetImageMetadata(data).into()).await;
 }
-
-pub async fn update_data(new_data: JsCstcData) {
-	STORE.dispatch(DataAction::UpdateData(new_data).into()).await;
-}
-
