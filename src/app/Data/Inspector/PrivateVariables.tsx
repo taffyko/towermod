@@ -1,7 +1,6 @@
 import { useAppDispatch, useAppSelector } from "@/redux";
 import { InspectorDictionary } from "./base/Inspector";
 import { ArrayPropertyInfo, DictionaryPropertyInfo, SimplePropertyInfo } from "./base/inspectorUtil";
-import { findObjectTypeById } from "@/redux";
 import { ObjectInstance, PrivateVariable } from "@towermod";
 import { actions } from "@/redux";
 import { assert } from "@/util/util";
@@ -14,7 +13,9 @@ export function PrivateVariables(props: { pinfo: ArrayPropertyInfo<PrivateVariab
 	const objPinfo = pinfo.parent as SimplePropertyInfo<ObjectInstance>
 	const obj = objPinfo.value;
 
-	const objType = useAppSelector(state => findObjectTypeById(state.data, obj.objectTypeId))
+	// const objType = useAppSelector(state => findObjectTypeById(state.data, obj.objectTypeId))
+	// FIXME
+	return
 
 	const value = useMemo(() => {
 		const dict: Record<string, string | number> = {}

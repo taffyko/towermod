@@ -109,7 +109,6 @@ export interface CPropItem {
 /** Subset of state held by frontend Redux */
 export interface CstcData {
 	editorPlugins: Record<number, PluginData>
-  objectTypes: Array<ObjectType>
   behaviors: Array<Behavior>
   traits: Array<ObjectTrait>
   families: Array<Family>

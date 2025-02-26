@@ -11,7 +11,7 @@ import { enhanceModInfo } from '@/util';
 const tagTypes = [
 	'Project', 'Game', 'Data', 'ModInfo', 'ModCache', 'TowermodConfig',
 	// game data objects
-	'Image', 'ImageMetadata',
+	'Image', 'ImageMetadata', 'ObjectType'
 ] as const;
 
 export const baseApi = createApi({
@@ -148,7 +148,7 @@ export const baseApi = createApi({
 			queryFn: queryFn(async (manifestPath) => {
 				return await invoke('load_project', { manifestPath })
 			}),
-			invalidatesTags: ['Project', 'Data'],
+			invalidatesTags: ['Project', 'Data', 'ObjectType', 'ImageMetadata', 'Image'],
 		}),
 
 		editProjectInfo: builder.mutation<void, Project>({

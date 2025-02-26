@@ -105,6 +105,25 @@ pub fn run() {
 				commands::mod_cache_exists,
 				commands::clear_mod_cache,
 				commands::wait_until_process_exits,
+
+				commands::get_object_types,
+				commands::get_object_type,
+				commands::search_object_types,
+				commands::update_object_type,
+				commands::create_object_type,
+				commands::delete_object_type,
+
+				commands::get_object_instances,
+				commands::get_object_instance,
+				commands::update_object_instance,
+				commands::delete_object_instance,
+				commands::create_object_instance,
+
+				commands::get_layouts,
+				commands::get_layout,
+
+				commands::get_layout_layers,
+				commands::get_layout_layer,
 			]
 		)
 		// TODO: once tauri-bindgen properly supports windows

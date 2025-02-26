@@ -2,7 +2,7 @@ import { enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, e
 import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
 import { queryFn } from './baseApiUtil';
-import { CstcData, ImageMetadata, PluginData } from '@towermod';
+import { CstcData, ImageMetadata, ObjectType, PluginData } from '@towermod';
 
 export const dataApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
@@ -50,14 +50,29 @@ export const dataApi = baseApi.injectEndpoints({
 			providesTags: ['Data']
 		}),
 
-
-
+		getObjectType: builder.query<ObjectType, number>({
+			queryFn: queryFn(async (id) => {
+				return await invoke('get_object_type', { id })
+			}),
+			providesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg) }]
+		}),
+		getObjectTypes: builder.query<number[], void>({
+			queryFn: queryFn(async () => {
+				return await invoke('get_object_types')
+			}),
+			providesTags: ['ObjectType']
+		}),
+		searchObjectTypes: builder.query<number[], string>({
+			queryFn: queryFn(async (txt) => {
+				return await invoke('get_object_type', { txt })
+			}),
+			providesTags: ['ObjectType'],
+		}),
 
 		getData: builder.query<CstcData, void>({
 			queryFn: queryFn(async () => {
 				const data: CstcData = await invoke('get_data');
 				for (const animation of data.animations) { enhanceAnimation(animation) }
-				for (const objectType of data.objectTypes) { enhanceObjectType(objectType) }
 				for (const behavior of data.behaviors) { enhanceBehavior(behavior) }
 				for (const trait of data.traits) { enhanceObjectTrait(trait) }
 				for (const family of data.families) { enhanceFamily(family) }

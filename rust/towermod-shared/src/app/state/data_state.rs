@@ -1,14 +1,13 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use towermod_cstc::stable::*;
+use super::super::selectors;
 
-use crate::cstc_editing::{CstcData, EdLayout};
+use crate::cstc_editing::{CstcData, EdLayout, EdObjectInstance};
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// Subset of state held by frontend Redux
 pub struct JsCstcData {
-	pub object_types: Vec<ObjectType>,
 	pub behaviors: Vec<Behavior>,
 	pub traits: Vec<ObjectTrait>,
 	pub families: Vec<Family>,
@@ -20,7 +19,6 @@ pub struct JsCstcData {
 impl JsCstcData {
 	pub fn get(value: &CstcData) -> Self {
 		Self {
-			object_types: value.object_types.clone(),
 			behaviors: value.behaviors.clone(),
 			traits: value.traits.clone(),
 			families: value.families.clone(),
@@ -31,7 +29,6 @@ impl JsCstcData {
 		}
 	}
 	pub fn set(self, value: &mut CstcData) {
-		value.object_types = self.object_types;
 		value.behaviors = self.behaviors;
 		value.traits = self.traits;
 		value.families = self.families;
@@ -49,8 +46,14 @@ pub enum Action {
 	UpdateData(JsCstcData),
 	SetData(CstcData),
 	SetImageMetadata (ImageMetadata),
-	AddObjectInstance { object_type_id: i32, layout_layer_id: i32 },
-	RemoveObjectInstance { id: i32 },
+
+	UpdateObjectType(ObjectType),
+	CreateObjectType { id: i32, plugin_id: i32 },
+	DeleteObjectType(i32),
+
+	UpdateObjectInstance(EdObjectInstance),
+	CreateObjectInstance { id: i32, object_type_id: i32, layout_layer_id: i32 },
+	DeleteObjectInstance(i32),
 }
 impl From<Action> for super::app_state::Action {
 	fn from(value: Action) -> Self {
@@ -58,25 +61,75 @@ impl From<Action> for super::app_state::Action {
 	}
 }
 
-pub fn reducer(state: State, action: Action) -> State {
+pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_state::State {
 	match (action) {
 		Action::UpdateData(data) => {
-			let mut state = state;
-			data.set(&mut state);
-			state
+			data.set(&mut s.data);
 		},
-		Action::SetData(state) => state,
-		Action::AddObjectInstance { layout_layer_id: _, object_type_id: _ } => todo!(),
-		Action::RemoveObjectInstance { id: _ } => todo!(),
+		Action::SetData(new_state) => s.data = new_state,
 		Action::SetImageMetadata(metadata) => {
-			let mut state = state;
-			let index = state.image_block.iter().position(|img| img.id == metadata.id);
+			let index = s.data.image_block.iter().position(|img| img.id == metadata.id);
 			if let Some(index) = index {
-				state.image_block[index] = metadata;
+				s.data.image_block[index] = metadata;
 			} else {
-				state.image_block.push(metadata);
+				s.data.image_block.push(metadata);
 			}
-			state
+		},
+
+		Action::UpdateObjectType(obj) => {
+			if let Some(original_obj) = s.data.object_types.iter_mut().find(|o| o.id == obj.id) {
+				*original_obj = obj;
+			}
+		},
+		Action::CreateObjectType { id, plugin_id } => {
+			s.data.object_types.push(towermod_cstc::ObjectType {
+				id,
+				plugin_id,
+				name: format!("obj{id}"),
+				..Default::default()
+			});
+		},
+		Action::DeleteObjectType(id) => {
+			s.data.object_types.retain(|o| o.id != id);
+			todo!() // delete all object instances of this type
+		},
+
+		Action::UpdateObjectInstance(obj) => {
+			'outer: for layout in &mut s.data.layouts {
+				for layer in &mut layout.layers {
+					for object in &mut layer.objects {
+						if object.id == obj.id {
+							*object = obj;
+							break 'outer;
+						}
+					}
+				}
+			}
+		},
+		Action::CreateObjectInstance { id, object_type_id, layout_layer_id } => {
+			let Some(plugin_name) = selectors::select_object_type_plugin_name(object_type_id)(&s).cloned() else { return s };
+
+			'outer: for layout in &mut s.data.layouts {
+				for layer in &mut layout.layers {
+					if layer.id == layout_layer_id {
+						layer.objects.push(EdObjectInstance {
+							id,
+							object_type_id,
+							data: towermod_cstc::ObjectData::new(&plugin_name),
+							..Default::default()
+						});
+						break 'outer;
+					}
+				}
+			}
+		}
+		Action::DeleteObjectInstance(id) => {
+			for layout in &mut s.data.layouts {
+				for layer in &mut layout.layers {
+					layer.objects.retain(|o| o.id != id);
+				}
+			}
 		},
 	}
+	s
 }

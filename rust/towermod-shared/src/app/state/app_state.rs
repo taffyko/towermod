@@ -24,7 +24,7 @@ pub struct State {
 pub fn reducer(mut state: State, action: Action) -> State {
 	match action {
 		Action::Data(action) => {
-			state.data = data::reducer(state.data, action);
+			state = data::reducer(state, action);
 		}
 		Action::Config(action) => {
 			state.config = config::reducer(state.config, action);
@@ -62,3 +62,21 @@ where
 	STORE.select(selector).await
 }
 
+/// Easily transform/clone a value before it is returned from the select() function
+#[macro_export]
+macro_rules! select {
+	($selector:expr, |$r:ident| $e:expr) => {
+		{
+			let selector = $selector;
+			let selector = move |s: &'_ $crate::app::state::app_state::State| {
+				let $r = selector(s);
+				$e
+			};
+			$crate::app::state::select(selector)
+		}
+	};
+}
+
+pub async fn dispatch(action: impl Into<Action>) {
+	STORE.dispatch(action.into()).await;
+}

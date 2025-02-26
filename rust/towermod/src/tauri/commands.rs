@@ -3,7 +3,7 @@ use tauri::{command, AppHandle, Emitter};
 use anyhow::Result;
 use fs_err::tokio as fs;
 use towermod_cstc::ImageMetadata;
-use towermod_shared::{app::state::{data_state::JsCstcData, select}, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType};
+use towermod_shared::{app::state::{data_state::JsCstcData, dispatch, select, DataAction}, cstc_editing, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType, select };
 use towermod_util::log_on_error;
 
 #[command]
@@ -271,4 +271,59 @@ pub async fn clear_mod_cache(mod_info: ModInfo) -> Result<()> { thunks::clear_mo
 #[command]
 pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 	thunks::wait_until_process_exits(pid).await
+}
+
+
+#[command] pub async fn get_object_types() -> Vec<i32> {
+	selectors::get_object_types().await
+}
+#[command] pub async fn get_object_type(id: i32) -> Option<towermod_cstc::ObjectType> {
+	selectors::get_object_type(id).await
+}
+#[command] pub async fn search_object_types(txt: String) -> Vec<i32> {
+	selectors::search_object_types(txt).await
+}
+#[command] pub async fn update_object_type(obj: towermod_cstc::ObjectType) {
+	dispatch(DataAction::UpdateObjectType(obj)).await
+}
+#[command] pub async fn create_object_type(plugin_id: i32) -> i32 {
+	let id = select(selectors::select_new_object_type_id()).await;
+	dispatch(DataAction::CreateObjectType { id, plugin_id }).await;
+	id
+}
+#[command] pub async fn delete_object_type(id: i32) {
+	dispatch(DataAction::DeleteObjectType(id)).await
+}
+
+#[command] pub async fn get_object_instances(layout_layer_id: i32) -> Vec<i32> {
+	select(selectors::select_object_instances(layout_layer_id)).await
+}
+#[command] pub async fn get_object_instance(id: i32) -> Option<cstc_editing::EdObjectInstance> {
+	select!(selectors::select_object_instance(id), |r| r.cloned()).await
+}
+#[command] pub async fn update_object_instance(obj: cstc_editing::EdObjectInstance) {
+	dispatch(DataAction::UpdateObjectInstance(obj)).await
+}
+#[command] pub async fn create_object_instance(object_type_id: i32, layout_layer_id: i32) -> i32 {
+	let id = select(selectors::select_new_object_instance_id()).await;
+	dispatch(DataAction::CreateObjectInstance { id, object_type_id, layout_layer_id }).await;
+	id
+}
+#[command] pub async fn delete_object_instance(id: i32) {
+	dispatch(DataAction::DeleteObjectInstance(id)).await
+}
+
+#[command] pub async fn get_layouts() -> Vec<String> {
+	select(selectors::select_layouts()).await
+}
+
+#[command] pub async fn get_layout(name: String) -> Option<cstc_editing::EdLayout> {
+	select!(selectors::select_layout(name), |r| r.cloned()).await
+}
+
+#[command] pub async fn get_layout_layers(layout_name: String) -> Vec<i32> {
+	select(selectors::select_layout_layers(layout_name)).await
+}
+#[command] pub async fn get_layout_layer(id: i32) -> Option<cstc_editing::EdLayoutLayer> {
+	select!(selectors::select_layout_layer(id), |r| r.cloned()).await
 }

@@ -7,8 +7,9 @@ export interface QueryErrorInfo {
 	error?: any,
 }
 
-export async function awaitRtk<T>(info: MaybePromise<QueryErrorInfo & { data?: T }>): Promise<T> {
+export async function awaitRtk<T>(info: MaybePromise<QueryErrorInfo & { data?: T }> & { unsubscribe?: () => void }): Promise<T> {
 	const { isError, error, data } = await info;
+	info.unsubscribe?.(); // do not cause data from manual dispatch to be held in the cache forever
 	if (isError || (isError === undefined && error !== undefined)) {
 		throw error
 	}

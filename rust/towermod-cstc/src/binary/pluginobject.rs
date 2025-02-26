@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use serde_alias::serde_alias;
 
@@ -28,6 +29,11 @@ pub enum ObjectData {
 	Text(TextObjectData),
 	Sprite(SpriteObjectData),
 	Unknown(Vec<u8>),
+}
+impl Default for ObjectData {
+	fn default() -> Self {
+		ObjectData::Unknown(Vec::new())
+	}
 }
 
 impl ObjectData {
@@ -70,6 +76,37 @@ impl ObjectData {
 			ObjectData::Unknown(data) => data,
 		}
 	}
+	pub fn new(plugin_name: &str) -> Self {
+		use ObjectData as E;
+		match plugin_name {
+			"XAudio2" => E::Unknown(Default::default()),
+			"Canvas" => E::Unknown(Default::default()),
+			"Mouse & Keyboard" => E::Unknown(Default::default()),
+			"Custom Movement" => E::Unknown(Default::default()),
+			"Clipboard" => E::Unknown(Default::default()),
+			"Hash table" => E::Unknown(Default::default()),
+			"Window" => E::Unknown(Default::default()),
+			"Input System" => E::Unknown(Default::default()),
+			"Sprite" => E::Sprite(Default::default()),
+			"Tiled Background" => E::Unknown(Default::default()),
+			"Image manipulator" => E::Unknown(Default::default()),
+			"Platform" => E::Unknown(Default::default()),
+			"Common Dialog" => E::Unknown(Default::default()),
+			"Sine" => E::Unknown(Default::default()),
+			"INI" => E::Unknown(Default::default()),
+			"Gradient" => E::Unknown(Default::default()),
+			"Panel" => E::Unknown(Default::default()),
+			"Text" => E::Text(Default::default()),
+			"HTTP" => E::Unknown(Default::default()),
+			"Array" => E::Unknown(Default::default()),
+			"CRC32" => E::Unknown(Default::default()),
+			"File" => E::Unknown(Default::default()),
+			"Path" => E::Unknown(Default::default()),
+			"Sys Info" => E::Unknown(Default::default()),
+			"Function" => E::Unknown(Default::default()),
+			_ => E::Unknown(Default::default()),
+		}
+	}
 }
 
 
@@ -95,16 +132,22 @@ pub struct Color {
 }
 
 #[serde_alias(SnakeCase)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Derivative, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derivative(Default)]
 pub struct TextObjectData {
+	#[derivative(Default(value = "2"))]
 	pub version: i32,
 	pub text: String,
+	#[derivative(Default(value = "String::from(\"arial\")"))]
 	pub font_face: String,
+	#[derivative(Default(value = "14"))]
 	pub px_size: i32,
 	pub italics: i32,
 	pub bold: i32,
+	#[derivative(Default(value = "16777215"))]
 	pub color: u32,
+	#[derivative(Default(value = "1.0"))]
 	pub opacity: f32,
 	pub horiz_align: i32,
 	pub vert_align: i32,
@@ -218,21 +261,28 @@ impl BlockWriter {
 }
 
 #[serde_alias(SnakeCase)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Derivative, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derivative(Default)]
 pub struct SpriteObjectData {
+	#[derivative(Default(value = "5"))]
 	pub version: i32,
+	#[derivative(Default(value = "3"))]
 	pub coll_mode: i32,
 	pub auto_mirror: i32,
 	pub auto_flip: i32,
+	#[derivative(Default(value = "8"))]
 	pub auto_rotations: i32,
 	pub auto_rotations_combo: i32,
 	pub hide_at_start: bool,
 	pub animation: i32,
 	pub skew_x: f32,
 	pub skew_y: f32,
+	#[derivative(Default(value = "true"))]
 	pub locked_animation_angles: bool,
+	#[derivative(Default(value = "String::from(\"Default\")"))]
 	pub start_anim: String, // TODO validate on this in UI
+	#[derivative(Default(value = "1"))]
 	pub start_frame: i32, // TODO validate on this in UI
 }
 impl SpriteObjectData {

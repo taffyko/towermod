@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use towermod_cstc::ImageMetadata;
-use crate::{app::state::{data_state::JsCstcData, select, DataAction, STORE}};
+use towermod_cstc::{ImageMetadata, ObjectType};
+use crate::{app::state::{data_state::JsCstcData, select, DataAction, STORE}, cstc_editing::EdObjectInstance};
 use fs_err::tokio as fs;
 
 pub async fn get_image(id: i32) -> Option<Vec<u8>> {
@@ -44,3 +44,4 @@ pub async fn set_image_metadata(data: ImageMetadata) {
 pub async fn update_data(new_data: JsCstcData) {
 	STORE.dispatch(DataAction::UpdateData(new_data).into()).await;
 }
+

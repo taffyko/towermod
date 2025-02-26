@@ -1,8 +1,9 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createSelector, createSlice } from "@reduxjs/toolkit";
 import { AppBlock, Behavior, Container, CstcData, Family, Layout, LayoutLayer, ObjectInstance, ObjectTrait, ObjectType, Animation, AnimationFrame, FeatureDescriptor, FeatureDescriptors, PrivateVariable, ImageMetadata, ActionPoint, DataKey, BehaviorControl, GlobalVariable, TextObjectData, SpriteObjectData } from "@towermod";
 // import { PrivateVariableType } from "@towermod";
-import { appActions as appActions } from './app'
+import { AppState, appActions as appActions } from './app'
 import { addRawReducers, assert, assertUnreachable, unwrap } from "@/util/util";
+import { State } from ".";
 
 export type DataState = CstcData
 
@@ -10,7 +11,6 @@ const initialState: DataState = {
 	appBlock: null as any,
 	editorPlugins: {},
 	layouts: [],
-	objectTypes: [],
 	behaviors: [],
 	traits: [],
 	families: [],
@@ -28,9 +28,6 @@ export function findObjectById(state: DataState, id: number) {
 	}
 	return assert(false)
 }
-export function findObjectTypeById(state: DataState, id: number) {
-	return unwrap(state.objectTypes[id])
-}
 
 export function findLayoutByName(state: DataState, name: string) {
 	return state.layouts.find(s => s.name === name)
@@ -43,7 +40,7 @@ export function findLayoutLayerById(state: DataState, id: number) {
 	}
 	return assert(false)
 }
-export function findAnimationById(state: DataState, id: number) {
+export function findAnimationById(state: DataState, id: number): Animation | undefined {
 	function recurse(animations: Animation[]): Animation | undefined {
 		for (const a of animations) {
 			if (a.id === id) {
@@ -56,19 +53,19 @@ export function findAnimationById(state: DataState, id: number) {
 		}
 		return undefined
 	}
-	return assert(recurse(state.animations))
+	return unwrap(recurse(state.animations))
 }
 export function findContainerByFirstObjectId(state: DataState, id: number) {
-	return assert(state.containers.find(c => c.objectIds[0] === id))
+	return unwrap(state.containers.find(c => c.objectIds[0] === id))
 }
 export function findBehaviorByObjectTypeAndIdx(state: DataState, objectTypeId: number, idx: number) {
-	return assert(state.behaviors.find(b => b.objectTypeId === objectTypeId && b.movIndex === idx))
+	return unwrap(state.behaviors.find(b => b.objectTypeId === objectTypeId && b.movIndex === idx))
 }
 export function findFamilyByName(state: DataState, name: string) {
-	return assert(state.families.find(b => b.name === name))
+	return unwrap(state.families.find(b => b.name === name))
 }
 export function findObjectTraitByName(state: DataState, name: string) {
-	return assert(state.traits.find(o => o.name === name))
+	return unwrap(state.traits.find(o => o.name === name))
 }
 
 export function findObjectInstances(state: DataState, objTypeId: number) {
@@ -92,7 +89,7 @@ export const uniqueObjectTypes = new Set([
 export type UniqueObjectTypes = (typeof uniqueObjectTypes) extends Set<infer T> ? T : never
 /** Towermod objects that possess unique IDs, making it possible to look them up */
 export type UniqueTowermodObject = Extract<TowermodObject, { _type: UniqueObjectTypes }>
-/** Minimum properties needed to lookup each object */
+/** Minimum properties needed to lookup each object (type and primary key) */
 export type UniqueObjectLookup =
 	Pick<Layout, '_type' | 'name'>
 	| Pick<LayoutLayer, '_type' | 'id'>
@@ -108,14 +105,12 @@ export type ObjectForType<T extends TowermodObject['_type']> = Extract<TowermodO
 export type LookupForType<T extends UniqueObjectLookup['_type']> = Extract<UniqueObjectLookup, { _type: T }>
 
 
-	export function findObject<T extends UniqueObjectLookup>(state: DataState, obj: T): ObjectForType<T['_type']> {
-		let target: any = null
+export function findObject<T extends UniqueObjectLookup>(state: DataState, obj: T): ObjectForType<T['_type']> {
+	let target: any = null
 	const type = obj._type;
 	switch (type) {
 		case 'ObjectInstance':
 			target = findObjectById(state, obj.id)
-		break; case 'ObjectType':
-			target = findObjectTypeById(state, obj.id)
 		break; case 'Layout':
 			target = findLayoutByName(state, obj.name)
 		break; case 'LayoutLayer':
@@ -138,6 +133,11 @@ export type LookupForType<T extends UniqueObjectLookup['_type']> = Extract<Uniqu
 	return target
 }
 
+export const selectTowermodObject = createSelector(
+	(state: DataState) => state,
+	(_, obj: UniqueObjectLookup) => obj,
+	(state: DataState, obj: UniqueObjectLookup) => findObject(state, obj),
+)
 
 export const dataSlice = createSlice({
 	name: "data",
@@ -164,43 +164,43 @@ export const dataSlice = createSlice({
 		removeObjectInstance(state, { payload }: PayloadAction<LookupForType<'ObjectInstance'>>) {
 			// TODO: do types need at least one instance?
 		},
-		addPrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string, initialValue: string | number }>) {
-			const { objectTypeId, prop, initialValue } = payload
-			const type = findObjectTypeById(state, objectTypeId)
-			if (type.privateVariables.find(o => o.name === prop)) {
-				console.error(`Property ${prop} already exists`)
-				return
-			}
-			const valueType = typeof initialValue === 'number' ? 0 : 1 // PrivateVariableType.Integer : PrivateVariableType.String
-			type.privateVariables.push({ name: prop, valueType, _type: 'PrivateVariable' })
-			const instances = findObjectInstances(state, objectTypeId)
-			for (const instance of instances) {
-				instance.privateVariables.push(String(initialValue))
-			}
-		},
-		removePrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string }>) {
-			const { objectTypeId, prop } = payload
-			const type = findObjectTypeById(state, objectTypeId)
-			const propIdx = type.privateVariables.findIndex(o => o.name === prop)
-			if (propIdx === -1) { return }
-			type.privateVariables.splice(propIdx, 1)
-			const instances = findObjectInstances(state, objectTypeId)
-			for (const instance of instances) {
-				instance.privateVariables.splice(propIdx, 1)
-			}
-			// TODO: confirmation dialog
-		},
-		editPrivateVariables(state, { payload }: PayloadAction<{ objectId: number, vars: Record<string, string | number> }>) {
-			const { objectId, vars } = payload
-			const instance = findObjectById(state, objectId)
-			const type = findObjectTypeById(state, instance.objectTypeId)
-			for (const key of Object.keys(vars)) {
-				const propIdx = type.privateVariables.findIndex(o => o.name === key)
-				if (propIdx !== -1) {
-					instance.privateVariables[propIdx] = String(vars[key])
-				}
-			}
-		}
+		// addPrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string, initialValue: string | number }>) {
+		// 	const { objectTypeId, prop, initialValue } = payload
+		// 	const type = findObjectTypeById(state, objectTypeId)
+		// 	if (type.privateVariables.find(o => o.name === prop)) {
+		// 		console.error(`Property ${prop} already exists`)
+		// 		return
+		// 	}
+		// 	const valueType = typeof initialValue === 'number' ? 0 : 1 // PrivateVariableType.Integer : PrivateVariableType.String
+		// 	type.privateVariables.push({ name: prop, valueType, _type: 'PrivateVariable' })
+		// 	const instances = findObjectInstances(state, objectTypeId)
+		// 	for (const instance of instances) {
+		// 		instance.privateVariables.push(String(initialValue))
+		// 	}
+		// },
+		// removePrivateVariable(state, { payload }: PayloadAction<{ objectTypeId: number, prop: string }>) {
+		// 	const { objectTypeId, prop } = payload
+		// 	const type = findObjectTypeById(state, objectTypeId)
+		// 	const propIdx = type.privateVariables.findIndex(o => o.name === prop)
+		// 	if (propIdx === -1) { return }
+		// 	type.privateVariables.splice(propIdx, 1)
+		// 	const instances = findObjectInstances(state, objectTypeId)
+		// 	for (const instance of instances) {
+		// 		instance.privateVariables.splice(propIdx, 1)
+		// 	}
+		// 	// TODO: confirmation dialog
+		// },
+		// editPrivateVariables(state, { payload }: PayloadAction<{ objectId: number, vars: Record<string, string | number> }>) {
+		// 	const { objectId, vars } = payload
+		// 	const instance = findObjectById(state, objectId)
+		// 	const type = findObjectTypeById(state, instance.objectTypeId)
+		// 	for (const key of Object.keys(vars)) {
+		// 		const propIdx = type.privateVariables.findIndex(o => o.name === key)
+		// 		if (propIdx !== -1) {
+		// 			instance.privateVariablespropIdx = String(vars[key])
+		// 		}
+		// 	}
+		// }
 	},
 });
 

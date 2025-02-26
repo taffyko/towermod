@@ -9,25 +9,34 @@ import {
 	FixedSizeTree,
 } from 'react-vtree';
 import { useMemoAsync, useStateRef } from '@/util/hooks';
-import { actions, dispatch, useAppSelector } from '@/redux';
+import { actions, dispatch, findAnimationById, findLayoutByName, findLayoutLayerById, findObject, useAppSelector } from '@/redux';
 import { assertUnreachable, enumerate } from '@/util/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject } from '@/redux';
-import { getObjectDisplayName } from '@/util/dataUtil';
+import { useObjectDisplayName } from '@/appUtil';
 import { store } from '@/redux';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';
+import { api } from '@/api';
 
-function getObjChildren(obj: UniqueTowermodObject): UniqueTowermodObject[] {
+function getObjChildren(obj: UniqueObjectLookup): UniqueTowermodObject[] {
+	// FIXME: mixture of full objects and lookups being used
+	// const data = store.getState().data;
 	switch (obj._type) {
 		case 'Layout':
+			// return findLayoutByName(data, obj.name)?.layers ?? []
+			// @ts-ignore
 			return obj.layers
 		case 'LayoutLayer':
+			// return findLayoutLayerById(data, obj.id)?.objects ?? []
+			// @ts-ignore
 			return obj.objects
 		case 'Animation':
+			// return findAnimationById(data, obj.id)?.subAnimations ?? []
+			// @ts-ignore
 			return obj.subAnimations
 	}
 	return []
@@ -38,7 +47,7 @@ type OutlinerNodeData = FixedSizeNodeData &
 		isLeaf: boolean;
 		name?: string;
 		nestingLevel: number;
-		obj: UniqueTowermodObject | null;
+		obj: UniqueObjectLookup | null;
 	};
 
 type RootContainerName = 'Layouts' | 'Animations' | 'Behaviors' | 'Containers' | 'Families' | 'Object Types' | 'Traits'
@@ -58,7 +67,7 @@ const getRootContainerData = (name: RootContainerName) => {
 }
 
 const getNodeData = (
-	obj: UniqueTowermodObject,
+	obj: UniqueObjectLookup,
 	_idx: number,
 	nestingLevel: number,
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
@@ -120,7 +129,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const tree = useContext(TreeContext)
 	const selectable = !!obj;
 
-	const objName = useAppSelector(s => obj && getObjectDisplayName(s.data, obj))
+	const objName = useObjectDisplayName(obj as any); // FIXME: mixture of full objects and lookups being used
 	const name = nameOverride ?? objName
 
 	return <div
@@ -178,7 +187,12 @@ export const Outliner = (props: OutlinerProps) => {
 	const behaviors = useAppSelector(s => s.data.behaviors) || []
 	const containers = useAppSelector(s => s.data.containers) || []
 	const families = useAppSelector(s => s.data.families) || []
-	const objectTypes = useAppSelector(s => s.data.objectTypes) || []
+	// const objectTypes = useAppSelector(s => s.data.objectTypes) || []
+	const _objectTypes = api.useGetObjectTypesQuery().data || []
+	const objectTypes = useMemo(() => {
+		return _objectTypes.map(id => ({ _type: 'ObjectType' as const, id }))
+	}, [_objectTypes]);
+
 	const traits = useAppSelector(s => s.data.traits) || []
 	const appBlock = useAppSelector(s => s.data.appBlock)
 
@@ -212,7 +226,7 @@ export const Outliner = (props: OutlinerProps) => {
 		yield getRootContainerData('Object Types')
 		if (appBlock) { yield getNodeData(appBlock, 0, 0) }
 
-		const rootContainerMap: Record<RootContainerName, UniqueTowermodObject[]> = {
+		const rootContainerMap: Record<RootContainerName, UniqueObjectLookup[]> = {
 			'Layouts': layouts,
 			'Animations': animations,
 			'Behaviors': behaviors,

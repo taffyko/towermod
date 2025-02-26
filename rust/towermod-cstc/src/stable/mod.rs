@@ -158,7 +158,7 @@ pub struct LevelBlock {
 }
 
 #[serde_alias(SnakeCase, CamelCase)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ObjectType {
 	pub id: i32,
@@ -321,8 +321,9 @@ pub enum LayerType {
 	Include,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
+#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize, FromPrimitive, ToPrimitive)]
 pub enum DisableShaderWhen {
+	#[default]
 	NoSetting,
 	Ps20Unavailable,
 	Ps20Available,

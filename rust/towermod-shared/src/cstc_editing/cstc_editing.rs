@@ -6,7 +6,7 @@ use anyhow::{Result, Context};
 use towermod_cstc as cstc;
 
 #[serde_alias(SnakeCase)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// ObjectInstance with decoded data
 pub struct EdObjectInstance {

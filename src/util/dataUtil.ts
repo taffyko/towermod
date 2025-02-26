@@ -1,42 +1,4 @@
 import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData } from "@towermod";
-import { UniqueTowermodObject, findObjectTypeById } from "../redux/reducers/data";
-import { assertUnreachable, unwrap } from "./util";
-
-export function getObjectDisplayName(data: CstcData, obj: UniqueTowermodObject) {
-	const objTypeName = obj._type
-	switch (objTypeName) {
-		case 'Layout':
-			return `Layout: ${obj.name}`
-		case 'LayoutLayer':
-			return `Layer ${obj.id}: ${obj.name}`
-		case 'ObjectInstance': {
-			const objType = unwrap(findObjectTypeById(data, obj.objectTypeId))
-			const plugin = data.editorPlugins[objType.pluginId]
-			const pluginName = plugin.stringTable.name
-			const objectName = objType.name
-			return `Instance: ${pluginName} (${objectName}: ${obj.id})`
-		} case 'Animation':
-			// TODO: animations
-			return `Animation ${obj.id}: ${obj.name}`
-		case 'Behavior':
-			return `Behavior: ${obj.name}`
-		case 'Container':
-			const objType = unwrap(findObjectTypeById(data, obj.objectIds[0]))
-			return `Container: ${objType.name}`
-		case 'Family':
-			return `Family: ${obj.name}`
-		case 'ObjectType': {
-			const plugin = data.editorPlugins[obj.pluginId]
-			const pluginName = plugin.stringTable.name
-			return `Type ${obj.id}: (${pluginName}: ${obj.name})`
-		} case 'ObjectTrait':
-			return `Trait: ${obj.name}`
-		case 'AppBlock':
-			return 'Project Settings'
-		default:
-			assertUnreachable(objTypeName)
-	}
-}
 
 export function getUniqueName(author: string, name: string) : string
 export function getUniqueName(mod: ModInfo | string): string
