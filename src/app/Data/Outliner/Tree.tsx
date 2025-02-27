@@ -21,7 +21,7 @@ export const TreeComponent = <
 					<TreeContext.Provider value={treeRef.current}>
 						<FixedSizeTree
 							async
-							// outerElementType={CustomScrollbarsVirtualList}
+							placeholder={null}
 							{...props}
 							width="100%"
 							ref={treeRef}

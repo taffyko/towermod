@@ -172,14 +172,38 @@ pub fn select_layout_layer_mut(layer_id: i32) -> impl Fn(&mut State) -> Option<&
 	}
 }
 
-pub fn select_animations() -> impl Fn(&State) -> Vec<i32> {
+pub fn select_root_animations() -> impl Fn(&State) -> Vec<i32> {
 	move |s| s.data.animations.iter().map(|a| a.id).collect()
 }
+pub fn select_animation_children(animation_id: i32) -> impl Fn(&State) -> Vec<i32> {
+	move |s| {
+		let Some(animation) = select_animation(animation_id)(s) else { return Vec::new(); };
+		animation.sub_animations.iter().map(|a| a.id).collect()
+	}
+}
 pub fn select_animation(animation_id: i32) -> impl Fn(&State) -> Option<&Animation> {
-	move |s| s.data.animations.iter().find(|a| a.id == animation_id)
+	move |s| {
+		fn search<'a>(animations: &'a Vec<Animation>, id: i32) -> Option<&'a Animation> {
+			for a in animations {
+				if a.id == id { return Some(a) }
+				if let Some(child) = search(&a.sub_animations, id) { return Some(child) }
+			}
+			None
+		}
+		search(&s.data.animations, animation_id)
+	}
 }
 pub fn select_animation_mut(animation_id: i32) -> impl Fn(&mut State) -> Option<&mut Animation> {
-		move |s| s.data.animations.iter_mut().find(|a| a.id == animation_id)
+	move |s| {
+		fn search<'a>(animations: &'a mut Vec<Animation>, id: i32) -> Option<&'a mut Animation> {
+			for a in animations {
+				if a.id == id { return Some(a) }
+				if let Some(child) = search(&mut a.sub_animations, id) { return Some(child) }
+			}
+			None
+		}
+		search(&mut s.data.animations, animation_id)
+	}
 }
 
 pub fn select_behaviors() -> impl Fn(&State) -> Vec<(i32, i32)> {

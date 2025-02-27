@@ -126,7 +126,8 @@ pub fn run() {
 				commands::get_layout_layer,
 				commands::update_layout_layer,
 
-				commands::get_animations,
+				commands::get_root_animations,
+				commands::get_animation_children,
 				commands::get_animation,
 				commands::update_animation,
 

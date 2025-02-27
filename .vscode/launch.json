@@ -12,6 +12,7 @@
 			// (to debug release builds, change `target/debug` to `release/debug`)
 			"program": "${workspaceRoot}/rust/target/x86_64-pc-windows-msvc/debug/towermod.exe",
 			"cwd": "${workspaceRoot}",
+			"envFile": "${workspaceFolder}/.env",
 			"preLaunchTask": "vite"
 		},
 		{

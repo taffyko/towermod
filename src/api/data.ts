@@ -81,6 +81,13 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: (_r, _e, arg) => [{ type: 'ObjectInstance', id: String(arg.id) }]
 		}),
+		getObjectInstances: builder.query<Lookup<ObjectInstance>[], number>({
+			queryFn: queryFn(async (layoutLayerId) => {
+				const ids: number[] = await invoke('get_object_instances', { layoutLayerId })
+				return ids.map(id => ({ id, _type: 'ObjectInstance' }))
+			}),
+			providesTags: ['ObjectInstance']
+		}),
 
 		getLayout: builder.query<Layout | null, LookupArg<Layout>>({
 			queryFn: queryFn(async ({ name }) => {
@@ -102,9 +109,9 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: (_r, _e, arg) => [{ type: 'LayoutLayer', id: String(arg.id) }]
 		}),
-		getLayoutLayers: builder.query<Lookup<LayoutLayer>[], void>({
-			queryFn: queryFn(async () => {
-				const ids: number[] = await invoke('get_layout_layers')
+		getLayoutLayers: builder.query<Lookup<LayoutLayer>[], string>({
+			queryFn: queryFn(async (layoutName) => {
+				const ids: number[] = await invoke('get_layout_layers', { layoutName })
 				return ids.map(id => ({ id, _type: 'LayoutLayer' }))
 			}),
 			providesTags: ['LayoutLayer']
@@ -116,9 +123,16 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: (_r, _e, arg) => [{ type: 'Animation', id: String(arg.id) }]
 		}),
-		getAnimations: builder.query<Lookup<Animation>[], void>({
+		getRootAnimations: builder.query<Lookup<Animation>[], void>({
 			queryFn: queryFn(async () => {
-				const ids: number[] = await invoke('get_animations')
+				const ids: number[] = await invoke('get_root_animations')
+				return ids.map(id => ({ id, _type: 'Animation' }))
+			}),
+			providesTags: ['Animation']
+		}),
+		getAnimationChildren: builder.query<Lookup<Animation>[], number>({
+			queryFn: queryFn(async (id) => {
+				const ids: number[] = await invoke('get_animation_children', { id })
 				return ids.map(id => ({ id, _type: 'Animation' }))
 			}),
 			providesTags: ['Animation']
@@ -126,7 +140,7 @@ export const dataApi = baseApi.injectEndpoints({
 
 		getBehavior: builder.query<Behavior | null, LookupArg<Behavior>>({
 			queryFn: queryFn(async ({ objectTypeId, movIndex }) => {
-				return enhanceBehavior(await invoke('get_behavior', { 'object_type_id': objectTypeId, 'mov_index': movIndex }))
+				return enhanceBehavior(await invoke('get_behavior', { objectTypeId, movIndex }))
 			}),
 			providesTags: (_r, _e, arg) => [{ type: 'Behavior', id: `${arg.objectTypeId}.${arg.movIndex}` }]
 		}),

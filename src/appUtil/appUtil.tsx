@@ -1,13 +1,15 @@
 import { spin } from "@/app/GlobalSpinner";
-import { dispatch, useAppSelector } from "@/redux";
+import { dispatch, store, useAppSelector } from "@/redux";
 import { api } from '@/api'
 import { openModal } from "@/app/Modal";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { awaitRtk } from "@/api/helpers";
 import { toast } from "@/app/Toast";
-import { ObjectForType, UniqueObjectLookup } from "@/util";
+import { ObjectForType, UniqueObjectLookup, arrayShallowEqual, objectShallowEqual } from "@/util";
 import { assertUnreachable, useMemoAsyncWithCleanup } from "@/util";
-import { skipToken } from "@reduxjs/toolkit/query";
+import { ApiEndpointQuery, QueryDefinition, skipToken } from "@reduxjs/toolkit/query";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { stringify } from "querystring";
 
 export async function saveProject() {
 	const saveProject = (dirPath: string) => awaitRtk(dispatch(api.endpoints.saveProject.initiate(dirPath)))
@@ -38,39 +40,105 @@ export async function installMods(files: string[]) {
 	}
 }
 
-export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined): ObjectForType<T['_type']> | undefined {
-	// TODO: subscribe to redux store changes & rerender when cache is invalidated, in the same way that the generated hooks do
-	// - can api.endpoints.*.select() be used for this?
-	const result = useMemoAsyncWithCleanup(() => {
-		if (!obj) { return [undefined] }
-		const promise = (() => {
-			const type = obj._type
-			switch (type) {
-				case 'ObjectType': return dispatch(api.endpoints.getObjectType.initiate(obj));
-				case 'ObjectInstance': return dispatch(api.endpoints.getObjectInstance.initiate(obj));
-				case 'Container': return dispatch(api.endpoints.getContainer.initiate(obj));
-				case 'Animation': return dispatch(api.endpoints.getAnimation.initiate(obj));
-				case 'Behavior': return dispatch(api.endpoints.getBehavior.initiate(obj));
-				case 'Family': return dispatch(api.endpoints.getFamily.initiate(obj));
-				case 'ObjectTrait': return dispatch(api.endpoints.getObjectTrait.initiate(obj));
-				case 'AppBlock': return dispatch(api.endpoints.getAppBlock.initiate());
-				case 'Layout': return dispatch(api.endpoints.getLayout.initiate(obj));
-				case 'LayoutLayer': return dispatch(api.endpoints.getLayoutLayer.initiate(obj));
-				default: assertUnreachable(type)
+export type QueryScopeFn = <QueryArg, Endpoint extends ApiEndpointQuery<QueryDefinition<QueryArg, any, any, any>, any>>(endpoint: Endpoint, arg: QueryArg) => ReturnType<ReturnType<Endpoint['select']>>
+
+let queryRuns = 0
+let selectorRuns = 0
+// allows a component to dynamically subscribe to RTK endpoints without using the generated hooks
+export function useQueryScope() {
+	type QueryEndpoint = ApiEndpointQuery<QueryDefinition<any, any, any, any, any>, any>
+	const [selection, setSelection] = useState<Record<string, unknown>>({})
+	const selectionRef = useRef<Record<string, unknown>>({})
+
+	// subscriptions list is reset each time the selector updates (any of the query results update)
+	// then is populated by any subsequent endpoints that are called
+	const endpoints = useMemo<Record<string, [QueryEndpoint, any, any]>>(() => {
+		return {}
+	}, [selection])
+	useEffect(() => {
+		return () => {
+			for (const [_endpoint, _arg, promise] of Object.values(endpoints)) {
+				promise.unsubscribe()
 			}
-		})()
-		return [promise as any, () => promise.unsubscribe()]
-	}, [obj])
-	return result?.data
+		}
+	}, [endpoints])
+
+	const query = useCallback<QueryScopeFn>((endpoint, arg) => {
+		queryRuns += 1
+		console.log('Query runs', queryRuns)
+		const key = JSON.stringify({ [endpoint.name]: arg })
+		if (!(key in endpoints)) {
+			endpoints[key] = [endpoint, arg, dispatch(endpoint.initiate(arg))]
+		}
+		const state = store.getState();
+		return endpoint.select(arg)(state as any) as any
+	}, [endpoints])
+
+	useSyncExternalStore(store.subscribe, () => {
+		selectorRuns += 1
+		console.log('Selector runs', selectorRuns)
+		const state = store.getState();
+		const selection: Record<string, unknown> = {};
+		for (const [key, [endpoint, arg, _promise]] of Object.entries(endpoints)) {
+			selection[key] = endpoint.select(arg)(state as any)
+		}
+		// trigger re-render if the data from *any* of the submitted queries has updated
+		for (const key of Object.keys(selection)) {
+			// @ts-ignore
+			// if this is the first request, and not an update - track the request, but don't trigger a re-render
+			// if (!(key in selectionRef.current)) {
+			// 	selectionRef.current[key] = selection[key]
+			// 	continue
+			// }
+			// if one of the previously initiated requests has updated, trigger a re-render
+			// @ts-ignore
+			if (selection[key]?.requestId != selectionRef.current[key]?.requestId) {
+				selectionRef.current = selection
+				setSelection(selection)
+				break
+			}
+		}
+		return selectionRef.current
+	})
+
+	return query
 }
 
-export function useObjectDisplayName(objLookup: UniqueObjectLookup | undefined): string | undefined {
-	const obj = useTowermodObject(objLookup);
+export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined): ObjectForType<T['_type']> | undefined {
+	const query = useQueryScope()
+
+	const type = obj?._type
+	let endpoint: any;
+	switch (type) {
+		case 'ObjectType': endpoint = api.endpoints.getObjectType
+		break; case 'ObjectInstance': endpoint = api.endpoints.getObjectInstance
+		break; case 'Container': endpoint = api.endpoints.getContainer
+		break; case 'Animation': endpoint = api.endpoints.getAnimation
+		break; case 'Behavior': endpoint = api.endpoints.getBehavior
+		break; case 'Family': endpoint = api.endpoints.getFamily
+		break; case 'ObjectTrait': endpoint = api.endpoints.getObjectTrait
+		break; case 'AppBlock': endpoint = api.endpoints.getAppBlock
+		break; case 'Layout': endpoint = api.endpoints.getLayout
+		break; case 'LayoutLayer': endpoint = api.endpoints.getLayoutLayer
+		break; case undefined: endpoint = undefined
+		break; default: assertUnreachable(type)
+	}
+
+	if (obj) {
+		const info = query(endpoint, obj)
+		// console.log(info, endpoint.name, obj)
+		return info.data
+	}
+}
+
+export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | undefined): string | undefined {
+	const obj = useTowermodObject(objLookup ?? undefined);
 
 	let objTypeId;
 	let pluginId;
 	switch (obj?._type) {
-		case 'ObjectType': objTypeId = obj.id; pluginId = obj.pluginId
+		case 'ObjectInstance': objTypeId = obj.objectTypeId
+		break; case 'ObjectType': pluginId = obj.pluginId
 		break; case 'Container': objTypeId = obj.objectIds[0]
 	}
 	const { currentData: objType } = api.useGetObjectTypeQuery(objTypeId != null ? { id: objTypeId } : skipToken)

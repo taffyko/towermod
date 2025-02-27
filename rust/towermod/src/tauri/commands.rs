@@ -313,7 +313,7 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 }
 #[command] pub async fn get_layout(name: String) -> Option<cstc_editing::EdLayout> {
 	select!(selectors::select_layout(name), |r| r.map(|l| {
-		let cstc_editing::EdLayout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode } = l;
+		let cstc_editing::EdLayout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers: _, image_ids, texture_loading_mode } = l;
 		cstc_editing::EdLayout { name: name.clone(), width: width.clone(), height: height.clone(), color: color.clone(), unbounded_scrolling: unbounded_scrolling.clone(), application_background: application_background.clone(), data_keys: data_keys.clone(), layers: Default::default(), image_ids: image_ids.clone(), texture_loading_mode: texture_loading_mode.clone() }
 	})).await
 }
@@ -326,7 +326,7 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 }
 #[command] pub async fn get_layout_layer(id: i32) -> Option<cstc_editing::EdLayoutLayer> {
 	select!(selectors::select_layout_layer(id), |r| r.map(|l| {
-		let cstc_editing::EdLayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects } = l;
+		let cstc_editing::EdLayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects: _ } = l;
 		cstc_editing::EdLayoutLayer { id: id.clone(), name: name.clone(), layer_type: layer_type.clone(), filter_color: filter_color.clone(), opacity: opacity.clone(), angle: angle.clone(), scroll_x_factor: scroll_x_factor.clone(), scroll_y_factor: scroll_y_factor.clone(), scroll_x: scroll_x.clone(), scroll_y: scroll_y.clone(), zoom_x_factor: zoom_x_factor.clone(), zoom_y_factor: zoom_y_factor.clone(), zoom_x: zoom_x.clone(), zoom_y: zoom_y.clone(), clear_background_color: clear_background_color.clone(), background_color: background_color.clone(), force_own_texture: force_own_texture.clone(), sampler: sampler.clone(), enable_3d: enable_3d.clone(), clear_depth_buffer: clear_depth_buffer.clone(), objects: Default::default() }
 	})).await
 }
@@ -334,12 +334,15 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 	dispatch(DataAction::UpdateLayoutLayer(layer)).await
 }
 
-#[command] pub async fn get_animations() -> Vec<i32> {
-	select(selectors::select_animations()).await
+#[command] pub async fn get_root_animations() -> Vec<i32> {
+	select(selectors::select_root_animations()).await
+}
+#[command] pub async fn get_animation_children(id: i32) -> Vec<i32> {
+	select(selectors::select_animation_children(id)).await
 }
 #[command] pub async fn get_animation(id: i32) -> Option<towermod_cstc::Animation> {
 	select!(selectors::select_animation(id), |r| r.map(|a| {
-		let towermod_cstc::Animation { id, name, tag, speed, is_angle, angle, repeat_count, repeat_to, ping_pong, frames, sub_animations } = a;
+		let towermod_cstc::Animation { id, name, tag, speed, is_angle, angle, repeat_count, repeat_to, ping_pong, frames, sub_animations: _ } = a;
 		towermod_cstc::Animation { id: id.clone(), name: name.clone(), tag: tag.clone(), speed: speed.clone(), is_angle: is_angle.clone(), angle: angle.clone(), repeat_count: repeat_count.clone(), repeat_to: repeat_to.clone(), ping_pong: ping_pong.clone(), frames: frames.clone(), sub_animations: Default::default() }
 	})).await
 }

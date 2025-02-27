@@ -1,5 +1,5 @@
-export function posmod(n: number, d: number) { return ((n % d) + d) % d }
 import { Slice } from '@reduxjs/toolkit'
+export function posmod(n: number, d: number) { return ((n % d) + d) % d }
 
 export function* enumerate<T>(iterable: Iterable<T>) {
 	let i = 0;
@@ -150,6 +150,26 @@ export function createObjectUrl(obj: Blob | MediaSource) {
 export function revokeObjectUrl(url: string) {
 	objectUrls.delete(url)
 	URL.revokeObjectURL(url)
+}
+
+export function arrayShallowEqual<T>(a: T[], b: T[]) {
+	if (a.length !== b.length) return false
+	for (let i = 0; i < a.length; i++) {
+		if (a[i] !== b[i]) return false
+	}
+	return true
+}
+
+export function objectShallowEqual(a: object, b: object) {
+	if (a === b) return true
+	if (a == null || b == null) return a === b
+	const keys = Object.keys(a)
+	if (keys.length !== Object.keys(b).length) return false
+	for (const key of keys) {
+		// @ts-ignore
+		if (a[key] !== b[key]) return false
+	}
+	return true
 }
 
 export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
