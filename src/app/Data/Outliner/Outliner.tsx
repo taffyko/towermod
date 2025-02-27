@@ -9,8 +9,8 @@ import {
 	FixedSizeTree,
 } from 'react-vtree';
 import { useStateRef } from '@/util/hooks';
-import { actions, dispatch, store } from '@/redux';
-import { assertUnreachable, enumerate } from '@/util/util';
+import { actions, dispatch, store, useAppSelector } from '@/redux';
+import { assertUnreachable, enumerate, objectShallowEqual } from '@/util/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
@@ -21,20 +21,15 @@ import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';
 import { api } from '@/api';
 
-function getObjChildren(obj: UniqueObjectLookup, query: QueryScopeFn | null): null | UniqueObjectLookup[] {
-	if (!query) { return null }
+function getObjChildren(obj: UniqueObjectLookup, query: QueryScopeFn | null): undefined | UniqueObjectLookup[] {
 	switch (obj._type) {
 		case 'Layout':
-			return query(api.endpoints.getLayoutLayers, obj.name).data ?? []
+			return query?.(api.endpoints.getLayoutLayers, obj.name).data ?? []
 		case 'LayoutLayer':
-			return query(api.endpoints.getObjectInstances, obj.id).data ?? []
+			return query?.(api.endpoints.getObjectInstances, obj.id).data ?? []
 		case 'Animation':
-			return query(api.endpoints.getAnimationChildren, obj.id).data ?? []
-			// return findAnimationById(data, obj.id)?.subAnimations ?? []
-			// @ts-ignore
-			return obj.subAnimations
+			return query?.(api.endpoints.getAnimationChildren, obj.id).data ?? []
 	}
-	return []
 }
 
 type OutlinerNodeData = FixedSizeNodeData &
@@ -42,7 +37,7 @@ type OutlinerNodeData = FixedSizeNodeData &
 		name?: string;
 		nestingLevel: number;
 		obj: UniqueObjectLookup | null;
-		children: UniqueObjectLookup[];
+		children?: UniqueObjectLookup[];
 	};
 
 type RootContainerName = 'Layouts' | 'Animations' | 'Behaviors' | 'Containers' | 'Families' | 'Object Types' | 'Traits'
@@ -65,19 +60,15 @@ const getNodeData = (
 	obj: UniqueObjectLookup,
 	_idx: number,
 	nestingLevel: number,
-	tree: FixedSizeTree<OutlinerNodeData>,
+	_tree: FixedSizeTree<OutlinerNodeData> | null,
 	query: QueryScopeFn | null = null,
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
 	const id: string | number = getTreeItemId(obj);
 
-	const state = tree?.state.records.get(id)
-	let children: UniqueObjectLookup[] = []
-	if (state?.public.isOpen) {
-		children = getObjChildren(obj, query) ?? []
-	}
+	const children = getObjChildren(obj, query)
 
 	const data: OutlinerNodeData = {
-		id: `${obj._type}-${id}`,
+		id,
 		children,
 		isOpenByDefault: false,
 		nestingLevel,
@@ -135,13 +126,15 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 
 	const objName = useObjectDisplayName(obj)
 	const name = nameOverride ?? objName
+	const selected = useAppSelector(s => objectShallowEqual(s.app.outlinerValue, obj))
 
-	const isLeaf = !children.length;
+	const isLeaf = !children;
 
 	return <div
 		className={`
 			${Style.treeItem}
 			${selectable ? Style.selectable : ''}
+			${selected ? Style.active : ''}
 		`}
 		onClick={() => {
 			if (selectable) {
@@ -194,7 +187,7 @@ export const Outliner = (props: OutlinerProps) => {
 	console.log("Outliner renders:", renderCount)
 	const query = useQueryScope()
 	const layouts = api.useGetLayoutsQuery().data || []
-	const animations = api.useGetRootAnimationsQuery().data || []
+	// const animations = api.useGetRootAnimationsQuery().data || []
 	const behaviors = api.useGetBehaviorsQuery().data || []
 	const containers = api.useGetContainersQuery().data || []
 	const families = api.useGetFamiliesQuery().data || []
@@ -203,6 +196,9 @@ export const Outliner = (props: OutlinerProps) => {
 	const appBlock = api.useGetAppBlockQuery().data
 
 	const [tree, setTreeRef] = useStateRef<FixedSizeTree<OutlinerNodeData>>()
+	useMemo(() => {
+		console.log("TREE STATE UPDATED")
+	}, [tree?.state.records.size])
 
 	const handle = useMemo(() => {
 		return {
@@ -227,7 +223,7 @@ export const Outliner = (props: OutlinerProps) => {
 		treeRenderCount += 1;
 		console.log("Tree renders:", treeRenderCount)
 		yield getRootContainerData('Layouts', layouts)
-		yield getRootContainerData('Animations', animations)
+		// yield getRootContainerData('Animations', animations)
 		yield getRootContainerData('Behaviors', behaviors)
 		yield getRootContainerData('Containers', containers)
 		yield getRootContainerData('Families', families)
@@ -237,11 +233,11 @@ export const Outliner = (props: OutlinerProps) => {
 
 		while (true) {
 			const parentMeta = yield;
-			for (const [child, i] of enumerate(parentMeta.data.children)) {
+			for (const [child, i] of enumerate(parentMeta.data.children ?? [])) {
 				yield getNodeData(child, i, parentMeta.nestingLevel + 1, tree, query)
 			}
 		}
-	}, [layouts, animations, behaviors, containers, families, objectTypes, traits, query])
+	}, [layouts, behaviors, containers, families, objectTypes, traits, query])
 
 	return <div className="vbox grow">
 		<OutlinerContext.Provider value={handle}>

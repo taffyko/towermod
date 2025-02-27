@@ -5,7 +5,7 @@ import { openModal } from "@/app/Modal";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { awaitRtk } from "@/api/helpers";
 import { toast } from "@/app/Toast";
-import { ObjectForType, UniqueObjectLookup, arrayShallowEqual, objectShallowEqual } from "@/util";
+import { ObjectForType, UniqueObjectLookup, arrayShallowEqual, objectShallowEqual, useRerender } from "@/util";
 import { assertUnreachable, useMemoAsyncWithCleanup } from "@/util";
 import { ApiEndpointQuery, QueryDefinition, skipToken } from "@reduxjs/toolkit/query";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -65,7 +65,7 @@ export function useQueryScope() {
 
 	const query = useCallback<QueryScopeFn>((endpoint, arg) => {
 		queryRuns += 1
-		console.log('Query runs', queryRuns)
+		// console.log('Query runs', queryRuns)
 		const key = JSON.stringify({ [endpoint.name]: arg })
 		if (!(key in endpoints)) {
 			endpoints[key] = [endpoint, arg, dispatch(endpoint.initiate(arg))]
@@ -74,9 +74,13 @@ export function useQueryScope() {
 		return endpoint.select(arg)(state as any) as any
 	}, [endpoints])
 
+	const debounceRef = useRef<any>(null)
+	const rerender = useRerender();
+
 	useSyncExternalStore(store.subscribe, () => {
 		selectorRuns += 1
-		console.log('Selector runs', selectorRuns)
+		// console.log('Selector runs', selectorRuns)
+
 		const state = store.getState();
 		const selection: Record<string, unknown> = {};
 		for (const [key, [endpoint, arg, _promise]] of Object.entries(endpoints)) {
@@ -92,7 +96,7 @@ export function useQueryScope() {
 			// }
 			// if one of the previously initiated requests has updated, trigger a re-render
 			// @ts-ignore
-			if (selection[key]?.requestId != selectionRef.current[key]?.requestId) {
+			if (selection[key]?.data != selectionRef.current[key]?.data) {
 				selectionRef.current = selection
 				setSelection(selection)
 				break
@@ -164,7 +168,7 @@ export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | unde
 		case 'Behavior':
 			return `Behavior: ${obj.name}`
 		case 'Container':
-			if (!objType || !plugin) { return }
+			if (!objType) { return }
 			return `Container: ${objType.name}`
 		case 'Family':
 			return `Family: ${obj.name}`

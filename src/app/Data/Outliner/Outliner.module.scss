@@ -17,7 +17,7 @@
 			background-color: var(--color-bg-hover);
 		}
 
-		&:active {
+		&:active, &.active {
 			background-color: var(--color-bg-active)
 		}
 	}

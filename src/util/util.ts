@@ -160,7 +160,7 @@ export function arrayShallowEqual<T>(a: T[], b: T[]) {
 	return true
 }
 
-export function objectShallowEqual(a: object, b: object) {
+export function objectShallowEqual(a?: object | null, b?: object | null) {
 	if (a === b) return true
 	if (a == null || b == null) return a === b
 	const keys = Object.keys(a)

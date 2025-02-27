@@ -229,6 +229,10 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				x: { type: 'int' },
 				y: { type: 'int' },
 			})
+		break; case 'ObjectTrait':
+			override(type, {
+				objectTypeIds: { valueTypes: ['int'] },
+			})
 		break; case 'AppBlock':
 			override(type, {
 				dataKeys: { valueTypes: ['DataKey'] },
