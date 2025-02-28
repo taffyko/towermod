@@ -9,7 +9,7 @@ import {
 	FixedSizeTree,
 } from 'react-vtree';
 import { useStateRef } from '@/util/hooks';
-import { actions, dispatch, store, useAppSelector } from '@/redux';
+import { actions, dispatch, useAppSelector } from '@/redux';
 import { assertUnreachable, enumerate, objectShallowEqual } from '@/util/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
@@ -128,7 +128,11 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const name = nameOverride ?? objName
 	const selected = useAppSelector(s => objectShallowEqual(s.app.outlinerValue, obj))
 
-	const isLeaf = !children;
+	const isLeaf = !children?.length;
+
+	if (!name) {
+		return <div className="opacity-0" />
+	}
 
 	return <div
 		className={`
@@ -152,7 +156,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 			<div className={Style.expandButton}>
 				<IconButton
 					src={isOpen ? arrowDownImg : arrowRightImg}
-					onClick={(e) => {
+					onMouseDown={(e) => {
 						if (e.shiftKey && tree) {
 							setOpenRecursive(tree, props.data.id, !isOpen)
 						} else {
@@ -180,11 +184,7 @@ export interface OutlinerProps {
 	handleRef?: React.Ref<OutlinerHandle>,
 }
 
-let renderCount = 0;
-let treeRenderCount = 0;
 export const Outliner = (props: OutlinerProps) => {
-	renderCount += 1;
-	console.log("Outliner renders:", renderCount)
 	const query = useQueryScope()
 	const layouts = api.useGetLayoutsQuery().data || []
 	// const animations = api.useGetRootAnimationsQuery().data || []
@@ -196,9 +196,6 @@ export const Outliner = (props: OutlinerProps) => {
 	const appBlock = api.useGetAppBlockQuery().data
 
 	const [tree, setTreeRef] = useStateRef<FixedSizeTree<OutlinerNodeData>>()
-	useMemo(() => {
-		console.log("TREE STATE UPDATED")
-	}, [tree?.state.records.size])
 
 	const handle = useMemo(() => {
 		return {
@@ -220,8 +217,6 @@ export const Outliner = (props: OutlinerProps) => {
 	useImperativeHandle(props.handleRef, () => handle, [handle])
 
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
-		treeRenderCount += 1;
-		console.log("Tree renders:", treeRenderCount)
 		yield getRootContainerData('Layouts', layouts)
 		// yield getRootContainerData('Animations', animations)
 		yield getRootContainerData('Behaviors', behaviors)

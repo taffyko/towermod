@@ -21,7 +21,8 @@ export const TreeComponent = <
 					<TreeContext.Provider value={treeRef.current}>
 						<FixedSizeTree
 							async
-							placeholder={null}
+							overscanCount={10}
+							placeholder={<div className="opacity-0" />}
 							{...props}
 							width="100%"
 							ref={treeRef}

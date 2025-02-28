@@ -172,6 +172,11 @@ export function objectShallowEqual(a?: object | null, b?: object | null) {
 	return true
 }
 
+export function svgToDataUri(svg: string | SVGElement) {
+	const xml = typeof svg === 'string' ? svg : (new XMLSerializer).serializeToString(svg);
+	return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(xml);
+}
+
 export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
 
 interface Flavoring<FlavorT> {

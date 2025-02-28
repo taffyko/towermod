@@ -42,8 +42,6 @@ export async function installMods(files: string[]) {
 
 export type QueryScopeFn = <QueryArg, Endpoint extends ApiEndpointQuery<QueryDefinition<QueryArg, any, any, any>, any>>(endpoint: Endpoint, arg: QueryArg) => ReturnType<ReturnType<Endpoint['select']>>
 
-let queryRuns = 0
-let selectorRuns = 0
 // allows a component to dynamically subscribe to RTK endpoints without using the generated hooks
 export function useQueryScope() {
 	type QueryEndpoint = ApiEndpointQuery<QueryDefinition<any, any, any, any, any>, any>
@@ -52,7 +50,7 @@ export function useQueryScope() {
 
 	// subscriptions list is reset each time the selector updates (any of the query results update)
 	// then is populated by any subsequent endpoints that are called
-	const endpoints = useMemo<Record<string, [QueryEndpoint, any, any]>>(() => {
+	const endpoints = useMemo<Record<string, [QueryEndpoint, any, any, any]>>(() => {
 		return {}
 	}, [selection])
 	useEffect(() => {
@@ -64,36 +62,29 @@ export function useQueryScope() {
 	}, [endpoints])
 
 	const query = useCallback<QueryScopeFn>((endpoint, arg) => {
-		queryRuns += 1
-		// console.log('Query runs', queryRuns)
 		const key = JSON.stringify({ [endpoint.name]: arg })
 		if (!(key in endpoints)) {
-			endpoints[key] = [endpoint, arg, dispatch(endpoint.initiate(arg))]
+			endpoints[key] = [endpoint, arg, dispatch(endpoint.initiate(arg)), endpoint.select(arg)]
 		}
 		const state = store.getState();
-		return endpoint.select(arg)(state as any) as any
+		const select = endpoints[key][3]
+		return select(state as any) as any
 	}, [endpoints])
 
-	const debounceRef = useRef<any>(null)
-	const rerender = useRerender();
-
 	useSyncExternalStore(store.subscribe, () => {
-		selectorRuns += 1
-		// console.log('Selector runs', selectorRuns)
-
 		const state = store.getState();
 		const selection: Record<string, unknown> = {};
-		for (const [key, [endpoint, arg, _promise]] of Object.entries(endpoints)) {
-			selection[key] = endpoint.select(arg)(state as any)
+		for (const [key, [_endpoint, _arg, _promise, select]] of Object.entries(endpoints)) {
+			selection[key] = select(state as any)
 		}
 		// trigger re-render if the data from *any* of the submitted queries has updated
 		for (const key of Object.keys(selection)) {
 			// @ts-ignore
 			// if this is the first request, and not an update - track the request, but don't trigger a re-render
-			// if (!(key in selectionRef.current)) {
-			// 	selectionRef.current[key] = selection[key]
-			// 	continue
-			// }
+			if (!(key in selectionRef.current)) {
+				selectionRef.current[key] = selection[key]
+				continue
+			}
 			// if one of the previously initiated requests has updated, trigger a re-render
 			// @ts-ignore
 			if (selection[key]?.data != selectionRef.current[key]?.data) {
@@ -109,6 +100,7 @@ export function useQueryScope() {
 }
 
 export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined): ObjectForType<T['_type']> | undefined {
+
 	const query = useQueryScope()
 
 	const type = obj?._type
@@ -130,7 +122,6 @@ export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefin
 
 	if (obj) {
 		const info = query(endpoint, obj)
-		// console.log(info, endpoint.name, obj)
 		return info.data
 	}
 }

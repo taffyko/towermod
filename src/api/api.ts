@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Game, ImageMetadata, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod';
 import { useObjectUrl } from '@/util/hooks';
 import { queryFn } from './baseApiUtil';
-import { enhanceModInfo } from '@/util';
+import { enhanceModInfo, svgToDataUri } from '@/util';
 
 
 
@@ -129,6 +129,22 @@ export const baseApi = createApi({
 		getText: builder.query<string, string>({
 			query: (arg) => ({ url: arg, responseHandler: 'text' })
 		}),
+		getPixelatedSvg: builder.query<string | null, string>({
+			queryFn: queryFn(async (href) => {
+				const data = await fetch(href).then(res => res.text())
+				if (!data) { return null }
+				const svgDoc = (new DOMParser).parseFromString(data, 'image/svg+xml');
+				const svg = svgDoc.querySelector('svg')
+				if (!svg) {
+					console.error("SVG not found in loaded content");
+					return null
+				}
+				svg.setAttribute('shape-rendering', 'crispEdges');
+				const url = svgToDataUri(svg);
+				return url
+			})
+		}),
+
 
 		init: builder.mutation<void, void>({
 			queryFn: queryFn(async () => {
