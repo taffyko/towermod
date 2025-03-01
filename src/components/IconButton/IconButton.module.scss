@@ -27,6 +27,12 @@ $iconSize: 16px;
 		height: calc($iconSize + var(--gap-l));
 	}
 
+	--flip-transform: ;
+	&.flip {
+		--flip-transform: rotateY(180deg);
+	}
+	transform: var(--flip-transform);
+
 	&:not(:disabled) {
 		&:hover {
 			background-color: var(--color-bg-hover);
@@ -37,7 +43,7 @@ $iconSize: 16px;
 		}
 
 		&:active {
-			transform: scale(0.9);
+			transform: scale(0.9) var(--flip-transform);
 			transition: none;
 			background-color: var(--color-bg-pressed);
 		}

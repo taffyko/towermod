@@ -72,4 +72,24 @@ export function setOpenRecursive(tree: VTree, id: string, open: boolean) {
 	}
 }
 
+export function filterTree(tree: VTree, ids: Set<string>) {
+	const records = tree.state.records
+	const shown: Record<string, boolean> = {}
+	const update: Record<string, boolean> = {}
+	for (const node of records as Iterable<NodeRecord<NodePublicState>>) {
+		const id = node.public.data.id;
+		if (ids.has(id)) {
+			let parent: NodeRecord<NodePublicState> | null = node
+			while (parent) {
+				shown[parent.public.data.id] = true
+				parent = parent.parent
+			}
+		} else {
+			update[id] = false
+		}
+	}
+	Object.assign(update, shown)
+	tree.recomputeTree(update)
+}
+
 export const TreeContext = createContext<VTree | null>(null)

@@ -56,8 +56,19 @@ $heightExpanded: 2.2rem;
 	}
 
 	.tabContent {
+		z-index: 0;
 		overflow-y: auto;
 		height: 100%;
 		padding: var(--gap);
+
+		&.hidden {
+			position: absolute;
+			top: 0;
+			right: 0;
+			left: 0;
+			bottom: 0;
+			pointer-events: none;
+			opacity: 0;
+		}
 	}
 }

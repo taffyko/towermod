@@ -28,11 +28,11 @@ export function Data() {
 		<OutlinerContext.Provider value={outlinerRef!}>
 			<div style={{ overflow: 'hidden' }} className="hbox gap grow">
 				<Outliner handleRef={setOutlinerRef} />
-				{ value ?
-					<div className="vbox grow" style={{ flexBasis: 0, overflow: 'hidden' }}>
+				<div className="vbox grow" style={{ flexBasis: 0, overflow: 'hidden' }}>
+					{ value ?
 						<Inspector pinfo={inferPropertyInfoFromValue(value, undefined, 'root') as any} onChange={onChange as any} />
-					</div>
-				: null }
+					: null }
+				</div>
 			</div>
 		</OutlinerContext.Provider>
 	</div>

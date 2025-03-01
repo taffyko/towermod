@@ -1,5 +1,5 @@
 /* eslint-disable max-depth */
-import { createContext, useCallback, useContext, useImperativeHandle, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
 	FixedSizeNodeData,
 	FixedSizeNodePublicState as NodePublicState,
@@ -8,9 +8,9 @@ import {
 	NodeComponentProps,
 	FixedSizeTree,
 } from 'react-vtree';
-import { useStateRef } from '@/util/hooks';
+import { useImperativeHandle, useStateRef } from '@/util/hooks';
 import { actions, dispatch, useAppSelector } from '@/redux';
-import { assertUnreachable, enumerate, objectShallowEqual } from '@/util/util';
+import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util/util';
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
@@ -20,6 +20,8 @@ import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';
 import { api } from '@/api';
+import { LineEdit } from '@/components/LineEdit';
+import { skipToken } from '@reduxjs/toolkit/query';
 
 function getObjChildren(obj: UniqueObjectLookup, query: QueryScopeFn | null): undefined | UniqueObjectLookup[] {
 	switch (obj._type) {
@@ -194,10 +196,10 @@ export const Outliner = (props: OutlinerProps) => {
 	const objectTypes = api.useGetObjectTypesQuery().data || []
 	const traits = api.useGetObjectTraitsQuery().data || []
 	const appBlock = api.useGetAppBlockQuery().data
-
 	const [tree, setTreeRef] = useStateRef<FixedSizeTree<OutlinerNodeData>>()
+	const lookup = useAppSelector(s => s.app.outlinerValue)
 
-	const handle = useMemo(() => {
+	const handle = useImperativeHandle(props.handleRef, () => {
 		return {
 			tree: tree!,
 			jumpToItem(obj) {
@@ -214,11 +216,14 @@ export const Outliner = (props: OutlinerProps) => {
 			},
 		} as OutlinerHandle
 	}, [tree])
-	useImperativeHandle(props.handleRef, () => handle, [handle])
+
+	useEffect(() => {
+		// jump to selected item
+		if (lookup) { handle.jumpToItem(lookup) }
+	}, [handle, lookup])
 
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
 		yield getRootContainerData('Layouts', layouts)
-		// yield getRootContainerData('Animations', animations)
 		yield getRootContainerData('Behaviors', behaviors)
 		yield getRootContainerData('Containers', containers)
 		yield getRootContainerData('Families', families)
@@ -234,8 +239,14 @@ export const Outliner = (props: OutlinerProps) => {
 		}
 	}, [layouts, behaviors, containers, families, objectTypes, traits, query])
 
+
 	return <div className="vbox grow">
 		<OutlinerContext.Provider value={handle}>
+			<div className="hbox gap">
+				<OutlinerSearch />
+				<div className="grow" />
+				<OutlinerHistoryButtons />
+			</div>
 			<TreeComponent
 				treeWalker={treeWalker}
 				itemSize={25}
@@ -245,6 +256,76 @@ export const Outliner = (props: OutlinerProps) => {
 			</TreeComponent>
 		</OutlinerContext.Provider>
 	</div>
+}
+
+
+function OutlinerSearch() {
+	const handle = useContext(OutlinerContext)
+	const [search, setSearch, matchIdx, matchCount, nextMatch] = useOutlinerSearch(handle)
+
+	return <>
+		<LineEdit placeholder="Search..." onChange={e => setSearch(e.target.value)} value={search}
+			onKeyDown={e => {
+				if (e.code === 'ArrowDown' || e.code === 'Enter') nextMatch(1)
+				else if (e.code === 'ArrowUp') nextMatch(-1)
+			}}
+		/>
+		<div>{matchIdx !== -1 ? `${matchIdx+1}/${matchCount}` : null}</div>
+	</>
+}
+
+function OutlinerHistoryButtons() {
+	const [first, last] = useAppSelector(s => {
+		const first = s.app.outlinerHistoryIdx === 0
+		const last = s.app.outlinerHistoryIdx === s.app.outlinerHistory.length - 1
+		return [first, last]
+	})
+	return <>
+		<IconButton disabled={first} flip src={arrowRightImg} onClick={() => {
+			dispatch(actions.outlinerHistoryNext(-1))
+		}} />
+		<IconButton disabled={last} src={arrowRightImg} onClick={() => {
+			dispatch(actions.outlinerHistoryNext(1))
+		}}/>
+	</>
+}
+
+function useOutlinerSearch(handle: OutlinerHandle) {
+	const lookup = useAppSelector(s => s.app.outlinerValue)
+	const [search, setSearch] = useState("")
+	let matchedObjectTypes = api.useSearchObjectTypesQuery(search || skipToken).data || []
+
+	const [matched, matchedKeys] = useMemo(() => {
+		if (!search) {
+			return [{}, []]
+		}
+		const map: Record<string, UniqueObjectLookup> = {}
+		let count = 0;
+		for (const obj of matchedObjectTypes) {
+			map[getTreeItemId(obj)] = obj
+			++count
+		}
+		return [map, Object.keys(map)] as const
+	}, [matchedObjectTypes, search])
+
+	const currentIdx = useMemo(() => lookup ? matchedKeys.indexOf(getTreeItemId(lookup)) : -1, [matchedKeys, lookup])
+
+	function nextItem(offset: number) {
+		const idx = posmod(currentIdx + offset, matchedKeys.length)
+		const key = matchedKeys[idx]
+		dispatch(actions.setOutlinerValue(matched[key]))
+	}
+
+	useEffect(() => {
+		if (handle.tree && search) {
+			// select first matched item if current item not in search results
+			if (currentIdx === -1) {
+				nextItem(1)
+			}
+		}
+	}, [search, matched])
+
+	return [search, setSearch, currentIdx, matchedKeys.length, nextItem] as const
 }
 
 export default Outliner

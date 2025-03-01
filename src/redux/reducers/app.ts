@@ -1,7 +1,8 @@
-import { posmod } from "@/util";
+import { UniqueObjectLookup, posmod } from "@/util";
 import { PayloadAction, createDraftSafeSelector, createSelector, createSlice } from "@reduxjs/toolkit";
 import { Game, ModInfo, Project } from "@towermod";
-import { UniqueObjectLookup } from "..";
+
+const MAX_OUTLINER_HISTORY = 50
 
 export interface AppState {
 	allTabs: string[]
@@ -10,6 +11,8 @@ export interface AppState {
 	selectedModId: string | undefined,
 	runningMods: string[],
 	outlinerValue: UniqueObjectLookup | undefined,
+	outlinerHistory: UniqueObjectLookup[],
+	outlinerHistoryIdx: number,
 	showImageCollisionPreview: boolean,
 	imageId: number,
 }
@@ -21,6 +24,8 @@ const initialState: AppState = {
 	selectedModId: undefined,
 	runningMods: [],
 	outlinerValue: undefined,
+	outlinerHistory: [],
+	outlinerHistoryIdx: 0,
 	showImageCollisionPreview: true,
 	imageId: 0,
 }
@@ -79,9 +84,25 @@ export const appSlice = createSlice({
 		},
 
 		setOutlinerValue(state, action: PayloadAction<UniqueObjectLookup | undefined>) {
-			state.outlinerValue = action.payload;
+			state.outlinerValue = action.payload
+			if (action.payload) {
+				if (state.outlinerHistoryIdx === -1) { state.outlinerHistoryIdx = state.outlinerHistory.length - 1 }
+				state.outlinerHistory = state.outlinerHistory.slice(0, state.outlinerHistoryIdx + 1) // slice off the future
+				state.outlinerHistory.push(action.payload)
+				if (state.outlinerHistory.length > MAX_OUTLINER_HISTORY) {
+					state.outlinerHistory.shift()
+				} else {
+					state.outlinerHistoryIdx += 1
+				}
+			} else {
+				state.outlinerHistoryIdx = -1
+			}
 		},
-
+		outlinerHistoryNext(state, action: PayloadAction<number>) {
+			if (state.outlinerHistoryIdx === -1) { state.outlinerHistoryIdx = (state.outlinerHistory.length - 1) - 1 * Math.sign(action.payload)}
+			state.outlinerHistoryIdx = posmod(state.outlinerHistoryIdx + action.payload, state.outlinerHistory.length)
+			state.outlinerValue = state.outlinerHistory[state.outlinerHistoryIdx]
+		},
 		setShowImageCollisionPreview(state, action: PayloadAction<boolean>) {
 			state.showImageCollisionPreview = action.payload;
 		},
