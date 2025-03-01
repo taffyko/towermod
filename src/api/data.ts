@@ -58,7 +58,7 @@ export const dataApi = baseApi.injectEndpoints({
 			queryFn: queryFn(async ({ id }) => {
 				return enhanceObjectType(await invoke('get_object_type', { id }))
 			}),
-			providesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg) }]
+			providesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id) }]
 		}),
 		getObjectTypes: builder.query<Lookup<ObjectType>[], void>({
 			queryFn: queryFn(async () => {
@@ -74,6 +74,12 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: ['ObjectType'],
 		}),
+		updateObjectType: builder.mutation<void, ObjectType>({
+			queryFn: queryFn(async (obj) => {
+				return await invoke('update_object_type', { obj })
+			}),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id) }]
+		}),
 
 		getObjectInstance: builder.query<ObjectInstance | null, LookupArg<ObjectInstance>>({
 			queryFn: queryFn(async ({ id }) => {
@@ -87,6 +93,12 @@ export const dataApi = baseApi.injectEndpoints({
 				return ids.map(id => ({ id, _type: 'ObjectInstance' }))
 			}),
 			providesTags: ['ObjectInstance']
+		}),
+		updateObjectInstance: builder.mutation<void, ObjectInstance>({
+			queryFn: queryFn(async (obj) => {
+				return await invoke('update_object_instance', { obj })
+			}),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectInstance', id: String(arg.id) }]
 		}),
 
 		getLayout: builder.query<Layout | null, LookupArg<Layout>>({
@@ -102,6 +114,12 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: ['Layout']
 		}),
+		updateLayout: builder.mutation<void, Layout>({
+			queryFn: queryFn(async (layout) => {
+				return await invoke('update_layout', { layout })
+			}),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'Layout', id: arg.name }]
+		}),
 
 		getLayoutLayer: builder.query<LayoutLayer | null, LookupArg<LayoutLayer>>({
 			queryFn: queryFn(async ({ id }) => {
@@ -115,6 +133,12 @@ export const dataApi = baseApi.injectEndpoints({
 				return ids.map(id => ({ id, _type: 'LayoutLayer' }))
 			}),
 			providesTags: ['LayoutLayer']
+		}),
+		updateLayoutLayer: builder.mutation<void, LayoutLayer>({
+			queryFn: queryFn(async (layer) => {
+				return await invoke('update_layout_layer', { layer })
+			}),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'LayoutLayer', id: String(arg.id) }]
 		}),
 
 		getAnimation: builder.query<Animation | null, LookupArg<Animation>>({
@@ -137,6 +161,12 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: ['Animation']
 		}),
+		updateAnimation: builder.mutation<void, Animation>({
+			queryFn: queryFn(async (animation) => {
+				return await invoke('update_animation', { animation })
+			}),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'Animation', id: String(arg.id) }]
+		}),
 
 		getBehavior: builder.query<Behavior | null, LookupArg<Behavior>>({
 			queryFn: queryFn(async ({ objectTypeId, movIndex }) => {
@@ -153,6 +183,12 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: ['Behavior']
 		}),
+		updateBehavior: builder.mutation<void, Behavior>({
+			queryFn: queryFn(async (behavior) => {
+				return await invoke('update_behavior', { behavior })
+			}),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'Behavior', id: `${arg.objectTypeId}.${arg.movIndex}` }]
+		}),
 
 		getContainer: builder.query<Container | null, LookupArg<Container>>({
 			queryFn: queryFn(async ({ objectIds }) => {
@@ -166,6 +202,12 @@ export const dataApi = baseApi.injectEndpoints({
 				return ids.map(id => ({ objectIds: [id], _type: 'Container' }))
 			}),
 			providesTags: ['Container']
+		}),
+		updateContainer: builder.mutation<void, Container>({
+			queryFn: queryFn(async (container) => {
+				return await invoke('update_container', { container })
+			}),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'Container', id: String(arg.objectIds[0]) }]
 		}),
 
 		getFamily: builder.query<Family | null, LookupArg<Family>>({
@@ -181,6 +223,12 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: ['Family']
 		}),
+		updateFamily: builder.mutation<void, Family>({
+			queryFn: queryFn(async (family) => {
+				return await invoke('update_family', { family })
+			}),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'Family', id: String(arg.name) }]
+		}),
 
 		getObjectTrait: builder.query<ObjectTrait | null, LookupArg<ObjectTrait>>({
 			queryFn: queryFn(async ({ name }) => {
@@ -195,12 +243,24 @@ export const dataApi = baseApi.injectEndpoints({
 			}),
 			providesTags: ['ObjectTrait']
 		}),
+		updateObjectTrait: builder.mutation<void, ObjectTrait>({
+			queryFn: queryFn(async (objectTrait) => {
+				return await invoke('update_trait', { trait: objectTrait })
+			}),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectTrait', id: String(arg) }]
+		}),
 
 		getAppBlock: builder.query<AppBlock, void>({
 			queryFn: queryFn(async () => {
 				return enhanceAppBlock(await invoke('get_app_block'))
 			}),
 			providesTags: ['AppBlock']
+		}),
+		updateAppBlock: builder.mutation<void, AppBlock>({
+			queryFn: queryFn(async (appBlock) => {
+				return await invoke('update_app_block', { appBlock })
+			}),
+			invalidatesTags: ['AppBlock']
 		}),
 	}),
 })

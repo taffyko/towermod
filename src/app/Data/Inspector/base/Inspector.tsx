@@ -125,18 +125,21 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		onChange(newObj)
 	}
 
-	const propertyComponents: React.ReactNode[] = useMemo(() => Object.entries(dictPinfo.value).map(([key, val]) => {
-		const pinfo = inferPropertyInfoFromDictionaryValue(val, dictPinfo, key)
+	const propertyComponents: React.ReactNode[] = useMemo(() =>
+		Object.entries(dictPinfo.value)
+			.sort(([key1,], [key2,]) => key1 < key2 ? -1 : 1)
+			.map(([key, val]) => {
+				const pinfo = inferPropertyInfoFromDictionaryValue(val, dictPinfo, key)
 
-		const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
+				const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
 
-		return <React.Fragment key={pinfo.key}>
-			<div>
-				{pinfo.key}:
-				<IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />
-			</div>
-			<div className="hbox">{valueComponent}</div>
-		</React.Fragment>
+				return <React.Fragment key={pinfo.key}>
+					<div>
+						{pinfo.key}:
+						<IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />
+					</div>
+					<div className="hbox">{valueComponent}</div>
+				</React.Fragment>
 	}), [dictPinfo.value])
 
 	// adding properties
@@ -163,7 +166,11 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		</div> : null}
 		{addProperty ?
 			<div className="hbox gap">
-				<LineEdit placeholder="Add new entry..." value={newKeyText} onChange={e => setNewKeyText(e.target.value)} />
+				<LineEdit
+					onKeyDown={e => e.code === 'Enter' && addProperty()}
+					placeholder="Add new entry..." value={newKeyText}
+					onChange={e => setNewKeyText(e.target.value)}
+				/>
 				{dictPinfo.valueTypes.length > 1 ?
 					<Select
 						onChange={v => setNewValueType(v as any)}

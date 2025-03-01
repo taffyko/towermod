@@ -3,7 +3,7 @@ import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
 import { useState } from 'react'
 import { UniqueTowermodObject } from '@/util'
-import { useStateRef } from '@/util/hooks'
+import { useOptimisticTwoWayBinding, useStateRef } from '@/util/hooks'
 import { useAppSelector } from '@/redux'
 import { api } from '@/api'
 import { Button } from '@/components/Button'
@@ -11,16 +11,22 @@ import { spin } from '../GlobalSpinner'
 import { toast } from '../Toast'
 import { Toggle } from '@/components/Toggle'
 import { awaitRtk } from '@/api/helpers'
-import { saveProject, useTowermodObject } from '@/appUtil'
+import { saveProject, updateTowermodObject, useTowermodObject } from '@/appUtil'
+import { debounce } from 'lodash-es'
+
+
+const updateTowermodObjectDebounced = debounce(updateTowermodObject, 500, { leading: true  })
 
 export function Data() {
 	const searchValue = useAppSelector((s) => s.app.outlinerValue);
-	const value = useTowermodObject(searchValue);
+	const externalValue = useTowermodObject(searchValue);
 
 	const [outlinerRef, setOutlinerRef] = useStateRef<OutlinerHandle>();
 
+	const [value, setValue] = useOptimisticTwoWayBinding({ externalValue })
 	const onChange = (obj: UniqueTowermodObject) => {
-		// FIXME: dispatch object changes to API
+		setValue(obj)
+		updateTowermodObjectDebounced(obj)
 	}
 
 	return <div className="vbox gap grow">

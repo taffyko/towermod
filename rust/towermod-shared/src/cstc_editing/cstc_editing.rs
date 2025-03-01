@@ -48,22 +48,39 @@ pub struct EdLayout {
 	pub color: i32,
 	pub unbounded_scrolling: bool,
 	pub application_background: bool,
-	pub data_keys: Vec<cstc::DataKey>,
+	pub data_keys: HashMap<String, EdDataKey>,
+	#[serde(default)]
 	pub layers: Vec<EdLayoutLayer>,
 	pub image_ids: Vec<i32>,
 	pub texture_loading_mode: cstc::TextureLoadingMode,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum EdDataKey {
+	Pointer(u32),
+	String(String),
+}
+
 impl EdLayout {
 	fn from_stable(layout: cstc::Layout, object_types: &HashMap<i32, &cstc::ObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
 		let cstc::Layout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode } = layout;
 		let layers = layers.into_iter()
 			.map(|layer| EdLayoutLayer::from_stable(layer, object_types, plugins))
 			.collect::<Result<Vec<_>>>()?;
+		let data_keys = data_keys.into_iter().map(|value| match value {
+			cstc::DataKey::Pointer(name, ptr) => (name, EdDataKey::Pointer(ptr)),
+			cstc::DataKey::String(name, string) => (name, EdDataKey::String(string)),
+		}).collect();
 		Ok(EdLayout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode })
 	}
 	fn to_stable(self) -> cstc::Layout {
 		let EdLayout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode } = self;
 		let layers = layers.into_iter().map(|layer| layer.to_stable()).collect();
+		let data_keys = data_keys.into_iter().map(|(name, value)| match value {
+			EdDataKey::Pointer(ptr) => cstc::DataKey::Pointer(name, ptr),
+			EdDataKey::String(string) => cstc::DataKey::String(name, string),
+		}).collect();
 		cstc::Layout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode }
 	}
 }
@@ -93,6 +110,7 @@ pub struct EdLayoutLayer {
 	#[serde(alias = "enable_3d")]
 	pub enable_3d: bool,
 	pub clear_depth_buffer: bool,
+	#[serde(default)]
 	pub objects: Vec<EdObjectInstance>,
 }
 impl EdLayoutLayer {

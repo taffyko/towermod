@@ -126,7 +126,6 @@ export function defaultValueForType(type: InspectorTypeName): (() => any) {
 		case 'boolean': return () => false
 		case 'ActionPoint': return () => ({ _type: 'ActionPoint', x: 0, y: 0, angle: 0, string: "" })
 		case 'AnimationFrame': return () => ({ _type: 'AnimationFrame', imageId: 0, duration: 0 })
-		case 'DataKey': return (): TypeNameToValue['DataKey'] => ({ _type: 'DataKey', type: "String", field0: "name", field1: "" })
 		case 'BehaviorControl': return (): TypeNameToValue['BehaviorControl'] => ({ _type: 'BehaviorControl', name: "name", vk: 0, player: 0 })
 		case 'PrivateVariable': return (): TypeNameToValue['PrivateVariable'] => ({ _type: 'PrivateVariable', name: "name", valueType: 'String' })
 		case 'GlobalVariable': return (): TypeNameToValue['GlobalVariable'] => ({ _type: 'GlobalVariable', name: "name", varType: 0, value: "" })
@@ -155,7 +154,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			override(type, {
 				name: { readonly: true },
 				imageIds: { hidden: true, },
-				dataKeys: { valueTypes: ['DataKey'] },
+				dataKeys: { valueTypes: ['string', 'int'] },
 				textureLoadingMode: { type: 'TextureLoadingMode' },
 				width: { type: 'int' },
 				height: { type: 'int' },
@@ -198,7 +197,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				objectTypeId: { readonly: true },
 				newIndex: { type: 'int', readonly: true },
 				movIndex: { type: 'int', readonly: true },
-				data: { hidden: true }, // TODO
+				data: { hidden: true }, // TODO decode behavior data
 				descriptors: { hidden: true, }
 			})
 		break; case 'BehaviorControl':
@@ -212,6 +211,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			})
 		break; case 'Family':
 			override(type, {
+				name: { readonly: true },
 				objectTypeIds: { valueTypes: ['int'] },
 				privateVariables: { valueTypes: ['PrivateVariable'] },
 			})
@@ -231,11 +231,12 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			})
 		break; case 'ObjectTrait':
 			override(type, {
+				name: { readonly: true },
 				objectTypeIds: { valueTypes: ['int'] },
 			})
 		break; case 'AppBlock':
 			override(type, {
-				dataKeys: { valueTypes: ['DataKey'] },
+				dataKeys: { valueTypes: ['string', 'int'] },
 				behaviorControls: { valueTypes: ['BehaviorControl'] },
 				globalVariables: { valueTypes: ['GlobalVariable'] },
 				fpsMode: { type: 'FpsMode' },

@@ -5,7 +5,7 @@ import { openModal } from "@/app/Modal";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { awaitRtk } from "@/api/helpers";
 import { toast } from "@/app/Toast";
-import { ObjectForType, UniqueObjectLookup, arrayShallowEqual, objectShallowEqual, useRerender } from "@/util";
+import { ObjectForType, TowermodObject, UniqueObjectLookup, UniqueTowermodObject, arrayShallowEqual, objectShallowEqual, useRerender } from "@/util";
 import { assertUnreachable, useMemoAsyncWithCleanup } from "@/util";
 import { ApiEndpointQuery, QueryDefinition, skipToken } from "@reduxjs/toolkit/query";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -99,8 +99,28 @@ export function useQueryScope() {
 	return query
 }
 
-export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined): ObjectForType<T['_type']> | undefined {
+export async function updateTowermodObject<T extends UniqueTowermodObject>(obj: T) {
+	let endpoint: any;
+	const type = obj._type
+	switch (type) {
+		case 'ObjectType': endpoint = api.endpoints.updateObjectType
+		break; case 'ObjectInstance': endpoint = api.endpoints.updateObjectInstance
+		break; case 'Container': endpoint = api.endpoints.updateContainer
+		break; case 'Animation': endpoint = api.endpoints.updateAnimation
+		break; case 'Behavior': endpoint = api.endpoints.updateBehavior
+		break; case 'Family': endpoint = api.endpoints.updateFamily
+		break; case 'ObjectTrait': endpoint = api.endpoints.updateObjectTrait
+		break; case 'AppBlock': endpoint = api.endpoints.updateAppBlock
+		break; case 'Layout': endpoint = api.endpoints.updateLayout
+		break; case 'LayoutLayer': endpoint = api.endpoints.updateLayoutLayer
+		break; case undefined: endpoint = undefined
+		break; default: assertUnreachable(type)
+	}
+	console.log('update dispatched')
+	await awaitRtk(dispatch(endpoint.initiate(obj)))
+}
 
+export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined): ObjectForType<T['_type']> | undefined {
 	const query = useQueryScope()
 
 	const type = obj?._type

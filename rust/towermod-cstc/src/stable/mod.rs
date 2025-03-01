@@ -301,6 +301,7 @@ pub struct Animation {
 	pub repeat_to: i32,
 	pub ping_pong: bool,
 	pub frames: Vec<AnimationFrame>,
+	#[serde(default)]
 	pub sub_animations: Vec<Animation>,
 }
 

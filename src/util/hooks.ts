@@ -298,9 +298,46 @@ export function useTwoWaySubmitBinding<T>(externalValue?: T, onSubmit?: (value: 
 	return [internalValue, setInternalValue, dirty, submit]
 }
 
-
-
-
+export function useOptimisticTwoWayBinding<T, TInternal = T>(options: {
+	initialValue?: TInternal,
+	externalValue?: T
+	/** transform external value */
+	transform?: (v: T) => TInternal,
+	el?: HTMLElement | null,
+	/** don't allow an updated external value to clobber the current internal value while the element is focused */
+	ignoreWhileEditing?: boolean,
+	isInputField?: boolean,
+}) {
+	const { externalValue, el, isInputField, ignoreWhileEditing, initialValue } = options
+	const transform = options.transform ?? (v => v as any)
+	const [value, setValue] = useState<TInternal>(() => externalValue !== undefined ? transform(externalValue) : initialValue)
+	// update internal value to reflect external value when control loses focus
+	useEventListener(el, 'blur', (e) => {
+		if (externalValue !== undefined && !(e.relatedTarget instanceof Node && el?.contains(e.relatedTarget))) {
+			setValue(transform(externalValue))
+		}
+	})
+	useEventListener(el, 'keydown', (e) => {
+		if (isInputField && e.code === 'Enter') {
+			if (externalValue !== undefined) {
+				setValue(transform(externalValue))
+			}
+		}
+	})
+	useEffect(() => {
+		if (externalValue !== undefined) {
+			if (ignoreWhileEditing !== false && el) {
+				// do not overwrite the internal value while the element is focused
+				if (!el?.contains(document.activeElement)) {
+					setValue(transform(externalValue))
+				}
+		 	} else {
+				setValue(transform(externalValue))
+			}
+		}
+	}, [externalValue])
+	return [value, setValue] as const
+}
 
 export function useIsInert() {
 	const isSpinning = useIsSpinning();

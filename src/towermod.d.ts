@@ -56,7 +56,7 @@ export interface AppBlock {
   globalVariables: Array<GlobalVariable>
   behaviorControls: Array<BehaviorControl>
   disableWindowsKey: boolean
-  dataKeys: Array<DataKey>
+  dataKeys: Record<string, string | number>
   simulateShaders: SimulateShadersMode
   originalProjectPath: string
   fpsInCaption: int
@@ -116,10 +116,6 @@ export interface CstcData {
   animations: Array<Animation>
   appBlock: AppBlock
 }
-
-export type DataKey =
-  | { _type: 'DataKey', type: 'Pointer', field0: string, field1: number }
-  | { _type: 'DataKey', type: 'String', field0: string, field1: string }
 
 export type DisableShaderWhen = 'NoSetting' | 'Ps20Unavailable' | 'Ps20Available' | 'Ps14Unavailable' | 'Ps14Available' | 'Ps11Unavailable' | 'Ps11Available';
 
@@ -239,7 +235,7 @@ export interface Layout {
   color: int
   unboundedScrolling: boolean
   applicationBackground: boolean
-  dataKeys: Array<DataKey>
+  dataKeys: Record<string, string | number>
   imageIds: Array<number>
   textureLoadingMode: TextureLoadingMode
   _type: 'Layout'

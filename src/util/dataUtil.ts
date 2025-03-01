@@ -1,6 +1,6 @@
-import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData, TextObjectData, SpriteObjectData, AnimationFrame, PrivateVariable, ActionPoint, DataKey, BehaviorControl, GlobalVariable } from "@towermod";
+import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData, TextObjectData, SpriteObjectData, AnimationFrame, PrivateVariable, ActionPoint, BehaviorControl, GlobalVariable } from "@towermod";
 
-export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | PrivateVariable | ImageMetadata | ActionPoint | DataKey | BehaviorControl | GlobalVariable
+export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | PrivateVariable | ImageMetadata | ActionPoint | BehaviorControl | GlobalVariable
 	| TextObjectData | SpriteObjectData
 
 export const uniqueObjectTypes = new Set([
