@@ -49,6 +49,7 @@ pub enum Action {
 	UpdateObjectType(ObjectType),
 	CreateObjectType { id: i32, plugin_id: i32 },
 	DeleteObjectType(i32),
+	AddObjectTypeVariable { id: i32, name: String, value: String },
 
 	UpdateObjectInstance(EdObjectInstance),
 	CreateObjectInstance { id: i32, object_type_id: i32, layout_layer_id: i32 },
@@ -102,8 +103,8 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			});
 		},
 		Action::DeleteObjectType(id) => {
-			s.data.object_types.retain(|o| o.id != id);
 			todo!() // delete all object instances of this type
+			s.data.object_types.retain(|o| o.id != id);
 		},
 
 		Action::UpdateObjectInstance(obj) => {
@@ -175,6 +176,7 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 				*original_family = family;
 			}
 		},
+
 
 		Action::UpdateTrait(trait_) => {
 			if let Some(original_trait) = selectors::select_trait_mut(trait_.name.clone())(&mut s) {

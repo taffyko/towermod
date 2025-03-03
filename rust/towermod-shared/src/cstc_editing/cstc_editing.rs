@@ -18,7 +18,7 @@ pub struct EdObjectInstance {
 	pub height: i32,
 	pub angle: f32,
 	pub filter: i32,
-	pub private_variables: Vec<String>,
+	pub private_variables: HashMap<String, VariableValue>,
 	pub data: cstc::ObjectData,
 	pub key: i32,
 }
@@ -27,12 +27,39 @@ impl EdObjectInstance {
 		let obj_type = object_types.get(&obj.object_type_id).context("Object type not found")?;
 		let plugin_name = &plugins.get(&obj_type.plugin_id).context("Plugin not found")?.string_table.name;
 		let data = cstc::ObjectData::decode(obj.data, &plugin_name);
-		let obj = EdObjectInstance { id: obj.id, object_type_id: obj.object_type_id, x: obj.x, y: obj.y, width: obj.width, height: obj.height, angle: obj.angle, filter: obj.filter, private_variables: obj.private_variables, data, key: obj.key };
+		let private_variables = obj.private_variables.into_iter().map(|(name, value)| (name, match value {
+			cstc::PrivateVariableType::Number(n) => VariableValue::Number(n),
+			cstc::PrivateVariableType::String(s) => VariableValue::String(s),
+		})).collect();
+		let obj = EdObjectInstance { id: obj.id, object_type_id: obj.object_type_id, x: obj.x, y: obj.y, width: obj.width, height: obj.height, angle: obj.angle, filter: obj.filter, private_variables: private_variables, data, key: obj.key };
 		Ok(obj)
 	}
 	fn to_stable(obj: EdObjectInstance) -> cstc::ObjectInstance {
 		let data = obj.data.encode();
-		cstc::ObjectInstance { id: obj.id, object_type_id: obj.object_type_id, x: obj.x, y: obj.y, width: obj.width, height: obj.height, angle: obj.angle, filter: obj.filter, private_variables: obj.private_variables, data, key: obj.key }
+		cstc::ObjectInstance { id: obj.id, object_type_id: obj.object_type_id, x: obj.x, y: obj.y, width: obj.width, height: obj.height, angle: obj.angle, filter: obj.filter, private_variables: private_variables, data, key: obj.key }
+	}
+}
+
+#[serde_alias(SnakeCase, CamelCase)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EdObjectType {
+	pub id: i32,
+	pub name: String,
+	pub plugin_id: i32,
+	pub global: bool,
+	pub destroy_when: towermod_cstc::DisableShaderWhen,
+	pub private_variables: HashMap<String, VariableType>,
+	pub descriptors: Option<towermod_cstc::FeatureDescriptors>,
+}
+impl EdObjectType {
+	fn from_stable(obj_type: cstc::ObjectType) -> Result<Self> {
+		let cstc::ObjectType { id, name, plugin_id, global, destroy_when, private_variables, descriptors } = obj_type;
+		let private_variables = private_variables.into_iter().map(|var| (match var.value_type {
+			cstc::PrivateVariableType::Integer => (var.name, VariableType::Number),
+			cstc::PrivateVariableType::String => (var.name, VariableType::String),
+		})).collect();
+		Ok(EdObjectType { id, name, plugin_id, global, destroy_when, private_variables, descriptors })
 	}
 }
 
@@ -72,6 +99,15 @@ pub struct EdAppBlock {
 	pub texture_loading_mode: cstc::TextureLoadingMode,
 }
 
+#[serde_alias(SnakeCase, CamelCase)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EdFamily {
+	// Unique name.
+	pub name: String,
+	pub object_type_ids: Vec<i32>,
+	pub private_variables: HashMap<String, VariableType>,
+}
 
 #[serde_alias(SnakeCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,8 +120,7 @@ pub struct EdLayout {
 	pub color: i32,
 	pub unbounded_scrolling: bool,
 	pub application_background: bool,
-	pub data_keys: HashMap<String, EdDataKey>,
-	#[serde(default)]
+	pub data_keys: Vec<cstc::DataKey>,
 	pub layers: Vec<EdLayoutLayer>,
 	pub image_ids: Vec<i32>,
 	pub texture_loading_mode: cstc::TextureLoadingMode,
@@ -164,6 +199,17 @@ impl EdLayoutLayer {
 	}
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum VariableValue {
+	Number(f64),
+	String(String),
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum VariableType {
+	Number,
+	String
+}
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
@@ -182,13 +228,13 @@ pub struct CstcData {
 	pub image_block: Vec<cstc::ImageMetadata>,
 }
 
-
 pub type StableData = (HashMap<i32, cstc::plugin::PluginData>, cstc::AppBlock, Vec<cstc::ImageMetadata>, cstc::LevelBlock, cstc::EventBlock);
 
 impl CstcData {
 	pub fn from_stable(value: StableData) -> Result<Self> {
 		let (editor_plugins, app_block, image_block, level_block, event_block) = value;
 		let cstc::LevelBlock { object_types, behaviors, traits, families, containers, layouts, animations } = level_block;
+		let object_types = object_types.into_iter().map(|obj_type| EdObjectType::from_stable(obj_type)).collect::<Result<Vec<_>>>()?;
 		let object_types_map = object_types.iter().map(|obj_type| (obj_type.id, obj_type)).collect();
 		let layouts = layouts.into_iter()
 			.map(|layout| EdLayout::from_stable(layout, &object_types_map, &editor_plugins))
