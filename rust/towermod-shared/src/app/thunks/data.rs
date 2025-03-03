@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use towermod_cstc::{ImageMetadata, ObjectType};
-use crate::{app::state::{data_state::JsCstcData, select, DataAction, STORE}, cstc_editing::EdObjectInstance};
+use crate::{app::state::{select, DataAction, STORE}, cstc_editing::EdObjectInstance};
 use fs_err::tokio as fs;
 
 pub async fn get_image(id: i32) -> Option<Vec<u8>> {

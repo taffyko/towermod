@@ -76,7 +76,6 @@ pub fn run() {
 				commands::get_editor_plugin,
 				commands::get_editor_plugins,
 				commands::get_image_metadata,
-				commands::get_data,
 				commands::is_image_overridden,
 				commands::set_image_metadata,
 				commands::image_dump_dir_path,
@@ -111,6 +110,8 @@ pub fn run() {
 				commands::update_object_type,
 				commands::create_object_type,
 				commands::delete_object_type,
+				commands::object_type_add_variable,
+				commands::object_type_delete_variable,
 
 				commands::get_object_instances,
 				commands::get_object_instance,
@@ -141,11 +142,15 @@ pub fn run() {
 
 				commands::get_families,
 				commands::get_family,
-				commands::update_family,
+				commands::family_add_object,
+				commands::family_remove_object,
+				commands::family_add_variable,
+				commands::family_delete_variable,
 
 				commands::get_traits,
 				commands::get_trait,
 				commands::update_trait,
+				commands::create_trait,
 
 				commands::get_app_block,
 				commands::update_app_block,

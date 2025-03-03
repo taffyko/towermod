@@ -505,7 +505,7 @@ pub async fn save_project(dir_path: PathBuf) -> Result<()> {
 	STORE.dispatch(AppAction::EditProjectInfo(project)).await;
 
 	let data = select(|s| s.data.clone()).await;
-	let (_editor_plugins, app_block, image_block, level_block, event_block) = data.to_stable();
+	let (_editor_plugins, app_block, image_block, level_block, event_block) = data.to_stable()?;
 
 	let ((), results) = unsafe {TokioScope::scope_and_collect(|s| {
 		s.spawn_blocking(|| serde_json::to_vec(&level_block));
@@ -591,7 +591,7 @@ pub async fn export_mod(mod_type: ModType) -> Result<()> {
 			let original_image_block_bin = cstc::ImageBlock::read_bin(&game_path)?;
 
 			let data = select(|s| s.data.clone()).await;
-			let (_editor_plugins, app_block, image_metadatas, level_block, event_block) = data.to_stable();
+			let (_editor_plugins, app_block, image_metadatas, level_block, event_block) = data.to_stable()?;
 
 			status("Generating patches");
 			let ((), results) = unsafe {TokioScope::scope_and_collect(|s| {

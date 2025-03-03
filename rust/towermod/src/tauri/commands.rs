@@ -3,7 +3,7 @@ use tauri::{command, AppHandle, Emitter};
 use anyhow::Result;
 use fs_err::tokio as fs;
 use towermod_cstc::ImageMetadata;
-use towermod_shared::{app::state::{data_state::JsCstcData, dispatch, select, DataAction}, cstc_editing, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType, select };
+use towermod_shared::{app::state::{dispatch, select, DataAction}, cstc_editing, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType, select };
 use towermod_util::log_on_error;
 
 #[command]
@@ -140,11 +140,6 @@ pub async fn get_image_metadata(id: i32) -> Option<ImageMetadata> {
 }
 
 #[command]
-pub async fn get_data() -> Option<JsCstcData> {
-	selectors::get_data().await
-}
-
-#[command]
 pub async fn is_image_overridden(id: i32) -> Result<bool> {
 	thunks::is_image_overridden(id).await
 }
@@ -272,13 +267,13 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_object_types() -> Vec<i32> {
 	selectors::get_object_types().await
 }
-#[command] pub async fn get_object_type(id: i32) -> Option<towermod_cstc::ObjectType> {
+#[command] pub async fn get_object_type(id: i32) -> Option<cstc_editing::EdObjectType> {
 	selectors::get_object_type(id).await
 }
 #[command] pub async fn search_object_types(txt: String) -> Vec<i32> {
 	selectors::search_object_types(txt).await
 }
-#[command] pub async fn update_object_type(obj: towermod_cstc::ObjectType) {
+#[command] pub async fn update_object_type(obj: cstc_editing::EdObjectType) {
 	dispatch(DataAction::UpdateObjectType(obj)).await
 }
 #[command] pub async fn create_object_type(plugin_id: i32) -> i32 {
@@ -288,6 +283,12 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 }
 #[command] pub async fn delete_object_type(id: i32) {
 	dispatch(DataAction::DeleteObjectType(id)).await
+}
+#[command] pub async fn object_type_add_variable(id: i32, name: String, value: cstc_editing::VariableValue) {
+	dispatch(DataAction::ObjectTypeAddVariable { id, name, value }).await
+}
+#[command] pub async fn object_type_delete_variable(id: i32, name: String) {
+	dispatch(DataAction::ObjectTypeDeleteVariable { id, name }).await
 }
 
 #[command] pub async fn get_object_instances(layout_layer_id: i32) -> Vec<i32> {
@@ -373,11 +374,20 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_families() -> Vec<String> {
 	select!(selectors::select_families(), |r| r.into_iter().map(|name| name.clone()).collect()).await
 }
-#[command] pub async fn get_family(name: String) -> Option<towermod_cstc::Family> {
+#[command] pub async fn get_family(name: String) -> Option<cstc_editing::EdFamily> {
 	select!(selectors::select_family(name), |r| r.cloned()).await
 }
-#[command] pub async fn update_family(family: towermod_cstc::Family) {
-	dispatch(DataAction::UpdateFamily(family)).await
+#[command] pub async fn family_add_object(name: String, object_type_id: i32) {
+	dispatch(DataAction::FamilyAddObject { name, object_type_id }).await
+}
+#[command] pub async fn family_remove_object(name: String, object_type_id: i32) {
+	dispatch(DataAction::FamilyRemoveObject { name, object_type_id }).await
+}
+#[command] pub async fn family_add_variable(name: String, var_name: String, value: cstc_editing::VariableValue) {
+	dispatch(DataAction::FamilyAddVariable { name, var_name, value }).await
+}
+#[command] pub async fn family_delete_variable(name: String, var_name: String) {
+	dispatch(DataAction::FamilyDeleteVariable { name, var_name }).await
 }
 
 #[command] pub async fn get_traits() -> Vec<String> {
@@ -389,11 +399,14 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn update_trait(object_trait: towermod_cstc::ObjectTrait) {
 	dispatch(DataAction::UpdateTrait(object_trait)).await
 }
+#[command] pub async fn create_trait(name: String) {
+	dispatch(DataAction::CreateTrait(name)).await
+}
 
-#[command] pub async fn get_app_block() -> Option<towermod_cstc::AppBlock> {
+#[command] pub async fn get_app_block() -> Option<cstc_editing::EdAppBlock> {
 	select(|s| s.data.app_block.as_ref().cloned()).await
 }
-#[command] pub async fn update_app_block(app_block: towermod_cstc::AppBlock) {
+#[command] pub async fn update_app_block(app_block: cstc_editing::EdAppBlock) {
 	dispatch(DataAction::UpdateAppBlock(app_block)).await;
 }
 

@@ -42,6 +42,8 @@ export type ArrayPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> =
 	key: InspectorKeyTypes,
 	value: readonly T[]
 	type: 'Array',
+	/** Whether or not new entries can be added */
+	fixed?: boolean,
 	/** List of type names representing the union of types this array can contain */
 	valueTypes?: Array<string & (KeyOfValue<TypeNameToValue, T> | 'unknown')>
 }
@@ -50,6 +52,8 @@ export type DictionaryPropertyInfo<T extends AnyInspectorValue = AnyInspectorVal
 	key: InspectorKeyTypes,
 	value: Readonly<Record<TKey, T>>,
 	type: 'Dictionary',
+	/** Whether or not new entries can be added */
+	fixed?: boolean,
 	/** List of type names representing the union of key types this dictionary can use to key its values */
 	keyTypes: Array<KeyOfValue<TypeNameToValue, TKey>>,
 	/** List of type names representing the union of value types this dictionary can contain */
@@ -123,6 +127,7 @@ export function inferPropertyInfoFromValue(value: AnyInspectorValue, parent: Any
 				value,
 				parent,
 				valueTypes: ['unknown'] as any,
+				readonly: parent?.readonly,
 			} as ArrayPropertyInfo
 		case 'Dictionary':
 			return {
@@ -131,7 +136,8 @@ export function inferPropertyInfoFromValue(value: AnyInspectorValue, parent: Any
 				value,
 				parent,
 				valueTypes: ['unknown'] as any,
-				keyTypes: ['string', 'number'] as any
+				keyTypes: ['string', 'number'] as any,
+				readonly: parent?.readonly,
 			} as DictionaryPropertyInfo
 		default:
 			return {
@@ -139,6 +145,7 @@ export function inferPropertyInfoFromValue(value: AnyInspectorValue, parent: Any
 				key,
 				value,
 				parent,
+				readonly: parent?.readonly,
 			} as SimplePropertyInfo
 	}
 }

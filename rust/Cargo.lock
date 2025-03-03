@@ -5423,6 +5423,7 @@ dependencies = [
  "fs-err",
  "futures",
  "glob",
+ "indexmap 2.7.1",
  "indoc",
  "itertools",
  "lazy_static",

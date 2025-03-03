@@ -2,43 +2,7 @@ use serde::{Deserialize, Serialize};
 use towermod_cstc::stable::*;
 use super::super::selectors;
 
-use crate::cstc_editing::{CstcData, EdLayout, EdLayoutLayer, EdObjectInstance};
-
-#[derive(Default, Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-/// Subset of state held by frontend Redux
-pub struct JsCstcData {
-	pub behaviors: Vec<Behavior>,
-	pub traits: Vec<ObjectTrait>,
-	pub families: Vec<Family>,
-	pub layouts: Vec<EdLayout>,
-	pub containers: Vec<Container>,
-	pub animations: Vec<Animation>,
-	pub app_block: Option<AppBlock>,
-}
-impl JsCstcData {
-	pub fn get(value: &CstcData) -> Self {
-		Self {
-			behaviors: value.behaviors.clone(),
-			traits: value.traits.clone(),
-			families: value.families.clone(),
-			layouts: value.layouts.clone(),
-			containers: value.containers.clone(),
-			animations: value.animations.clone(),
-			app_block: value.app_block.clone(),
-		}
-	}
-	pub fn set(self, value: &mut CstcData) {
-		value.behaviors = self.behaviors;
-		value.traits = self.traits;
-		value.families = self.families;
-		value.layouts = self.layouts;
-		value.containers = self.containers;
-		value.animations = self.animations;
-		value.app_block = self.app_block;
-	}
-}
-
+use crate::cstc_editing::{CstcData, EdAppBlock, EdFamily, EdLayout, EdLayoutLayer, EdObjectInstance, EdObjectType, VariableType, VariableValue};
 
 pub type State = CstcData;
 
@@ -46,9 +10,11 @@ pub enum Action {
 	SetData(CstcData),
 	SetImageMetadata (ImageMetadata),
 
-	UpdateObjectType(ObjectType),
+	UpdateObjectType(EdObjectType),
 	CreateObjectType { id: i32, plugin_id: i32 },
 	DeleteObjectType(i32),
+	ObjectTypeAddVariable { id: i32, name: String, value: VariableValue },
+	ObjectTypeDeleteVariable { id: i32, name: String },
 
 	UpdateObjectInstance(EdObjectInstance),
 	CreateObjectInstance { id: i32, object_type_id: i32, layout_layer_id: i32 },
@@ -64,11 +30,16 @@ pub enum Action {
 
 	UpdateContainer(Container),
 
-	UpdateFamily(Family),
+	FamilyAddObject { name: String, object_type_id: i32 },
+	FamilyRemoveObject { name: String, object_type_id: i32 },
+	FamilyAddVariable { name: String, var_name: String, value: VariableValue },
+	FamilyDeleteVariable { name: String, var_name: String },
 
 	UpdateTrait(ObjectTrait),
+	CreateTrait(String),
+	DeleteTrait(String),
 
-	UpdateAppBlock(AppBlock),
+	UpdateAppBlock(EdAppBlock),
 }
 impl From<Action> for super::app_state::Action {
 	fn from(value: Action) -> Self {
@@ -77,6 +48,7 @@ impl From<Action> for super::app_state::Action {
 }
 
 pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_state::State {
+
 	match (action) {
 		Action::SetData(new_state) => s.data = new_state,
 		Action::SetImageMetadata(metadata) => {
@@ -88,13 +60,14 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			}
 		},
 
-		Action::UpdateObjectType(obj) => {
+		Action::UpdateObjectType(mut obj) => {
 			if let Some(original_obj) = selectors::select_object_type_mut(obj.id)(&mut s) {
+				std::mem::swap(&mut obj.private_variables, &mut original_obj.private_variables);
 				*original_obj = obj;
 			}
 		},
 		Action::CreateObjectType { id, plugin_id } => {
-			s.data.object_types.push(towermod_cstc::ObjectType {
+			s.data.object_types.push(EdObjectType {
 				id,
 				plugin_id,
 				name: format!("obj{id}"),
@@ -103,8 +76,27 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 		},
 		Action::DeleteObjectType(id) => {
 			s.data.object_types.retain(|o| o.id != id);
-			todo!() // delete all object instances of this type
+			for layout in &mut s.data.layouts {
+				for layer in &mut layout.layers {
+					layer.objects.retain(|o| o.object_type_id != id);
+				}
+			}
 		},
+		Action::ObjectTypeAddVariable { id, name, value } => {
+			add_private_variable(&mut s, id, name, value);
+		},
+		Action::ObjectTypeDeleteVariable { id, name } => {
+			// fail if variable comes from family
+			for family in selectors::select_object_families(id)(&s) {
+				if family.private_variables.contains_key(&name) { return s };
+			}
+			let Some(original_obj) = selectors::select_object_type_mut(id)(&mut s) else { return s };
+			if original_obj.private_variables.shift_remove(&name).is_none() { return s };
+			// delete variable on instances
+			for instance in selectors::select_object_instances_mut(id)(&mut s) {
+				instance.private_variables.remove(&name);
+			}
+		}
 
 		Action::UpdateObjectInstance(obj) => {
 			if let Some(original_obj) = selectors::select_object_instance_mut(obj.id)(&mut s) {
@@ -170,21 +162,60 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			}
 		},
 
-		Action::UpdateFamily(family) => {
-			if let Some(original_family) = selectors::select_family_mut(family.name.clone())(&mut s) {
-				*original_family = family;
+		Action::FamilyAddObject { name, object_type_id } => {
+			let Some(family) = selectors::select_family_mut(name)(&mut s) else { return s };
+			if !family.object_type_ids.contains(&object_type_id) {
+				family.object_type_ids.push(object_type_id);
+				for (var_name, var_type) in family.private_variables.clone() {
+					add_private_variable(&mut s, object_type_id, var_name, var_type.into());
+				}
 			}
 		},
+		Action::FamilyRemoveObject { name, object_type_id } => {
+			let Some(family) = selectors::select_family_mut(name)(&mut s) else { return s };
+			family.object_type_ids.retain(|id| *id != object_type_id);
+		},
+		Action::FamilyAddVariable { name, var_name, value } => {
+			let Some(family) = selectors::select_family_mut(name.clone())(&mut s) else { return s };
+			if family.private_variables.contains_key(&name) { return s };
+			for id in family.object_type_ids.clone() {
+				add_private_variable(&mut s, id, var_name.clone(), value.clone());
+			}
+		},
+		Action::FamilyDeleteVariable { name, var_name } => {
+			let Some(family) = selectors::select_family_mut(name)(&mut s) else { return s };
+			family.private_variables.remove(&var_name);
+		}
 
-		Action::UpdateTrait(trait_) => {
-			if let Some(original_trait) = selectors::select_trait_mut(trait_.name.clone())(&mut s) {
-				*original_trait = trait_;
+		Action::UpdateTrait(object_trait) => {
+			if let Some(original_trait) = selectors::select_trait_mut(object_trait.name.clone())(&mut s) {
+				*original_trait = object_trait;
 			}
 		},
+		Action::CreateTrait(name) => {
+			if s.data.traits.iter().any(|t| t.name == name) { return s }
+			s.data.traits.push(ObjectTrait {
+				name,
+				object_type_ids: vec![],
+			});
+		},
+		Action::DeleteTrait(name) => {
+			s.data.traits.retain(|t| t.name != name);
+		}
 
 		Action::UpdateAppBlock(app_block) => {
 			s.data.app_block = Some(app_block);
 		},
 	}
 	s
+}
+
+
+fn add_private_variable(mut s: &mut super::app_state::State, id: i32, name: String, value: VariableValue) {
+	let Some(original_obj) = selectors::select_object_type_mut(id)(&mut s) else { return };
+	if original_obj.private_variables.contains_key(&name) { return };
+	original_obj.private_variables.insert(name.clone(), (&value).into());
+	for instance in selectors::select_object_instances_mut(id)(&mut s) {
+		instance.private_variables.insert(name.clone(), value.clone());
+	}
 }

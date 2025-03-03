@@ -80,8 +80,10 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 	}
 
 	if (!arrPinfo.valueTypes || arrPinfo.valueTypes[0] === 'unknown') {
-		if (arrPinfo.custom) { arrPinfo.valueTypes = ['unknown'] }
-		else { throw new Error(`Need to define 'valueTypes' for array ${arrPinfo.parent?.type}.${arrPinfo.key}`) }
+		if (!arrPinfo.valueTypes) { arrPinfo.valueTypes = ['unknown'] }
+		if (!arrPinfo.custom) {
+			console.error(`Need to define 'valueTypes' for array ${arrPinfo.parent?.type}.${arrPinfo.key}`)
+		}
 	}
 
 	const removeElement = (idx: number) => {
@@ -97,16 +99,18 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 		valueComponent = getValComponent(pinfo as any, (v) => { onElementChange(pinfo.key, v) })
 
 		return <KeyValuePair key={i} value={valueComponent} label={<>
-			{arrPinfo.readonly ? undefined : <IconButton src={closeImg} onClick={() => removeElement(i)} />} {i}
+			{arrPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeElement(i)} />} {i}
 		</>} />
 	}), [arrPinfo.value])
 
 	// adding elements
+	let canAddElements = !arrPinfo.readonly
 	const [newValueType, setNewValueType] = useState(arrPinfo.valueTypes[0])
-	if (newValueType === 'unknown' && !arrPinfo.readonly && !props.getDefaultValue) {
-		throw new Error(`Need to define 'valueTypes' or provide custom getDefaultValue implementation for non-readonly array ${arrPinfo.parent?.type}.${arrPinfo.key}`)
+	if (newValueType === 'unknown' && !arrPinfo.fixed && !props.getDefaultValue) {
+		canAddElements = false
+		console.error(`Need to define 'valueTypes' or provide custom getDefaultValue implementation for non-readonly array ${arrPinfo.parent?.type}.${arrPinfo.key}`)
 	}
-	const getDefaultValue = arrPinfo.readonly ? undefined : props.getDefaultValue ?? defaultValueForType(newValueType)
+	const getDefaultValue = !canAddElements ? undefined : props.getDefaultValue ?? defaultValueForType(newValueType)
 	const addElement = getDefaultValue ? () => {
 		const newArr = [...arrPinfo.value, getDefaultValue() as T]
 		onChange?.(newArr)
@@ -128,7 +132,7 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 							options={arrPinfo.valueTypes}
 						/>
 					: null}
-					<IconButton src={plusImg} onClick={() => addElement()} />
+					<IconButton src={plusImg} onClick={() => addElement?.()} />
 				</div>
 			: null}
 		</> : <div className="subtle">{valueComponents.length} items...</div>}
@@ -178,22 +182,25 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 				const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
 				return <KeyValuePair key={pinfo.key} value={valueComponent} label={<>
 					{pinfo.key}:
-					{dictPinfo.readonly ? undefined : <IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />}
+					{dictPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />}
 				</>} />
 	}), [dictPinfo.value])
 
 	// adding properties
-	const [newKeyText, setNewKeyText] = useState("")
+	let canAddProperties = !dictPinfo.fixed
 	if (!dictPinfo.valueTypes || dictPinfo.valueTypes[0] === 'unknown') {
+		dictPinfo.valueTypes = ['unknown']
+		canAddProperties = false
 		if (dictPinfo.parent?.type === 'Array') {
 			const obj = dictPinfo.parent.parent
-			throw new Error(`Need to define 'valueTypes' for dictionary at ${obj?.type}.${dictPinfo.parent.key}[${dictPinfo.key}]`)
+			console.error(`Need to define 'valueTypes' for dictionary at ${obj?.type}.${dictPinfo.parent.key}[${dictPinfo.key}]`)
 		} else {
-			throw new Error(`Need to define 'valueTypes' for dictionary ${dictPinfo.parent?.type}.${dictPinfo.key}`)
+			console.error(`Need to define 'valueTypes' for dictionary ${dictPinfo.parent?.type}.${dictPinfo.key}`)
 		}
 	}
+	const [newKeyText, setNewKeyText] = useState("")
 	const [newValueType, setNewValueType] = useState(dictPinfo.valueTypes[0])
-	const getDefaultValue = defaultValueForType(newValueType)
+	const getDefaultValue = canAddProperties ? defaultValueForType(newValueType) : undefined
 	const addProperty = getDefaultValue ? () => {
 		const newObj = { ...dictPinfo.value, [newKeyText]: getDefaultValue() }
 		setNewKeyText("")

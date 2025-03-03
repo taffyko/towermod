@@ -4,7 +4,7 @@ import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorK
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
 import { PrivateVariables } from './PrivateVariables';
-import { DisableShaderWhen, FpsMode, LayerSamplerMode, LayerType, ResizeMode, SamplerMode, SimulateShadersMode, TextRenderingMode, TextureLoadingMode } from '@towermod';
+import { DisableShaderWhen, FpsMode, LayerSamplerMode, LayerType, ResizeMode, SamplerMode, SimulateShadersMode, TextRenderingMode, TextureLoadingMode, VariableType } from '@towermod';
 import { InspectorArray } from './base/Inspector';
 import { ObjectInstances, PluginName } from './MiscInspectorComponents';
 import { SpinBox } from '@/components/SpinBox';
@@ -23,7 +23,8 @@ export const customEnumSubtypes: Record<keyof CustomEnumToValue, string[]> = {
 	LayerSamplerMode: ['Default', 'Point', 'Linear'],
 	LayerType: ['Normal', 'WindowCtrls', 'NonFrame', 'Include'],
 	DisableShaderWhen: ['NoSetting', 'Ps20Unavailable', 'Ps20Available', 'Ps14Unavailable', 'Ps14Available', 'Ps11Unavailable', 'Ps11Available'],
-	FpsMode: ['VSync', 'Unlimited', 'Fixed']
+	FpsMode: ['VSync', 'Unlimited', 'Fixed'],
+	VariableType: ['Number', 'String'],
 }
 export const customStringSubtypeNames = Object.getOwnPropertyNames(customEnumSubtypes) as (keyof CustomEnumToValue)[]
 
@@ -36,6 +37,7 @@ export type CustomEnumToValue = {
 	LayerSamplerMode: LayerSamplerMode
 	LayerType: LayerType
 	DisableShaderWhen: DisableShaderWhen
+	VariableType: VariableType,
 	FpsMode: FpsMode,
 }
 
@@ -73,8 +75,8 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 				switch (key) {
 					case 'objectTypeId':
 						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
-					case 'privateVariables':
-						return <PrivateVariables pinfo={pinfo as any} />
+					// case 'privateVariables':
+						// return <PrivateVariables pinfo={pinfo as any} />
 				}
 			break; case 'ObjectType':
 				switch (key) {
@@ -124,9 +126,9 @@ export function defaultValueForType(type: InspectorTypeName): (() => any) {
 		case 'string': return () => ""
 		case 'boolean': return () => false
 		case 'ActionPoint': return () => ({ _type: 'ActionPoint', x: 0, y: 0, angle: 0, string: "" })
+		case 'VariableType': return () => 'Number'
 		case 'AnimationFrame': return () => ({ _type: 'AnimationFrame', imageId: 0, duration: 0 })
 		case 'BehaviorControl': return (): TypeNameToValue['BehaviorControl'] => ({ _type: 'BehaviorControl', name: "name", vk: 0, player: 0 })
-		case 'PrivateVariable': return (): TypeNameToValue['PrivateVariable'] => ({ _type: 'PrivateVariable', name: "name", valueType: 'String' })
 		case 'GlobalVariable': return (): TypeNameToValue['GlobalVariable'] => ({ _type: 'GlobalVariable', name: "name", varType: 0, value: "" })
 	}
 	throw new Error(`No default value defined for ${type}`)
@@ -188,7 +190,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				id: { type: 'int', readonly: true },
 				pluginId: { hidden: true },
 				descriptors: { hidden: true, },
-				privateVariables: { hidden: true },
+				privateVariables: { valueTypes: ['VariableType'], readonly: true },
 				destroyWhen: { type: 'DisableShaderWhen' }
 			})
 		break; case 'Behavior':
@@ -196,7 +198,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				objectTypeId: { readonly: true },
 				newIndex: { type: 'int', readonly: true },
 				movIndex: { type: 'int', readonly: true },
-				data: { hidden: true }, // TODO decode behavior data
+				data: { hidden: true },
 				descriptors: { hidden: true, }
 			})
 		break; case 'BehaviorControl':
@@ -212,7 +214,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			override(type, {
 				name: { readonly: true },
 				objectTypeIds: { valueTypes: ['int'] },
-				privateVariables: { valueTypes: ['PrivateVariable'] },
+				privateVariables: { valueTypes: ['VariableType'], readonly: true },
 			})
 		break; case 'ImageMetadata':
 			override(type, {

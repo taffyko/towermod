@@ -53,7 +53,6 @@ env_logger = "0.10.0"
 tracing-flame = "0.2.0"
 zstd = "0.13.2"
 fs-err = { version = "2.11.0", features = ["tokio"] }
-
 windows = { version = "0.51.1", features = ["Data_Xml_Dom", "Win32_Foundation", "Win32_Security", "Win32_System_Threading", "Win32_System_Shutdown", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_System_ProcessStatus", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Diagnostics_Debug", "Win32_System_Memory", "Win32_System_LibraryLoader", "Win32_Graphics_Gdi", "Win32_Storage_FileSystem", "Win32_System_IO", "Win32_System_Pipes", "Win32_System_Registry"] }
 glob = "0.3.1"
 thiserror = "1.0.48"
@@ -65,6 +64,7 @@ redux-rs = "0.3.3"
 static_assertions = "1.1.0"
 rfd = "0.15.2"
 itertools = "0.14.0"
+indexmap = { version = "2.7", features = ["serde"] }
 
 [profile.dev]
 strip = false

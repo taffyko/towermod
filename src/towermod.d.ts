@@ -153,11 +153,10 @@ export interface EventGroup {
   events: Array<SomeEvent>
 }
 
-
 export interface Family {
   name: string
   objectTypeIds: Array<number>
-  privateVariables: Array<PrivateVariable>
+  privateVariables: Record<string, VariableType>
   _type: 'Family'
 }
 
@@ -295,7 +294,7 @@ export interface ObjectInstance {
   height: int
   angle: float
   filter: int
-  privateVariables: Array<string>
+  privateVariables: Record<string, number | string>
 	data: TextObjectData | SpriteObjectData | number[]
   key: int
   _type: 'ObjectInstance'
@@ -346,7 +345,7 @@ export interface ObjectType {
   pluginId: int
   global: boolean
   destroyWhen: DisableShaderWhen
-  privateVariables: Array<PrivateVariable>
+  privateVariables: Record<string, VariableType>
   descriptors?: FeatureDescriptors
   _type: 'ObjectType'
 }
@@ -379,14 +378,7 @@ export interface PluginStringTable {
   web: string
 }
 
-/** Record on an ObjectType that describes the names and types of each object instance */
-export interface PrivateVariable {
-  name: string
-  valueType: PrivateVariableType
-  _type: 'PrivateVariable'
-}
-
-export type PrivateVariableType = 'Integer' | 'String'
+export type VariableType = 'Number' | 'String'
 
 /** Metadata about a project, found in its manifest.toml */
 export interface Project {

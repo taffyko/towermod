@@ -1,7 +1,7 @@
 //! APIs for requesting data from the state
 
 use std::collections::HashMap;
-use crate::{select, app::state::{app_state::State, data_state::JsCstcData, select}, cstc_editing::{EdLayout, EdLayoutLayer, EdObjectInstance}};
+use crate::{app::state::{app_state::State, select}, cstc_editing::{EdFamily, EdLayout, EdLayoutLayer, EdObjectInstance, EdObjectType}, select};
 use towermod_cstc::{plugin::PluginData, Animation, Behavior, Container, Family, ImageMetadata, ObjectTrait, ObjectType};
 
 
@@ -32,10 +32,10 @@ pub async fn is_data_loaded() -> bool {
 	select(|s| !s.data.editor_plugins.is_empty()).await
 }
 
-pub fn select_object_type(object_type_id: i32) -> impl Fn(&State) -> Option<&ObjectType> {
+pub fn select_object_type(object_type_id: i32) -> impl Fn(&State) -> Option<&EdObjectType> {
 	move |s: &State| { s.data.object_types.iter().find(|ot| ot.id == object_type_id) }
 }
-pub fn select_object_type_mut(object_type_id: i32) -> impl Fn(&mut State) -> Option<&mut ObjectType> {
+pub fn select_object_type_mut(object_type_id: i32) -> impl Fn(&mut State) -> Option<&mut EdObjectType> {
 	move |s: &mut State| { s.data.object_types.iter_mut().find(|ot| ot.id == object_type_id) }
 }
 pub fn select_object_type_plugin_name<'a>(object_type_id: i32) -> impl Fn(&'a State) -> Option<&'a String> {
@@ -66,6 +66,19 @@ pub fn select_object_instances(layout_layer_id: i32) -> impl Fn(&State) -> Vec<i
 		return Vec::new();
 	}
 }
+pub fn select_object_instances_mut(layout_layer_id: i32) -> impl Fn(&mut State) -> Vec<&mut EdObjectInstance> {
+	move |s: &mut State| {
+		for layout in &mut s.data.layouts {
+			for layer in &mut layout.layers {
+				if layer.id == layout_layer_id {
+					return layer.objects.iter_mut().collect();
+				}
+			}
+		}
+		return Vec::new();
+	}
+}
+
 pub fn select_object_instance(object_instance_id: i32) -> impl Fn(&State) -> Option<&EdObjectInstance> {
 	move |s: &State| {
 		for layout in &s.data.layouts {
@@ -95,6 +108,12 @@ pub fn select_object_instance_mut(object_instance_id: i32) -> impl Fn(&mut State
 	}
 }
 
+pub fn select_object_families(object_type_id: i32) -> impl Fn(&State) -> Vec<&EdFamily> {
+	move |s: &State| {
+		s.data.families.iter().filter(|f| f.object_type_ids.contains(&object_type_id)).collect()
+	}
+}
+
 pub fn select_object_instance_plugin(object_instance_id: i32) -> impl Fn(&State) -> Option<&PluginData> {
 	move |s: &State| {
 		let obj = select_object_instance(object_instance_id)(s)?;
@@ -115,17 +134,12 @@ pub fn select_new_object_type_id() -> impl Fn(&State) -> i32 {
 pub async fn get_object_types() -> Vec<i32> {
 	select(|s| s.data.object_types.iter().map(|ot| ot.id).collect()).await
 }
-pub async fn get_object_type(object_type_id: i32) -> Option<ObjectType> {
+pub async fn get_object_type(object_type_id: i32) -> Option<EdObjectType> {
 	select!(select_object_type(object_type_id), |r| r.cloned()).await
 }
 pub async fn search_object_types(txt: String) -> Vec<i32> {
 	select(move |s| s.data.object_types.iter().filter(|ot| ot.name.contains(&txt)).map(|ot| ot.id).collect()).await
 }
-pub async fn get_data() -> Option<JsCstcData> {
-	if !is_data_loaded().await { return None }
-	Some(select(|s| { JsCstcData::get(&s.data) }).await)
-}
-
 
 pub fn select_layouts() -> impl Fn(&State) -> Vec<String> {
 	move |s| s.data.layouts.iter().map(|l| l.name.clone()).collect()
@@ -229,10 +243,10 @@ pub fn select_container_mut(object_id: i32) -> impl Fn(&mut State) -> Option<&mu
 pub fn select_families() -> impl Fn(&State) -> Vec<&String> {
 	move |s| s.data.families.iter().map(|f| &f.name).collect()
 }
-pub fn select_family(name: String) -> impl Fn(&State) -> Option<&Family> {
+pub fn select_family(name: String) -> impl Fn(&State) -> Option<&EdFamily> {
 	move |s| s.data.families.iter().find(|f| f.name == name)
 }
-pub fn select_family_mut(name: String) -> impl Fn(&mut State) -> Option<&mut Family> {
+pub fn select_family_mut(name: String) -> impl Fn(&mut State) -> Option<&mut EdFamily> {
 	move |s| s.data.families.iter_mut().find(|f| f.name == name)
 }
 
