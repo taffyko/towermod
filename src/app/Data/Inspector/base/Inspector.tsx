@@ -4,14 +4,29 @@
 import { Select } from "@/components/Select"
 import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
 import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo, inferPropertyInfoFromValue, enumSubtypes } from "./inspectorUtil"
-import React, { useMemo, useState } from "react"
+import React, { useCallback, useMemo, useState } from "react"
 import IconButton from "@/components/IconButton"
 import plusImg from '@/icons/plus.svg'
 import closeImg from '@/icons/close.svg'
+import arrowDownImg from '@/icons/arrowDown.svg';
+import arrowRightImg from '@/icons/arrowRight.svg';
 import { LineEdit } from "@/components/LineEdit"
 import { SpinBox } from "@/components/SpinBox"
 import { Toggle } from "@/components/Toggle"
 import Style from '../Inspector.module.scss'
+import { Portal } from "@/components/Portal"
+import { useStateRef } from "@/util"
+
+function KeyValuePair(props: { label: React.ReactNode, value: React.ReactNode }) {
+	const { label, value } = props
+	return <React.Fragment>
+		<div className="hbox" style={{ alignSelf: 'start', alignItems: 'center', justifyContent: 'space-between' }}>
+			{label}
+			<div className="labelPortal" />
+		</div>
+		<div className="hbox">{value}</div>
+	</React.Fragment>
+}
 
 export const InspectorObject = (props: {
 	pinfo?: ObjectPropertyInfo,
@@ -40,13 +55,8 @@ export const InspectorObject = (props: {
 
 	const propertyComponents: React.ReactNode[] = useMemo(() => propertyInfos.map(pinfo => {
 		if (pinfo.hidden) { return null }
-
 		const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
-
-		return <React.Fragment key={pinfo.key}>
-			<div>{pinfo.key}:</div>
-			<div className="hbox">{valueComponent}</div>
-		</React.Fragment>
+		return <KeyValuePair key={pinfo.key} label={pinfo.key} value={valueComponent} />
 	}), [objPinfo.value])
 
 	return <div className={`${Style.grid} ${root ? Style.root : ''}`}>
@@ -54,61 +64,96 @@ export const InspectorObject = (props: {
 	</div>
 }
 
-export const InspectorArray = (props: { pinfo: ArrayPropertyInfo<AnyInspectorValue>, onChange: (v: InspectorArrayValue) => void }) => {
+export const InspectorArray = <T extends AnyInspectorValue>(props: {
+	pinfo: ArrayPropertyInfo<T>,
+	onChange?: (v: InspectorArrayValue) => void,
+	/** Override the component used for each value */
+	getValueComponent?: (pinfo: AnyPropertyInfo<T>, onChange: (v: any) => void) => React.ReactNode,
+	getDefaultValue?: () => T,
+}) => {
 	const { pinfo: arrPinfo, onChange } = props
 
 	const onElementChange = (key: InspectorKeyTypes, value: any) => {
 		const newArr = [...arrPinfo.value]
 		newArr[key as any] = value
-		onChange(newArr)
+		onChange?.(newArr)
 	}
 
 	if (!arrPinfo.valueTypes || arrPinfo.valueTypes[0] === 'unknown') {
-		throw new Error(`Need to define 'valueTypes' for array ${arrPinfo.parent?.type}.${arrPinfo.key}`)
+		if (arrPinfo.custom) { arrPinfo.valueTypes = ['unknown'] }
+		else { throw new Error(`Need to define 'valueTypes' for array ${arrPinfo.parent?.type}.${arrPinfo.key}`) }
 	}
 
 	const removeElement = (idx: number) => {
 		const newArr = [ ...arrPinfo.value ]
 		newArr.splice(idx, 1)
-		onChange(newArr)
+		onChange?.(newArr)
 	}
 
 	const valueComponents: React.ReactNode[] = useMemo(() => arrPinfo.value.map((val, i) => {
-		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo, i);
-		const valueComponent = getValueComponent(pinfo, (v) => { onElementChange(pinfo.key, v) })
+		let valueComponent
+		const getValComponent = props.getValueComponent ?? getValueComponent
+		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo as ArrayPropertyInfo<AnyInspectorValue>, i);
+		valueComponent = getValComponent(pinfo as any, (v) => { onElementChange(pinfo.key, v) })
 
-		return <React.Fragment key={i}>
-			<div>
-				<IconButton src={closeImg} onClick={() => removeElement(i)} /> {pinfo.key}
-			</div>
-			<div className="hbox grow">{valueComponent}</div>
-		</React.Fragment>
+		return <KeyValuePair key={i} value={valueComponent} label={<>
+			{arrPinfo.readonly ? undefined : <IconButton src={closeImg} onClick={() => removeElement(i)} />} {i}
+		</>} />
 	}), [arrPinfo.value])
 
 	// adding elements
 	const [newValueType, setNewValueType] = useState(arrPinfo.valueTypes[0])
-	const getDefaultValue = defaultValueForType(newValueType)
+	if (newValueType === 'unknown' && !arrPinfo.readonly && !props.getDefaultValue) {
+		throw new Error(`Need to define 'valueTypes' or provide custom getDefaultValue implementation for non-readonly array ${arrPinfo.parent?.type}.${arrPinfo.key}`)
+	}
+	const getDefaultValue = arrPinfo.readonly ? undefined : props.getDefaultValue ?? defaultValueForType(newValueType)
 	const addElement = getDefaultValue ? () => {
-		const newArr = [...arrPinfo.value, getDefaultValue()]
-		onChange(newArr)
+		const newArr = [...arrPinfo.value, getDefaultValue() as T]
+		onChange?.(newArr)
 	} : undefined
 
-	return <div className="vbox grow gap">
-		{valueComponents.length ? <div className={Style.grid}>
-			{valueComponents}
-		</div> : null}
-		{addElement ?
-			<div className="hbox">
-				{arrPinfo.valueTypes.length > 1 ?
-					<Select
-						onChange={v => setNewValueType(v as any)}
-						options={arrPinfo.valueTypes}
-					/>
-				: null}
-				<IconButton src={plusImg} onClick={() => addElement()} />
-			</div>
-		: null}
+	const { ref, isOpen, ToggleCollapse } = useCollapsible()
+
+	return <div ref={ref} className="vbox grow gap">
+		<ToggleCollapse />
+		{isOpen ? <>
+			{valueComponents.length ? <div className={Style.grid}>
+				{valueComponents}
+			</div> : null}
+			{addElement ?
+				<div className="hbox">
+					{arrPinfo.valueTypes.length > 1 ?
+						<Select
+							onChange={v => setNewValueType(v as any)}
+							options={arrPinfo.valueTypes}
+						/>
+					: null}
+					<IconButton src={plusImg} onClick={() => addElement()} />
+				</div>
+			: null}
+		</> : <div className="subtle">{valueComponents.length} items...</div>}
 	</div>
+}
+
+function useCollapsible() {
+	const [el, setEl] = useStateRef<HTMLDivElement>()
+	// portal so that elements can be placed inside the label, if one exists
+	const labelEl = useMemo(() => {
+		if (!el) { return null }
+		return el.parentElement?.previousElementSibling?.querySelector('.labelPortal')
+	}, [el])
+	const [isOpen, setIsOpen] = useState(false)
+
+	const ToggleCollapse = useCallback(() =>
+		<Portal parent={labelEl}>
+			<IconButton
+				src={isOpen ? arrowDownImg : arrowRightImg}
+				onClick={() => setIsOpen(!isOpen)}
+			/>
+		</Portal>
+	, [labelEl, isOpen, setIsOpen])
+
+	return { ref: setEl, isOpen, ToggleCollapse }
 }
 
 export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyInspectorValue>, onChange: (v: InspectorDictionaryValue) => void }) => {
@@ -130,16 +175,11 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 			.sort(([key1,], [key2,]) => key1 < key2 ? -1 : 1)
 			.map(([key, val]) => {
 				const pinfo = inferPropertyInfoFromDictionaryValue(val, dictPinfo, key)
-
 				const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
-
-				return <React.Fragment key={pinfo.key}>
-					<div>
-						{pinfo.key}:
-						<IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />
-					</div>
-					<div className="hbox">{valueComponent}</div>
-				</React.Fragment>
+				return <KeyValuePair key={pinfo.key} value={valueComponent} label={<>
+					{pinfo.key}:
+					{dictPinfo.readonly ? undefined : <IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />}
+				</>} />
 	}), [dictPinfo.value])
 
 	// adding properties
@@ -160,26 +200,31 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		onChange(newObj)
 	} : undefined
 
-	return <div className="vbox grow gap" key={dictPinfo.key}>
-		{propertyComponents.length ? <div className={Style.grid}>
-			{propertyComponents}
-		</div> : null}
-		{addProperty ?
-			<div className="hbox gap">
-				<LineEdit
-					onKeyDown={e => e.code === 'Enter' && addProperty()}
-					placeholder="Add new entry..." value={newKeyText}
-					onChange={e => setNewKeyText(e.target.value)}
-				/>
-				{dictPinfo.valueTypes.length > 1 ?
-					<Select
-						onChange={v => setNewValueType(v as any)}
-						options={dictPinfo.valueTypes}
+	const { ref, isOpen, ToggleCollapse } = useCollapsible()
+
+	return <div ref={ref} className="vbox grow gap" key={dictPinfo.key}>
+		<ToggleCollapse />
+		{isOpen ? <>
+			{propertyComponents.length ? <div className={Style.grid}>
+				{propertyComponents}
+			</div> : null}
+			{addProperty ?
+				<div className="hbox gap">
+					<LineEdit
+						onKeyDown={e => e.code === 'Enter' && addProperty()}
+						placeholder="Add new entry..." value={newKeyText}
+						onChange={e => setNewKeyText(e.target.value)}
 					/>
-				: null}
-				<IconButton src={plusImg} disabled={!newKeyText} onClick={() => addProperty()} />
-			</div>
-		: null}
+					{dictPinfo.valueTypes.length > 1 ?
+						<Select
+							onChange={v => setNewValueType(v as any)}
+							options={dictPinfo.valueTypes}
+						/>
+					: null}
+					<IconButton src={plusImg} disabled={!newKeyText} onClick={() => addProperty()} />
+				</div>
+			: null}
+		</> : <div className="subtle">{propertyComponents.length} entries...</div>}
 	</div>
 }
 

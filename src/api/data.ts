@@ -245,9 +245,9 @@ export const dataApi = baseApi.injectEndpoints({
 		}),
 		updateObjectTrait: builder.mutation<void, ObjectTrait>({
 			queryFn: queryFn(async (objectTrait) => {
-				return await invoke('update_trait', { trait: objectTrait })
+				return await invoke('update_trait', { objectTrait })
 			}),
-			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectTrait', id: String(arg) }]
+			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectTrait', id: String(arg.name) }]
 		}),
 
 		getAppBlock: builder.query<AppBlock, void>({

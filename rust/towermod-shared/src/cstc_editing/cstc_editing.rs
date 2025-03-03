@@ -36,6 +36,42 @@ impl EdObjectInstance {
 	}
 }
 
+#[serde_alias(SnakeCase)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EdAppBlock {
+	pub name: String,
+	pub window_width: i32,
+	pub window_height: i32,
+	pub eye_distance: f32,
+	pub show_menu: bool,
+	pub screensaver: bool,
+	pub fps_mode: cstc::FpsMode,
+	pub fps: i32,
+	pub fullscreen: bool,
+	pub sampler_mode: cstc::SamplerMode,
+	pub global_variables: Vec<cstc::GlobalVariable>,
+	pub behavior_controls: Vec<cstc::BehaviorControl>,
+	pub disable_windows_key: bool,
+	pub data_keys: Vec<EdDataKey>,
+	pub simulate_shaders: cstc::SimulateShadersMode,
+	pub original_project_path: String,
+	pub fps_in_caption: i32,
+	pub use_motion_blur: bool,
+	pub motion_blur_steps: i32,
+	pub text_rendering_mode: cstc::TextRenderingMode,
+	pub override_timedelta: bool,
+	pub time_delta_override: f32,
+	pub caption: bool,
+	pub minimize_box: bool,
+	pub maximize_box: bool,
+	pub resize_mode: cstc::ResizeMode,
+	pub minimum_fps: f32,
+	pub layout_index: i32,
+	pub multisamples: u32,
+	pub texture_loading_mode: cstc::TextureLoadingMode,
+}
+
 
 #[serde_alias(SnakeCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]

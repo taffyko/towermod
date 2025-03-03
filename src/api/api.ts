@@ -8,11 +8,12 @@ import { enhanceModInfo, svgToDataUri } from '@/util';
 
 
 
+const cstcObjectTagTypes = [
+	'Data', 'Image', 'ImageMetadata', 'ObjectType', 'ObjectInstance', 'Behavior', 'Container', 'Family', 'ObjectTrait', 'AppBlock', 'Layout', 'LayoutLayer', 'Animation'
+] as const
 const tagTypes = [
-	'Project', 'Game', 'Data', 'ModInfo', 'ModCache', 'TowermodConfig',
-	// game data objects
-	'Image', 'ImageMetadata', 'ObjectType', 'ObjectInstance', 'Behavior', 'Container', 'Family', 'ObjectTrait', 'AppBlock', 'Layout', 'LayoutLayer', 'Animation'
-] as const;
+	'Project', 'Game', 'ModInfo', 'ModCache', 'TowermodConfig', ...cstcObjectTagTypes
+] as const
 
 export const baseApi = createApi({
 	reducerPath: 'api',
@@ -79,13 +80,13 @@ export const baseApi = createApi({
 			queryFn: queryFn(async (filePath) => {
 				await invoke('set_game', { filePath: filePath || null })
 			}),
-			invalidatesTags: ['Project', 'Game', 'Data'],
+			invalidatesTags: ['Project', 'Game', ...cstcObjectTagTypes],
 		}),
 		newProject: builder.mutation<void, void>({
 			queryFn: queryFn(async () => {
 				await invoke('new_project')
 			}),
-			invalidatesTags: ['Project', 'Data'],
+			invalidatesTags: ['Project', ...cstcObjectTagTypes],
 		}),
 		exportMod: builder.mutation<void, ModType>({
 			queryFn: queryFn(async (modType) => {
@@ -164,7 +165,7 @@ export const baseApi = createApi({
 			queryFn: queryFn(async (manifestPath) => {
 				return await invoke('load_project', { manifestPath })
 			}),
-			invalidatesTags: ['Project', 'Data', 'ObjectType', 'ImageMetadata', 'Image'],
+			invalidatesTags: ['Project', ...cstcObjectTagTypes],
 		}),
 
 		editProjectInfo: builder.mutation<void, Project>({

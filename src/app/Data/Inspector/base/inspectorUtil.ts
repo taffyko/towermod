@@ -1,5 +1,5 @@
 import { float, int } from "@/util/util"
-import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, applyPropertyInfoOverrides, customEnumSubtypes, CustomEnumToValue } from "../customInspectorUtil"
+import { CustomInspectorObjects, customNumericSubtypeNames, customStringSubtypeNames, applyPropertyInfoOverrides, customEnumSubtypes, CustomEnumToValue, getCustomProperties } from "../customInspectorUtil"
 
 export type InspectorObjectValue = CustomInspectorObjects
 export type InspectorKeyTypes = string | number
@@ -35,6 +35,7 @@ export type BasePropertyInfo = {
 	parent?: ArrayPropertyInfo | DictionaryPropertyInfo | ObjectPropertyInfo,
 	hidden?: boolean,
 	readonly?: boolean,
+	custom?: boolean,
 }
 
 export type ArrayPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> = BasePropertyInfo & {
@@ -42,7 +43,7 @@ export type ArrayPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> =
 	value: readonly T[]
 	type: 'Array',
 	/** List of type names representing the union of types this array can contain */
-	valueTypes: Array<string & (KeyOfValue<TypeNameToValue, T> | 'unknown')>
+	valueTypes?: Array<string & (KeyOfValue<TypeNameToValue, T> | 'unknown')>
 }
 
 export type DictionaryPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> = BasePropertyInfo & {
@@ -64,12 +65,13 @@ export type ObjectPropertyInfo<T extends InspectorObjectValue = InspectorObjectV
 	value: T,
 	type: T['_type'],
 }
+type CustomPropertyInfo = BasePropertyInfo & { key: InspectorKeyTypes, custom: true, type: 'unknown', value: unknown }
 
 
 /** Property descriptors for objects and collections, which are capable of having sub-properties of their own */
 export type ParentPropertyInfo = ArrayPropertyInfo | DictionaryPropertyInfo | ObjectPropertyInfo
 export type AnyPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> =
-	ArrayPropertyInfo<T> | DictionaryPropertyInfo<T, TKey> | SimplePropertyInfo<T>
+	ArrayPropertyInfo<T> | DictionaryPropertyInfo<T, TKey> | SimplePropertyInfo<T> | CustomPropertyInfo
 
 export function inferPropertyInfoFromArrayValue(element: AnyInspectorValue, parentPinfo: ArrayPropertyInfo, idx: number): AnyPropertyInfo {
 	const pinfo = inferPropertyInfoFromValue(element, parentPinfo, idx)
@@ -111,6 +113,7 @@ export function inferPropertyInfoFromDictionaryValue(element: AnyInspectorValue,
 }
 
 export function inferPropertyInfoFromValue(value: AnyInspectorValue, parent: AnyPropertyInfo | undefined, key: InspectorKeyTypes, unknownOk = false): AnyPropertyInfo {
+	if (parent?.custom) { unknownOk = true }
 	const type = inferTypeFromValue(value, unknownOk);
 	switch (type) {
 		case 'Array':
@@ -168,11 +171,10 @@ function objectPropertyInfo(obj: InspectorObjectValue, objPinfo: ObjectPropertyI
 {
 	const value = (obj as any)[key]
 	if (key === '_type') { return { key, value, type: 'string', hidden: true } }
-
 	const pinfo = inferPropertyInfoFromValue(value, objPinfo, key, true);
 	applyPropertyInfoOverrides(obj, pinfo, key)
 
-	if (!pinfo.hidden && pinfo.type === 'unknown') {
+	if (!(pinfo.hidden || pinfo.custom) && pinfo.type === 'unknown') {
 		console.error(`Cannot determine type of ${obj._type}.${key}, value`, value)
 	}
 
@@ -181,6 +183,14 @@ function objectPropertyInfo(obj: InspectorObjectValue, objPinfo: ObjectPropertyI
 
 export function objectPropertyInfos(objPinfo: ObjectPropertyInfo): AnyPropertyInfo[] {
 	const obj = objPinfo.value
-	const keys = Object.keys(obj) as (keyof typeof obj)[]
-	return keys.map(key => objectPropertyInfo(obj, objPinfo, key))
+	const keys = Object.keys(obj)
+	const pinfos = keys.map(key => objectPropertyInfo(obj, objPinfo, key))
+
+	const customProperties = getCustomProperties(objPinfo)
+	if (customProperties) {
+		const customPinfos: CustomPropertyInfo[] = customProperties
+			.map(key => ({ key, custom: true, type: 'unknown' as any, value: undefined as any, parent: objPinfo }))
+		pinfos.splice(keys.length - 1, 0, ...customPinfos)
+	}
+	return pinfos
 }

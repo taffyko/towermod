@@ -1,10 +1,13 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { TowermodObject } from "@/util";
-import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName, ParentPropertyInfo } from "./base/inspectorUtil";
+import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName, ParentPropertyInfo, ObjectPropertyInfo } from "./base/inspectorUtil";
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
 import { PrivateVariables } from './PrivateVariables';
 import { DisableShaderWhen, FpsMode, LayerSamplerMode, LayerType, ResizeMode, SamplerMode, SimulateShadersMode, TextRenderingMode, TextureLoadingMode } from '@towermod';
+import { InspectorArray } from './base/Inspector';
+import { ObjectInstances, PluginName } from './MiscInspectorComponents';
+import { SpinBox } from '@/components/SpinBox';
 
 
 export type CustomInspectorObjects = TowermodObject
@@ -37,34 +40,11 @@ export type CustomEnumToValue = {
 }
 
 /** Provide additional virtual properties for each type, to display in the inspector */
-export function customProperties<T extends InspectorObjectValue>(obj: T, pinfo: ParentPropertyInfo): AnyPropertyInfo[] | undefined {
-	const type = obj['_type']
+export function getCustomProperties(objPinfo: ObjectPropertyInfo): string[] | undefined {
+	const type = objPinfo.value['_type']
 	switch (type) {
 		case 'ObjectType':
-			return [
-				{
-					key: 'instances',
-					get value() {
-						// FIXME: instances list
-						// return findObjectInstances(store.getState().data, obj.id).map(instance => instance.id)
-						return []
-					},
-					readonly: true,
-					type: 'Array',
-					valueTypes: ['int'],
-					parent: pinfo,
-				},
-				{
-					key: 'plugin',
-					get value() {
-						// FIXME: plugin name
-						// return store.getState().data.editorPlugins[obj.pluginId]?.stringTable.name
-						return "todo"
-					},
-					readonly: true,
-					type: 'string',
-				}
-			]
+			return ['instances', 'plugin']
 	}
 	return undefined
 }
@@ -74,42 +54,61 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 	const parentPinfo = pinfo.parent
 	let objPinfo = parentPinfo
 	let collectionElement = false
+	let key = pinfo.key
 	if (parentPinfo?.type === 'Dictionary' || parentPinfo?.type === 'Array') {
 		collectionElement = true
 		objPinfo = parentPinfo.parent
+		key = parentPinfo.key
 	}
 	if (parentPinfo && objPinfo && typeof objPinfo.value === 'object' && (objPinfo.type as any) !== 'Dictionary') {
 		const obj = objPinfo.value as InspectorObjectValue
 		const type = obj._type
 		switch (type) {
 			case 'AnimationFrame':
-				switch (pinfo.key) {
+				switch (key) {
 					case 'imageId':
 						return <ImageLink id={pinfo.value as any} />
 				}
 			break; case 'ObjectInstance':
-				switch (pinfo.key) {
+				switch (key) {
 					case 'objectTypeId':
 						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
 					case 'privateVariables':
 						return <PrivateVariables pinfo={pinfo as any} />
 				}
 			break; case 'ObjectType':
-				switch (pinfo.key) {
+				switch (key) {
 					case 'instances':
-						return <IdLink lookup={{ _type: 'ObjectInstance', id: pinfo.value as any }} />
+						return <Suspense fallback={<SpinBox />}>
+							<ObjectInstances objectType={obj} />
+						</Suspense>
+					break; case 'plugin':
+						return <PluginName pluginId={obj.pluginId} />
 				}
 			break; case 'Behavior':
-				switch (pinfo.key) {
+				switch (key) {
 					case 'objectTypeId':
 						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
 				}
 			break; case 'Family':
-				switch (pinfo.key) {
+				switch (key) {
 					case 'objectTypeIds':
 						if (collectionElement) {
-							// FIXME: this
-							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
+							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} onChange={(lookup: any) => onChange(lookup.id)} />
+						}
+				}
+			break; case 'ObjectTrait':
+				switch (key) {
+					case 'objectTypeIds':
+						if (collectionElement) {
+							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} onChange={(lookup: any) => onChange(lookup.id)} />
+						}
+				}
+			break; case 'Container':
+				switch (key) {
+					case 'objectIds':
+						if (collectionElement) {
+							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} onChange={(lookup: any) => onChange(lookup.id)} />
 						}
 				}
 		}
@@ -187,7 +186,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'ObjectType':
 			override(type, {
 				id: { type: 'int', readonly: true },
-				pluginId: { type: 'int', readonly: true },
+				pluginId: { hidden: true },
 				descriptors: { hidden: true, },
 				privateVariables: { hidden: true },
 				destroyWhen: { type: 'DisableShaderWhen' }
