@@ -114,6 +114,7 @@ pub fn run() {
 				commands::object_type_delete_variable,
 
 				commands::get_object_instances,
+				commands::get_object_type_instances,
 				commands::get_object_instance,
 				commands::update_object_instance,
 				commands::delete_object_instance,

@@ -1,18 +1,16 @@
 import React, { Suspense } from 'react'
 import { TowermodObject } from "@/util";
-import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName, ParentPropertyInfo, ObjectPropertyInfo } from "./base/inspectorUtil";
+import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName, ObjectPropertyInfo } from "./base/inspectorUtil";
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
-import { PrivateVariables } from './PrivateVariables';
 import { DisableShaderWhen, FpsMode, LayerSamplerMode, LayerType, ResizeMode, SamplerMode, SimulateShadersMode, TextRenderingMode, TextureLoadingMode, VariableType } from '@towermod';
-import { InspectorArray } from './base/Inspector';
 import { ObjectInstances, PluginName } from './MiscInspectorComponents';
 import { SpinBox } from '@/components/SpinBox';
 
 
 export type CustomInspectorObjects = TowermodObject
 
-export const customNumericSubtypeNames = [] as const
+export const customNumericSubtypeNames = ['RgbColor'] as const
 
 export const customEnumSubtypes: Record<keyof CustomEnumToValue, string[]> = {
 	TextureLoadingMode: ['LoadOnAppStart', 'LoadOnLayoutStart'],
@@ -84,7 +82,7 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 						return <Suspense fallback={<SpinBox />}>
 							<ObjectInstances objectType={obj} />
 						</Suspense>
-					break; case 'plugin':
+					case 'plugin':
 						return <PluginName pluginId={obj.pluginId} />
 				}
 			break; case 'Behavior':
@@ -154,19 +152,19 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'Layout':
 			override(type, {
 				name: { readonly: true },
+				color: { type: 'RgbColor' },
 				imageIds: { hidden: true, },
-				dataKeys: { valueTypes: ['string', 'int'] },
+				dataKeys: { valueTypes: ['string', 'int'], fixed: true },
 				textureLoadingMode: { type: 'TextureLoadingMode' },
 				width: { type: 'int' },
 				height: { type: 'int' },
-				color: { type: 'int' },
 			})
 		break; case 'LayoutLayer':
 			override(type, {
 				layerType: { type: 'LayerType' },
 				sampler: { type: 'LayerSamplerMode' },
 				id: { type: 'int', readonly: true },
-				filterColor: { type: 'int' },
+				filterColor: { type: 'RgbColor' },
 				backgroundColor: { type: 'int' },
 			})
 		break; case 'ObjectInstance':
@@ -178,11 +176,12 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				id: { type: 'int', readonly: true },
 				data: dataPinfo,
 				objectTypeId: { type: 'int' },
+				privateVariables: { type: 'Dictionary', fixed: true, valueTypes: ['number', 'string'] },
 				x: { type: 'int' },
 				y: { type: 'int' },
 				width: { type: 'int' },
 				height: { type: 'int' },
-				filter: { type: 'int' },
+				filter: { type: 'RgbColor' },
 				key: { type: 'int' },
 			})
 		break; case 'ObjectType':
@@ -237,7 +236,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			})
 		break; case 'AppBlock':
 			override(type, {
-				dataKeys: { valueTypes: ['string', 'int'] },
+				dataKeys: { valueTypes: ['string', 'int'], fixed: true },
 				behaviorControls: { valueTypes: ['BehaviorControl'] },
 				globalVariables: { valueTypes: ['GlobalVariable'] },
 				fpsMode: { type: 'FpsMode' },

@@ -22,7 +22,7 @@ export type TypeNameToValue = {
 	'int': int,
 	'Array': Array<unknown>,
 	'Dictionary': Record<string | number, unknown>
-} & CustomEnumToValue & {
+} & Record<(typeof numericSubtypeNames)[number], number> & CustomEnumToValue & {
 	[T in InspectorObjectValue as T['_type']]: T
 }
 export type InspectorTypeName = keyof TypeNameToValue

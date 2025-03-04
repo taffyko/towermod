@@ -200,6 +200,7 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 	}
 	const [newKeyText, setNewKeyText] = useState("")
 	const [newValueType, setNewValueType] = useState(dictPinfo.valueTypes[0])
+	if (newValueType === 'unknown') { canAddProperties = false }
 	const getDefaultValue = canAddProperties ? defaultValueForType(newValueType) : undefined
 	const addProperty = getDefaultValue ? () => {
 		const newObj = { ...dictPinfo.value, [newKeyText]: getDefaultValue() }
@@ -272,7 +273,7 @@ function getValueComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): 
 			return <InspectorArray pinfo={pinfo as any} onChange={onChange} />
 		case 'Dictionary':
 			return <InspectorDictionary pinfo={pinfo as any} onChange={onChange} />
-		case 'number': case 'int': case 'float':
+		case 'number': case 'int': case 'float': case 'RgbColor': /* FIXME: implement color picker */
 			return <InspectorNumeric pinfo={pinfo as any} onChange={onChange} />
 		case 'string':
 			return <InspectorString pinfo={pinfo as any} onChange={onChange} />

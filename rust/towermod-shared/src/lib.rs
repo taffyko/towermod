@@ -7,6 +7,7 @@
 #![feature(never_type)]
 #![allow(unused_parens)]
 #![allow(unused_import_braces)]
+#![feature(impl_trait_in_fn_trait_return)]
 
 pub mod dllreader_client;
 pub mod game_images;

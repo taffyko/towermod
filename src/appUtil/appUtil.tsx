@@ -108,14 +108,13 @@ export async function updateTowermodObject<T extends UniqueTowermodObject>(obj: 
 		break; case 'Container': endpoint = api.endpoints.updateContainer
 		break; case 'Animation': endpoint = api.endpoints.updateAnimation
 		break; case 'Behavior': endpoint = api.endpoints.updateBehavior
-		break; case 'Family': endpoint = api.endpoints.updateFamily
 		break; case 'ObjectTrait': endpoint = api.endpoints.updateObjectTrait
 		break; case 'AppBlock': endpoint = api.endpoints.updateAppBlock
 		break; case 'Layout': endpoint = api.endpoints.updateLayout
 		break; case 'LayoutLayer': endpoint = api.endpoints.updateLayoutLayer
-		break; case undefined: endpoint = undefined
-		break; default: assertUnreachable(type)
+		break; default: endpoint = undefined
 	}
+	if (!endpoint) { return }
 	await awaitRtk(dispatch(endpoint.initiate(obj)))
 }
 

@@ -1,6 +1,6 @@
 //! APIs for requesting data from the state
 
-use std::collections::HashMap;
+use std::{collections::HashMap};
 use crate::{app::state::{app_state::State, select}, cstc_editing::{EdFamily, EdLayout, EdLayoutLayer, EdObjectInstance, EdObjectType}, select};
 use towermod_cstc::{plugin::PluginData, Animation, Behavior, Container, Family, ImageMetadata, ObjectTrait, ObjectType};
 
@@ -54,16 +54,16 @@ pub fn select_new_object_instance_id() -> impl Fn(&State) -> i32 {
 			).max().unwrap_or(0) + 1
 	}
 }
-pub fn select_object_instances(layout_layer_id: i32) -> impl Fn(&State) -> Vec<i32> {
+pub fn select_object_instances(layout_layer_id: i32) -> impl Fn(&State) -> Vec<&EdObjectInstance> {
 	move |s: &State| {
 		for layout in &s.data.layouts {
 			for layer in &layout.layers {
 				if layer.id == layout_layer_id {
-					return layer.objects.iter().map(|o| o.id).collect();
+					return layer.objects.iter().collect();
 				}
 			}
 		}
-		return Vec::new();
+		Vec::new()
 	}
 }
 pub fn select_object_instances_mut(layout_layer_id: i32) -> impl Fn(&mut State) -> Vec<&mut EdObjectInstance> {
@@ -75,7 +75,19 @@ pub fn select_object_instances_mut(layout_layer_id: i32) -> impl Fn(&mut State) 
 				}
 			}
 		}
-		return Vec::new();
+		Vec::new()
+	}
+}
+pub fn select_all_object_instances() -> impl Fn(&State) -> Vec<&EdObjectInstance> {
+	move |s| { s.data.layouts.iter().flat_map(|l| l.layers.iter().flat_map(|l| l.objects.iter())).collect() }
+}
+pub fn select_object_instance_ids(layout_layer_id: i32) -> impl Fn(&State) -> Vec<i32> {
+	move |s| { select_object_instances(layout_layer_id)(s).iter().map(|o| o.id).collect() }
+}
+pub fn select_object_type_instance_ids(object_type_id: i32) -> impl Fn(&State) -> Vec<i32> {
+	move |s| {
+		let object_instances = select_all_object_instances()(s);
+		object_instances.into_iter().filter_map(|o| if o.object_type_id == object_type_id { Some(o.id) } else { None }).collect()
 	}
 }
 

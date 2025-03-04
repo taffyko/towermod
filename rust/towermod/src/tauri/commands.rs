@@ -292,7 +292,10 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 }
 
 #[command] pub async fn get_object_instances(layout_layer_id: i32) -> Vec<i32> {
-	select(selectors::select_object_instances(layout_layer_id)).await
+	select(selectors::select_object_instance_ids(layout_layer_id)).await
+}
+#[command] pub async fn get_object_type_instances(object_type_id: i32) -> Vec<i32> {
+	select(selectors::select_object_type_instance_ids(object_type_id)).await
 }
 #[command] pub async fn get_object_instance(id: i32) -> Option<cstc_editing::EdObjectInstance> {
 	select!(selectors::select_object_instance(id), |r| r.cloned()).await

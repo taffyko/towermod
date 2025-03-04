@@ -11,7 +11,7 @@ const InspectorArray = lazy(() => import('./base/Inspector').then(m => ({ defaul
 
 export function ObjectInstances(props: { objectType: ObjectType }) {
 	const { objectType } = props
-	const { data: instances } = api.useGetObjectInstancesQuery(objectType?.id ?? skipToken)
+	const { data: instances } = api.useGetObjectTypeInstancesQuery(objectType?.id ?? skipToken)
 	return <IdLinkArray lookups={instances ?? []} />
 }
 
@@ -22,6 +22,7 @@ export function IdLinkArray(props: { lookups: UniqueObjectLookup[], onChange?: (
 		key: 'root',
 		custom: true,
 		type: 'Array',
+		fixed: !onChange,
 		readonly: !onChange,
 		value: lookups,
 	}
@@ -32,4 +33,8 @@ export function PluginName(props: { pluginId: number }) {
 	const { pluginId } = props
 	const { data: plugin } = api.useGetEditorPluginQuery(pluginId)
 	return plugin?.stringTable.name
+}
+
+export function ColorPicker(props: { value: int, onChange: (v: int) => void }) {
+	// TODO
 }

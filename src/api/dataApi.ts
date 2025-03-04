@@ -80,6 +80,11 @@ export const dataApi = baseApi.injectEndpoints({
 			transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectInstance' })),
 			providesTags: ['ObjectInstance']
 		}),
+		getObjectTypeInstances: builder.query<Lookup<ObjectInstance>[], number>({
+			query: (objectTypeId) => invoke('get_object_type_instances', { objectTypeId }),
+			transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectInstance' })),
+			providesTags: ['ObjectInstance']
+		}),
 		updateObjectInstance: builder.mutation<void, ObjectInstance>({
 			query: (obj) => invoke('update_object_instance', { obj }),
 			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectInstance', id: String(arg.id) }]

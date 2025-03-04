@@ -1,8 +1,8 @@
-import { BaseQueryFn, FetchArgs, FetchBaseQueryError, FetchBaseQueryMeta, createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { createApi } from '@reduxjs/toolkit/query/react'
 import { invoke } from "@tauri-apps/api/core";
 import { Game, ImageMetadata, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod';
 import { useObjectUrl } from '@/util/hooks';
-import { customBaseQuery, queryFn } from './baseApiUtil';
+import { customBaseQuery } from './baseApiUtil';
 import { enhanceModInfo, svgToDataUri } from '@/util';
 
 const cstcObjectTagTypes = [
