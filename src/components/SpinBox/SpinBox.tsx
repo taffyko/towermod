@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import Style from './SpinBox.module.scss'
-import { useEventListener, useStateRef, useOptimisticTwoWayBinding } from '@/util';
+import { useEventListener, useStateRef, useOptimisticTwoWayBinding, classes } from '@/util';
 
 export function SpinBox(props: Omit<React.ComponentProps<'input'>, 'onChange' | 'value'> & {
 	value?: number,
 	int?: boolean,
+	small?: boolean,
 	onChange?: (v: number) => void
 }) {
-	const { value: externalValue, int, onChange: externalOnChange, ...htmlProps } = props
+	const { value: externalValue, int, onChange: externalOnChange, small, className, ...htmlProps } = props
 
 	const [el, setEl] = useStateRef<HTMLInputElement>();
 	const [value, setValue] = useOptimisticTwoWayBinding({
@@ -22,7 +23,7 @@ export function SpinBox(props: Omit<React.ComponentProps<'input'>, 'onChange' | 
 
 	return <input
 		ref={setEl}
-		className={Style.spinbox}
+		{...classes(Style.spinbox, small && Style.small, className)}
 		type="number" step={int ? '1' : 'any'}
 		value={value}
 		onChange={e => onChange?.(e.target.value)}

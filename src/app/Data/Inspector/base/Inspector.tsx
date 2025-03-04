@@ -204,7 +204,7 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 	const addProperty = getDefaultValue ? () => {
 		const newObj = { ...dictPinfo.value, [newKeyText]: getDefaultValue() }
 		setNewKeyText("")
-		onChange(newObj)
+		onChange(newObj as Record<InspectorKeyTypes, AnyInspectorValue>)
 	} : undefined
 
 	const { ref, isOpen, ToggleCollapse } = useCollapsible()

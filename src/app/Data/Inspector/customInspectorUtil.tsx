@@ -96,7 +96,7 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 				switch (key) {
 					case 'objectTypeIds':
 						if (collectionElement) {
-							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} onChange={(lookup: any) => onChange(lookup.id)} />
+							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
 						}
 				}
 			break; case 'ObjectTrait':
@@ -213,7 +213,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'Family':
 			override(type, {
 				name: { readonly: true },
-				objectTypeIds: { valueTypes: ['int'] },
+				objectTypeIds: { valueTypes: ['int'], readonly: true },
 				privateVariables: { valueTypes: ['VariableType'], readonly: true },
 			})
 		break; case 'ImageMetadata':

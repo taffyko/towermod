@@ -177,6 +177,10 @@ export function svgToDataUri(svg: string | SVGElement) {
 	return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(xml);
 }
 
+export function classes(...classes: unknown[]): { className: string } {
+	return { className: classes.filter(Boolean).join(' ') }
+}
+
 export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
 
 interface Flavoring<FlavorT> {
