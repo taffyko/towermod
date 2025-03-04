@@ -137,8 +137,8 @@ pub async fn get_object_types() -> Vec<i32> {
 pub async fn get_object_type(object_type_id: i32) -> Option<EdObjectType> {
 	select!(select_object_type(object_type_id), |r| r.cloned()).await
 }
-pub async fn search_object_types(txt: String) -> Vec<i32> {
-	select(move |s| s.data.object_types.iter().filter(|ot| ot.name.contains(&txt)).map(|ot| ot.id).collect()).await
+pub async fn search_object_types(txt: String) -> Vec<(i32, String)> {
+	select(move |s| s.data.object_types.iter().filter(|ot| ot.name.contains(&txt)).map(|ot| (ot.id, ot.name.clone())).collect()).await
 }
 
 pub fn select_layouts() -> impl Fn(&State) -> Vec<String> {

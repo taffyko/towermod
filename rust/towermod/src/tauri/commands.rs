@@ -270,7 +270,7 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_object_type(id: i32) -> Option<cstc_editing::EdObjectType> {
 	selectors::get_object_type(id).await
 }
-#[command] pub async fn search_object_types(txt: String) -> Vec<i32> {
+#[command] pub async fn search_object_types(txt: String) -> Vec<(i32, String)> {
 	selectors::search_object_types(txt).await
 }
 #[command] pub async fn update_object_type(obj: cstc_editing::EdObjectType) {

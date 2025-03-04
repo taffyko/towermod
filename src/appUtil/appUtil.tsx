@@ -116,7 +116,6 @@ export async function updateTowermodObject<T extends UniqueTowermodObject>(obj: 
 		break; case undefined: endpoint = undefined
 		break; default: assertUnreachable(type)
 	}
-	console.log('update dispatched')
 	await awaitRtk(dispatch(endpoint.initiate(obj)))
 }
 
