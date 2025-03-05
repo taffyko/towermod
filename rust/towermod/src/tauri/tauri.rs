@@ -116,6 +116,7 @@ pub fn run() {
 				commands::get_object_instances,
 				commands::get_object_type_instances,
 				commands::get_object_instance,
+				commands::search_object_instances,
 				commands::update_object_instance,
 				commands::delete_object_instance,
 				commands::create_object_instance,
@@ -126,6 +127,7 @@ pub fn run() {
 
 				commands::get_layout_layers,
 				commands::get_layout_layer,
+				commands::search_layout_layers,
 				commands::update_layout_layer,
 
 				commands::get_root_animations,
@@ -139,7 +141,10 @@ pub fn run() {
 
 				commands::get_container,
 				commands::get_containers,
+				commands::search_containers,
 				commands::update_container,
+				commands::create_container,
+				commands::delete_container,
 
 				commands::get_families,
 				commands::get_family,

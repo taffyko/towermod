@@ -94,7 +94,8 @@ export interface BehaviorControl {
 }
 
 export interface Container {
-  objectIds: Array<number>
+	id: int,
+  objectIds: Array<int>
   _type: 'Container'
 }
 
@@ -493,4 +494,9 @@ export interface FileDialogOptions {
 	fileName?: string,
 	title?: string,
 	canCreateDirectories?: boolean,
+}
+
+export interface SearchOptions {
+	text: String,
+	caseSensitive?: boolean,
 }

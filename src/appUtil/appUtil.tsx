@@ -152,7 +152,7 @@ export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | unde
 	switch (obj?._type) {
 		case 'ObjectInstance': objTypeId = obj.objectTypeId
 		break; case 'ObjectType': pluginId = obj.pluginId
-		break; case 'Container': objTypeId = obj.objectIds[0]
+		break; case 'Container': objTypeId = obj.id
 	}
 	const { currentData: objType } = api.useGetObjectTypeQuery(objTypeId != null ? { id: objTypeId } : skipToken)
 	switch (obj?._type) {

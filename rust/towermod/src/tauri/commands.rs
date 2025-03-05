@@ -3,7 +3,7 @@ use tauri::{command, AppHandle, Emitter};
 use anyhow::Result;
 use fs_err::tokio as fs;
 use towermod_cstc::ImageMetadata;
-use towermod_shared::{app::state::{dispatch, select, DataAction}, cstc_editing, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType, select };
+use towermod_shared::{app::{selectors::SearchOptions, state::{dispatch, select, DataAction}}, cstc_editing, select, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType };
 use towermod_util::log_on_error;
 
 #[command]
@@ -270,8 +270,8 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_object_type(id: i32) -> Option<cstc_editing::EdObjectType> {
 	selectors::get_object_type(id).await
 }
-#[command] pub async fn search_object_types(txt: String) -> Vec<(i32, String)> {
-	selectors::search_object_types(txt).await
+#[command] pub async fn search_object_types(options: SearchOptions) -> Vec<(i32, String)> {
+	selectors::search_object_types(options).await
 }
 #[command] pub async fn update_object_type(obj: cstc_editing::EdObjectType) {
 	dispatch(DataAction::UpdateObjectType(obj)).await
@@ -299,6 +299,9 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 }
 #[command] pub async fn get_object_instance(id: i32) -> Option<cstc_editing::EdObjectInstance> {
 	select!(selectors::select_object_instance(id), |r| r.cloned()).await
+}
+#[command] pub async fn search_object_instances(options: SearchOptions) -> Vec<(i32, String)> {
+	selectors::search_object_instances(options).await
 }
 #[command] pub async fn update_object_instance(obj: cstc_editing::EdObjectInstance) {
 	dispatch(DataAction::UpdateObjectInstance(obj)).await
@@ -334,6 +337,9 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 		cstc_editing::EdLayoutLayer { id: id.clone(), name: name.clone(), layer_type: layer_type.clone(), filter_color: filter_color.clone(), opacity: opacity.clone(), angle: angle.clone(), scroll_x_factor: scroll_x_factor.clone(), scroll_y_factor: scroll_y_factor.clone(), scroll_x: scroll_x.clone(), scroll_y: scroll_y.clone(), zoom_x_factor: zoom_x_factor.clone(), zoom_y_factor: zoom_y_factor.clone(), zoom_x: zoom_x.clone(), zoom_y: zoom_y.clone(), clear_background_color: clear_background_color.clone(), background_color: background_color.clone(), force_own_texture: force_own_texture.clone(), sampler: sampler.clone(), enable_3d: enable_3d.clone(), clear_depth_buffer: clear_depth_buffer.clone(), objects: Default::default() }
 	})).await
 }
+#[command] pub async fn search_layout_layers(options: SearchOptions) -> Vec<(i32, String)> {
+	selectors::search_layout_layers(options).await
+}
 #[command] pub async fn update_layout_layer(layer: cstc_editing::EdLayoutLayer) {
 	dispatch(DataAction::UpdateLayoutLayer(layer)).await
 }
@@ -367,11 +373,20 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_containers() -> Vec<i32> {
 	select(selectors::select_containers()).await
 }
-#[command] pub async fn get_container(id: i32) -> Option<towermod_cstc::Container> {
+#[command] pub async fn get_container(id: i32) -> Option<cstc_editing::EdContainer> {
 	select!(selectors::select_container(id), |r| r.cloned()).await
 }
-#[command] pub async fn update_container(container: towermod_cstc::Container) {
+#[command] pub async fn update_container(container: cstc_editing::EdContainer) {
 	dispatch(DataAction::UpdateContainer(container)).await
+}
+#[command] pub async fn create_container(object_type_id: i32) {
+	dispatch(DataAction::CreateContainer(object_type_id)).await
+}
+#[command] pub async fn delete_container(object_type_id: i32) {
+	dispatch(DataAction::DeleteContainer(object_type_id)).await
+}
+#[command] pub async fn search_containers(options: SearchOptions) -> Vec<(i32, String)> {
+	select(selectors::search_containers(options)).await
 }
 
 #[command] pub async fn get_families() -> Vec<String> {

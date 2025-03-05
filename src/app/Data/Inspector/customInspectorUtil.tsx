@@ -106,6 +106,8 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 				}
 			break; case 'Container':
 				switch (key) {
+					case 'id':
+						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
 					case 'objectIds':
 						if (collectionElement) {
 							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} onChange={(lookup: any) => onChange(lookup.id)} />
@@ -207,6 +209,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			})
 		break; case 'Container':
 			override(type, {
+				id: { readonly: true, type: 'int' },
 				objectIds: { valueTypes: ['int'] }
 			})
 		break; case 'Family':

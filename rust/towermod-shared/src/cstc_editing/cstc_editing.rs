@@ -24,28 +24,28 @@ pub struct EdObjectInstance {
 	pub key: i32,
 }
 impl EdObjectInstance {
-	fn from_stable(obj: cstc::ObjectInstance, object_types: &IndexMap<i32, &EdObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
-		let obj_type = object_types.get(&obj.object_type_id).context("Object type not found")?;
+	fn from_stable(obj: cstc::ObjectInstance, object_types: &IndexMap<i32, EdObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
+		let cstc::ObjectInstance { id, object_type_id, x, y, width, height, angle, filter, private_variables, data, key } = obj;
+		let obj_type = object_types.get(&object_type_id).context("Object type not found")?;
 		let plugin_name = &plugins.get(&obj_type.plugin_id).context("Plugin not found")?.string_table.name;
-		let data = cstc::ObjectData::decode(obj.data, &plugin_name);
-		let private_variables = std::iter::zip(obj_type.private_variables.clone(), obj.private_variables).map(|((name, value_type), value)| Ok((name, match value_type {
+		let data = cstc::ObjectData::decode(data, &plugin_name);
+		let private_variables = std::iter::zip(obj_type.private_variables.clone(), private_variables).map(|((name, value_type), value)| Ok((name, match value_type {
 			VariableType::Number => VariableValue::Number(value.parse().unwrap_or(0.0)),
 			VariableType::String => VariableValue::String(value),
 		}))).collect::<Result<HashMap<_, _>>>()?;
-
-		let obj = EdObjectInstance { id: obj.id, object_type_id: obj.object_type_id, x: obj.x, y: obj.y, width: obj.width, height: obj.height, angle: obj.angle, filter: obj.filter, private_variables: private_variables, data, key: obj.key };
-		Ok(obj)
+		Ok(EdObjectInstance { id, object_type_id, x, y, width, height, angle, filter, private_variables, data, key })
 	}
-	fn to_stable(mut self, object_types: &IndexMap<i32, &EdObjectType>) -> Result<cstc::ObjectInstance> {
-		let data = self.data.encode();
-		let obj_type = object_types.get(&self.object_type_id).context("Object type not found")?;
+	fn to_stable(self, object_types: &IndexMap<i32, EdObjectType>) -> Result<cstc::ObjectInstance> {
+		let Self { id, object_type_id, x, y, width, height, angle, filter, mut private_variables, data, key } = self;
+		let data = data.encode();
+		let obj_type = object_types.get(&object_type_id).context("Object type not found")?;
 		let private_variables = obj_type.private_variables.iter().map(|(name, _)| {
-			match self.private_variables.remove(name).context("Variable missing from object")? {
+			match private_variables.remove(name).context("Variable missing from object")? {
 				VariableValue::Number(num) => Ok(num.to_string()),
 				VariableValue::String(string) => Ok(string),
 			}
 		}).collect::<Result<Vec<_>>>()?;
-		Ok(cstc::ObjectInstance { id: self.id, object_type_id: self.object_type_id, x: self.x, y: self.y, width: self.width, height: self.height, angle: self.angle, filter: self.filter, private_variables, data, key: self.key })
+		Ok(cstc::ObjectInstance { id, object_type_id, x, y, width, height, angle, filter, private_variables, data, key })
 	}
 }
 
@@ -187,7 +187,7 @@ pub enum EdDataKey {
 }
 
 impl EdLayout {
-	fn from_stable(layout: cstc::Layout, object_types: &IndexMap<i32, &EdObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
+	fn from_stable(layout: cstc::Layout, object_types: &IndexMap<i32, EdObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
 		let cstc::Layout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode } = layout;
 		let layers = layers.into_iter()
 			.map(|layer| EdLayoutLayer::from_stable(layer, object_types, plugins))
@@ -198,7 +198,7 @@ impl EdLayout {
 		}).collect();
 		Ok(EdLayout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode })
 	}
-	fn to_stable(self, object_types: &IndexMap<i32, &EdObjectType>) -> Result<cstc::Layout> {
+	fn to_stable(self, object_types: &IndexMap<i32, EdObjectType>) -> Result<cstc::Layout> {
 		let EdLayout { name, width, height, color, unbounded_scrolling, application_background, data_keys, layers, image_ids, texture_loading_mode } = self;
 		let layers = layers.into_iter().map(|layer| layer.to_stable(object_types)).collect::<Result<Vec<_>>>()?;
 		let data_keys = data_keys.into_iter().map(|(name, value)| match value {
@@ -238,14 +238,14 @@ pub struct EdLayoutLayer {
 	pub objects: Vec<EdObjectInstance>,
 }
 impl EdLayoutLayer {
-	fn from_stable(layer: cstc::LayoutLayer, object_types: &IndexMap<i32, &EdObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
+	fn from_stable(layer: cstc::LayoutLayer, object_types: &IndexMap<i32, EdObjectType>, plugins: &HashMap<i32, cstc::plugin::PluginData>) -> Result<Self> {
 		let cstc::LayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects } = layer;
 		let objects = objects.into_iter()
 			.map(|obj| EdObjectInstance::from_stable(obj, object_types, plugins))
 			.collect::<Result<Vec<_>>>()?;
 		Ok(EdLayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects })
 	}
-	fn to_stable(self, object_types: &IndexMap<i32, &EdObjectType>) -> Result<cstc::LayoutLayer> {
+	fn to_stable(self, object_types: &IndexMap<i32, EdObjectType>) -> Result<cstc::LayoutLayer> {
 		let EdLayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects } = self;
 		let objects = objects.into_iter().map(|obj| obj.to_stable(object_types)).collect::<Result<Vec<_>>>()?;
 		Ok(cstc::LayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects })
@@ -280,17 +280,39 @@ impl From<VariableType> for VariableValue {
 	}
 }
 
-#[serde_alias(SnakeCase, CamelCase)]
+#[serde_alias(SnakeCase)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EdContainer {
+	/// Object type ID of the container
+	pub id: i32,
+	pub object_ids: Vec<i32>,
+}
+impl EdContainer {
+	fn from_stable(container: cstc::Container) -> Result<Self> {
+		let cstc::Container { mut object_ids } = container;
+		if (object_ids.len() < 1) { anyhow::bail!("Container is empty") }
+		let id = object_ids.remove(0);
+		Ok(EdContainer { id, object_ids })
+	}
+	fn to_stable(self) -> cstc::Container {
+		let EdContainer { id, mut object_ids } = self;
+		object_ids.insert(0, id);
+		cstc::Container { object_ids }
+	}
+}
+
+#[serde_alias(SnakeCase)]
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CstcData {
 	pub editor_plugins: HashMap<i32, cstc::plugin::PluginData>,
-	pub object_types: Vec<EdObjectType>,
+	pub object_types: IndexMap<i32, EdObjectType>,
 	pub behaviors: Vec<cstc::Behavior>,
 	pub traits: Vec<cstc::ObjectTrait>,
 	pub families: Vec<EdFamily>,
 	pub layouts: Vec<EdLayout>,
-	pub containers: Vec<cstc::Container>,
+	pub containers: IndexMap<i32, EdContainer>,
 	pub animations: Vec<cstc::Animation>,
 	pub app_block: Option<EdAppBlock>,
 	pub event_block: Option<cstc::EventBlock>,
@@ -303,24 +325,31 @@ impl CstcData {
 	pub fn from_stable(value: StableData) -> Result<Self> {
 		let (editor_plugins, app_block, image_block, level_block, event_block) = value;
 		let cstc::LevelBlock { object_types, behaviors, traits, families, containers, layouts, animations } = level_block;
-		let object_types = object_types.into_iter().map(|obj_type| EdObjectType::from_stable(obj_type)).collect::<Result<Vec<_>>>()?;
-		let object_types_map = object_types.iter().map(|obj_type| (obj_type.id, obj_type)).collect();
+		let object_types = object_types.into_iter().map(|obj_type| {
+			let obj_type = EdObjectType::from_stable(obj_type)?;
+			Ok((obj_type.id, obj_type))
+		}).collect::<Result<IndexMap<_, _>>>()?;
 		let app_block = EdAppBlock::from_stable(app_block);
 		let families = families.into_iter().map(EdFamily::from_stable).collect();
 		let layouts = layouts.into_iter()
-			.map(|layout| EdLayout::from_stable(layout, &object_types_map, &editor_plugins))
+			.map(|layout| EdLayout::from_stable(layout, &object_types, &editor_plugins))
 			.collect::<Result<Vec<_>>>()?;
+		let containers = containers.into_iter().map(|c| {
+			let c = EdContainer::from_stable(c)?;
+			Ok((c.id, c))
+		}).collect::<Result<IndexMap<_, _>>>()?;
 		Ok(CstcData { editor_plugins, object_types, behaviors, traits, families, containers, layouts, animations, app_block: Some(app_block), event_block: Some(event_block), image_block })
 	}
 
 	pub fn to_stable(self) -> Result<StableData> {
 		let CstcData { editor_plugins, object_types, behaviors, traits, families, containers, layouts, animations, app_block, event_block, image_block } = self;
-		let object_types_map = object_types.iter().map(|obj_type| (obj_type.id, obj_type)).collect();
+		let containers = containers.into_iter().map(|(_, c)| c.to_stable()).collect();
+		let layouts = layouts.into_iter().map(|layout| layout.to_stable(&object_types)).collect::<Result<Vec<_>>>()?;
 		let families = families.into_iter().map(EdFamily::to_stable).collect();
-		let layouts = layouts.into_iter().map(|layout| layout.to_stable(&object_types_map)).collect::<Result<Vec<_>>>()?;
-		let object_types = object_types.into_iter().map(EdObjectType::to_stable).collect();
-		let level_block = cstc::LevelBlock { object_types, behaviors, traits, families, containers, layouts, animations };
 		let app_block = app_block.unwrap().to_stable();
+		let object_types = object_types.into_iter().map(|(_, obj)| obj.to_stable()).collect();
+
+		let level_block = cstc::LevelBlock { object_types, behaviors, traits, families, containers, layouts, animations };
 		Ok((editor_plugins, app_block, image_block, level_block, event_block.unwrap()))
 	}
 }

@@ -98,7 +98,7 @@ const getTreeItemId = (obj: UniqueObjectLookup) => {
 		break; case 'Behavior':
 			id = `${obj.objectTypeId}-${obj.movIndex}`
 		break; case 'Container':
-			id = obj.objectIds[0]
+			id = obj.id
 		break; case 'Family':
 			id = obj.name
 		break; case 'ObjectType':
@@ -293,7 +293,7 @@ function OutlinerHistoryButtons() {
 function useOutlinerSearch(handle: OutlinerHandle) {
 	const lookup = useAppSelector(s => s.app.outlinerValue)
 	const [search, setSearch] = useState("")
-	let matchedObjectTypes = api.useSearchObjectTypesQuery(search || skipToken).data || []
+	let matchedObjectTypes = api.useSearchObjectTypesQuery({ text: search } || skipToken).data || []
 
 	const [matched, matchedKeys] = useMemo(() => {
 		if (!search) {

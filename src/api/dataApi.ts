@@ -1,7 +1,7 @@
 import { enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, useObjectUrl } from '@/util';
 import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
-import { Animation, Behavior, ImageMetadata, Layout, LayoutLayer, ObjectInstance, ObjectType, PluginData, Container, Family, ObjectTrait, AppBlock } from '@towermod';
+import { Animation, Behavior, ImageMetadata, Layout, LayoutLayer, ObjectInstance, ObjectType, PluginData, Container, Family, ObjectTrait, AppBlock, SearchOptions } from '@towermod';
 import type { LookupForType, UniqueTowermodObject } from '@/util';
 
 type Lookup<T extends UniqueTowermodObject> = LookupForType<T['_type']>
@@ -52,7 +52,7 @@ export const dataApi = baseApi.injectEndpoints({
 			transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectType' })),
 			providesTags: [{ type: 'ObjectType', id: 'LIST' }]
 		}),
-		searchObjectTypes: builder.query<{ _type: 'ObjectType', name: string, id: int }[], string>({
+		searchObjectTypes: builder.query<{ _type: 'ObjectType', name: string, id: int }[], SearchOptions>({
 			query: (txt) => invoke('search_object_types', { txt }),
 			transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'ObjectType' })),
 			providesTags: [{ type: 'ObjectType', id: 'LIST' }]
@@ -156,18 +156,18 @@ export const dataApi = baseApi.injectEndpoints({
 		}),
 
 		getContainer: builder.query<Container | null, LookupArg<Container>>({
-			query: ({ objectIds }) => invoke('get_container', { id: objectIds[0] }),
+			query: (args) => invoke('get_container', args),
 			transformResponse: (r: Container) => enhanceContainer(r),
-			providesTags: (_r, _e, arg) => [{ type: 'Container', id: String(arg.objectIds[0]) }]
+			providesTags: (_r, _e, arg) => [{ type: 'Container', id: String(arg.id) }]
 		}),
 		getContainers: builder.query<Lookup<Container>[], void>({
 			query: () => invoke('get_containers'),
-			transformResponse: (r: number[]) => r.map(id => ({ objectIds: [id], _type: 'Container' })),
+			transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'Container' })),
 			providesTags: ['Container']
 		}),
 		updateContainer: builder.mutation<void, Container>({
 			query: (container) => invoke('update_container', { container }),
-			invalidatesTags: (_r, _e, arg) => [{ type: 'Container', id: String(arg.objectIds[0]) }]
+			invalidatesTags: (_r, _e, arg) => [{ type: 'Container', id: String(arg.id) }]
 		}),
 
 		getFamily: builder.query<Family | null, LookupArg<Family>>({

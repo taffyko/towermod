@@ -16,7 +16,7 @@ export type UniqueObjectLookup =
 	| Pick<ObjectInstance, '_type' | 'id'>
 	| Pick<Animation, '_type' | 'id'>
 	| Pick<Behavior, '_type' | 'movIndex' | 'objectTypeId'>
-	| Pick<Container, '_type' | 'objectIds'>
+	| Pick<Container, '_type' | 'id'>
 	| Pick<Family, '_type' | 'name'>
 	| Pick<ObjectType, '_type' | 'id'>
 	| Pick<ObjectTrait, '_type' | 'name'>

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use towermod_cstc::stable::*;
 use super::super::selectors;
 
-use crate::cstc_editing::{CstcData, EdAppBlock, EdFamily, EdLayout, EdLayoutLayer, EdObjectInstance, EdObjectType, VariableType, VariableValue};
+use crate::cstc_editing::{CstcData, EdAppBlock, EdContainer, EdFamily, EdLayout, EdLayoutLayer, EdObjectInstance, EdObjectType, VariableType, VariableValue};
 
 pub type State = CstcData;
 
@@ -28,7 +28,9 @@ pub enum Action {
 
 	UpdateBehavior(Behavior),
 
-	UpdateContainer(Container),
+	UpdateContainer(EdContainer),
+	CreateContainer(i32),
+	DeleteContainer(i32),
 
 	FamilyAddObject { name: String, object_type_id: i32 },
 	FamilyRemoveObject { name: String, object_type_id: i32 },
@@ -67,7 +69,7 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			}
 		},
 		Action::CreateObjectType { id, plugin_id } => {
-			s.data.object_types.push(EdObjectType {
+			s.data.object_types.insert(id, EdObjectType {
 				id,
 				plugin_id,
 				name: format!("obj{id}"),
@@ -75,7 +77,7 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			});
 		},
 		Action::DeleteObjectType(id) => {
-			s.data.object_types.retain(|o| o.id != id);
+			s.data.object_types.shift_remove(&id);
 			for layout in &mut s.data.layouts {
 				for layer in &mut layout.layers {
 					layer.objects.retain(|o| o.object_type_id != id);
@@ -157,10 +159,15 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 
 		Action::UpdateContainer(container) => {
 			if container.object_ids.len() == 0 { return s }
-			if let Some(original_container) = selectors::select_container_mut(container.object_ids[0])(&mut s) {
-				*original_container = container;
-			}
+			let Some(original_container) = s.data.containers.get_mut(&container.id) else { return s };
+			original_container.object_ids = container.object_ids
 		},
+		Action::CreateContainer(id) => {
+			s.data.containers.insert(id, EdContainer { id, object_ids: vec![] });
+		}
+		Action::DeleteContainer(id) => {
+			s.data.containers.shift_remove(&id);
+		}
 
 		Action::FamilyAddObject { name, object_type_id } => {
 			let Some(family) = selectors::select_family_mut(name)(&mut s) else { return s };

@@ -1,7 +1,8 @@
 //! APIs for requesting data from the state
 
 use std::{collections::HashMap};
-use crate::{app::state::{app_state::State, select}, cstc_editing::{EdFamily, EdLayout, EdLayoutLayer, EdObjectInstance, EdObjectType}, select};
+use crate::{app::state::{app_state::State, select}, cstc_editing::{EdContainer, EdFamily, EdLayout, EdLayoutLayer, EdObjectInstance, EdObjectType}, select, serde};
+use ::serde::{Deserialize, Serialize};
 use towermod_cstc::{plugin::PluginData, Animation, Behavior, Container, Family, ImageMetadata, ObjectTrait, ObjectType};
 
 
@@ -33,10 +34,10 @@ pub async fn is_data_loaded() -> bool {
 }
 
 pub fn select_object_type(object_type_id: i32) -> impl Fn(&State) -> Option<&EdObjectType> {
-	move |s: &State| { s.data.object_types.iter().find(|ot| ot.id == object_type_id) }
+	move |s: &State| { s.data.object_types.get(&object_type_id) }
 }
 pub fn select_object_type_mut(object_type_id: i32) -> impl Fn(&mut State) -> Option<&mut EdObjectType> {
-	move |s: &mut State| { s.data.object_types.iter_mut().find(|ot| ot.id == object_type_id) }
+	move |s: &mut State| { s.data.object_types.get_mut(&object_type_id) }
 }
 pub fn select_object_type_plugin_name<'a>(object_type_id: i32) -> impl Fn(&'a State) -> Option<&'a String> {
 	move |s| {
@@ -90,6 +91,17 @@ pub fn select_object_type_instance_ids(object_type_id: i32) -> impl Fn(&State) -
 		object_instances.into_iter().filter_map(|o| if o.object_type_id == object_type_id { Some(o.id) } else { None }).collect()
 	}
 }
+pub async fn search_object_instances(options: SearchOptions) -> Vec<(i32, String)> {
+	select(move |s| {
+		let object_instances = select_all_object_instances()(&s);
+		object_instances.iter().filter_map(|(o)| {
+			let ot = s.data.object_types.get(&o.object_type_id);
+			ot.map(|ot| if matches_search(&ot.name, &options) {
+				Some((o.id, ot.name.clone()))
+			} else { None }).flatten()
+		}).collect()
+	}).await
+}
 
 pub fn select_object_instance(object_instance_id: i32) -> impl Fn(&State) -> Option<&EdObjectInstance> {
 	move |s: &State| {
@@ -140,17 +152,35 @@ pub fn select_object_instance_plugin_name<'a>(object_instance_id: i32) -> impl F
 	}
 }
 
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchOptions {
+	text: String,
+	#[serde(default)]
+	case_sensitive: bool,
+}
+fn matches_search(scrutinee: &str, options: &SearchOptions) -> bool {
+	if (options.case_sensitive) {
+		scrutinee.contains(&options.text)
+	} else {
+		scrutinee.to_lowercase().contains(&options.text)
+	}
+}
+
 pub fn select_new_object_type_id() -> impl Fn(&State) -> i32 {
-	|s| { s.data.object_types.iter().map(|o| o.id).max().unwrap_or(0) + 1 }
+	|s| { s.data.object_types.iter().map(|(id, _)| *id).max().unwrap_or(0) + 1 }
 }
 pub async fn get_object_types() -> Vec<i32> {
-	select(|s| s.data.object_types.iter().map(|ot| ot.id).collect()).await
+	select(|s| s.data.object_types.iter().map(|(id, _)| *id).collect()).await
 }
 pub async fn get_object_type(object_type_id: i32) -> Option<EdObjectType> {
 	select!(select_object_type(object_type_id), |r| r.cloned()).await
 }
-pub async fn search_object_types(txt: String) -> Vec<(i32, String)> {
-	select(move |s| s.data.object_types.iter().filter(|ot| ot.name.contains(&txt)).map(|ot| (ot.id, ot.name.clone())).collect()).await
+pub async fn search_object_types(options: SearchOptions) -> Vec<(i32, String)> {
+	select(move |s| s.data.object_types.iter()
+		.filter(|(_, o)| matches_search(&o.name, &options))
+		.map(|(id, o)| (*id, o.name.clone())).collect()
+	).await
 }
 
 pub fn select_layouts() -> impl Fn(&State) -> Vec<String> {
@@ -196,6 +226,12 @@ pub fn select_layout_layer_mut(layer_id: i32) -> impl Fn(&mut State) -> Option<&
 		}
 		None
 	}
+}
+pub async fn search_layout_layers(options: SearchOptions) -> Vec<(i32, String)> {
+	select(move |s| s.data.layouts.iter().flat_map(|l| l.layers.iter())
+		.filter(|(o)| matches_search(&o.name, &options))
+		.map(|(o)| (o.id, o.name.clone())).collect()
+	).await
 }
 
 pub fn select_root_animations() -> impl Fn(&State) -> Vec<i32> {
@@ -243,13 +279,18 @@ pub fn select_behavior_mut(object_type_id: i32, mov_index: i32) -> impl Fn(&mut 
 }
 
 pub fn select_containers() -> impl Fn(&State) -> Vec<i32> {
-	move |s| s.data.containers.iter().map(|c| c.object_ids[0]).collect()
+	move |s| s.data.containers.iter().map(|(k, _)| *k).collect()
 }
-pub fn select_container(object_id: i32) -> impl Fn(&State) -> Option<&Container> {
-	move |s| s.data.containers.iter().find(|c| c.object_ids[0] == object_id)
+pub fn select_container(object_id: i32) -> impl Fn(&State) -> Option<&EdContainer> {
+	move |s| s.data.containers.get(&object_id)
 }
-pub fn select_container_mut(object_id: i32) -> impl Fn(&mut State) -> Option<&mut Container> {
-	move |s| s.data.containers.iter_mut().find(|c| c.object_ids[0] == object_id)
+pub fn search_containers(options: SearchOptions) -> impl Fn(&State) -> Vec<(i32, String)> {
+	move |s| s.data.containers.iter()
+		.filter_map(|(_, c)|
+			if let Some(o) = s.data.object_types.get(&c.id) {
+				if matches_search(&o.name, &options) { Some((o.id, o.name.clone())) } else { None }
+			} else { None }
+		).collect()
 }
 
 pub fn select_families() -> impl Fn(&State) -> Vec<&String> {
