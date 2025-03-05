@@ -11,7 +11,7 @@ import Text from '@/components/Text';
 import chime from '@/audio/chime.ogg';
 import { api } from '@/api';
 import { ConfirmModal, openModal } from '../Modal';
-import { getVersion } from '@/util';
+import { getVersion, triggerTransition } from '@/util';
 
 const VERSION = await getVersion();
 
@@ -49,9 +49,7 @@ export const TitleBar = () => {
 			<div className={Style.gap} />
 			<img className={Style.icon} src={iconImg} height="16" onClick={(e) => {
 				const el = e.currentTarget;
-				el.classList.add(Style.active)
-				el.offsetTop
-				el.classList.remove(Style.active);
+				triggerTransition(el, Style.active)
 
 				const audio = new Audio(chime);
 				audio.preservesPitch = false;

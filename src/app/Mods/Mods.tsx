@@ -10,7 +10,7 @@ import { openFolder, getModsDirPath, waitUntilProcessExits } from '@/util/rpc';
 import { Button } from '@/components/Button';
 import { LoadContainer } from '@/components/LoadContainer';
 import { ErrorMsg } from '@/components/Error';
-import { assert, posmod } from '@/util/util';
+import { assert, posmod, triggerTransition } from '@/util/util';
 import { useImperativeHandle, useObjectUrl, useStateRef } from '@/util/hooks';
 import { spin } from '../GlobalSpinner';
 import { Select } from '@/components/Select';
@@ -141,9 +141,7 @@ function ModDetails() {
 	const [el, setEl] = useStateRef<HTMLDivElement>();
 
 	useEffect(() => {
-		el?.classList.add(Style.init)
-		el?.offsetTop
-		el?.classList.remove(Style.init)
+		triggerTransition(el, Style.init)
 	}, [mod])
 
 	const icon = useObjectUrl(mod?.icon, { type: 'image/png' })

@@ -1,0 +1,61 @@
+.comboboxInput {
+	border: solid 1px var(--color-border);
+	border-radius: var(--border-radius);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	padding: var(--gap-s);
+	transition: background-color 0.2s cubic-bezier(0, 0.1, 0, 1);
+
+	color: white;
+	&[data-focus] {
+		text-align: left;
+		color: var(--color-text);
+		background-color: var(--color-bg-root);
+	}
+
+	&.transitionSubmitted {
+		transition: none;
+		background-color: var(--color-text);
+	}
+}
+.comboboxOptions {
+	border: solid 1px var(--color-border);
+	--anchor-gap: var(--gap-s);
+	--anchor-padding: var(--gap-s);
+	border-radius: var(--border-radius);
+	width: var(--input-width);
+	background-color: var(--color-bg);
+
+	&:empty {
+		opacity: 0;
+	}
+
+	[role=option] {
+		width: 100%;
+		padding: var(--gap-s);
+
+		&[data-focus], &[data-hover] {
+			background-color: var(--color-bg-active);
+		}
+	}
+}
+
+.comboboxButton {
+	flex-grow: 1;
+	height: 27px;
+	display: flex;
+	gap: var(--gap-s);
+	flex-flow: row nowrap;
+
+	transition: filter 0.2s cubic-bezier(0, 0.1, 0, 1);
+	&.transitionSubmitted {
+		transition: none;
+		filter: brightness(500%);
+	}
+
+	> :first-child {
+		flex-grow: 1;
+	}
+}
+
+

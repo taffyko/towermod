@@ -2,7 +2,7 @@ import { api, useGameImageUrl } from "@/api";
 import { Button } from "@/components/Button";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { InspectorObject } from "../Data/Inspector";
-import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, useMemoAsync, useRerender, useStateRef, useTwoWayBinding, useTwoWaySubmitBinding } from "@/util";
+import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useRerender, useStateRef, useTwoWayBinding, useTwoWaySubmitBinding } from "@/util";
 import { toast } from "../Toast";
 import { spin } from "../GlobalSpinner";
 import { awaitRtk } from "@/api/helpers";
@@ -241,8 +241,7 @@ function ImagePreview(props: {
 
 	function onImageLoad() {
 		setNaturalWidth(imgEl?.naturalWidth)
-		imgEl?.parentElement?.offsetTop
-		imgEl?.parentElement?.classList.remove(Style.loading)
+		triggerTransition(imgEl, Style.loading)
 	}
 }
 

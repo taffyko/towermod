@@ -181,6 +181,12 @@ export function classes(...classes: unknown[]): { className: string } {
 	return { className: classes.filter(Boolean).join(' ') }
 }
 
+export function triggerTransition(el?: HTMLElement | null, className?: string) {
+	className && el?.classList.add(className)
+	el?.offsetTop
+	className && el?.classList.remove(className)
+}
+
 export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
 
 interface Flavoring<FlavorT> {

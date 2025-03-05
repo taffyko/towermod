@@ -5,6 +5,7 @@ import { Tabs } from '@/app/Tabs';
 import { useEffect, useMemo } from 'react';
 import { TitleBar } from '@/app/TitleBar';
 import { Data } from '@/app/Data';
+import { Events } from '@/app/Events'
 import Images from '@/app/Images';
 import Config from '@/app/Config';
 import { useEventListener, useIsInert, useMountEffect, useStateRef } from '@/util/hooks';
@@ -38,7 +39,7 @@ const App = () => {
 			'Mods': <Mods />,
 			'Images': <Images />,
 			'Data': <Data />,
-			'Events': <div />
+			'Events': <Events />
 		}
 	), [dataIsLoaded, game])
 

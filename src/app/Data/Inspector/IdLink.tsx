@@ -6,22 +6,23 @@ import { SpinBox } from "@/components/SpinBox";
 import { api } from "@/api";
 import { ObjectType } from "@towermod";
 import { useMemo, useState } from "react";
-import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react'
 import { skipToken } from "@reduxjs/toolkit/query";
+import { ComboboxButton } from "@/components/Combobox";
 
 export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
 	const { lookup, onChange } = props;
 	const displayName = useObjectDisplayName(lookup)
 
 	return <div className="hbox gap">
-		{ onChange ? <LookupEdit lookup={lookup} onChange={onChange} /> : null }
-		<Button
-			onClick={() => {
-				dispatch(actions.setOutlinerValue(lookup))
-			}}
-		>
-			{displayName}
-		</Button>
+		{ onChange ?
+			<LookupEdit lookup={lookup} onChange={onChange} />
+		:
+			<Button
+				onClick={() => { dispatch(actions.setOutlinerValue(lookup)) }}
+			>
+				{displayName}
+			</Button>
+		}
 	</div>
 }
 
@@ -39,28 +40,22 @@ function LookupEdit(props: { lookup: UniqueObjectLookup, onChange?: (v: UniqueOb
 
 
 function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
-	const { value, onChange } = props;
+	const { value: selectedId, onChange } = props;
 	const [query, setQuery] = useState('')
 	const { data: objectTypes } = api.useSearchObjectTypesQuery(query || skipToken)
-	const name = objectTypes?.find((ot) => ot.id === value)?.name
+	const name = objectTypes?.find((ot) => ot.id === selectedId)?.name
+	const value = api.useGetObjectTypeQuery({ id: selectedId }).data || { name: name || '...', id: selectedId }
 
-	return <Combobox value={value} onChange={(v) => {
-			if (v != null) {
-				onChange(v)
-			}
-		}}>
-		<ComboboxInput
-			value={name ?? ''}
-			aria-label="ObjectType"
-			onChange={(e) => setQuery(e.currentTarget.value)}
-			placeholder="Search object types..."
-		/>
-		<ComboboxOptions>
-			{objectTypes?.map((objectType) => (
-				<ComboboxOption key={objectType.id} value={objectType.id}>
-					{objectType.name}
-				</ComboboxOption>
-			))}
-		</ComboboxOptions>
-	</Combobox>
+	return <ComboboxButton<{ name: string, id: int }>
+		value={value}
+		onChange={(value) => {
+			onChange(value.id)
+		}}
+		onClick={() => {
+			dispatch(actions.setOutlinerValue({ id: selectedId, _type: 'ObjectType' }))
+		}}
+		query={query}
+		setQuery={setQuery}
+		options={objectTypes ?? []}
+	/>
 }
