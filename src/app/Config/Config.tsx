@@ -66,9 +66,9 @@ export const Config = () => {
 	return <div className="vbox gap">
 		<Button onClick={onClickOpenTracingWindow}>Open Tracing Window</Button>
 		<div className="hbox">
-			{game ? <span>Valid game selected</span> : <span style={{ color: 'var(--color-warn)' }}>Please set a valid game path</span>}
+			{game ? <span>Valid game selected</span> : <span className="text-(--color-warn)">Please set a valid game path</span>}
 			<div className="grow" />
-			<Button style={{ minWidth: '40%' }} onClick={() => { openModal(<SetGameModal initialValue={gamePath} /> )}}>
+			<Button className="min-w-[40%]" onClick={() => { openModal(<SetGameModal initialValue={gamePath} /> )}}>
 				Set game path
 			</Button>
 		</div>

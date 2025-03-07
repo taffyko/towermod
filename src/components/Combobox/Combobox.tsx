@@ -1,9 +1,10 @@
 import { Combobox as BaseCombobox, ComboboxInput, ComboboxOptions, ComboboxOption } from '@headlessui/react';
 import Style from './Combobox.module.scss'
-import { classes, triggerTransition, useStateRef } from '@/util';
+import { triggerTransition, useStateRef } from '@/util';
 import { useState } from 'react';
 import IconButton from '../IconButton';
 import editImg from '@/icons/edit.svg'
+import clsx from 'clsx';
 import { Button } from '../Button';
 
 export function Combobox<TValue extends { name: string }>(props: {
@@ -41,7 +42,7 @@ export function Combobox<TValue extends { name: string }>(props: {
 		/>
 		<ComboboxOptions anchor="bottom" className={Style.comboboxOptions}>
 			{({ option }) => (
-				<ComboboxOption value={option} className="data-[focus]:bg-blue-100">
+				<ComboboxOption value={option}>
 					{option.name}
 				</ComboboxOption>
 			)}
@@ -62,7 +63,7 @@ export function ComboboxButton<TValue extends { name: string }>(props: {
 
 	const [el, setEl] = useStateRef<HTMLDivElement>()
 
-	return <div ref={setEl} className={Style.comboboxButton} style={{ width: '178px' }}>
+	return <div ref={setEl} className={clsx(Style.comboboxButton, "w-[178px]")}>
 		{editing ?
 			<Combobox value={value} options={options}
 				query={query}

@@ -14,7 +14,7 @@ import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util
 import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
-import { UniqueObjectLookup, UniqueTowermodObject } from '@/util';
+import { UniqueObjectLookup, UniqueTowermodObject, towermodObjectIdsEqual } from '@/util';
 import { QueryScopeFn, useObjectDisplayName, useQueryScope } from '@/appUtil';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
@@ -128,7 +128,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 
 	const objName = useObjectDisplayName(obj)
 	const name = nameOverride ?? objName
-	const selected = useAppSelector(s => objectShallowEqual(s.app.outlinerValue, obj))
+	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
 
 	const isLeaf = !children?.length;
 

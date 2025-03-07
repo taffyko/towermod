@@ -53,7 +53,7 @@ export const dataApi = baseApi.injectEndpoints({
 			providesTags: [{ type: 'ObjectType', id: 'LIST' }]
 		}),
 		searchObjectTypes: builder.query<{ _type: 'ObjectType', name: string, id: int }[], SearchOptions>({
-			query: (txt) => invoke('search_object_types', { txt }),
+			query: (options) => invoke('search_object_types', { options }),
 			transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'ObjectType' })),
 			providesTags: [{ type: 'ObjectType', id: 'LIST' }]
 		}),

@@ -174,6 +174,7 @@ pub struct EdLayout {
 	pub unbounded_scrolling: bool,
 	pub application_background: bool,
 	pub data_keys: IndexMap<String, VariableValue>,
+	#[serde(default)]
 	pub layers: Vec<EdLayoutLayer>,
 	pub image_ids: Vec<i32>,
 	pub texture_loading_mode: cstc::TextureLoadingMode,

@@ -54,7 +54,7 @@ export default function Images() {
 			</div>
 			<div className="hbox gap grow" style={{ overflow: 'hidden' }}>
 				<div className="vbox gap grow">
-					<div className="hbox gap center">
+					<div className="hbox gap items-center">
 						<SpinBox style={{ width: '5rem' }} int value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
 						<IconButton disabled={!imgUrl} src={folderOpenImg} onClick={onClickBrowseImage} />
 						<IconButton src={uploadImg} onClick={onClickSetImage} />

@@ -20,7 +20,7 @@ import { useStateRef } from "@/util"
 function KeyValuePair(props: { label: React.ReactNode, value: React.ReactNode }) {
 	const { label, value } = props
 	return <React.Fragment>
-		<div className="hbox" style={{ alignSelf: 'start', alignItems: 'center', justifyContent: 'space-between' }}>
+		<div className="hbox items-center self-start justify-between">
 			{label}
 			<div className="labelPortal" />
 		</div>

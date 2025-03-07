@@ -42,7 +42,7 @@ function LookupEdit(props: { lookup: UniqueObjectLookup, onChange?: (v: UniqueOb
 function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
 	const { value: selectedId, onChange } = props;
 	const [query, setQuery] = useState('')
-	const { data: objectTypes } = api.useSearchObjectTypesQuery(query || skipToken)
+	const { data: objectTypes } = api.useSearchObjectTypesQuery({ text: query } || skipToken)
 	const name = objectTypes?.find((ot) => ot.id === selectedId)?.name
 	const value = api.useGetObjectTypeQuery({ id: selectedId }).data || { name: name || '...', id: selectedId }
 

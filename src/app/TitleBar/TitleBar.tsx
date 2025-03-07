@@ -47,7 +47,7 @@ export const TitleBar = () => {
 	return <div className={Style.titleBarRoot}>
 		<div className={Style.titleBarContent}>
 			<div className={Style.gap} />
-			<img className={Style.icon} src={iconImg} height="16" onClick={(e) => {
+			<img className={Style.icon} src={iconImg} onClick={(e) => {
 				const el = e.currentTarget;
 				triggerTransition(el, Style.active)
 

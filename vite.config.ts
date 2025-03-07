@@ -1,15 +1,21 @@
 import { defineConfig } from "vite";
 import tsconfigPathPlugin from 'vite-tsconfig-paths';
+import tailwindcss from '@tailwindcss/postcss';
 import react from "@vitejs/plugin-react";
 
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
-  plugins: [
+	plugins: [
 		react(),
 		tsconfigPathPlugin(),
 	],
+	css: {
+		postcss: {
+			plugins: [tailwindcss()]
+		}
+	},
 	resolve: {
 		alias: {
 			'@': '/src',

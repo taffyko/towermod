@@ -177,10 +177,6 @@ export function svgToDataUri(svg: string | SVGElement) {
 	return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(xml);
 }
 
-export function classes(...classes: unknown[]): { className: string } {
-	return { className: classes.filter(Boolean).join(' ') }
-}
-
 export function triggerTransition(el?: HTMLElement | null, className?: string) {
 	className && el?.classList.add(className)
 	el?.offsetTop

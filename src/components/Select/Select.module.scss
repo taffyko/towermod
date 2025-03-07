@@ -2,8 +2,10 @@
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	border-radius: var(--border-radius);
+	height: 21px;
 
 	&:not(:disabled) {
+		padding-left: 6px;
 		border: solid 1px var(--color-border);
 		&:not(:open) {
 			&:hover {
@@ -13,6 +15,10 @@
 				background-color: var(--color-bg-hover);
 			}
 		}
+	}
+	&:disabled {
+		padding: 0 6px;
+		appearance: none;
 	}
 
 	option {

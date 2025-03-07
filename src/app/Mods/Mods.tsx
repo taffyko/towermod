@@ -204,7 +204,7 @@ export default function Mods() {
 	const modsList = api.useGetInstalledModsQuery();
 	const [playUnmodified] = api.usePlayVanillaMutation();
 
-	return <div className="vbox gap grow" style={{ isolation: 'isolate', overflow: 'hidden' }}>
+	return <div className="vbox gap grow isolation overflow-hidden">
 		<div className="hbox gap">
 			<Button onClick={async () => {
 				await awaitRtk(spin(playUnmodified()))
@@ -225,7 +225,7 @@ export default function Mods() {
 				Refresh
 			</Button>
 		</div>
-		<div className="hbox gap grow" style={{ overflow: 'hidden' }}>
+		<div className="hbox gap grow overflow-hidden">
 			<ModList />
 			<ModDetails />
 		</div>

@@ -40,6 +40,7 @@
 
 		.icon {
 			transition: filter 0.25s ease-out;
+			height: 16px;
 			filter:
 				brightness(100%)
 				drop-shadow(0 0 5px rgba(255, 255, 255, 0.0))

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import Style from './SpinBox.module.scss'
-import { useEventListener, useStateRef, useOptimisticTwoWayBinding, classes } from '@/util';
+import { useStateRef, useOptimisticTwoWayBinding } from '@/util';
+import clsx from 'clsx';
 
 export function SpinBox(props: Omit<React.ComponentProps<'input'>, 'onChange' | 'value'> & {
 	value?: number,
@@ -23,7 +24,7 @@ export function SpinBox(props: Omit<React.ComponentProps<'input'>, 'onChange' | 
 
 	return <input
 		ref={setEl}
-		{...classes(Style.spinbox, small && Style.small, className)}
+		className={clsx(Style.spinbox, small && Style.small, className)}
 		type="number" step={int ? '1' : 'any'}
 		value={value}
 		onChange={e => onChange?.(e.target.value)}

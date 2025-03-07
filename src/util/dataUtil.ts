@@ -1,4 +1,5 @@
 import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData, TextObjectData, SpriteObjectData, AnimationFrame, ActionPoint, BehaviorControl, GlobalVariable } from "@towermod";
+import { assert, assertUnreachable } from "./util";
 
 export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | ImageMetadata | ActionPoint | BehaviorControl | GlobalVariable
 	| TextObjectData | SpriteObjectData
@@ -24,6 +25,16 @@ export type UniqueObjectLookup =
 export type ObjectForType<T extends TowermodObject['_type']> = Extract<TowermodObject, { _type: T }>
 export type LookupForType<T extends UniqueObjectLookup['_type']> = Extract<UniqueObjectLookup, { _type: T }>
 
+
+export function towermodObjectIdsEqual(a: UniqueObjectLookup | null | undefined, b: UniqueObjectLookup | null | undefined): boolean {
+	if (a == null || b == null) { return false }
+	if (a._type !== b._type) { return false }
+	if ('id' in a) { return a.id === (b as typeof a).id }
+	if ('name' in a) { return a.name === (b as typeof a).name }
+	if ('movIndex' in a) { return a.movIndex === (b as typeof a).movIndex && a.objectTypeId === (b as typeof a).objectTypeId }
+	if (a._type === 'AppBlock') { return true }
+	assertUnreachable(a)
+}
 
 export function getUniqueName(author: string, name: string) : string
 export function getUniqueName(mod: ModInfo | string): string

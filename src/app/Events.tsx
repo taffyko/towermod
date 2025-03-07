@@ -13,7 +13,7 @@ export function Events() {
 		.filter(([key]) => key.includes(query))
 		.map(([name, value]) => ({ name, value }))
 
-	return <div className="vbox gap" style={{ width: '178px' }}>
+	return <div className="vbox gap w-[178px]">
 		<Button>{value?.name}</Button>
 		<Combobox allowClear value={value} onChange={setValue} setQuery={setQuery} options={filteredOptions} />
 		<br />
