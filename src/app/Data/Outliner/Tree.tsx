@@ -1,8 +1,6 @@
-import { forwardRef } from "react"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { TreeContext } from "./treeUtil"
 import { FixedSizeNodeData, FixedSizeTree, FixedSizeTreeProps } from "react-vtree"
-import Scrollbars from "@/components/Scrollbars"
 import { useForwardRef } from "@/util/hooks"
 
 export const TreeComponent = <
@@ -34,12 +32,3 @@ export const TreeComponent = <
 		</AutoSizer>
 	</div>
 }
-
-const CustomScrollbarsVirtualList = forwardRef((props: any, ref: any) => {
-	const {children, onScroll} = props
-	return <Scrollbars
-		viewRef={ref}
-		onScroll={onScroll}
-		children={children}
-	/>
-});

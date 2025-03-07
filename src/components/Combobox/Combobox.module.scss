@@ -48,6 +48,11 @@
 	flex-flow: row nowrap;
 
 	transition: filter 0.2s cubic-bezier(0, 0.1, 0, 1);
+
+	button {
+		height: 27px;
+	}
+
 	&.transitionSubmitted {
 		transition: none;
 		filter: brightness(500%);

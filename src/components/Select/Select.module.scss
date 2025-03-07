@@ -5,7 +5,7 @@
 	height: 21px;
 
 	&:not(:disabled) {
-		padding-left: 6px;
+		padding-left: var(--spacing);
 		border: solid 1px var(--color-border);
 		&:not(:open) {
 			&:hover {
@@ -17,7 +17,7 @@
 		}
 	}
 	&:disabled {
-		padding: 0 6px;
+		padding: 0 var(--spacing);
 		appearance: none;
 	}
 
