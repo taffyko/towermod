@@ -55,7 +55,7 @@ export const Tabs = (props: {
 			return <div
 				key={tab}
 				// @ts-ignore
-				inert={tab === currentTab ? undefined : ""}
+				inert={tab !== currentTab}
 				className={`${Style.tabContent} ${tab === currentTab ? '' : Style.hidden} stretchbox`}
 			>
 				{children}

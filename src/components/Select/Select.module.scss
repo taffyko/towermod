@@ -2,7 +2,7 @@
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	border-radius: var(--border-radius);
-	height: 21px;
+	min-height: 21px;
 
 	&:not(:disabled) {
 		padding-left: var(--spacing);
@@ -23,5 +23,17 @@
 
 	option {
 		border-radius: 10px;
+	}
+}
+
+.listboxButton {
+	transition: scale 0.5s cubic-bezier(0, 0.1, 0, 1);
+	&.transitionOpen {
+		transition: none;
+		transform: scale(0.5);
+	}
+	&.transitionSelected {
+		transition: none;
+		filter: brightness(500%);
 	}
 }

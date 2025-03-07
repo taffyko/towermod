@@ -80,6 +80,11 @@ export const dataApi = baseApi.injectEndpoints({
 			transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectInstance' })),
 			providesTags: ['ObjectInstance']
 		}),
+		searchObjectInstances: builder.query<{ _type: 'ObjectInstance', name: string, id: int }[], SearchOptions>({
+			query: (options) => invoke('search_object_instances', { options }),
+			transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'ObjectInstance' })),
+			providesTags: [{ type: 'ObjectType', id: 'LIST' }]
+		}),
 		getObjectTypeInstances: builder.query<Lookup<ObjectInstance>[], number>({
 			query: (objectTypeId) => invoke('get_object_type_instances', { objectTypeId }),
 			transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectInstance' })),
@@ -114,6 +119,11 @@ export const dataApi = baseApi.injectEndpoints({
 			query: (layoutName) => invoke('get_layout_layers', { layoutName }),
 			transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'LayoutLayer' })),
 			providesTags: ['LayoutLayer']
+		}),
+		searchLayoutLayers: builder.query<{ _type: 'LayoutLayer', name: string, id: int }[], SearchOptions>({
+			query: (options) => invoke('search_layout_layers', { options }),
+			transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'LayoutLayer' })),
+			providesTags: [{ type: 'LayoutLayer', id: 'LIST' }]
 		}),
 		updateLayoutLayer: builder.mutation<void, LayoutLayer>({
 			query: (layer) => invoke('update_layout_layer', { layer }),
@@ -164,6 +174,11 @@ export const dataApi = baseApi.injectEndpoints({
 			query: () => invoke('get_containers'),
 			transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'Container' })),
 			providesTags: ['Container']
+		}),
+		searchContainers: builder.query<{ _type: 'Container', name: string, id: int }[], SearchOptions>({
+			query: (options) => invoke('search_containers', { options }),
+			transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'Container' })),
+			providesTags: [{ type: 'Container', id: 'LIST' }]
 		}),
 		updateContainer: builder.mutation<void, Container>({
 			query: (container) => invoke('update_container', { container }),

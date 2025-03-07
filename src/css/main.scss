@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@use 'tailwindcss';
 
 @font-face {
 	font-family: 'times-16';
@@ -52,6 +52,8 @@
 	--gap-l: 1rem;
 	--border-width: 1px;
 	--border-radius: 5px;
+
+	--button-width: 176px;
 
 	// TODO: courier monospace for errors
 	--font: 'times-16', times, 'Times New Roman', serif;

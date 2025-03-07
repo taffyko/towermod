@@ -78,8 +78,7 @@ const App = () => {
 				<ModalParent />
 				<DragDropHandler />
 				<div
-					// @ts-ignore
-					inert={isInert ? "" : undefined}
+					inert={isInert}
 					className={Style.pageContent}
 				>
 					<Portal parent={titleRef}>

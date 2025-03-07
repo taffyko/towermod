@@ -22,6 +22,8 @@ import arrowRightImg from '@/icons/arrowRight.svg';
 import { api } from '@/api';
 import { LineEdit } from '@/components/LineEdit';
 import { skipToken } from '@reduxjs/toolkit/query';
+import { Select } from '@/components/Select';
+import { createSelector } from '@reduxjs/toolkit';
 
 function getObjChildren(obj: UniqueObjectLookup, query: QueryScopeFn | null): undefined | UniqueObjectLookup[] {
 	switch (obj._type) {
@@ -259,6 +261,15 @@ export const Outliner = (props: OutlinerProps) => {
 }
 
 
+const people = [
+	{ id: 1, name: 'Tom Cook' },
+	{ id: 2, name: 'Wade Cooper' },
+	{ id: 3, name: 'Tanya Fox' },
+	{ id: 4, name: 'Arlene Mccoy' },
+	{ id: 5, name: 'Devon Webb' },
+	{ id: 6, name: 'eoiqwueowiquewqiouewio' },
+]
+
 function OutlinerSearch() {
 	const handle = useContext(OutlinerContext)
 	const [search, setSearch, matchIdx, matchCount, nextMatch] = useOutlinerSearch(handle)
@@ -271,15 +282,22 @@ function OutlinerSearch() {
 			}}
 		/>
 		<div>{matchIdx !== -1 ? `${matchIdx+1}/${matchCount}` : null}</div>
+		<Select options={people} />
 	</>
 }
 
-function OutlinerHistoryButtons() {
-	const [first, last] = useAppSelector(s => {
-		const first = s.app.outlinerHistoryIdx === 0
-		const last = s.app.outlinerHistoryIdx === s.app.outlinerHistory.length - 1
+const outlinerHistorySelector = createSelector(
+	s => s.app.outlinerHistory,
+	s => s.app.outlinerHistoryIdx,
+	(outlinerHistory, outlinerHistoryIdx) => {
+		const first = outlinerHistoryIdx === 0
+		const last = outlinerHistoryIdx === outlinerHistory.length - 1
 		return [first, last]
-	})
+	}
+)
+
+function OutlinerHistoryButtons() {
+	const [first, last] = useAppSelector(outlinerHistorySelector)
 	return <>
 		<IconButton disabled={first} flip src={arrowRightImg} onClick={() => {
 			dispatch(actions.outlinerHistoryNext(-1))

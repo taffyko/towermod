@@ -27,16 +27,6 @@ export default function Images() {
 	const [dumpImages] = api.useDumpImagesMutation();
 	const { data: imageDumpDir } = api.useImageDumpDirPathQuery();
 	const { data: project } = api.useGetProjectQuery();
-
-	const imageId = useAppSelector(s => s.app.imageId)
-	const imgUrl = useGameImageUrl(imageId);
-	const { data: savedMetadata } = api.useGetImageMetadataQuery(imageId)
-	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
-	const [setImageMetadata] = api.useSetImageMetadataMutation();
-
-	const [metadata, setMetadata, isMetadataDirty, submitMetadata] = useTwoWaySubmitBinding(savedMetadata, setImageMetadata)
-	const showCollision = useAppSelector(s => s.app.showImageCollisionPreview)
-
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
 
 	return <div className="vbox gap grow">
@@ -45,43 +35,72 @@ export default function Images() {
 			<Button disabled={!imageDumpDir} onClick={onClickBrowseDumpedImages}>Browse dump</Button>
 			<Button disabled={!projectImagesDir} onClick={onClickBrowseProjectImages}>Browse project images</Button>
 		</div>
-		{ project ? <>
-			<div className="hbox gap">
-				<Button onClick={onClickSetImage}>Set image</Button>
-				<Toggle value={showCollision} onChange={(v) => dispatch(actions.setShowImageCollisionPreview(v))}>
-					Show collision
-				</Toggle>
-			</div>
-			<div className="hbox gap grow" style={{ overflow: 'hidden' }}>
-				<div className="vbox gap grow">
-					<div className="hbox gap items-center">
-						<SpinBox style={{ width: '5rem' }} int value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
-						<IconButton disabled={!imgUrl} src={folderOpenImg} onClick={onClickBrowseImage} />
-						<IconButton src={uploadImg} onClick={onClickSetImage} />
-						<IconButton src={refreshImg} onClick={onClickReloadAllImages} />
-						{ isOverridden ? <IconButton src={closeImg} onClick={onClickClearImage} /> : null }
-						<Button disabled={!metadata} onClick={onClickSetMask}>Set mask</Button>
-						<Button disabled={!metadata} onClick={onClickExportMask}>Export mask</Button>
-					</div>
-					<ImagePreview showCollision={showCollision} imageId={imageId} metadata={metadata ?? undefined} />
-				</div>
-				<div className="vbox gap grow">
-					{ metadata
-						? <Button disabled={!isMetadataDirty} onClick={() => submitMetadata()}>Save metadata</Button>
-						: <Button style={{ alignSelf: 'stretch' }} onClick={onClickSetImage}>{ imgUrl ? "Add metadata" : "Add image" }</Button>
-					}
-					<InspectorObject value={metadata ?? undefined} onChange={setMetadata as any} />
-				</div>
-			</div>
-		</> : <div className="subtle">Load a saved Towermod project to see more options</div> }
+		{project ?
+			<ImageEditing />
+		:
+			<div className="subtle">Load a saved Towermod project to see more options</div>
+		}
 	</div>
-
-	async function onClickSetMask() {
-		const filePath = await filePicker({ filters: [{ name: 'PNG Image', extensions: ['png'] }] })
-		if (!filePath) { return }
-		const newMetadata = await applyMaskFromImagePath(metadata, filePath);
-		setImageMetadata(newMetadata)
+	async function onClickDumpImages() {
+		await awaitRtk(spin(dumpImages()));
+		toast("Dumped images")
 	}
+
+	async function onClickBrowseDumpedImages() {
+		if (!imageDumpDir) { return }
+		toast("Opened dumped images folder")
+		openFolder(imageDumpDir)
+	}
+
+	async function onClickBrowseProjectImages() {
+		if (!projectImagesDir) { return }
+		toast("Opened custom images folder")
+		openFolder(projectImagesDir)
+	}
+}
+
+function ImageEditing() {
+	const imageId = useAppSelector(s => s.app.imageId)
+	const imgUrl = useGameImageUrl(imageId);
+	const { data: savedMetadata } = api.useGetImageMetadataQuery(imageId)
+	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
+	const [setImageMetadata] = api.useSetImageMetadataMutation();
+	const { data: project } = api.useGetProjectQuery();
+	const { data: imageDumpDir } = api.useImageDumpDirPathQuery();
+	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
+
+	const [metadata, setMetadata, isMetadataDirty, submitMetadata] = useTwoWaySubmitBinding(savedMetadata, (m) => m && setImageMetadata(m))
+	const showCollision = useAppSelector(s => s.app.showImageCollisionPreview)
+
+	return <>
+		<div className="hbox gap">
+			<Button onClick={onClickSetImage}>Set image</Button>
+			<Toggle value={showCollision} onChange={(v) => dispatch(actions.setShowImageCollisionPreview(v))}>
+				Show collision
+			</Toggle>
+		</div>
+		<div className="hbox gap grow" style={{ overflow: 'hidden' }}>
+			<div className="vbox gap grow">
+				<div className="hbox gap items-center">
+					<SpinBox style={{ width: '5rem' }} int value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
+					<IconButton disabled={!imgUrl} src={folderOpenImg} onClick={onClickBrowseImage} />
+					<IconButton src={uploadImg} onClick={onClickSetImage} />
+					<IconButton src={refreshImg} onClick={onClickReloadAllImages} />
+					{ isOverridden ? <IconButton src={closeImg} onClick={onClickClearImage} /> : null }
+					<Button disabled={!metadata} onClick={onClickSetMask}>Set mask</Button>
+					<Button disabled={!metadata} onClick={onClickExportMask}>Export mask</Button>
+				</div>
+				<ImagePreview showCollision={showCollision} imageId={imageId} metadata={metadata ?? undefined} />
+			</div>
+			<div className="vbox gap grow">
+				{ metadata
+					? <Button disabled={!isMetadataDirty} onClick={() => submitMetadata()}>Save metadata</Button>
+					: <Button style={{ alignSelf: 'stretch' }} onClick={onClickSetImage}>{ imgUrl ? "Add metadata" : "Add image" }</Button>
+				}
+				<InspectorObject value={metadata ?? undefined} onChange={setMetadata as any} />
+			</div>
+		</div>
+	</>
 
 	async function applyMaskFromImagePath(metadata: ImageMetadata, filePath: string): Promise<ImageMetadata> {
 		const blob = await awaitRtk(spin(dispatch(api.endpoints.getFile.initiate(filePath))))
@@ -95,7 +114,16 @@ export default function Images() {
 		}
 	}
 
+	async function onClickSetMask() {
+		if (!metadata) { return }
+		const filePath = await filePicker({ filters: [{ name: 'PNG Image', extensions: ['png'] }] })
+		if (!filePath) { return }
+		const newMetadata = await applyMaskFromImagePath(metadata, filePath);
+		setImageMetadata(newMetadata)
+	}
+
 	async function onClickExportMask() {
+		if (!metadata) { return }
 		const filePath = await spin(save({
 			title: "Save mask image",
 			filters: [{ name: 'PNG image', extensions: ['png' ]}]
@@ -165,27 +193,9 @@ export default function Images() {
 		toast(`Updated image ${imageId}`)
 		return imgPath
 	}
-
 	async function onClickReloadAllImages() {
 		dispatch(api.util.invalidateTags(['Image']))
 		toast("Reloaded images")
-	}
-
-	async function onClickDumpImages() {
-		await awaitRtk(spin(dumpImages()));
-		toast("Dumped images")
-	}
-
-	async function onClickBrowseDumpedImages() {
-		if (!imageDumpDir) { return }
-		toast("Opened dumped images folder")
-		openFolder(imageDumpDir)
-	}
-
-	async function onClickBrowseProjectImages() {
-		if (!projectImagesDir) { return }
-		toast("Opened custom images folder")
-		openFolder(projectImagesDir)
 	}
 }
 
@@ -241,7 +251,7 @@ function ImagePreview(props: {
 
 	function onImageLoad() {
 		setNaturalWidth(imgEl?.naturalWidth)
-		triggerTransition(imgEl, Style.loading)
+		triggerTransition(imgEl?.parentElement, Style.loading)
 	}
 }
 

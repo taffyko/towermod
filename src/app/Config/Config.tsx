@@ -64,7 +64,7 @@ export const Config = () => {
 	}, [game])
 
 	return <div className="vbox gap">
-		<Button onClick={onClickOpenTracingWindow}>Open Tracing Window</Button>
+		{/* <Button onClick={onClickOpenTracingWindow}>Open Tracing Window</Button> */}
 		<div className="hbox">
 			{game ? <span>Valid game selected</span> : <span className="text-(--color-warn)">Please set a valid game path</span>}
 			<div className="grow" />
