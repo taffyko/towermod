@@ -1,10 +1,12 @@
+@use "@/css/mixins" as *;
+
 .comboboxInput {
 	border: solid 1px var(--color-border);
 	border-radius: var(--border-radius);
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	padding: var(--gap-s);
-	transition: background-color 0.2s cubic-bezier(0, 0.1, 0, 1);
+	padding-left: var(--gap);
 
 	color: white;
 	&[data-focus] {
@@ -13,10 +15,13 @@
 		background-color: var(--color-bg-root);
 	}
 
-	&.transitionSubmitted {
-		transition: none;
-		background-color: var(--color-text);
+	&:disabled {
+		color: var(--color-text-disabled);
+		background-color: var(--color-bg-disabled);
+		border-color: var(--color-border-disabled);
 	}
+
+	@include transitionFlashBg('&.transitionSubmitted');
 }
 .comboboxOptions {
 	border: solid 1px var(--color-border);
@@ -47,16 +52,11 @@
 	gap: var(--gap-s);
 	flex-flow: row nowrap;
 
-	transition: filter 0.2s cubic-bezier(0, 0.1, 0, 1);
-
 	button {
 		height: 27px;
 	}
 
-	&.transitionSubmitted {
-		transition: none;
-		filter: brightness(500%);
-	}
+	@include transitionFlash('&.transitionSubmitted');
 
 	> :first-child {
 		flex-grow: 1;

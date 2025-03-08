@@ -260,16 +260,6 @@ export const Outliner = (props: OutlinerProps) => {
 	</div>
 }
 
-
-const people = [
-	{ id: 1, name: 'Tom Cook' },
-	{ id: 2, name: 'Wade Cooper' },
-	{ id: 3, name: 'Tanya Fox' },
-	{ id: 4, name: 'Arlene Mccoy' },
-	{ id: 5, name: 'Devon Webb' },
-	{ id: 6, name: 'eoiqwueowiquewqiouewio' },
-]
-
 function OutlinerSearch() {
 	const handle = useContext(OutlinerContext)
 	const [search, setSearch, matchIdx, matchCount, nextMatch] = useOutlinerSearch(handle)
@@ -282,7 +272,6 @@ function OutlinerSearch() {
 			}}
 		/>
 		<div>{matchIdx !== -1 ? `${matchIdx+1}/${matchCount}` : null}</div>
-		<Select options={people} />
 	</>
 }
 

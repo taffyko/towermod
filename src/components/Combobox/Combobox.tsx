@@ -16,16 +16,20 @@ export function Combobox<TValue extends { name: string }>(props: {
 	allowClear?: boolean,
 	inputProps?: Partial<React.ComponentProps<typeof ComboboxInput>>
 	query?: string,
+	placeholder?: string
+	disabled?: boolean,
 }) {
-	const { value, onChange, options, query, setQuery, allowClear, inputProps } = props
+	const { value, onChange, options, query, setQuery, allowClear, inputProps, placeholder, disabled } = props
 
 	const [el, setEl] = useStateRef<HTMLInputElement>()
 	return <BaseCombobox
+		disabled={disabled}
 		value={value}
 		onChange={(v) => {
 			if (v === value) { return }
 			if (!v && !allowClear) { return }
 			triggerTransition(el, Style.transitionSubmitted)
+			setQuery?.(v?.name || "")
 			onChange?.(v)
 		}}
 		virtual={{
@@ -33,11 +37,13 @@ export function Combobox<TValue extends { name: string }>(props: {
 		}}
 	>
 		<ComboboxInput
-			value={query}
+			disabled={disabled}
 			ref={setEl}
 			className={Style.comboboxInput}
 			onChange={(e) => setQuery?.(e.currentTarget.value)}
 			displayValue={(v: TValue) => v?.name ?? ""}
+			//@ts-ignore
+			placeholder={placeholder ?? "Enter value..."}
 			{...inputProps}
 		/>
 		<ComboboxOptions anchor="bottom" className={Style.comboboxOptions}>
@@ -57,8 +63,11 @@ export function ComboboxButton<TValue extends { name: string }>(props: {
 	query?: string,
 	setQuery?: (text: string) => void,
 	onClick?: () => void,
+	placeholder?: string,
+	disableButton?: boolean,
+	disableEditing?: boolean,
 }) {
-	const { value, options, onChange, query, setQuery, onClick } = props
+	const { value, options, onChange, query, setQuery, onClick, placeholder, disableButton, disableEditing } = props
 	const [editing, setEditing] = useState(false)
 
 	const [el, setEl] = useStateRef<HTMLDivElement>()
@@ -78,12 +87,14 @@ export function ComboboxButton<TValue extends { name: string }>(props: {
 					onKeyDown: (e: any) => { if (e.key === 'Enter' || e.key === 'Escape') { setEditing(false) } },
 					autoFocus: true,
 				}}
+				placeholder={placeholder}
+				disabled={disableEditing}
 			/>
 		:
-			<Button onClick={onClick}>{value?.name ?? 'No value'}</Button>
+			<Button disabled={disableButton || !value?.name} onClick={onClick}>{value?.name ?? placeholder ?? 'Enter value...'}</Button>
 		}
 		{!editing ?
-			<IconButton src={editImg} onClick={() => { setQuery?.(""); setEditing(true) }} />
+			<IconButton disabled={disableEditing} src={editImg} onClick={() => { setQuery?.(""); setEditing(true) }} />
 		: null}
 	</div>
 }

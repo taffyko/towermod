@@ -1,17 +1,66 @@
-@mixin pressable($class) {
-	#{$class} {
-		border: none;
-		--a-pressable: 0.1s background-color ease-out;
-		animation: var(--a-pressable);
+@mixin pressable($outTransition: null, $pressed: '.pressed') {
+	border-radius: var(--border-radius);
+	background-color: var(--color-bg);
+	border: solid var(--border-width) var(--color-border);
+	--pressable_t1: 0.1s background-color ease-out;
+	// --pressable_t2: 0.2s transform cubic-bezier(0, 0.1, 0, 1);
+	@include contribute(transition, var(--pressable_t1), $outTransition);
+
+	&:disabled {
+		background-color: var(--color-bg-disabled);
+		color: var(--color-text-disabled);
+		border-color: var(--color-border-disabled);
 	}
 
-	#{$class}.active, #{$class}:active {
-		background-color: var(--color-bg-active);
-		color: var(--color-text-active);
-	}
+	&:not(:disabled) {
+		&:hover {
+			background-color: var(--color-bg-hover);
+			--pressable_t1: 0s background-color;
+		}
 
-	#{$class}:hover {
-		background-color: var(--color-bg-hover);
-		--a2: 0.0s background-color ease-out;
+		&#{$pressed}, &:active {
+			--pressable_t1: 0s background-color;
+			// --pressable_t2: 0s transform;
+			color: var(--color-text-active);
+			background-color: var(--color-bg-pressed);
+			transform: scale(0.95);
+		}
+	}
+}
+
+
+// Contribute values to lists like transform/transition/filter by assigning the value to an out-variable if one is given,
+// so that the value can be composed alongside others.
+@mixin contribute($prop, $val, $outVar: null) {
+	@if $outVar != null {
+		#{$outVar}: #{$val}
+	} @else {
+		#{$prop}: #{$val}
+	}
+}
+
+@mixin transitionTriggerBase($transition, $selector, $transitionOutVar: null) {
+	@include contribute(transition, $transition, $transitionOutVar);
+	#{$selector} {
+		transition: none;
+		@content;
+	}
+}
+
+@mixin transitionFlash($selector, $transitionOutVar: null) {
+	@include transitionTriggerBase(filter 0.2s cubic-bezier(0, 0.1, 0, 1), $selector, $transitionOutVar) {
+		filter: brightness(400%);
+	}
+}
+
+@mixin transitionFlashBg($selector, $transitionOutVar: null) {
+	@include transitionTriggerBase(background-color 0.2s cubic-bezier(0, 0.1, 0, 1), $selector, $transitionOutVar) {
+		background-color: #909090;
+	}
+}
+
+@mixin transitionPulse($selector, $transitionOutVar: null) {
+	@include transitionTriggerBase(transform 0.2s cubic-bezier(0, 0.1, 0, 1), $selector, $transitionOutVar) {
+		transform: scale(0.95);
 	}
 }

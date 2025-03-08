@@ -20,7 +20,10 @@ const meta = {
 		layout: "centered",
 	},
 	args: {
+		disabled: false,
+		allowClear: false,
 		options: ['Foo', 'Bar', 'Baz'],
+		placeholder: 'Enter value...',
 	}
 } satisfies Meta<typeof Story>;
 

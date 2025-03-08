@@ -61,7 +61,7 @@ export function Select<T extends SelectProps | MultiSelectProps>(props: T) {
 			if (value) {
 				buttonContent = <span>{typeof (value as Choice) === 'string' ? value : value.name}</span>
 			} else {
-				buttonContent = <span className="italic">No selection</span>
+				buttonContent = <span className="text-(--color-text-subtle)">No selection</span>
 			}
 		}
 	}
@@ -86,10 +86,10 @@ export function Select<T extends SelectProps | MultiSelectProps>(props: T) {
 				{buttonContent}
 				{!disabled ? <>
 					<Svg href={rightImg} aria-hidden="true"
-						className="group-data-open:hidden pointer-events-none absolute top-1 right-2.5 size-4"
+						className="group-data-open:hidden pointer-events-none absolute top-0.5 right-2.5 size-4"
 					/>
 					<Svg href={downImg} aria-hidden="true"
-						className="group-not-data-open:hidden pointer-events-none absolute top-1 right-2.5 size-4"
+						className="group-not-data-open:hidden pointer-events-none absolute top-0.5 right-2.5 size-4"
 					/>
 				</> : null}
 			</ListboxButton>

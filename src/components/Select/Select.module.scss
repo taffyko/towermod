@@ -1,3 +1,5 @@
+@use '@/css/mixins' as *;
+
 .select {
 	background-color: var(--color-bg);
 	color: var(--color-text);
@@ -27,13 +29,7 @@
 }
 
 .listboxButton {
-	transition: scale 0.5s cubic-bezier(0, 0.1, 0, 1);
-	&.transitionOpen {
-		transition: none;
-		transform: scale(0.5);
-	}
-	&.transitionSelected {
-		transition: none;
-		filter: brightness(500%);
-	}
+	@include pressable(--t-pressable);
+	@include transitionFlashBg('&.transitionSelected', --t-flash);
+	transition: var(--t-pressable), var(--t-flash);
 }

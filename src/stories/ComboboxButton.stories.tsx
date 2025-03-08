@@ -22,7 +22,10 @@ const meta = {
 		layout: "centered",
 	},
 	args: {
+		disableButton: false,
+		disableEditing: false,
 		options: ['Foo', 'Bar', 'Baz'],
+		placeholder: 'Enter value...',
 		onClick: fn(),
 	}
 } satisfies Meta<typeof Story>;
