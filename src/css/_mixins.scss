@@ -1,4 +1,4 @@
-@mixin pressable($outTransition: null, $pressed: '.pressed', $focused: '.focused') {
+@mixin pressable($outTransition: null, $pressed: '.pressed', $focused: '.focused', $transformTarget: '&') {
 	border-radius: var(--border-radius);
 	background-color: var(--color-bg);
 	border: solid var(--border-width) var(--color-border);
@@ -27,7 +27,9 @@
 			--pressable_t1: 0s background-color;
 			color: var(--color-text-active);
 			background-color: var(--color-bg-pressed);
-			transform: scale(0.95);
+			#{$transformTarget} {
+				transform: scale(0.95);
+			}
 		}
 	}
 }

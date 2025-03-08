@@ -17,6 +17,9 @@
 	> img {
 		margin-top: -2px;
 	}
+	&:not(.checked) {
+		filter: brightness(0.9);
+	}
 
 	&:not(:disabled) {
 		&:hover {
@@ -30,7 +33,7 @@
 
 		&:active {
 			transition: none;
-			filter: brightness(0.9);
+			filter: brightness(0.8);
 		}
 	}
 

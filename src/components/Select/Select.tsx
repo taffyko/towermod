@@ -106,7 +106,7 @@ export function Select<T extends SelectProps | MultiSelectProps>(props: T) {
 					return <ListboxOption
 						key={name}
 						value={option}
-						className={"group flex cursor-default items-center gap-2 rounded-lg py-0 px-0 select-none data-[focus]:bg-white/10"}
+						className={clsx(Style.listboxOption, "group flex cursor-default items-center gap-2 rounded-lg py-0 px-0 select-none")}
 					>
 						{({ selected }) => <>
 							{ multiple ? <img src={selected ? checkboxOnImg : checkboxOffImg} className="pl-1" /> : null }

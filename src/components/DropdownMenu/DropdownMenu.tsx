@@ -38,7 +38,7 @@ export function DropdownMenu(props: { disabled?: boolean, label?: React.ReactNod
 	</Menu>
 }
 
-export function ToggleMenuItem(props: React.ComponentProps<typeof MenuItem> & {
+export function ToggleMenuItem(props: Omit<React.ComponentProps<typeof MenuItem>, 'value' | 'onChange'> & {
 	value?: boolean,
 	onChange?: (value: boolean) => void
 }) {
@@ -46,7 +46,6 @@ export function ToggleMenuItem(props: React.ComponentProps<typeof MenuItem> & {
 	const [value, setValue] = useTwoWayBinding<boolean>(externalValue, onChange, false)
 
 	return <MenuItem keepOpen onClick={() => {
-		console.log("THE")
 		setValue(!value)
 	}} {...rest}>
 		<Toggle value={value}>{children}</Toggle>

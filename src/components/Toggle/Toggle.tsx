@@ -2,8 +2,8 @@ import React from "react"
 import checkboxOnImg from '@/images/checkboxOn.png'
 import checkboxOffImg from '@/images/checkboxOff.png'
 import { useTwoWayBinding } from "@/util"
-import IconButton from "../IconButton"
 import Style from './Toggle.module.scss'
+import clsx from "clsx"
 
 export function Toggle(props: {
 	value?: boolean,
@@ -20,7 +20,7 @@ export function Toggle(props: {
 	return <button
 		disabled={disabled}
 		onClick={() => setChecked(!checked)}
-		className={`${Style.toggle}`}
+		className={clsx(Style.toggle, checked && Style.checked)}
 	>
 		<img src={src} />
 		{children}

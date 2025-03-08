@@ -2,6 +2,7 @@ import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo,
 import { MiniEvent, assert, createObjectUrl, revokeObjectUrl } from './util';
 import { useIsSpinning } from '@/app/GlobalSpinner';
 import { useIsModalOpen } from '@/app/Modal/modalStore';
+import useResizeObserver from '@react-hook/resize-observer'
 
 function setRef<T>(ref: React.Ref<T> | undefined, value: T) {
 	if (!ref) return;
@@ -344,3 +345,17 @@ export function useIsInert() {
 	const isModalOpen = useIsModalOpen();
 	return isSpinning || isModalOpen;
 }
+
+export function useSize(target?: HTMLElement | null) {
+	const [size, setSize] = React.useState<DOMRect>()
+
+	React.useLayoutEffect(() => {
+		if (target) {
+			setSize(target.getBoundingClientRect())
+		}
+	}, [target])
+
+	useResizeObserver(target ?? { current: null }, (entry) => setSize(entry.contentRect))
+	return size
+}
+

@@ -32,7 +32,7 @@ export function Data() {
 	return <div className="vbox gap grow">
 		<PlayProject />
 		<OutlinerContext.Provider value={outlinerRef!}>
-			<div style={{ overflow: 'hidden' }} className="hbox gap grow">
+			<div className="hbox gap grow">
 				<Outliner handleRef={setOutlinerRef} />
 				<div className="vbox grow" style={{ flexBasis: 0, overflow: 'hidden' }}>
 					{ value ?

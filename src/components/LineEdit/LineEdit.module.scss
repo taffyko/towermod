@@ -1,16 +1,28 @@
 .lineEdit {
-	border: solid 1px var(--color-border-alternate);
-	padding-left: var(--gap);
-	background-color: var(--color-bg);
-	border-radius: 5px;
-	color: var(--color-text);
-	--a-pressable: 0.1s background-color ease-out;
-	animation: var(--a-pressable);
-	line-height: var(--button-height);
+	position: relative;
+	input {
+		max-width: var(--button-width);
+		box-sizing: border-box !important;
+		border: solid 1px var(--color-border-alternate);
+		padding-left: var(--gap);
+		padding-right: var(--internal-children-width);
+		background-color: var(--color-bg);
+		border-radius: 5px;
+		color: var(--color-text);
+		line-height: var(--button-height);
 
-	&:disabled {
-		border-color: var(--color-border-disabled);
-		color: var(--color-text-disabled);
-		background-color: var(--color-bg-disabled);
+		&:disabled {
+			border-color: var(--color-border-disabled);
+			color: var(--color-text-disabled);
+			background-color: var(--color-bg-disabled);
+		}
 	}
+}
+
+.internalChildren {
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: 0 var(--gap);
+	line-height: var(--button-height);
 }

@@ -24,6 +24,7 @@ import { LineEdit } from '@/components/LineEdit';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { Select } from '@/components/Select';
 import { createSelector } from '@reduxjs/toolkit';
+import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu';
 
 function getObjChildren(obj: UniqueObjectLookup, query: QueryScopeFn | null): undefined | UniqueObjectLookup[] {
 	switch (obj._type) {
@@ -262,23 +263,46 @@ export const Outliner = (props: OutlinerProps) => {
 
 function OutlinerSearch() {
 	const handle = useContext(OutlinerContext)
-	const [search, setSearch, matchIdx, matchCount, nextMatch] = useOutlinerSearch(handle)
+	const [caseSensitive, setCaseSensitive] = useState(false);
+	const [searchObjectTypes, setSearchObjectTypes] = useState(true);
+	const [searchObjectInstances, setSearchObjectInstances] = useState(false);
+	const [searchLayoutLayers, setSearchLayoutLayers] = useState(false);
+	const [searchContainers, setSearchContainers] = useState(false);
+	const [search, setSearch, matchIdx, matchCount, nextMatch] = useOutlinerSearch(handle, {
+		caseSensitive,
+		searchObjectTypes,
+		searchObjectInstances,
+		searchLayoutLayers,
+		searchContainers,
+	})
 
 	return <>
-		<LineEdit placeholder="Search..." onChange={e => setSearch(e.target.value)} value={search}
+		<LineEdit className="z-1" placeholder="Search..." onChange={e => setSearch(e.target.value)} value={search}
 			onKeyDown={e => {
 				if (e.code === 'ArrowDown' || e.code === 'Enter') nextMatch(1)
 				else if (e.code === 'ArrowUp') nextMatch(-1)
 			}}
-		/>
-		<div>{matchIdx !== -1 ? `${matchIdx+1}/${matchCount}` : null}</div>
+		>
+			{search ?
+				matchIdx !== -1
+					? <div>{`${matchIdx+1}/${matchCount}`}</div>
+					: <div className="text-(--color-error)">0/0</div>
+			: null }
+		</LineEdit>
+		<DropdownMenu label="Filter">
+			<ToggleMenuItem value={caseSensitive} onChange={setCaseSensitive}>Case sensitive</ToggleMenuItem>
+			<ToggleMenuItem value={searchObjectTypes} onChange={setSearchObjectTypes}>Search object types</ToggleMenuItem>
+			<ToggleMenuItem value={searchObjectInstances} onChange={setSearchObjectInstances}>Search object instances</ToggleMenuItem>
+			<ToggleMenuItem value={searchLayoutLayers} onChange={setSearchLayoutLayers}>Search layers</ToggleMenuItem>
+			<ToggleMenuItem value={searchContainers} onChange={setSearchContainers}>Search containers</ToggleMenuItem>
+		</DropdownMenu>
 	</>
 }
 
 const outlinerHistorySelector = createSelector(
 	s => s.app.outlinerHistory,
 	s => s.app.outlinerHistoryIdx,
-	(outlinerHistory, outlinerHistoryIdx) => {
+	(outlinerHistory: unknown[], outlinerHistoryIdx: number) => {
 		const first = outlinerHistoryIdx === 0
 		const last = outlinerHistoryIdx === outlinerHistory.length - 1
 		return [first, last]
@@ -297,10 +321,27 @@ function OutlinerHistoryButtons() {
 	</>
 }
 
-function useOutlinerSearch(handle: OutlinerHandle) {
+const emptyArray = [] as const;
+
+function useOutlinerSearch(handle: OutlinerHandle, options: {
+	caseSensitive: boolean,
+	searchObjectTypes: boolean,
+	searchObjectInstances: boolean,
+	searchLayoutLayers: boolean,
+	searchContainers: boolean,
+}) {
+	const { caseSensitive, searchObjectTypes, searchObjectInstances, searchLayoutLayers, searchContainers } = options
 	const lookup = useAppSelector(s => s.app.outlinerValue)
 	const [search, setSearch] = useState("")
-	let matchedObjectTypes = api.useSearchObjectTypesQuery({ text: search } || skipToken).data || []
+	const searchOptions = search ? {
+		text: caseSensitive ? search : search.toLowerCase(),
+		caseSensitive
+	} : undefined
+	let matchedObjectTypes = api.useSearchObjectTypesQuery((searchObjectTypes && searchOptions) || skipToken).currentData || emptyArray
+	let matchedLayoutLayers = api.useSearchLayoutLayersQuery((searchLayoutLayers && searchOptions) || skipToken).currentData || emptyArray
+	let matchedObjectInstances = api.useSearchObjectInstancesQuery((searchObjectInstances && searchOptions) || skipToken).currentData || emptyArray
+	let matchedContainers = api.useSearchContainersQuery((searchContainers && searchOptions) || skipToken).currentData || emptyArray
+
 
 	const [matched, matchedKeys] = useMemo(() => {
 		if (!search) {
@@ -312,8 +353,20 @@ function useOutlinerSearch(handle: OutlinerHandle) {
 			map[getTreeItemId(obj)] = obj
 			++count
 		}
+		for (const obj of matchedLayoutLayers) {
+			map[getTreeItemId(obj)] = obj
+			++count
+		}
+		for (const obj of matchedObjectInstances) {
+			map[getTreeItemId(obj)] = obj
+			++count
+		}
+		for (const obj of matchedContainers) {
+			map[getTreeItemId(obj)] = obj
+			++count
+		}
 		return [map, Object.keys(map)] as const
-	}, [matchedObjectTypes, search])
+	}, [search, matchedObjectTypes, matchedLayoutLayers, matchedObjectInstances, matchedContainers])
 
 	const currentIdx = useMemo(() => lookup ? matchedKeys.indexOf(getTreeItemId(lookup)) : -1, [matchedKeys, lookup])
 
