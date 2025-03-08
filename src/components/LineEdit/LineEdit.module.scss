@@ -1,12 +1,12 @@
 .lineEdit {
-	height: 1.5rem;
 	border: solid 1px var(--color-border-alternate);
-	padding-left: var(--gap-s);
+	padding-left: var(--gap);
 	background-color: var(--color-bg);
 	border-radius: 5px;
 	color: var(--color-text);
 	--a-pressable: 0.1s background-color ease-out;
 	animation: var(--a-pressable);
+	line-height: var(--button-height);
 
 	&:disabled {
 		border-color: var(--color-border-disabled);

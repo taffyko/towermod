@@ -1,0 +1,32 @@
+@use '@/css/mixins' as *;
+
+.menuButton {
+	@include pressable;
+}
+
+.menuItems {
+	--anchor-gap: var(--spacing);
+	--anchor-padding: var(--spacing);
+	min-width: var(--button-width);
+
+	border: solid 1px var(--color-border);
+	border-radius: var(--border-radius);
+	background-color: var(--color-bg);
+	overflow: hidden;
+
+	> * {
+		@include pressable($pressed: '.pressed', $focused: '[data-focus]');
+		border-radius: 0;
+		width: 100%;
+		border: none;
+
+		height: 28px;
+		text-align: left;
+		width: 100%;
+		overflow: hidden;
+		padding: var(--gap-s) var(--gap);
+	}
+	> :not(:last-child) {
+		border-bottom: solid 1px var(--color-border-subtle);
+	}
+}

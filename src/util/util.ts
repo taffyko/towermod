@@ -180,7 +180,9 @@ export function svgToDataUri(svg: string | SVGElement) {
 export function triggerTransition(el?: HTMLElement | null, className?: string) {
 	className && el?.classList.add(className)
 	el?.offsetTop
-	className && el?.classList.remove(className)
+	setTimeout(() => {
+		className && el?.classList.remove(className)
+	}, 0)
 }
 
 export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;

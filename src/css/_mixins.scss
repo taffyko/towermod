@@ -1,10 +1,11 @@
-@mixin pressable($outTransition: null, $pressed: '.pressed') {
+@mixin pressable($outTransition: null, $pressed: '.pressed', $focused: '.focused') {
 	border-radius: var(--border-radius);
 	background-color: var(--color-bg);
 	border: solid var(--border-width) var(--color-border);
 	--pressable_t1: 0.1s background-color ease-out;
-	// --pressable_t2: 0.2s transform cubic-bezier(0, 0.1, 0, 1);
 	@include contribute(transition, var(--pressable_t1), $outTransition);
+	padding: 0 calc(var(--spacing) * 2);
+
 
 	&:disabled {
 		background-color: var(--color-bg-disabled);
@@ -18,9 +19,12 @@
 			--pressable_t1: 0s background-color;
 		}
 
+		&#{$focused}, &:focus-visible {
+			background-color: var(--color-bg-focus);
+		}
+
 		&#{$pressed}, &:active {
 			--pressable_t1: 0s background-color;
-			// --pressable_t2: 0s transform;
 			color: var(--color-text-active);
 			background-color: var(--color-bg-pressed);
 			transform: scale(0.95);

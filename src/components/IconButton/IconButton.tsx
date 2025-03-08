@@ -11,6 +11,6 @@ export function IconButton(props: {
 		className={`${Style.iconButton} ${big ? Style.big : ''} ${flip ? Style.flip : ''} ${className ?? ''}`}
 		{...htmlProps}
 	>
-		{ src.endsWith('.svg') ? <Svg href={src} /> : <img src={src} /> }
+		{ src.endsWith('.svg') || src.startsWith('data:image/svg') ? <Svg href={src} /> : <img src={src} /> }
 	</button>
 }
