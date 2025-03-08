@@ -277,7 +277,7 @@ function OutlinerSearch() {
 	})
 
 	return <>
-		<LineEdit className="z-1" placeholder="Search..." onChange={e => setSearch(e.target.value)} value={search}
+		<LineEdit className="z-1 flex-shrink" placeholder="Search..." onChange={e => setSearch(e.target.value)} value={search}
 			onKeyDown={e => {
 				if (e.code === 'ArrowDown' || e.code === 'Enter') nextMatch(1)
 				else if (e.code === 'ArrowUp') nextMatch(-1)

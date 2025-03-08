@@ -72,7 +72,7 @@ export const Config = () => {
 				Set game path
 			</Button>
 		</div>
-		<LineEdit disabled value={gamePath} />
+		<LineEdit className="w-auto" disabled value={gamePath} />
 		<hr />
 
 		<Text>Package legacy projects as playable mods</Text>

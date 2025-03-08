@@ -1,7 +1,7 @@
 .lineEdit {
 	position: relative;
 	input {
-		max-width: var(--button-width);
+		width: 100%;
 		box-sizing: border-box !important;
 		border: solid 1px var(--color-border-alternate);
 		padding-left: var(--gap);
@@ -16,6 +16,11 @@
 			color: var(--color-text-disabled);
 			background-color: var(--color-bg-disabled);
 		}
+	}
+}
+@layer base {
+	.lineEdit {
+		width: var(--button-width);
 	}
 }
 
