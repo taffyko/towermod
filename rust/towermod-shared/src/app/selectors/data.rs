@@ -45,6 +45,31 @@ pub fn select_object_type_plugin_name<'a>(object_type_id: i32) -> impl Fn(&'a St
 		select_editor_plugin_name(plugin_id)(s)
 	}
 }
+pub fn select_object_type_image_id(object_type_id: i32) -> impl Fn(&State) -> Option<i32> {
+	move |s| {
+		let obj_type = select_object_type(object_type_id)(s)?;
+		let plugin_name = select_editor_plugin_name(obj_type.plugin_id)(s)?;
+		if plugin_name != "Sprite" { return None }
+		let instance = select_object_type_first_instance(object_type_id)(s)?;
+		object_instance_image_id(s, instance)
+	}
+}
+fn object_instance_image_id(s: &State, instance: &EdObjectInstance) -> Option<i32> {
+	let towermod_cstc::ObjectData::Sprite(data) = &instance.data else { return None };
+	let anim_root = select_animation(data.animation)(s)?;
+	let anim_section = anim_root.sub_animations.iter().find(|a| a.name == data.start_anim)?;
+	let first_anim_angle = anim_section.sub_animations.first()?;
+	let frame = first_anim_angle.frames.get((data.start_frame - 1) as usize)?;
+	Some(frame.image_id)
+}
+
+pub fn select_object_instance_image_id(object_instance_id: i32) -> impl Fn(&State) -> Option<i32> {
+	move |s| {
+		let obj = select_object_instance(object_instance_id)(s)?;
+		object_instance_image_id(s, obj)
+	}
+}
+
 pub fn select_new_object_instance_id() -> impl Fn(&State) -> i32 {
 	|s| {
 		s.data.layouts.iter()
@@ -79,21 +104,24 @@ pub fn select_object_instances_mut(layout_layer_id: i32) -> impl Fn(&mut State) 
 		Vec::new()
 	}
 }
-pub fn select_all_object_instances() -> impl Fn(&State) -> Vec<&EdObjectInstance> {
-	move |s| { s.data.layouts.iter().flat_map(|l| l.layers.iter().flat_map(|l| l.objects.iter())).collect() }
+pub fn select_all_object_instances<'a>(s: &'a State) -> impl Iterator<Item = &'a EdObjectInstance> {
+	s.data.layouts.iter().flat_map(|l| l.layers.iter().flat_map(|l| l.objects.iter()))
 }
 pub fn select_object_instance_ids(layout_layer_id: i32) -> impl Fn(&State) -> Vec<i32> {
 	move |s| { select_object_instances(layout_layer_id)(s).iter().map(|o| o.id).collect() }
 }
 pub fn select_object_type_instance_ids(object_type_id: i32) -> impl Fn(&State) -> Vec<i32> {
 	move |s| {
-		let object_instances = select_all_object_instances()(s);
+		let object_instances: Vec<_> = select_all_object_instances(s).collect();
 		object_instances.into_iter().filter_map(|o| if o.object_type_id == object_type_id { Some(o.id) } else { None }).collect()
 	}
 }
+pub fn select_object_type_first_instance(object_type_id: i32) -> impl Fn(&State) -> Option<&EdObjectInstance> {
+	move |s| { select_all_object_instances(s).find(|o| o.object_type_id == object_type_id) }
+}
 pub async fn search_object_instances(options: SearchOptions) -> Vec<(i32, String)> {
 	select(move |s| {
-		let object_instances = select_all_object_instances()(&s);
+		let object_instances: Vec<_> = select_all_object_instances(&s).collect();
 		object_instances.iter().filter_map(|(o)| {
 			let ot = s.data.object_types.get(&o.object_type_id);
 			ot.map(|ot| if matches_search(&ot.name, &options) {
@@ -265,6 +293,13 @@ pub fn select_animation_mut(animation_id: i32) -> impl Fn(&mut State) -> Option<
 			None
 		}
 		search(&mut s.data.animations, animation_id)
+	}
+}
+pub fn select_animation_image_id(animation_id: i32) -> impl Fn(&State) -> Option<i32> {
+	move |s| {
+		let animation = select_animation(animation_id)(s)?;
+		let frame = animation.frames.get(0)?;
+		Some(frame.image_id)
 	}
 }
 

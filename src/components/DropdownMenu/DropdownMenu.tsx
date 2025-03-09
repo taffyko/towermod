@@ -48,7 +48,7 @@ export function ToggleMenuItem(props: Omit<React.ComponentProps<typeof MenuItem>
 	return <MenuItem keepOpen onClick={() => {
 		setValue(!value)
 	}} {...rest}>
-		<Toggle value={value}>{children}</Toggle>
+		<Toggle as="div" value={value}>{children}</Toggle>
 	</MenuItem>
 }
 

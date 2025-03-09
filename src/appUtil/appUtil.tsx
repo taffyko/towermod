@@ -1,6 +1,6 @@
 import { spin } from "@/app/GlobalSpinner";
 import { dispatch, store, useAppSelector } from "@/redux";
-import { api } from '@/api'
+import { api, useGameImageUrl } from '@/api'
 import { openModal } from "@/app/Modal";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { awaitRtk } from "@/api/helpers";
@@ -40,13 +40,14 @@ export async function installMods(files: string[]) {
 	}
 }
 
-export type QueryScopeFn = <QueryArg, Endpoint extends ApiEndpointQuery<QueryDefinition<QueryArg, any, any, any>, any>>(endpoint: Endpoint, arg: QueryArg) => ReturnType<ReturnType<Endpoint['select']>>
-
+// return type: { data: T, isLoading: boolean, isError: boolean, isSuccess: boolean, endpointName: string, error: any,  }
+export type QueryScopeFn = <QueryArg, Endpoint extends ApiEndpointQuery<QueryDefinition<QueryArg, any, any, any>, any>>(endpoint: Endpoint, arg: QueryArg) => ReturnType<ReturnType<Endpoint['select']>> & { isLoading: boolean, error: any }
 // allows a component to dynamically subscribe to RTK endpoints without using the generated hooks
-export function useQueryScope() {
+export function useQueryScope(): [QueryScopeFn, boolean] {
 	type QueryEndpoint = ApiEndpointQuery<QueryDefinition<any, any, any, any, any>, any>
 	const [selection, setSelection] = useState<Record<string, unknown>>({})
 	const selectionRef = useRef<Record<string, unknown>>({})
+	const loadingRef = useRef<boolean>(false);
 
 	// subscriptions list is reset each time the selector updates (any of the query results update)
 	// then is populated by any subsequent endpoints that are called
@@ -60,11 +61,21 @@ export function useQueryScope() {
 			}
 		}
 	}, [endpoints])
+	let timeout = 0
 
 	const query = useCallback<QueryScopeFn>((endpoint, arg) => {
 		const key = JSON.stringify({ [endpoint.name]: arg })
 		if (!(key in endpoints)) {
+			clearTimeout(timeout)
+			loadingRef.current = true
 			endpoints[key] = [endpoint, arg, dispatch(endpoint.initiate(arg)), endpoint.select(arg)]
+			console.log('loading', loadingRef.current)
+			Promise.all(Object.values(endpoints).map(e => e[2])).then(() => {
+				console.log('loading', loadingRef.current)
+				timeout = window.setTimeout(() => {
+					loadingRef.current = false;
+				}, 1)
+			})
 		}
 		const state = store.getState();
 		const select = endpoints[key][3]
@@ -96,7 +107,7 @@ export function useQueryScope() {
 		return selectionRef.current
 	})
 
-	return query
+	return [query, loadingRef.current]
 }
 
 export async function updateTowermodObject<T extends UniqueTowermodObject>(obj: T) {
@@ -118,8 +129,10 @@ export async function updateTowermodObject<T extends UniqueTowermodObject>(obj: 
 	await awaitRtk(dispatch(endpoint.initiate(obj)))
 }
 
-export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined): ObjectForType<T['_type']> | undefined {
-	const query = useQueryScope()
+export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined, query?: QueryScopeFn): { data: ObjectForType<T['_type']> | undefined, isLoading: boolean } {
+	if (!query) {
+		[query] = useQueryScope()
+	}
 
 	const type = obj?._type
 	let endpoint: any;
@@ -140,12 +153,36 @@ export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefin
 
 	if (obj) {
 		const info = query(endpoint, obj)
-		return info.data
+		return info
 	}
+	return { data: undefined, isLoading: false }
+}
+
+export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined): { hasIcon: boolean, data: string | undefined, isLoading: boolean } {
+	const [query] = useQueryScope()
+	const { data: obj, isLoading: objIsLoading } = useTowermodObject(objLookup ?? undefined, query);
+	let imageId = null
+	let hasIcon = false
+	let imageIdLoading = false
+	switch (obj?._type) {
+		case 'Container': case 'ObjectType':
+			if (obj._type === 'ObjectType' && obj.type)
+			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id))
+			hasIcon = true
+		break; case 'ObjectInstance':
+			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectInstanceImageId, obj.id))
+			hasIcon = true
+		break; case 'Animation':
+			const { data: animation, isLoading } = query(api.endpoints.getAnimation, { id: obj.id })
+			imageIdLoading = isLoading
+			imageId = animation?.frames[0]?.imageId
+	}
+	const { data: url, isLoading: urlLoading } = useGameImageUrl(imageId)
+	return { data: url, isLoading: objIsLoading || imageIdLoading || urlLoading }
 }
 
 export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | undefined): string | undefined {
-	const obj = useTowermodObject(objLookup ?? undefined);
+	const { data: obj } = useTowermodObject(objLookup ?? undefined);
 
 	let objTypeId;
 	let pluginId;
@@ -184,7 +221,11 @@ export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | unde
 		case 'ObjectType': {
 			if (!plugin) { return }
 			const pluginName = plugin.stringTable.name
-			return `Type ${obj.id}: (${pluginName}: ${obj.name})`
+			if (pluginName === 'Sprite') {
+				return obj.name
+			} else {
+				return `${obj.name} (${pluginName})`
+			}
 		} case 'ObjectTrait':
 			return `Trait: ${obj.name}`
 		case 'AppBlock':

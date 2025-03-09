@@ -3,6 +3,7 @@ import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
 import { Animation, Behavior, ImageMetadata, Layout, LayoutLayer, ObjectInstance, ObjectType, PluginData, Container, Family, ObjectTrait, AppBlock, SearchOptions } from '@towermod';
 import type { LookupForType, UniqueTowermodObject } from '@/util';
+import { skipToken } from '@reduxjs/toolkit/query';
 
 type Lookup<T extends UniqueTowermodObject> = LookupForType<T['_type']>
 type LookupArg<T extends UniqueTowermodObject> = Omit<Lookup<T>, '_type'>
@@ -61,6 +62,10 @@ export const dataApi = baseApi.injectEndpoints({
 			query: (obj) => invoke('update_object_type', { obj }),
 			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id) }]
 		}),
+		getObjectTypeImageId: builder.query<int | null, int>({
+			query: (id) => invoke('get_object_type_image_id', { id }),
+			providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
+		}),
 		createObjectType: builder.mutation<int, { pluginId: int }>({
 			query: (pluginId) => invoke('create_object_type', { pluginId }),
 			invalidatesTags: (_r, _e, id) => [{ type: 'ObjectType', id: String(id) }, { type: 'ObjectType', id: 'LIST' }]
@@ -93,6 +98,10 @@ export const dataApi = baseApi.injectEndpoints({
 		updateObjectInstance: builder.mutation<void, ObjectInstance>({
 			query: (obj) => invoke('update_object_instance', { obj }),
 			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectInstance', id: String(arg.id) }]
+		}),
+		getObjectInstanceImageId: builder.query<int | null, int>({
+			query: (id) => invoke('get_object_instance_image_id', { id }),
+			providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
 		}),
 
 		getLayout: builder.query<Layout | null, LookupArg<Layout>>({
@@ -245,8 +254,8 @@ async function _getGameImage(id: int): Promise<Uint8Array | null> {
 	return resp
 }
 
-export function useGameImageUrl(id: int): string | undefined {
-	const { data: blob } = dataApi.useGetGameImageQuery(id)
+export function useGameImageUrl(id?: int | null): { data: string | undefined, isLoading: boolean } {
+	const { currentData: blob, isFetching } = dataApi.useGetGameImageQuery(id ?? skipToken)
 	const href = useObjectUrl(blob);
-	return href ?? undefined
+	return { data: href, isLoading: isFetching }
 }

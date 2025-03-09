@@ -1,13 +1,19 @@
+import clsx from 'clsx';
 import Style from './LoadContainer.module.scss'
 import { ErrorMsg } from '@/components/Error';
 export function LoadContainer(props: React.ComponentProps<'div'> & {
 	isLoading?: boolean
 	error?: any,
 	children?: React.ReactNode,
+	small?: boolean,
+	render?: boolean,
 }) {
-	const { isLoading, error, children, ...htmlProps } = props;
+	const { isLoading, error, small, render, children, ...htmlProps } = props;
 	if (isLoading) {
-		return <SpinnerBox {...htmlProps} />
+		return <>
+			<SpinnerBox small={small} {...htmlProps} />
+			{ render ? <div className="invisible hidden absolute">{children}</div> : null }
+		</>
 	}
 	if (error !== undefined) {
 		return <ErrorMsg {...htmlProps} error={error} />
@@ -17,10 +23,10 @@ export function LoadContainer(props: React.ComponentProps<'div'> & {
 	</div>
 }
 
-function SpinnerBox(props: React.ComponentProps<'div'>) {
-	const { className, ...htmlProps } = props;
+function SpinnerBox(props: React.ComponentProps<'div'> & { small?: boolean }) {
+	const { small, className, ...htmlProps } = props;
 	return <div {...htmlProps} className={`${Style.spinnerContainer} ${className || ''}`}>
-		<div className={Style.spinnerBox}>
+		<div className={clsx(small ? Style.spinnerBoxSmall : Style.spinnerBox, className)}>
 			<div className={Style.spinnerBg} />
 			<div className={Style.spinnerSegment} />
 			<div className={Style.outlineInner} />

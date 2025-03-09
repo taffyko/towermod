@@ -268,13 +268,23 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 	selectors::get_object_types().await
 }
 #[command] pub async fn get_object_type(id: i32) -> Option<cstc_editing::EdObjectType> {
-	selectors::get_object_type(id).await
+	let object_type = selectors::get_object_type(id).await?;
+	let plugin_name = selectors::select_editor_plugin_name(object_type.plugin_id).await?;
+	let value = serde_json::value::to_value(object_type).ok()?;
+	{
+		let value = value.as_object_mut()?;
+		value.insert(String::from("pluginName"), plugin_name);
+	}
+	todo!()
 }
 #[command] pub async fn search_object_types(options: SearchOptions) -> Vec<(i32, String)> {
 	selectors::search_object_types(options).await
 }
 #[command] pub async fn update_object_type(obj: cstc_editing::EdObjectType) {
 	dispatch(DataAction::UpdateObjectType(obj)).await
+}
+#[command] pub async fn get_object_type_image_id(id: i32) -> Option<i32> {
+	select(selectors::select_object_type_image_id(id)).await
 }
 #[command] pub async fn create_object_type(plugin_id: i32) -> i32 {
 	let id = select(selectors::select_new_object_type_id()).await;
@@ -305,6 +315,9 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 }
 #[command] pub async fn update_object_instance(obj: cstc_editing::EdObjectInstance) {
 	dispatch(DataAction::UpdateObjectInstance(obj)).await
+}
+#[command] pub async fn get_object_instance_image_id(id: i32) -> Option<i32> {
+	select(selectors::select_object_instance_image_id(id)).await
 }
 #[command] pub async fn create_object_instance(object_type_id: i32, layout_layer_id: i32) -> i32 {
 	let id = select(selectors::select_new_object_instance_id()).await;

@@ -3,29 +3,10 @@
 	@include pressable;
 	padding: 0 calc(var(--spacing) * 3);
 	min-height: var(--button-height);
-	// border: solid 1px currentColor;
-	// background-color: var(--color-bg);
-	// border-radius: 5px;
-	// color: var(--color-text);
-	// --a-pressable: 0.1s background-color ease-out;
-	// animation: var(--a-pressable);
 
-	// &:not(:disabled) {
-	// 	&:hover {
-	// 		background-color: var(--color-bg-hover);
-	// 		--a2: 0.0s background-color ease-out;
-	// 	}
-
-	// 	&:active {
-	// 		background-color: var(--color-bg-pressed);
-	// 		color: var(--color-text-active);
-	// 		transform: scale(0.95);
-	// 	}
-	// }
-
-	// &:disabled {
-	// 	border-color: var(--color-border-disabled);
-	// 	color: var(--color-text-disabled);
-	// 	background-color: var(--color-bg-disabled);
-	// }
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--gap);
 }

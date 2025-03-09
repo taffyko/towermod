@@ -1,3 +1,0 @@
-interface greet {
-  func greet(my_name: string) -> string
-}

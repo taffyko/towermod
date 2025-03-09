@@ -1,28 +1,7 @@
 use super::commands;
 
-// tauri_bindgen_host::generate!({
-//     path: "../../greet.wit",
-//     async: false,
-//     tracing: true
-// });
-
-// #[derive(Clone, Copy)]
-// struct GreetCtx;
-
-// impl greet::Greet for GreetCtx {
-// 	fn greet(&self, name: String) -> String {
-// 			format!(
-// 					"Hello, {}! You've been greeted from code-generated Rust!",
-// 					name
-// 			)
-// 	}
-// }
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-	// let mut router: Router<GreetCtx> = Router::new(GreetCtx {});
-	// greet::add_to_router(&mut router, |ctx| ctx).unwrap();
-
 	tauri::Builder::default()
 		.plugin(tauri_plugin_opener::init())
 		.plugin(tauri_plugin_dialog::init())
@@ -108,6 +87,7 @@ pub fn run() {
 				commands::get_object_type,
 				commands::search_object_types,
 				commands::update_object_type,
+				commands::get_object_type_image_id,
 				commands::create_object_type,
 				commands::delete_object_type,
 				commands::object_type_add_variable,
@@ -118,6 +98,7 @@ pub fn run() {
 				commands::get_object_instance,
 				commands::search_object_instances,
 				commands::update_object_instance,
+				commands::get_object_instance_image_id,
 				commands::delete_object_instance,
 				commands::create_object_instance,
 
@@ -162,8 +143,6 @@ pub fn run() {
 				commands::update_app_block,
 			]
 		)
-		// TODO: once tauri-bindgen properly supports windows
-		// .ipc_router(router)
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
 }

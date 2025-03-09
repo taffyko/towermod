@@ -19,7 +19,7 @@ const updateTowermodObjectDebounced = debounce(updateTowermodObject, 500, { lead
 
 export function Data() {
 	const searchValue = useAppSelector((s) => s.app.outlinerValue);
-	const externalValue = useTowermodObject(searchValue);
+	const { data: externalValue } = useTowermodObject(searchValue);
 
 	const [outlinerRef, setOutlinerRef] = useStateRef<OutlinerHandle>();
 

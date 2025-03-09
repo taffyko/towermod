@@ -190,7 +190,7 @@ export interface OutlinerProps {
 }
 
 export const Outliner = (props: OutlinerProps) => {
-	const query = useQueryScope()
+	const [query] = useQueryScope()
 	const layouts = api.useGetLayoutsQuery().data || []
 	// const animations = api.useGetRootAnimationsQuery().data || []
 	const behaviors = api.useGetBehaviorsQuery().data || []

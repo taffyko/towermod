@@ -8,28 +8,16 @@
 	justify-content: center;
 }
 
-$size: 50px;
-$weight: 5px;
-$outlineWeight: 4px;
-
-.spinnerBox {
+@mixin spinnerMixin($size, $weight, $outlineWeight) {
 	position: relative;
 	width: $size;
 	height: $size;
 	isolation: isolate;
 	filter: url(#salinear5) brightness(0.9) contrast(0.8);
 
-	.spinnerBg {
-		position: absolute;
-		width: $size;
-		height: $size;
-		border-radius: 50%;
-		border: solid $weight black;
-	}
-
 	.spinnerSegment {
 		$extraWeight: 4px;
-		$weight: $weight + $extraWeight;
+		$segmentWeight: $weight + $extraWeight;
 		left: math.div(-$extraWeight, 2);
 		top: math.div(-$extraWeight, 2);
 		position: absolute;
@@ -37,8 +25,17 @@ $outlineWeight: 4px;
 		width: $size + $extraWeight;
 		height: $size + $extraWeight;
 		border-radius: 50%;
-		border: solid $weight transparent;
-		border-top: solid $weight white;
+		border: solid $segmentWeight transparent;
+		border-top: solid $segmentWeight white;
+	}
+
+	.spinnerBg {
+		position: absolute;
+		position: absolute;
+		width: $size;
+		height: $size;
+		border-radius: 50%;
+		border: solid $weight black;
 	}
 
 	.outlineOuter {
@@ -62,6 +59,13 @@ $outlineWeight: 4px;
 		border: solid $weight var(--color-text);
 		z-index: -1;
 	}
+}
+
+.spinnerBox {
+	@include spinnerMixin(50px, 5px, 4px);
+}
+.spinnerBoxSmall {
+	@include spinnerMixin(20px, 2px, 4px);
 }
 
 @keyframes spin {

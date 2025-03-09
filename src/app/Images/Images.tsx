@@ -61,7 +61,7 @@ export default function Images() {
 
 function ImageEditing() {
 	const imageId = useAppSelector(s => s.app.imageId)
-	const imgUrl = useGameImageUrl(imageId);
+	const { data: imgUrl } = useGameImageUrl(imageId);
 	const { data: savedMetadata } = api.useGetImageMetadataQuery(imageId)
 	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
 	const [setImageMetadata] = api.useSetImageMetadataMutation();
@@ -205,7 +205,7 @@ function ImagePreview(props: {
 	metadata?: ImageMetadata,
 }) {
 	const { imageId, metadata, showCollision } = props;
-	const imgUrl = useGameImageUrl(imageId);
+	const { data: imgUrl } = useGameImageUrl(imageId);
 
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
 	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
