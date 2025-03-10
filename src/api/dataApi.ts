@@ -1,4 +1,4 @@
-import { enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, useObjectUrl } from '@/util';
+import { createObjectUrl, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl, useObjectUrl } from '@/util';
 import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
 import { Animation, Behavior, ImageMetadata, Layout, LayoutLayer, ObjectInstance, ObjectType, PluginData, Container, Family, ObjectTrait, AppBlock, SearchOptions } from '@towermod';
@@ -10,16 +10,22 @@ type LookupArg<T extends UniqueTowermodObject> = Omit<Lookup<T>, '_type'>
 
 export const dataApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
-		getGameImage: builder.query<Blob | null, number>({
+		getGameImageUrl: builder.query<string | null, number>({
 			query: async (id) => {
 				const arrayBuffer = await _getGameImage(id)
 				let blob: Blob | null = null
 				if (arrayBuffer) {
 					blob = new Blob([arrayBuffer], { type: 'image/png' })
 				}
-				return blob
+				return blob && createObjectUrl(blob)
 			},
 			providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }],
+			onCacheEntryAdded: async (_arg, cacheApi) => {
+				const info = await cacheApi.cacheDataLoaded
+				if (!info.data) { return }
+				await cacheApi.cacheEntryRemoved
+				revokeObjectUrl(info.data)
+			},
 		}),
 		getImageMetadata: builder.query<ImageMetadata | null, number>({
 			query: (id) => invoke('get_image_metadata', { id }),
@@ -252,10 +258,4 @@ async function _getGameImage(id: int): Promise<Uint8Array | null> {
 		return null
 	}
 	return resp
-}
-
-export function useGameImageUrl(id?: int | null): { data: string | undefined, isLoading: boolean } {
-	const { currentData: blob, isFetching } = dataApi.useGetGameImageQuery(id ?? skipToken)
-	const href = useObjectUrl(blob);
-	return { data: href, isLoading: isFetching }
 }

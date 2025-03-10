@@ -16,22 +16,20 @@ export const baseApi = createApi({
 	reducerPath: 'api',
 	baseQuery: customBaseQuery, // Base URL for API calls
 	tagTypes,
+	keepUnusedDataFor: 60,
 	endpoints: (builder) => ({
 		getFile: builder.query<Blob | null, string | null | undefined>({
 			query: async (path) => {
-				const arrayBuffer = path ? await _getFile(path) : null
-				let blob: Blob | null = null
-				if (arrayBuffer) {
-					const fileExtension = path!.split('.').pop()?.toLowerCase()
-					let options: BlobPropertyBag | undefined;
-					switch (fileExtension) {
-						case '.jpg': case '.jpeg':
-							options = { type: 'image/jpeg' }
-						break; case '.png':
-							options = { type: 'image/png' }
-					}
-					blob = new Blob([arrayBuffer], options)
-				}
+				const blob = path ? await _getFileBlob(path) : null
+				return blob
+			},
+
+			// should discard data from the cache almost immediately after use, as files on-disk can always change
+			keepUnusedDataFor: 1,
+		}),
+		getFileUrl: builder.query<string | null, string | null | undefined>({
+			query: async (path) => {
+				const blob = path ? await _getFileBlob(path) : null
 				return blob
 			},
 			// should discard data from the cache almost immediately after use, as files on-disk can always change
@@ -288,6 +286,22 @@ async function _getFile(path: string): Promise<Uint8Array | null> {
 		return null
 	}
 	return resp
+}
+async function _getFileBlob(path: string): Promise<Blob | null> {
+	const arrayBuffer = path ? await _getFile(path) : null
+	let blob: Blob | null = null
+	if (arrayBuffer) {
+		const fileExtension = path!.split('.').pop()?.toLowerCase()
+		let options: BlobPropertyBag | undefined;
+		switch (fileExtension) {
+			case '.jpg': case '.jpeg':
+				options = { type: 'image/jpeg' }
+			break; case '.png':
+				options = { type: 'image/png' }
+		}
+		blob = new Blob([arrayBuffer], options)
+	}
+	return blob
 }
 
 export function useFileUrl(path: string | null | undefined): string | undefined {

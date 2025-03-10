@@ -1,15 +1,14 @@
 import { spin } from "@/app/GlobalSpinner";
-import { dispatch, store, useAppSelector } from "@/redux";
-import { api, useGameImageUrl } from '@/api'
+import { dispatch, store } from "@/redux";
+import { api } from '@/api'
 import { openModal } from "@/app/Modal";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { awaitRtk } from "@/api/helpers";
 import { toast } from "@/app/Toast";
-import { ObjectForType, TowermodObject, UniqueObjectLookup, UniqueTowermodObject, arrayShallowEqual, objectShallowEqual, useRerender } from "@/util";
-import { assertUnreachable, useMemoAsyncWithCleanup } from "@/util";
+import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject } from "@/util";
+import { assertUnreachable } from "@/util";
 import { ApiEndpointQuery, QueryDefinition, skipToken } from "@reduxjs/toolkit/query";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { stringify } from "querystring";
 
 export async function saveProject() {
 	const saveProject = (dirPath: string) => awaitRtk(dispatch(api.endpoints.saveProject.initiate(dirPath)))
@@ -60,12 +59,10 @@ export function useQueryScope(): [QueryScopeFn] {
 			}
 		}
 	}, [endpoints])
-	let timeout = 0
 
 	const query = useCallback<QueryScopeFn>((endpoint, arg) => {
 		const key = JSON.stringify({ [endpoint.name]: arg })
 		if (!(key in endpoints)) {
-			clearTimeout(timeout)
 			endpoints[key] = [endpoint, arg, dispatch(endpoint.initiate(arg)), endpoint.select(arg)]
 		}
 		const state = store.getState();
@@ -161,6 +158,8 @@ export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined):
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id))
 		break; case 'Container':
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id))
+		break; case 'Behavior':
+			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.objectTypeId))
 		break; case 'ObjectInstance':
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectInstanceImageId, obj.id))
 		break; case 'Animation':
@@ -168,9 +167,9 @@ export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined):
 			imageIdLoading = isLoading
 			imageId = animation?.frames[0]?.imageId
 	}
-	hasIcon = hasIcon && imageId != null
-	const { data: url, isLoading: urlLoading } = useGameImageUrl(imageId)
-	return { data: url, hasIcon, isLoading: objIsLoading || imageIdLoading || urlLoading }
+	hasIcon = hasIcon || imageId != null
+	const { data: url, isLoading: urlLoading } = api.useGetGameImageUrlQuery(imageId ?? skipToken)
+	return { data: url ?? undefined, hasIcon, isLoading: objIsLoading || imageIdLoading || urlLoading }
 }
 
 export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | undefined): string | undefined {

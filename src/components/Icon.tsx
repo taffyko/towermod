@@ -1,3 +1,4 @@
+import { useStateRef } from "@/util"
 import clsx from "clsx"
 import { useEffect, useState } from "react"
 
@@ -8,12 +9,22 @@ export function Icon(props: {
 	className?: string
 }) {
 	const { src, className, noReflow } = props
+	const [el, setEl] = useStateRef<HTMLImageElement>()
 	const [loading, setLoading] = useState(true)
 	useEffect(() => {
-		setLoading(true)
-	}, [src])
+		if (el) {
+			el.src = src || ''
+			setLoading(el.complete)
+		}
+	}, [src, el])
+	// useEffect(() => {
+	// 	if (el?.complete) {
+	// 		setLoading(false)
+	// 	}
+	// }, [el])
 	return <>
 		<img
+			ref={setEl}
 			onLoad={() => { if (src) {
 				setLoading(false)
 			}}}
@@ -21,7 +32,7 @@ export function Icon(props: {
 				'object-cover pointer-events-none',
 				(!src || loading) ? 'opacity-0' : 'transition-opacity ease-[cubic-bezier(0,0.1,0,1)] duration-250',
 				(!src && !noReflow) && 'absolute',
-				className,
+				className || 'h-[100%] aspect-square',
 			)}
 			src={src ?? undefined}
 		/>

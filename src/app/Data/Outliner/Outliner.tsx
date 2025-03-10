@@ -141,7 +141,6 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 		return <div className="opacity-0" />
 	}
 
-
 	return <div
 		className={`
 			${Style.treeItem}
@@ -175,7 +174,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 				/>
 			</div>
 		)}
-		<Icon noReflow={hasIcon} src={icon} className="h-[25px] w-[25px]" />
+		<Icon noReflow={hasIcon} src={icon} />
 		<div style={defaultTextStyle}>{name}</div>
 	</div>
 };

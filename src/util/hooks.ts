@@ -218,6 +218,10 @@ export function useIsPressed(el: HTMLElement | null) {
 	return pressed
 }
 
+/**
+ * NOTE: Prefer using a custom RTK Query endpoint to create object URLs for performance reasons
+ * (sharing already-created URLs, delayed eviction, etc.)
+ */
 export function useObjectUrl(data?: BlobPart | number[] | null, options?: BlobPropertyBag): string | undefined
 export function useObjectUrl(blob?: Blob | null): string | undefined
 export function useObjectUrl(data?: Blob | BlobPart | number[] | null, options?: BlobPropertyBag): string | undefined {

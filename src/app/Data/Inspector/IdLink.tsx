@@ -47,6 +47,7 @@ function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
 	const { data: objectTypes } = api.useSearchObjectTypesQuery({ text: query } || skipToken)
 	const name = objectTypes?.find((ot) => ot.id === selectedId)?.name
 	const value = api.useGetObjectTypeQuery({ id: selectedId }).data || { name: name || '...', id: selectedId }
+	const { data: icon } = useObjectIcon(value ? { _type: 'ObjectType', id: value.id } : undefined);
 
 	return <ComboboxButton<{ name: string, id: int }>
 		value={value}
@@ -59,5 +60,6 @@ function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
 		query={query}
 		setQuery={setQuery}
 		options={objectTypes ?? []}
+		icon={<Icon src={icon} />}
 	/>
 }

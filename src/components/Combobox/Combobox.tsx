@@ -58,6 +58,7 @@ export function Combobox<TValue extends { name: string }>(props: {
 
 export function ComboboxButton<TValue extends { name: string }>(props: {
 	value: TValue | undefined,
+	icon?: React.ReactNode,
 	options: TValue[],
 	onChange?: (value: TValue) => void,
 	query?: string,
@@ -67,7 +68,7 @@ export function ComboboxButton<TValue extends { name: string }>(props: {
 	disableButton?: boolean,
 	disableEditing?: boolean,
 }) {
-	const { value, options, onChange, query, setQuery, onClick, placeholder, disableButton, disableEditing } = props
+	const { value, icon, options, onChange, query, setQuery, onClick, placeholder, disableButton, disableEditing } = props
 	const [editing, setEditing] = useState(false)
 
 	const [el, setEl] = useStateRef<HTMLDivElement>()
@@ -91,7 +92,7 @@ export function ComboboxButton<TValue extends { name: string }>(props: {
 				disabled={disableEditing}
 			/>
 		:
-			<Button disabled={disableButton || !value?.name} onClick={onClick}>{value?.name ?? placeholder ?? 'Enter value...'}</Button>
+			<Button icon={icon} disabled={disableButton || !value?.name} onClick={onClick}>{value?.name ?? placeholder ?? 'Enter value...'}</Button>
 		}
 		{!editing ?
 			<IconButton disabled={disableEditing} src={editImg} onClick={() => { setQuery?.(""); setEditing(true) }} />

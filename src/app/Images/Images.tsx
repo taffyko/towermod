@@ -1,8 +1,8 @@
-import { api, useGameImageUrl } from "@/api";
+import { api } from "@/api";
 import { Button } from "@/components/Button";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { InspectorObject } from "../Data/Inspector";
-import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useRerender, useStateRef, useTwoWayBinding, useTwoWaySubmitBinding } from "@/util";
+import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useStateRef, useTwoWaySubmitBinding } from "@/util";
 import { toast } from "../Toast";
 import { spin } from "../GlobalSpinner";
 import { awaitRtk } from "@/api/helpers";
@@ -61,7 +61,7 @@ export default function Images() {
 
 function ImageEditing() {
 	const imageId = useAppSelector(s => s.app.imageId)
-	const { data: imgUrl } = useGameImageUrl(imageId);
+	const { data: imgUrl } = api.useGetGameImageUrlQuery(imageId);
 	const { data: savedMetadata } = api.useGetImageMetadataQuery(imageId)
 	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
 	const [setImageMetadata] = api.useSetImageMetadataMutation();
@@ -205,7 +205,7 @@ function ImagePreview(props: {
 	metadata?: ImageMetadata,
 }) {
 	const { imageId, metadata, showCollision } = props;
-	const { data: imgUrl } = useGameImageUrl(imageId);
+	const { data: imgUrl } = api.useGetGameImageUrlQuery(imageId);
 
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
 	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
