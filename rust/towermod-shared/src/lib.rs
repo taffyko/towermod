@@ -5,9 +5,11 @@
 #![feature(str_from_utf16_endian)]
 #![feature(min_specialization)]
 #![feature(never_type)]
+#![feature(impl_trait_in_fn_trait_return)]
+#![feature(impl_trait_in_bindings)]
+#![feature(closure_lifetime_binder)]
 #![allow(unused_parens)]
 #![allow(unused_import_braces)]
-#![feature(impl_trait_in_fn_trait_return)]
 
 pub mod dllreader_client;
 pub mod game_images;

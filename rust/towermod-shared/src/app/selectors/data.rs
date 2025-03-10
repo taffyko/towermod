@@ -9,7 +9,7 @@ use towermod_cstc::{plugin::PluginData, Animation, Behavior, Container, Family, 
 pub fn select_editor_plugin(plugin_id: i32) -> impl Fn(&State) -> Option<&PluginData> {
 	move |s| { s.data.editor_plugins.get(&plugin_id) }
 }
-pub fn select_editor_plugin_name<'a>(plugin_id: i32) -> impl Fn(&'a State) -> Option<&'a String> {
+pub fn select_editor_plugin_name(plugin_id: i32) -> impl Fn(&State) -> Option<&String> {
 	move |s| {
 		let plugin = select_editor_plugin(plugin_id)(s)?;
 		Some(&plugin.string_table.name)
@@ -39,7 +39,7 @@ pub fn select_object_type(object_type_id: i32) -> impl Fn(&State) -> Option<&EdO
 pub fn select_object_type_mut(object_type_id: i32) -> impl Fn(&mut State) -> Option<&mut EdObjectType> {
 	move |s: &mut State| { s.data.object_types.get_mut(&object_type_id) }
 }
-pub fn select_object_type_plugin_name<'a>(object_type_id: i32) -> impl Fn(&'a State) -> Option<&'a String> {
+pub fn select_object_type_plugin_name(object_type_id: i32) -> impl Fn(&State) -> Option<&String> {
 	move |s| {
 		let plugin_id = select_object_type(object_type_id)(s)?.plugin_id;
 		select_editor_plugin_name(plugin_id)(s)
@@ -173,7 +173,7 @@ pub fn select_object_instance_plugin(object_instance_id: i32) -> impl Fn(&State)
 		select_editor_plugin(obj_type.plugin_id)(s)
 	}
 }
-pub fn select_object_instance_plugin_name<'a>(object_instance_id: i32) -> impl Fn(&'a State) -> Option<&'a String> {
+pub fn select_object_instance_plugin_name(object_instance_id: i32) -> impl Fn(&State) -> Option<&String> {
 	move |s| {
 		let plugin = select_object_instance_plugin(object_instance_id)(s)?;
 		Some(&plugin.string_table.name)

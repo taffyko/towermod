@@ -267,15 +267,15 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_object_types() -> Vec<i32> {
 	selectors::get_object_types().await
 }
-#[command] pub async fn get_object_type(id: i32) -> Option<cstc_editing::EdObjectType> {
+#[command] pub async fn get_object_type(id: i32) -> Option<serde_json::Value> {
 	let object_type = selectors::get_object_type(id).await?;
-	let plugin_name = selectors::select_editor_plugin_name(object_type.plugin_id).await?;
-	let value = serde_json::value::to_value(object_type).ok()?;
+	let plugin_name = select!(selectors::select_editor_plugin_name(object_type.plugin_id), |r| r.cloned()).await;
+	let mut value = serde_json::value::to_value(object_type).ok()?;
 	{
 		let value = value.as_object_mut()?;
-		value.insert(String::from("pluginName"), plugin_name);
+		value.insert(String::from("pluginName"), plugin_name.into());
 	}
-	todo!()
+	Some(value)
 }
 #[command] pub async fn search_object_types(options: SearchOptions) -> Vec<(i32, String)> {
 	selectors::search_object_types(options).await

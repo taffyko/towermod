@@ -29,12 +29,6 @@ export function IdLinkArray(props: { lookups: UniqueObjectLookup[], onChange?: (
 	return <InspectorArray pinfo={pinfo} getValueComponent={(pinfo) => <IdLink lookup={pinfo.value as unknown as UniqueObjectLookup} />}/>
 }
 
-export function PluginName(props: { pluginId: number }) {
-	const { pluginId } = props
-	const { data: plugin } = api.useGetEditorPluginQuery(pluginId)
-	return plugin?.stringTable.name
-}
-
 export function ColorPicker(props: { value: int, onChange: (v: int) => void }) {
 	// TODO
 }

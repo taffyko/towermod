@@ -1,46 +1,18 @@
-import { store, actions, dispatch, useAppSelector } from "@/redux";
+import { actions, dispatch } from "@/redux";
 import { useObjectDisplayName, useObjectIcon } from "@/appUtil";
-import { UniqueObjectLookup, int, useStateRef } from "@/util";
+import { UniqueObjectLookup, int } from "@/util";
 import { Button } from "@/components/Button";
 import { SpinBox } from "@/components/SpinBox";
 import { api } from "@/api";
-import { ObjectType } from "@towermod";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { ComboboxButton } from "@/components/Combobox";
-import { LoadContainer } from "@/components/LoadContainer";
-import clsx from "clsx";
-
-function Icon(props: { src?: string | null }) {
-	const { src } = props
-	const [loading, setLoading] = useState(true)
-	useEffect(() => {
-		setLoading(true)
-	}, [src])
-	if (!src && !loading) {
-		console.log('b', src, loading)
-	}
-	return <>
-		<img
-			onLoad={(e) => { if (src) {
-				console.log(e.currentTarget.src)
-				setLoading(false)
-			}}}
-			className={clsx(
-				'h-[32px] w-[32px] object-cover',
-				// (!src && !loading) && 'hidden',
-				(!src || loading) ? 'opacity-0' : 'transition-opacity ease-[cubic-bezier(0,0.1,0,1)] duration-250',
-			)}
-			src={src ?? undefined}
-		/>
-	</>
-}
+import { Icon } from "@/components/Icon";
 
 export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
 	const { lookup, onChange } = props;
 	const displayName = useObjectDisplayName(lookup)
-	const { data: url } = useObjectIcon(lookup)
-	const hasIcon = lookup._type === 'ObjectType'
+	const { data: url, hasIcon } = useObjectIcon(lookup)
 
 	return <div className="hbox gap">
 		{ onChange ?
@@ -48,7 +20,7 @@ export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: Uniqu
 		:
 			<Button
 				onClick={() => { dispatch(actions.setOutlinerValue(lookup)) }}
-				icon={hasIcon ? <Icon src={url} /> : null}
+				icon={<Icon src={url} noReflow={hasIcon} className="w-[32px] h-[32px]"/>}
 			>
 				 {displayName}
 			</Button>

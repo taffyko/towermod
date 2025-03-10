@@ -4,7 +4,7 @@ import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorK
 import { IdLink } from './IdLink';
 import { ImageLink } from './ImageLink';
 import { DisableShaderWhen, FpsMode, LayerSamplerMode, LayerType, ResizeMode, SamplerMode, SimulateShadersMode, TextRenderingMode, TextureLoadingMode, VariableType } from '@towermod';
-import { ObjectInstances, PluginName } from './MiscInspectorComponents';
+import { ObjectInstances } from './MiscInspectorComponents';
 import { SpinBox } from '@/components/SpinBox';
 
 
@@ -44,7 +44,7 @@ export function getCustomProperties(objPinfo: ObjectPropertyInfo): string[] | un
 	const type = objPinfo.value['_type']
 	switch (type) {
 		case 'ObjectType':
-			return ['instances', 'plugin']
+			return ['instances']
 	}
 	return undefined
 }
@@ -82,8 +82,6 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 						return <Suspense fallback={<SpinBox />}>
 							<ObjectInstances objectType={obj} />
 						</Suspense>
-					case 'plugin':
-						return <PluginName pluginId={obj.pluginId} />
 				}
 			break; case 'Behavior':
 				switch (key) {
@@ -190,6 +188,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			override(type, {
 				id: { type: 'int', readonly: true },
 				pluginId: { hidden: true },
+				pluginName: { readonly: true },
 				descriptors: { hidden: true, },
 				privateVariables: { valueTypes: ['VariableType'], readonly: true },
 				destroyWhen: { type: 'DisableShaderWhen' }

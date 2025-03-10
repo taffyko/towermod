@@ -15,7 +15,7 @@ import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject, towermodObjectIdsEqual } from '@/util';
-import { QueryScopeFn, useObjectDisplayName, useQueryScope } from '@/appUtil';
+import { QueryScopeFn, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';
@@ -25,6 +25,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { Select } from '@/components/Select';
 import { createSelector } from '@reduxjs/toolkit';
 import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu';
+import { Icon } from '@/components/Icon';
 
 function getObjChildren(obj: UniqueObjectLookup, query: QueryScopeFn | null): undefined | UniqueObjectLookup[] {
 	switch (obj._type) {
@@ -130,6 +131,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const selectable = !!obj;
 
 	const objName = useObjectDisplayName(obj)
+	const { data: icon, hasIcon } = useObjectIcon(obj)
 	const name = nameOverride ?? objName
 	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
 
@@ -138,6 +140,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	if (!name) {
 		return <div className="opacity-0" />
 	}
+
 
 	return <div
 		className={`
@@ -172,6 +175,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 				/>
 			</div>
 		)}
+		<Icon noReflow={hasIcon} src={icon} className="h-[25px] w-[25px]" />
 		<div style={defaultTextStyle}>{name}</div>
 	</div>
 };
