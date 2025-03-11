@@ -141,16 +141,22 @@ export function useStateRef<T>() {
 }
 
 /**
- * Run only once on initial mount, even during development
+ * Run only once on mount, and run cleanup only once on unmount - even during development
  * (for edge-cases where StrictMode considerations can be safely disregarded)
  */
-export function useMountEffect(effect: () => void) {
-	const executedRef = useRef(false);
-	useEffect(() => {
-		if (executedRef.current) { return }
-		effect()
-		executedRef.current = true
-	}, []);
+export function useMountEffect(effect: React.EffectCallback): void {
+	if (import.meta.env.PROD) {
+		useEffect(effect, [])
+	} else {
+		const strictModeMount = useRef(false);
+		useEffect(() => {
+			if (!strictModeMount.current) {
+				strictModeMount.current = true
+				return
+			}
+			return effect()
+		}, []);
+	}
 }
 
 export function useMiniEvent<T>(event: MiniEvent<T> | null | undefined, cb: (e: T) => void, deps: React.DependencyList) {

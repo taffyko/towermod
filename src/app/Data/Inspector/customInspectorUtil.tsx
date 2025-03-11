@@ -44,7 +44,7 @@ export function getCustomProperties(objPinfo: ObjectPropertyInfo): string[] | un
 	const type = objPinfo.value['_type']
 	switch (type) {
 		case 'ObjectType':
-			return ['instances']
+			return ['instances', 'animation']
 	}
 	return undefined
 }

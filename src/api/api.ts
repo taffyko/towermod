@@ -16,7 +16,7 @@ export const baseApi = createApi({
 	reducerPath: 'api',
 	baseQuery: customBaseQuery, // Base URL for API calls
 	tagTypes,
-	keepUnusedDataFor: 60,
+	keepUnusedDataFor: 1,
 	endpoints: (builder) => ({
 		getFile: builder.query<Blob | null, string | null | undefined>({
 			query: async (path) => {

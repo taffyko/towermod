@@ -3,6 +3,7 @@
 	color: var(--color-text);
 	border-radius: var(--border-radius);
 	font-family: var(--font-monospace);
+	width: var(--button-width);
 
 	&:not(:disabled) {
 		border: solid 1px var(--color-bg-highlight);

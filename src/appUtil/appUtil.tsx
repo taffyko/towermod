@@ -5,7 +5,7 @@ import { openModal } from "@/app/Modal";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { awaitRtk } from "@/api/helpers";
 import { toast } from "@/app/Toast";
-import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, useRerender } from "@/util";
+import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, useMountEffect, useRerender } from "@/util";
 import { assertUnreachable } from "@/util";
 import { ApiEndpointQuery, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -59,13 +59,13 @@ export function useQueryScope(): [QueryScopeFn] {
 	}
 
 	// Unsubscribe everything on unmount
-	useEffect(() => {
+	useMountEffect(() => {
 		return () => {
 			for (const [, , promise] of Object.values(endpointsRef.current)) {
 				promise.unsubscribe()
 			}
 		}
-	}, [endpointsRef])
+	})
 
 	const query = useCallback<QueryScopeFn>((endpoint, arg, queryName) => {
 		const key = defaultSerializeQueryArgs({ endpointName: endpoint.name, queryArgs: arg, endpointDefinition: null as any})

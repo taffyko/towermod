@@ -17,11 +17,6 @@ export function Icon(props: {
 			setLoading(el.complete)
 		}
 	}, [src, el])
-	// useEffect(() => {
-	// 	if (el?.complete) {
-	// 		setLoading(false)
-	// 	}
-	// }, [el])
 	return <>
 		<img
 			ref={setEl}
