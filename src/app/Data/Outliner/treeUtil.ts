@@ -1,3 +1,4 @@
+import { getObjectStringId } from '@/util';
 import { createContext } from 'react';
 import {
 	FixedSizeNodePublicState,
@@ -93,3 +94,5 @@ export function filterTree(tree: VTree, ids: Set<string>) {
 }
 
 export const TreeContext = createContext<VTree | null>(null)
+
+export const getTreeItemId = getObjectStringId

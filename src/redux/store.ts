@@ -6,7 +6,7 @@ import { useStore, useSelector, useDispatch } from 'react-redux';
 const rootReducer = combineSlices(...slices, api)
 export const store = configureStore({
 	reducer: rootReducer,
-	middleware: (gdm) => gdm({ serializableCheck: false }).concat(api.middleware),
+	middleware: (gdm) => gdm({ immutableCheck: false, serializableCheck: false }).concat(api.middleware),
 })
 
 export const dispatch = store.dispatch;

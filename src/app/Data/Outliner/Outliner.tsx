@@ -11,7 +11,7 @@ import {
 import { useImperativeHandle, useStateRef } from '@/util/hooks';
 import { actions, dispatch, useAppSelector } from '@/redux';
 import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util/util';
-import { jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
+import { getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject, towermodObjectIdsEqual } from '@/util';
@@ -22,19 +22,22 @@ import arrowRightImg from '@/icons/arrowRight.svg';
 import { api } from '@/api';
 import { LineEdit } from '@/components/LineEdit';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { Select } from '@/components/Select';
 import { createSelector } from '@reduxjs/toolkit';
 import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu';
 import { Icon } from '@/components/Icon';
 
 function getObjChildren(obj: UniqueObjectLookup, query: QueryScopeFn | null): undefined | UniqueObjectLookup[] {
 	switch (obj._type) {
-		case 'Layout':
-			return query?.(api.endpoints.getLayoutLayers, obj.name).data ?? []
-		case 'LayoutLayer':
-			return query?.(api.endpoints.getObjectInstances, obj.id).data ?? []
-		case 'Animation':
-			return query?.(api.endpoints.getAnimationChildren, obj.id).data ?? []
+		case 'Layout': {
+			const queryName = `getObjChildren.${getTreeItemId(obj)}`
+			return query?.(api.endpoints.getLayoutLayers, obj.name, queryName).data ?? []
+		} case 'LayoutLayer': {
+			const queryName = `getObjChildren.${getTreeItemId(obj)}`
+			return query?.(api.endpoints.getObjectInstances, obj.id, queryName).data ?? []
+		} case 'Animation': {
+			const queryName = `getObjChildren.${getTreeItemId(obj)}`
+			return query?.(api.endpoints.getAnimationChildren, obj.id, queryName).data ?? []
+		}
 	}
 }
 
@@ -87,35 +90,6 @@ const getNodeData = (
 	}
 };
 
-const getTreeItemId = (obj: UniqueObjectLookup) => {
-	const objType = obj._type;
-	let id: string | number
-	switch (objType) {
-		case 'Layout':
-			id = obj.name
-		break; case 'LayoutLayer':
-			id = obj.id
-		break; case 'ObjectInstance':
-			id = obj.id
-		break; case 'Animation':
-			id = obj.id
-		break; case 'Behavior':
-			id = `${obj.objectTypeId}-${obj.movIndex}`
-		break; case 'Container':
-			id = obj.id
-		break; case 'Family':
-			id = obj.name
-		break; case 'ObjectType':
-			id = obj.id
-		break; case 'ObjectTrait':
-			id = obj.name
-		break; case 'AppBlock':
-			id = ''
-		break; default:
-			assertUnreachable(objType, obj)
-	}
-	return `${obj._type}-${id}`
-}
 
 const defaultTextStyle = {marginLeft: 10};
 const defaultButtonStyle = {fontFamily: 'Courier New'};

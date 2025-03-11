@@ -5,9 +5,9 @@ import { openModal } from "@/app/Modal";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { awaitRtk } from "@/api/helpers";
 import { toast } from "@/app/Toast";
-import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject } from "@/util";
+import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, useRerender } from "@/util";
 import { assertUnreachable } from "@/util";
-import { ApiEndpointQuery, QueryDefinition, skipToken } from "@reduxjs/toolkit/query";
+import { ApiEndpointQuery, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 export async function saveProject() {
@@ -40,40 +40,59 @@ export async function installMods(files: string[]) {
 }
 
 // return type: { data: T, isLoading: boolean, isError: boolean, isSuccess: boolean, endpointName: string, error: any,  }
-export type QueryScopeFn = <QueryArg, Endpoint extends ApiEndpointQuery<QueryDefinition<QueryArg, any, any, any>, any>>(endpoint: Endpoint, arg: QueryArg) => ReturnType<ReturnType<Endpoint['select']>> & { isLoading: boolean, error: any }
-// allows a component to dynamically subscribe to RTK endpoints without using the generated hooks
+export type QueryScopeFn = <QueryArg, Endpoint extends ApiEndpointQuery<QueryDefinition<QueryArg, any, any, any>, any>>(endpoint: Endpoint, arg: QueryArg, queryName: string) => ReturnType<ReturnType<Endpoint['select']>> & { isLoading: boolean, error: any }
+/**
+ * Allows a component to dynamically subscribe to RTK endpoints without using the generated hooks.
+ *
+ * Each query initiated with useQueryScope must be given a `queryName`
+ * If a query is initiated with the same queryName but different parameters, the previous query will be unsubscribed.
+ */
 export function useQueryScope(): [QueryScopeFn] {
 	type QueryEndpoint = ApiEndpointQuery<QueryDefinition<any, any, any, any, any>, any>
 	const [selection, setSelection] = useState<Record<string, unknown>>({})
 	const selectionRef = useRef<Record<string, unknown>>({})
+	const queriesRef = useRef<Record<string, string>>({})
+	const endpointsRef = useRef<Record<string, [endpoint: QueryEndpoint, arg: any, promise: any, select: any, rendersSinceLastUse: number]>>({});
 
-	// subscriptions list is reset each time the selector updates (any of the query results update)
-	// then is populated by any subsequent endpoints that are called
-	const endpoints = useMemo<Record<string, [QueryEndpoint, any, any, any]>>(() => {
-		return {}
-	}, [selection])
+	for (const value of Object.values(endpointsRef.current)) {
+		value[4]++;
+	}
+
+	// Unsubscribe everything on unmount
 	useEffect(() => {
 		return () => {
-			for (const [_endpoint, _arg, promise] of Object.values(endpoints)) {
+			for (const [, , promise] of Object.values(endpointsRef.current)) {
 				promise.unsubscribe()
 			}
 		}
-	}, [endpoints])
+	}, [endpointsRef])
 
-	const query = useCallback<QueryScopeFn>((endpoint, arg) => {
-		const key = JSON.stringify({ [endpoint.name]: arg })
-		if (!(key in endpoints)) {
-			endpoints[key] = [endpoint, arg, dispatch(endpoint.initiate(arg)), endpoint.select(arg)]
+	const query = useCallback<QueryScopeFn>((endpoint, arg, queryName) => {
+		const key = defaultSerializeQueryArgs({ endpointName: endpoint.name, queryArgs: arg, endpointDefinition: null as any})
+		if (!(key in endpointsRef.current)) {
+			endpointsRef.current[key] = [endpoint, arg, dispatch(endpoint.initiate(arg)), endpoint.select(arg), 0]
+		} else {
+			endpointsRef.current[key][4] = 0
 		}
+
+		// If a query was initiated with an existing queryName but with new params, unsubscribe the old query
+		const oldKey = queriesRef.current[queryName]
+		if (oldKey && oldKey != key) {
+			const promise = endpointsRef.current[oldKey]?.[2]
+			promise?.unsubscribe();
+			delete endpointsRef.current[oldKey]
+		}
+		queriesRef.current[queryName] = key
+
 		const state = store.getState();
-		const select = endpoints[key][3]
+		const select = endpointsRef.current[key][3]
 		return select(state as any) as any
-	}, [endpoints])
+	}, [endpointsRef, selection])
 
 	useSyncExternalStore(store.subscribe, () => {
 		const state = store.getState();
 		const selection: Record<string, unknown> = {};
-		for (const [key, [_endpoint, _arg, _promise, select]] of Object.entries(endpoints)) {
+		for (const [key, [_endpoint, _arg, _promise, select]] of Object.entries(endpointsRef.current)) {
 			selection[key] = select(state as any)
 		}
 		// trigger re-render if the data from *any* of the submitted queries has updated
@@ -117,8 +136,12 @@ export async function updateTowermodObject<T extends UniqueTowermodObject>(obj: 
 	await awaitRtk(dispatch(endpoint.initiate(obj)))
 }
 
-export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined, query?: QueryScopeFn): { data: ObjectForType<T['_type']> | undefined, isLoading: boolean } {
-	if (!query) {
+export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined, scope?: { query: QueryScopeFn, queryName: string }): { data: ObjectForType<T['_type']> | undefined, isLoading: boolean } {
+	let query: QueryScopeFn;
+	let queryName = 'useTowermodObject'
+	if (scope) {
+		({ query, queryName } = scope)
+	} {
 		[query] = useQueryScope()
 	}
 
@@ -140,7 +163,7 @@ export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefin
 	}
 
 	if (obj) {
-		const info = query(endpoint, obj)
+		const info = query(endpoint, obj, queryName)
 		return info
 	}
 	return { data: undefined, isLoading: false }
@@ -148,22 +171,23 @@ export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefin
 
 export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined): { hasIcon: boolean | null, data: string | undefined, isLoading: boolean } {
 	const [query] = useQueryScope()
-	const { data: obj, isLoading: objIsLoading } = useTowermodObject(objLookup ?? undefined, query);
+	const queryName = 'useObjectIcon'
+	const { data: obj, isLoading: objIsLoading } = useTowermodObject(objLookup ?? undefined, { query, queryName: 'useTowermodObject' });
 	let imageId = null
 	let hasIcon = null
 	let imageIdLoading = false
 	switch (obj?._type) {
 		case 'ObjectType':
 			hasIcon = obj.pluginName === 'Sprite';
-			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id))
+			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id, queryName))
 		break; case 'Container':
-			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id))
+			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id, queryName))
 		break; case 'Behavior':
-			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.objectTypeId))
+			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.objectTypeId, queryName))
 		break; case 'ObjectInstance':
-			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectInstanceImageId, obj.id))
+			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectInstanceImageId, obj.id, queryName))
 		break; case 'Animation':
-			const { data: animation, isLoading } = query(api.endpoints.getAnimation, { id: obj.id })
+			const { data: animation, isLoading } = query(api.endpoints.getAnimation, { id: obj.id }, queryName)
 			imageIdLoading = isLoading
 			imageId = animation?.frames[0]?.imageId
 	}
