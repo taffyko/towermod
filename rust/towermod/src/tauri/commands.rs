@@ -364,10 +364,7 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 	select(selectors::select_animation_children(id)).await
 }
 #[command] pub async fn get_animation(id: i32) -> Option<towermod_cstc::Animation> {
-	select!(selectors::select_animation(id), |r| r.map(|a| {
-		let towermod_cstc::Animation { id, name, tag, speed, is_angle, angle, repeat_count, repeat_to, ping_pong, frames, sub_animations: _ } = a;
-		towermod_cstc::Animation { id: id.clone(), name: name.clone(), tag: tag.clone(), speed: speed.clone(), is_angle: is_angle.clone(), angle: angle.clone(), repeat_count: repeat_count.clone(), repeat_to: repeat_to.clone(), ping_pong: ping_pong.clone(), frames: frames.clone(), sub_animations: Default::default() }
-	})).await
+	select!(selectors::select_animation(id), |r| r.cloned()).await
 }
 #[command] pub async fn update_animation(animation: towermod_cstc::Animation) {
 	dispatch(DataAction::UpdateAnimation(animation)).await

@@ -27,8 +27,8 @@ export const dataApi = baseApi.injectEndpoints({
 				revokeObjectUrl(info.data)
 			},
 		}),
-		getImageMetadata: builder.query<ImageMetadata | null, number>({
-			query: (id) => invoke('get_image_metadata', { id }),
+		getImageMetadata: builder.query<ImageMetadata | null, { id: number }>({
+			query: (arg) => invoke('get_image_metadata', arg),
 			transformResponse: (r: ImageMetadata) => enhanceImageMetadata(r),
 			providesTags: (r) => r ? [{ type: 'ImageMetadata', id: r.id }] : []
 		}),

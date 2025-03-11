@@ -62,7 +62,7 @@ export default function Images() {
 function ImageEditing() {
 	const imageId = useAppSelector(s => s.app.imageId)
 	const { data: imgUrl } = api.useGetGameImageUrlQuery(imageId);
-	const { data: savedMetadata } = api.useGetImageMetadataQuery(imageId)
+	const { data: savedMetadata } = api.useGetImageMetadataQuery({ id: imageId })
 	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
 	const [setImageMetadata] = api.useSetImageMetadataMutation();
 	const { data: project } = api.useGetProjectQuery();

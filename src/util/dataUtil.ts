@@ -21,6 +21,7 @@ export type UniqueObjectLookup =
 	| Pick<Family, '_type' | 'name'>
 	| Pick<ObjectType, '_type' | 'id'>
 	| Pick<ObjectTrait, '_type' | 'name'>
+	| Pick<ImageMetadata, '_type' | 'id'>
 	| Pick<AppBlock, '_type'>
 export type ObjectForType<T extends TowermodObject['_type']> = Extract<TowermodObject, { _type: T }>
 export type LookupForType<T extends UniqueObjectLookup['_type']> = Extract<UniqueObjectLookup, { _type: T }>
@@ -92,8 +93,9 @@ export function enhanceObjectInstance(obj: ObjectInstance): ObjectInstance {
 export function enhanceAnimation<T extends Animation>(animation: T): T {
 	if (!animation) { return animation }
 	animation._type = 'Animation'
-	// @ts-ignore
-	delete animation.subAnimations;
+	for (const subAnimation of animation.subAnimations) {
+		enhanceAnimation(subAnimation)
+	}
 	for (const frame of animation.frames) {
 		frame._type = 'AnimationFrame'
 	}

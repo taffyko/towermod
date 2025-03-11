@@ -256,28 +256,6 @@ export const baseApi = createApi({
 	}),
 });
 
-export const dataApi = baseApi.injectEndpoints({
-	endpoints: (builder) => ({
-		getImageMetadata: builder.query<ImageMetadata | null, number>({
-			query: async (id) => {
-				const metadata: ImageMetadata = await invoke('get_image_metadata', { id }) ?? null
-				if (metadata) {
-					metadata._type = 'ImageMetadata'
-					for (const apoint of metadata.apoints) { apoint._type = 'ActionPoint' }
-				}
-				return metadata
-			},
-			providesTags: ['ImageMetadata']
-		}),
-		setImageMetadata: builder.mutation<void, ImageMetadata>({
-			query: async (data) => {
-				return await invoke('set_image_metadata', { data })
-			},
-			invalidatesTags: ['ImageMetadata']
-		}),
-	}),
-})
-
 async function _getFile(path: string): Promise<Uint8Array | null> {
 	const enc = new TextEncoder();
 	const bytes = enc.encode(JSON.stringify(path))

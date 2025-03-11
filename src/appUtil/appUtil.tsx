@@ -158,6 +158,7 @@ export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefin
 		break; case 'AppBlock': endpoint = api.endpoints.getAppBlock
 		break; case 'Layout': endpoint = api.endpoints.getLayout
 		break; case 'LayoutLayer': endpoint = api.endpoints.getLayoutLayer
+		break; case 'ImageMetadata': endpoint = api.endpoints.getImageMetadata
 		break; case undefined: endpoint = undefined
 		break; default: assertUnreachable(type)
 	}
@@ -186,6 +187,8 @@ export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined):
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.objectTypeId, queryName))
 		break; case 'ObjectInstance':
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectInstanceImageId, obj.id, queryName))
+		break; case 'ImageMetadata':
+			imageId = obj.id
 		break; case 'Animation':
 			const { data: animation, isLoading } = query(api.endpoints.getAnimation, { id: obj.id }, queryName)
 			imageIdLoading = isLoading
@@ -243,6 +246,8 @@ export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | unde
 			}
 		} case 'ObjectTrait':
 			return `Trait: ${obj.name}`
+		case 'ImageMetadata':
+			return `Image: ${obj.id}`
 		case 'AppBlock':
 			return 'Project Settings'
 		default:

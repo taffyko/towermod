@@ -2,9 +2,8 @@ import React, { Suspense } from 'react'
 import { TowermodObject } from "@/util";
 import type { AnyPropertyInfo, InspectorObjectValue, TypeNameToValue, InspectorKeyTypes, InspectorTypeName, ObjectPropertyInfo } from "./base/inspectorUtil";
 import { IdLink } from './IdLink';
-import { ImageLink } from './ImageLink';
-import { DisableShaderWhen, FpsMode, LayerSamplerMode, LayerType, ResizeMode, SamplerMode, SimulateShadersMode, TextRenderingMode, TextureLoadingMode, VariableType } from '@towermod';
-import { ObjectInstances } from './MiscInspectorComponents';
+import { DisableShaderWhen, FpsMode, LayerSamplerMode, LayerType, ObjectInstance, ResizeMode, SamplerMode, SimulateShadersMode, SpriteObjectData, TextRenderingMode, TextureLoadingMode, VariableType } from '@towermod';
+import { EditAnimations, ObjectInstances } from './MiscInspectorComponents';
 import { SpinBox } from '@/components/SpinBox';
 
 
@@ -44,7 +43,9 @@ export function getCustomProperties(objPinfo: ObjectPropertyInfo): string[] | un
 	const type = objPinfo.value['_type']
 	switch (type) {
 		case 'ObjectType':
-			return ['instances', 'animation']
+			return ['instances']
+		case 'ObjectInstance':
+			return ['animation']
 	}
 	return undefined
 }
@@ -67,14 +68,16 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 			case 'AnimationFrame':
 				switch (key) {
 					case 'imageId':
-						return <ImageLink id={pinfo.value as any} />
+						return <IdLink lookup={{ _type: 'ImageMetadata', id: pinfo.value as any }} onChange={onChange as any} />
 				}
 			break; case 'ObjectInstance':
 				switch (key) {
 					case 'objectTypeId':
 						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
-					// case 'privateVariables':
-						// return <PrivateVariables pinfo={pinfo as any} />
+					case 'animation':
+						if ('_type' in obj.data && obj.data._type === 'SpriteObjectData') {
+							return <EditAnimations objectInstance={obj as ObjectInstance<SpriteObjectData>} />
+						}
 				}
 			break; case 'ObjectType':
 				switch (key) {
@@ -117,8 +120,8 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 	return undefined
 }
 
-export function defaultValueForType<T extends InspectorTypeName>(type: T): undefined | (() => TypeNameToValue[T])
-export function defaultValueForType(type: InspectorTypeName): (() => any) {
+export function defaultValueForType<T extends InspectorTypeName>(type: T): undefined | (() => TypeNameToValue[T]) | undefined
+export function defaultValueForType(type: InspectorTypeName): (() => any) | undefined {
 	switch (type) {
 		case 'number': case 'int': case 'float': return () => 0
 		case 'string': return () => ""
@@ -129,7 +132,8 @@ export function defaultValueForType(type: InspectorTypeName): (() => any) {
 		case 'BehaviorControl': return (): TypeNameToValue['BehaviorControl'] => ({ _type: 'BehaviorControl', name: "name", vk: 0, player: 0 })
 		case 'GlobalVariable': return (): TypeNameToValue['GlobalVariable'] => ({ _type: 'GlobalVariable', name: "name", varType: 0, value: "" })
 	}
-	throw new Error(`No default value defined for ${type}`)
+	console.error(`No default value defined for ${type}`)
+	return undefined
 }
 
 /** Provides additional property type/metadata information for each type */
@@ -140,6 +144,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			override(type, {
 				id: { type: 'int', readonly: true },
 				frames: { valueTypes: ['AnimationFrame'] },
+				subAnimations: { valueTypes: ['Animation'] },
 				tag: { type: 'int' },
 				repeatCount: { type: 'int' },
 				repeatTo: { type: 'int' },
@@ -183,6 +188,10 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				height: { type: 'int' },
 				filter: { type: 'RgbColor' },
 				key: { type: 'int' },
+			})
+		break; case 'SpriteObjectData':
+			override(type, {
+				animation: { hidden: true }
 			})
 		break; case 'ObjectType':
 			override(type, {

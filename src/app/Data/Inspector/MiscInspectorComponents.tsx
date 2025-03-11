@@ -1,4 +1,4 @@
-import { ObjectType, int } from "@towermod";
+import { ObjectInstance, ObjectType, SpriteObjectData, int } from "@towermod";
 import { ArrayPropertyInfo } from "./base/inspectorUtil";
 import { api } from "@/api";
 import { lazy } from 'react'
@@ -8,6 +8,7 @@ import { UniqueObjectLookup } from "@/util";
 
 
 const InspectorArray = lazy(() => import('./base/Inspector').then(m => ({ default: m.InspectorArray })))
+const InspectorObject = lazy(() => import('./base/Inspector').then(m => ({ default: m.InspectorObject })))
 
 export function ObjectInstances(props: { objectType: ObjectType }) {
 	const { objectType } = props
@@ -31,4 +32,12 @@ export function IdLinkArray(props: { lookups: UniqueObjectLookup[], onChange?: (
 
 export function ColorPicker(props: { value: int, onChange: (v: int) => void }) {
 	// TODO
+}
+
+export function EditAnimations(props: {
+	objectInstance: ObjectInstance<SpriteObjectData>
+}) {
+	const { objectInstance } = props
+	const { data: anim } = api.useGetAnimationQuery({ id: objectInstance.data.animation })
+	return anim ? <InspectorObject value={anim} onChange={() => {}} /> : null
 }

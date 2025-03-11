@@ -57,7 +57,7 @@ pub fn select_object_type_image_id(object_type_id: i32) -> impl Fn(&State) -> Op
 fn object_instance_image_id(s: &State, instance: &EdObjectInstance) -> Option<i32> {
 	let towermod_cstc::ObjectData::Sprite(data) = &instance.data else { return None };
 	let anim_root = select_animation(data.animation)(s)?;
-	let anim_section = anim_root.sub_animations.iter().find(|a| a.name == data.start_anim)?;
+	let anim_section = anim_root.sub_animations.iter().find(|a| a.name == data.start_anim).or(anim_root.sub_animations.first())?;
 	let first_anim_angle = anim_section.sub_animations.first()?;
 	let frame = first_anim_angle.frames.get((data.start_frame - 1) as usize)?;
 	Some(frame.image_id)

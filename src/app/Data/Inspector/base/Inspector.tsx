@@ -16,6 +16,7 @@ import { Toggle } from "@/components/Toggle"
 import Style from '../Inspector.module.scss'
 import { Portal } from "@/components/Portal"
 import { useStateRef } from "@/util"
+import Text from '@/components/Text'
 
 function KeyValuePair(props: { label: React.ReactNode, value: React.ReactNode }) {
 	const { label, value } = props
@@ -56,7 +57,7 @@ export const InspectorObject = (props: {
 	const propertyComponents: React.ReactNode[] = useMemo(() => propertyInfos.map(pinfo => {
 		if (pinfo.hidden) { return null }
 		const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
-		return <KeyValuePair key={pinfo.key} label={pinfo.key} value={valueComponent} />
+		return <KeyValuePair key={pinfo.key} label={<Text>{pinfo.key}</Text>} value={valueComponent} />
 	}), [objPinfo.value])
 
 	return <div className={`${Style.grid} ${root ? Style.root : ''}`}>
@@ -99,7 +100,7 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 		valueComponent = getValComponent(pinfo as any, (v) => { onElementChange(pinfo.key, v) })
 
 		return <KeyValuePair key={i} value={valueComponent} label={<>
-			{arrPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeElement(i)} />} {i}
+			{arrPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeElement(i)} />} <Text>{i}</Text>
 		</>} />
 	}), [arrPinfo.value])
 
@@ -181,7 +182,7 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 				const pinfo = inferPropertyInfoFromDictionaryValue(val, dictPinfo, key)
 				const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
 				return <KeyValuePair key={pinfo.key} value={valueComponent} label={<>
-					{pinfo.key}:
+					<Text>{pinfo.key}:</Text>
 					{dictPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />}
 				</>} />
 	}), [dictPinfo.value])

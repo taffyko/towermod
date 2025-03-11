@@ -16,7 +16,7 @@ export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: Uniqu
 
 	return <div className="hbox gap">
 		{ onChange ?
-			<LookupEdit lookup={lookup} onChange={onChange} />
+			<LookupEdit name={displayName} icon={url} lookup={lookup} onChange={onChange} />
 		:
 			<Button
 				onClick={() => { dispatch(actions.setOutlinerValue(lookup)) }}
@@ -29,13 +29,18 @@ export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: Uniqu
 }
 
 
-function LookupEdit(props: { lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
-	const { lookup, onChange } = props;
+function LookupEdit(props: { name?: string, icon?: string, lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
+	const { name, icon, lookup, onChange } = props;
 	switch (lookup._type) {
-		case 'ObjectInstance':
-			return <SpinBox small value={lookup.id} onChange={(v) => onChange?.({ ...lookup, id: v })} />
 		case 'ObjectType':
 			return <ObjectTypeEdit value={lookup.id} onChange={(v) => onChange?.({ ...lookup, id: v })} />
+		default:
+			if ('id' in lookup) {
+				return <>
+					<Icon src={icon} className="h-[32px] aspect-square" />
+					<SpinBox small value={lookup.id} onChange={(v) => onChange?.({ ...lookup, id: v })} />
+				</>
+			}
 	}
 	return undefined
 }

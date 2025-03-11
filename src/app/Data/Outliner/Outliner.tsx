@@ -149,7 +149,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 			</div>
 		)}
 		<Icon noReflow={hasIcon} src={icon} />
-		<div style={defaultTextStyle}>{name}</div>
+		<div className="text" style={defaultTextStyle}>{name}</div>
 	</div>
 };
 

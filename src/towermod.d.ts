@@ -32,6 +32,7 @@ export interface Animation {
   repeatTo: int
   pingPong: boolean
   frames: Array<AnimationFrame>
+	subAnimations: Animation[]
   _type: 'Animation'
 }
 
@@ -285,7 +286,9 @@ export interface ModInfo {
 
 export type ModType = 'FilesOnly' | 'Legacy' | 'BinaryPatch';
 
-export interface ObjectInstance {
+export type ObjectInstanceData = TextObjectData | SpriteObjectData | number[]
+
+export interface ObjectInstance<T extends ObjectInstanceData = ObjectInstanceData> {
   id: int
   objectTypeId: int
   x: int
@@ -295,7 +298,7 @@ export interface ObjectInstance {
   angle: float
   filter: int
   privateVariables: Record<string, number | string>
-	data: TextObjectData | SpriteObjectData | number[]
+	data: T
   key: int
   _type: 'ObjectInstance'
 }

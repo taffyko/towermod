@@ -3,7 +3,7 @@ export function Text(props: React.ComponentProps<'span'> & {
 	className?: string,
 }) {
 	const { className, children, ...htmlProps } = props;
-	return <span {...htmlProps} className={`text ${className || ''}`}>{props.children}</span>
+	return <span {...htmlProps} className={`text ${className || ''}`}>{children}</span>
 }
 
 export default Text

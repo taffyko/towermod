@@ -61,7 +61,7 @@ export const ModListItem = (props: {
 	>
 			<>
 				{iconImg ? <img className={Style.icon} src={iconImg} /> : <div className={Style.icon} /> }
-				{ mod.error ? <span className={Style.error}>{fileName}</span> : <span>{mod.displayName}</span> }
+				{ mod.error ? <span className={Style.error}>{fileName}</span> : <Text>{mod.displayName}</Text> }
 			</>
 	</div>
 }
