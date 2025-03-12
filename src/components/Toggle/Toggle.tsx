@@ -4,6 +4,7 @@ import checkboxOffImg from '@/images/checkboxOff.png'
 import { useTwoWayBinding } from "@/util"
 import Style from './Toggle.module.scss'
 import clsx from "clsx"
+import Text from '@/components/Text'
 
 export function Toggle(props: {
 	as?: 'div' | 'span' | 'button',
@@ -25,6 +26,6 @@ export function Toggle(props: {
 		className={clsx(Style.toggle, checked && Style.checked)}
 	>
 		<img src={src} />
-		{children}
+		<Text>{children}</Text>
 	</Element>
 }

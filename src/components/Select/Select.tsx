@@ -30,24 +30,23 @@ export function Select2(props: Omit<React.ComponentProps<'div'>, 'onChange'> & {
 }
 
 type Choice = { name: string } | string
-interface BaseSelectProps {
+interface BaseSelectProps<T extends Choice> {
 	multiple?: boolean,
-	options: Choice[],
+	options: T[],
 	label?: string,
 	disabled?: boolean,
 }
-export interface MultiSelectProps extends BaseSelectProps {
-	multiple: true,
-	value?: Choice[],
-	onChange?: (value: Choice[]) => void,
-}
-export interface SelectProps extends BaseSelectProps {
+export type SelectProps<T extends Choice> = BaseSelectProps<T> & ({
 	multiple?: false,
-	value?: Choice | null,
-	onChange?: (value: Choice) => void,
-}
+	value?: T | null,
+	onChange?: (value: T) => void,
+} | {
+	multiple: true,
+	value?: T[],
+	onChange?: (value: T[]) => void,
+})
 
-export function Select<T extends SelectProps | MultiSelectProps>(props: T) {
+export function Select<T extends Choice>(props: SelectProps<T>) {
 	const { options, multiple, value: externalValue, onChange: externalOnChange, label } = props
 	const disabled = !!props.disabled || options.length === 0
 

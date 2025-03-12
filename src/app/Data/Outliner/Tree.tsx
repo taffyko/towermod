@@ -17,6 +17,7 @@ export const TreeComponent = <
 			{({height}) => (
 				<div style={{ height: 100 }}>
 					<TreeContext.Provider value={treeRef.current}>
+						{/*@ts-ignore*/}
 						<FixedSizeTree
 							async
 							overscanCount={10}

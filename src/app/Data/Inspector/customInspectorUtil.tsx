@@ -144,7 +144,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 			override(type, {
 				id: { type: 'int', readonly: true },
 				frames: { valueTypes: ['AnimationFrame'] },
-				subAnimations: { valueTypes: ['Animation'] },
+				subAnimations: { valueTypes: ['Animation'], hidden: true },
 				tag: { type: 'int' },
 				repeatCount: { type: 'int' },
 				repeatTo: { type: 'int' },

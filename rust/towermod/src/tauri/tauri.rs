@@ -114,6 +114,8 @@ pub fn run() {
 				commands::get_root_animations,
 				commands::get_animation_children,
 				commands::get_animation,
+				commands::get_outliner_object_types,
+				commands::get_object_type_animation,
 				commands::update_animation,
 
 				commands::get_behaviors,

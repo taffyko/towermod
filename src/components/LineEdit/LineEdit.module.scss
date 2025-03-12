@@ -1,21 +1,28 @@
 .lineEdit {
 	position: relative;
+	border: solid 1px var(--color-border-alternate);
+	border-radius: 5px;
+	background-color: var(--color-bg);
+	&.disabled {
+		border-color: var(--color-border-disabled);
+		color: var(--color-text-disabled);
+		background-color: var(--color-bg-disabled);
+	}
+
 	input {
 		width: 100%;
 		box-sizing: border-box !important;
-		border: solid 1px var(--color-border-alternate);
 		padding-left: var(--gap);
 		padding-right: var(--internal-children-width);
-		background-color: var(--color-bg);
-		border-radius: 5px;
-		color: var(--color-text);
 		line-height: var(--button-height);
+		color: var(--color-text);
+	}
 
-		&:disabled {
-			border-color: var(--color-border-disabled);
-			color: var(--color-text-disabled);
-			background-color: var(--color-bg-disabled);
-		}
+	.placeholder {
+		position: absolute;
+		left: var(--gap);
+		line-height: var(--button-height);
+		color: var(--color-text-subtle);
 	}
 }
 @layer base {

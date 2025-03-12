@@ -366,6 +366,14 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_animation(id: i32) -> Option<towermod_cstc::Animation> {
 	select!(selectors::select_animation(id), |r| r.cloned()).await
 }
+#[command] pub async fn get_object_type_animation(id: i32) -> Option<towermod_cstc::Animation> {
+	select!(selectors::select_object_type_animation(id), |r| r.cloned()).await
+}
+#[command] pub async fn get_outliner_object_types(skip: usize, take: usize) -> Vec<(cstc_editing::EdObjectType, Option<towermod_cstc::Animation>)> {
+	select!(selectors::select_outliner_object_types(skip, take), |l| {
+		l.into_iter().map(|(obj, anim)| (obj.clone(), anim.cloned())).collect()
+	}).await
+}
 #[command] pub async fn update_animation(animation: towermod_cstc::Animation) {
 	dispatch(DataAction::UpdateAnimation(animation)).await
 }

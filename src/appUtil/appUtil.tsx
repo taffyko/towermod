@@ -192,7 +192,10 @@ export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined):
 		break; case 'Animation':
 			const { data: animation, isLoading } = query(api.endpoints.getAnimation, { id: obj.id }, queryName)
 			imageIdLoading = isLoading
-			imageId = animation?.frames[0]?.imageId
+			if (animation) {
+				const a = animation.isAngle ? animation : animation.subAnimations[0]
+				imageId = a.frames[0]?.imageId
+			}
 	}
 	hasIcon = hasIcon || imageId != null
 	const { data: url, isLoading: urlLoading } = api.useGetGameImageUrlQuery(imageId ?? skipToken)
@@ -228,7 +231,10 @@ export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | unde
 			const objectName = objType.name
 			return `Instance: ${pluginName} (${objectName}: ${obj.id})`
 		} case 'Animation':
-			return `Animation ${obj.id}: ${obj.name}`
+			if (obj.isAngle) {
+				return `Angle ${obj.angle}°`
+			}
+			return `Animation: ${obj.name}`
 		case 'Behavior':
 			return `Behavior: ${obj.name}`
 		case 'Container':

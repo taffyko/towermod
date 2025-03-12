@@ -3,7 +3,7 @@
 use std::{collections::HashMap};
 use crate::{app::state::{app_state::State, select}, cstc_editing::{EdContainer, EdFamily, EdLayout, EdLayoutLayer, EdObjectInstance, EdObjectType}, select, serde};
 use ::serde::{Deserialize, Serialize};
-use towermod_cstc::{plugin::PluginData, Animation, Behavior, Container, Family, ImageMetadata, ObjectTrait, ObjectType};
+use towermod_cstc::{plugin::PluginData, Animation, Behavior, Container, Family, ImageMetadata, ObjectData, ObjectTrait, ObjectType};
 
 
 pub fn select_editor_plugin(plugin_id: i32) -> impl Fn(&State) -> Option<&PluginData> {
@@ -263,7 +263,7 @@ pub async fn search_layout_layers(options: SearchOptions) -> Vec<(i32, String)> 
 }
 
 pub fn select_root_animations() -> impl Fn(&State) -> Vec<i32> {
-	move |s| s.data.animations.iter().map(|a| a.id).collect()
+	move |s| s.data.animations.values().map(|a| a.id).collect()
 }
 pub fn select_animation_children(animation_id: i32) -> impl Fn(&State) -> Vec<i32> {
 	move |s| {
@@ -273,28 +273,53 @@ pub fn select_animation_children(animation_id: i32) -> impl Fn(&State) -> Vec<i3
 }
 pub fn select_animation(animation_id: i32) -> impl Fn(&State) -> Option<&Animation> {
 	move |s| {
-		fn search<'a>(animations: &'a Vec<Animation>, id: i32) -> Option<&'a Animation> {
+		fn search<'a>(animations: impl Iterator<Item = &'a Animation>, id: i32) -> Option<&'a Animation> {
 			for a in animations {
 				if a.id == id { return Some(a) }
-				if let Some(child) = search(&a.sub_animations, id) { return Some(child) }
+				if let Some(child) = search(a.sub_animations.iter(), id) { return Some(child) }
 			}
 			None
 		}
-		search(&s.data.animations, animation_id)
+		search(s.data.animations.values(), animation_id)
 	}
 }
 pub fn select_animation_mut(animation_id: i32) -> impl Fn(&mut State) -> Option<&mut Animation> {
 	move |s| {
-		fn search<'a>(animations: &'a mut Vec<Animation>, id: i32) -> Option<&'a mut Animation> {
+		fn search<'a>(animations: impl Iterator<Item = &'a mut Animation>, id: i32) -> Option<&'a mut Animation> {
 			for a in animations {
 				if a.id == id { return Some(a) }
-				if let Some(child) = search(&mut a.sub_animations, id) { return Some(child) }
+				if let Some(child) = search(a.sub_animations.iter_mut(), id) { return Some(child) }
 			}
 			None
 		}
-		search(&mut s.data.animations, animation_id)
+		search(s.data.animations.values_mut(), animation_id)
 	}
 }
+pub fn select_object_type_animation(object_type_id: i32) -> impl Fn(&State) -> Option<&Animation> {
+	move |s| {
+		let plugin = select_object_type_plugin_name(object_type_id)(s)?;
+		if plugin != "Sprite" { return None }
+		let instance = select_object_type_first_instance(object_type_id)(s)?;
+		let ObjectData::Sprite(data) = &instance.data else { return None };
+		s.data.animations.get(&data.animation)
+	}
+}
+pub fn select_outliner_object_types(skip: usize, take: usize) -> impl Fn(&State) -> Vec<(&EdObjectType, Option<&Animation>)> {
+	move |s| {
+		let Some((sprite_plugin_id, _)) = s.data.editor_plugins.iter().find(|(_, p)| p.string_table.name == "Sprite") else { return vec![] };
+		s.data.object_types.values().skip(skip).take(take).map(|obj| {
+			if obj.plugin_id == *sprite_plugin_id {
+				let Some(instance) = select_object_type_first_instance(obj.id)(s) else { return Some((obj, None)) };
+				let ObjectData::Sprite(data) = &instance.data else { return None };
+				let animation = s.data.animations.get(&data.animation);
+				Some((obj, animation))
+			} else {
+				Some((obj, None))
+			}
+		}).filter_map(|o| o).collect()
+	}
+}
+
 pub fn select_animation_image_id(animation_id: i32) -> impl Fn(&State) -> Option<i32> {
 	move |s| {
 		let animation = select_animation(animation_id)(s)?;

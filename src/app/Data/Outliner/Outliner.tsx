@@ -14,7 +14,8 @@ import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util
 import { getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
-import { UniqueObjectLookup, UniqueTowermodObject, towermodObjectIdsEqual } from '@/util';
+import { UniqueObjectLookup, UniqueTowermodObject, LookupForType, towermodObjectIdsEqual } from '@/util';
+import { Animation } from '@/towermod'
 import { QueryScopeFn, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
@@ -26,7 +27,10 @@ import { createSelector } from '@reduxjs/toolkit';
 import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu';
 import { Icon } from '@/components/Icon';
 
-function getObjChildren(obj: UniqueObjectLookup, query: QueryScopeFn | null): undefined | UniqueObjectLookup[] {
+
+type OutlinerTowermodObject = Exclude<UniqueObjectLookup, LookupForType<'Animation'>> | Animation
+
+function getObjChildren(obj: OutlinerTowermodObject, query: QueryScopeFn | null): undefined | OutlinerTowermodObject[] {
 	switch (obj._type) {
 		case 'Layout': {
 			const queryName = `getObjChildren.${getTreeItemId(obj)}`
@@ -35,8 +39,11 @@ function getObjChildren(obj: UniqueObjectLookup, query: QueryScopeFn | null): un
 			const queryName = `getObjChildren.${getTreeItemId(obj)}`
 			return query?.(api.endpoints.getObjectInstances, obj.id, queryName).data ?? []
 		} case 'Animation': {
+			return obj.subAnimations
+		} case 'ObjectType': {
 			const queryName = `getObjChildren.${getTreeItemId(obj)}`
-			return query?.(api.endpoints.getAnimationChildren, obj.id, queryName).data ?? []
+			const rootAnim = query?.(api.endpoints.getObjectTypeAnimation, { id: obj.id }, queryName).data
+			return rootAnim?.subAnimations ?? []
 		}
 	}
 }
@@ -45,13 +52,13 @@ type OutlinerNodeData = FixedSizeNodeData &
 	{
 		name?: string;
 		nestingLevel: number;
-		obj: UniqueObjectLookup | null;
-		children?: UniqueObjectLookup[];
+		obj: OutlinerTowermodObject | null;
+		children?: OutlinerTowermodObject[];
 	};
 
 type RootContainerName = 'Layouts' | 'Animations' | 'Behaviors' | 'Containers' | 'Families' | 'Object Types' | 'Traits'
 
-const getRootContainerData = (name: RootContainerName, children: UniqueObjectLookup[]): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
+const getRootContainerData = (name: RootContainerName, children: OutlinerTowermodObject[]): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
 	return {
 		data: {
 			id: `root-${name}`,
@@ -66,7 +73,7 @@ const getRootContainerData = (name: RootContainerName, children: UniqueObjectLoo
 }
 
 const getNodeData = (
-	obj: UniqueObjectLookup,
+	obj: OutlinerTowermodObject,
 	_idx: number,
 	nestingLevel: number,
 	_tree: FixedSizeTree<OutlinerNodeData> | null,
@@ -169,7 +176,6 @@ export interface OutlinerProps {
 export const Outliner = (props: OutlinerProps) => {
 	const [query] = useQueryScope()
 	const layouts = api.useGetLayoutsQuery().data || []
-	// const animations = api.useGetRootAnimationsQuery().data || []
 	const behaviors = api.useGetBehaviorsQuery().data || []
 	const containers = api.useGetContainersQuery().data || []
 	const families = api.useGetFamiliesQuery().data || []

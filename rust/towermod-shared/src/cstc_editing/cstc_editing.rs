@@ -314,7 +314,7 @@ pub struct CstcData {
 	pub families: Vec<EdFamily>,
 	pub layouts: Vec<EdLayout>,
 	pub containers: IndexMap<i32, EdContainer>,
-	pub animations: Vec<cstc::Animation>,
+	pub animations: IndexMap<i32, cstc::Animation>,
 	pub app_block: Option<EdAppBlock>,
 	pub event_block: Option<cstc::EventBlock>,
 	pub image_block: Vec<cstc::ImageMetadata>,
@@ -330,6 +330,9 @@ impl CstcData {
 			let obj_type = EdObjectType::from_stable(obj_type)?;
 			Ok((obj_type.id, obj_type))
 		}).collect::<Result<IndexMap<_, _>>>()?;
+
+		let animations = animations.into_iter().map(|anim| (anim.id, anim)).collect::<IndexMap<_, _>>();
+
 		let app_block = EdAppBlock::from_stable(app_block);
 		let families = families.into_iter().map(EdFamily::from_stable).collect();
 		let layouts = layouts.into_iter()
@@ -349,6 +352,8 @@ impl CstcData {
 		let families = families.into_iter().map(EdFamily::to_stable).collect();
 		let app_block = app_block.unwrap().to_stable();
 		let object_types = object_types.into_iter().map(|(_, obj)| obj.to_stable()).collect();
+
+		let animations = animations.into_iter().map(|(_, anim)| anim).collect();
 
 		let level_block = cstc::LevelBlock { object_types, behaviors, traits, families, containers, layouts, animations };
 		Ok((editor_plugins, app_block, image_block, level_block, event_block.unwrap()))

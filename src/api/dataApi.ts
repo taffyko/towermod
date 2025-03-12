@@ -1,9 +1,8 @@
-import { createObjectUrl, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl, useObjectUrl } from '@/util';
+import { createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl, useObjectUrl } from '@/util';
 import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
 import { Animation, Behavior, ImageMetadata, Layout, LayoutLayer, ObjectInstance, ObjectType, PluginData, Container, Family, ObjectTrait, AppBlock, SearchOptions } from '@towermod';
 import type { LookupForType, UniqueTowermodObject } from '@/util';
-import { skipToken } from '@reduxjs/toolkit/query';
 
 type Lookup<T extends UniqueTowermodObject> = LookupForType<T['_type']>
 type LookupArg<T extends UniqueTowermodObject> = Omit<Lookup<T>, '_type'>
@@ -149,6 +148,18 @@ export const dataApi = baseApi.injectEndpoints({
 			query: (args) => invoke('get_animation', args),
 			transformResponse: (r: Animation) => enhanceAnimation(r),
 			providesTags: (_r, _e, arg) => [{ type: 'Animation', id: String(arg.id) }]
+		}),
+		getOutlinerObjectTypes: builder.query<[ObjectType, Animation | null][], { skip: number, take: number }>({
+			query: (args) => invoke('get_outliner_object_types', args),
+			transformResponse: (r: [ObjectType, Animation | null][]) => r.map((obj, anim) => (
+				[enhanceObjectType(obj), anim && enhanceAnimation(anim)]
+			)),
+			providesTags: ['ObjectType']
+		}),
+		getObjectTypeAnimation: builder.query<Animation | null, LookupArg<ObjectType>>({
+			query: (args) => invoke('get_object_type_animation', args),
+			transformResponse: (r: Animation) => enhanceAnimation(r),
+			providesTags: (r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id)}, r && { type: 'Animation', id: String(r.id) }]
 		}),
 		getRootAnimations: builder.query<Lookup<Animation>[], void>({
 			query: () => invoke('get_root_animations'),

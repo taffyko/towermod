@@ -151,24 +151,19 @@ export const getObjectStringId = (obj: UniqueObjectLookup) => {
 	const objType = obj._type;
 	let id: string | number
 	switch (objType) {
-		case 'Layout':
+		case 'LayoutLayer':
+		case 'ObjectInstance':
+		case 'Animation':
+		case 'ImageMetadata':
+		case 'ObjectType':
+		case 'Container':
+			id = obj.id
+		break; case 'Layout':
+		case 'Family':
+		case 'ObjectTrait':
 			id = obj.name
-		break; case 'LayoutLayer':
-			id = obj.id
-		break; case 'ObjectInstance':
-			id = obj.id
-		break; case 'Animation':
-			id = obj.id
 		break; case 'Behavior':
 			id = `${obj.objectTypeId}-${obj.movIndex}`
-		break; case 'Container':
-			id = obj.id
-		break; case 'Family':
-			id = obj.name
-		break; case 'ObjectType':
-			id = obj.id
-		break; case 'ObjectTrait':
-			id = obj.name
 		break; case 'AppBlock':
 			id = ''
 		break; default:
