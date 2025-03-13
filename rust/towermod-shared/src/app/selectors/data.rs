@@ -319,6 +319,13 @@ pub fn select_outliner_object_types(skip: usize, take: usize) -> impl Fn(&State)
 		}).filter_map(|o| o).collect()
 	}
 }
+pub async fn select_outliner_object_type_image_ids(skip: usize, take: usize) -> impl Fn(&State) -> Vec<Option<i32>> {
+	move |s| {
+		select_outliner_object_types(skip, take)(s).into_iter().map(|(obj, anim)| {
+			select_object_type_image_id(obj.id)(s)
+		}).collect()
+	}
+}
 
 pub fn select_animation_image_id(animation_id: i32) -> impl Fn(&State) -> Option<i32> {
 	move |s| {

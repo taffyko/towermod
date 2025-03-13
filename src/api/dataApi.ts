@@ -149,10 +149,10 @@ export const dataApi = baseApi.injectEndpoints({
 			transformResponse: (r: Animation) => enhanceAnimation(r),
 			providesTags: (_r, _e, arg) => [{ type: 'Animation', id: String(arg.id) }]
 		}),
-		getOutlinerObjectTypes: builder.query<[ObjectType, Animation | null][], { skip: number, take: number }>({
-			query: (args) => invoke('get_outliner_object_types', args),
-			transformResponse: (r: [ObjectType, Animation | null][]) => r.map((obj, anim) => (
-				[enhanceObjectType(obj), anim && enhanceAnimation(anim)]
+		getOutlinerObjectTypes: builder.query<Array<ObjectType & { animation?: Animation }>, { page: number, pageSize: number }>({
+			query: ({ page, pageSize }) => invoke('get_outliner_object_types', { skip: page * pageSize, take: pageSize}),
+			transformResponse: (r: [ObjectType, Animation | null][]) => r.map(([obj, anim]) => (
+				{ ...enhanceObjectType(obj), animation: enhanceAnimation(anim) ?? undefined }
 			)),
 			providesTags: ['ObjectType']
 		}),

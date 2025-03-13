@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::{Path, PathBuf}};
 use tauri::{command, AppHandle, Emitter};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use fs_err::tokio as fs;
 use towermod_cstc::ImageMetadata;
 use towermod_shared::{app::{selectors::SearchOptions, state::{dispatch, select, DataAction}}, cstc_editing, select, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType };
@@ -374,6 +374,24 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 		l.into_iter().map(|(obj, anim)| (obj.clone(), anim.cloned())).collect()
 	}).await
 }
+#[command]
+pub async fn get_outliner_object_type_icons(_window: tauri::Window, request: tauri::ipc::Request<'_>) -> Result<tauri::ipc::Response> {
+	if let tauri::ipc::InvokeBody::Raw(payload) = request.body() {
+		let payload = String::from_utf8_lossy(payload).to_string();
+		let map: serde_json::Map<String, serde_json::Value> = serde_json::from_str(&payload)?;
+		let skip = map.get("skip").and_then(|v| v.as_i64()).context("'skip' missing")? as usize;
+		let take = map.get("take").and_then(|v| v.as_i64()).context("'take' missing")? as usize;
+
+		// get_outliner_object_type_icons(skip, take).await
+		let data: Vec<u8> = todo!();
+
+		Ok(tauri::ipc::Response::new(data))
+	} else {
+		Err(anyhow::anyhow!("Invalid request").into())
+	}
+}
+
+
 #[command] pub async fn update_animation(animation: towermod_cstc::Animation) {
 	dispatch(DataAction::UpdateAnimation(animation)).await
 }

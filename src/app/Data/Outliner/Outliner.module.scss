@@ -9,7 +9,6 @@
 
 .treeItem {
 	@include unbutton;
-	opacity: 1;
 	transition: opacity 0.5s;
 
 	&.selectable {

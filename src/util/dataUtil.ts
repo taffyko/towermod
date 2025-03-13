@@ -90,7 +90,7 @@ export function enhanceObjectInstance(obj: ObjectInstance): ObjectInstance {
 	return obj
 }
 
-export function enhanceAnimation<T extends Animation>(animation: T): T {
+export function enhanceAnimation<T extends Animation | null>(animation: T): T {
 	if (!animation) { return animation }
 	animation._type = 'Animation'
 	for (const subAnimation of animation.subAnimations) {

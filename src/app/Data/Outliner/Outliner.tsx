@@ -7,15 +7,16 @@ import {
 	TreeWalkerValue,
 	NodeComponentProps,
 	FixedSizeTree,
+	NodeRecord,
 } from 'react-vtree';
 import { useImperativeHandle, useStateRef } from '@/util/hooks';
 import { actions, dispatch, useAppSelector } from '@/redux';
 import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util/util';
-import { getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
+import { setTreeItemChildren as baseSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject, LookupForType, towermodObjectIdsEqual } from '@/util';
-import { Animation } from '@/towermod'
+import { Animation, ObjectType } from '@/towermod'
 import { QueryScopeFn, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
@@ -26,9 +27,13 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { createSelector } from '@reduxjs/toolkit';
 import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu';
 import { Icon } from '@/components/Icon';
+import { Button } from '@/components/Button';
+import clsx from 'clsx';
 
 
-type OutlinerTowermodObject = Exclude<UniqueObjectLookup, LookupForType<'Animation'>> | Animation
+
+type OutlinerTowermodObject = Exclude<UniqueObjectLookup, LookupForType<'Animation'>>
+	| Animation
 
 function getObjChildren(obj: OutlinerTowermodObject, query: QueryScopeFn | null): undefined | OutlinerTowermodObject[] {
 	switch (obj._type) {
@@ -39,11 +44,13 @@ function getObjChildren(obj: OutlinerTowermodObject, query: QueryScopeFn | null)
 			const queryName = `getObjChildren.${getTreeItemId(obj)}`
 			return query?.(api.endpoints.getObjectInstances, obj.id, queryName).data ?? []
 		} case 'Animation': {
-			return obj.subAnimations
+			// return obj.subAnimations
+			return undefined
 		} case 'ObjectType': {
-			const queryName = `getObjChildren.${getTreeItemId(obj)}`
-			const rootAnim = query?.(api.endpoints.getObjectTypeAnimation, { id: obj.id }, queryName).data
-			return rootAnim?.subAnimations ?? []
+			return undefined
+			// const queryName = `getObjChildren.${getTreeItemId(obj)}`
+			// const rootAnim = query?.(api.endpoints.getObjectTypeAnimation, { id: obj.id }, queryName).data
+			// return rootAnim?.subAnimations ?? []
 		}
 	}
 }
@@ -54,6 +61,7 @@ type OutlinerNodeData = FixedSizeNodeData &
 		nestingLevel: number;
 		obj: OutlinerTowermodObject | null;
 		children?: OutlinerTowermodObject[];
+		idx: number | null,
 	};
 
 type RootContainerName = 'Layouts' | 'Animations' | 'Behaviors' | 'Containers' | 'Families' | 'Object Types' | 'Traits'
@@ -67,6 +75,7 @@ const getRootContainerData = (name: RootContainerName, children: OutlinerTowermo
 			children,
 			nestingLevel: 0,
 			obj: null,
+			idx: null,
 		},
 		nestingLevel: 0
 	}
@@ -74,7 +83,7 @@ const getRootContainerData = (name: RootContainerName, children: OutlinerTowermo
 
 const getNodeData = (
 	obj: OutlinerTowermodObject,
-	_idx: number,
+	idx: number,
 	nestingLevel: number,
 	_tree: FixedSizeTree<OutlinerNodeData> | null,
 	query: QueryScopeFn | null = null,
@@ -89,6 +98,7 @@ const getNodeData = (
 		isOpenByDefault: false,
 		nestingLevel,
 		obj,
+		idx,
 	}
 
 	return {
@@ -96,6 +106,15 @@ const getNodeData = (
 		nestingLevel,
 	}
 };
+
+function setTreeItemChildren(tree: FixedSizeTree<OutlinerNodeData>, items: OutlinerTowermodObject[], parentId: string) {
+	const parent = tree.state.records.get(parentId)
+	if (!parent) { return }
+	const children = items.map((item, idx) => (
+		getNodeData(item, idx, parent.public.data.nestingLevel + 1, tree).data
+	))
+	baseSetTreeItemChildren(tree, children, parentId)
+}
 
 
 const defaultTextStyle = {marginLeft: 10};
@@ -107,27 +126,57 @@ type OutlinerNodeMeta = Readonly<{
 
 type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
-	const {data: {name: nameOverride, nestingLevel, obj, children}, isOpen, style, setOpen} = props
-	const tree = useContext(TreeContext)
+	const {data: {name: nameOverride, nestingLevel, obj, idx, id}, isOpen, style, setOpen} = props
+	const tree = useContext(TreeContext) as FixedSizeTree<OutlinerNodeData>
 	const selectable = !!obj;
 
-	const objName = useObjectDisplayName(obj)
-	const { data: icon, hasIcon } = useObjectIcon(obj)
-	const name = nameOverride ?? objName
+	const isObjectType = obj?._type === 'ObjectType'
+	const objName = useObjectDisplayName(isObjectType ? null : obj)
+	let { data: icon, hasIcon } = useObjectIcon(obj)
+
+	let name = nameOverride ?? objName
 	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
 
-	const isLeaf = !children?.length;
-
-	if (!name) {
-		return <div className="opacity-0" />
+	// object types
+	const pageSize = 500
+	let page = null
+	if (idx != null && isObjectType) {
+		page = Math.floor(idx / pageSize)
 	}
+	const info = api.useGetOutlinerObjectTypesQuery(page != null ? { page, pageSize } : skipToken)
+	let objType: ObjectType & { animation?: Animation } | undefined
+	if (idx != null) {
+		const idxInPage = idx % pageSize
+		objType = info.data?.[idxInPage]
+		name ??= objType?.name
+		hasIcon = hasIcon || objType?.pluginName === 'Sprite' /* FIXME: this endpoint is not setting pluginName */
+	}
+	useEffect(() => {
+		// FIXME: batch this
+		if (obj?._type === 'ObjectType') {
+			const children = objType?.animation?.subAnimations ?? []
+			setTreeItemChildren(tree, children, id)
+		} else if (obj?._type === 'Animation') {
+			setTreeItemChildren(tree, obj.subAnimations, id)
+		}
+	}, [objType])
+
+
+	const nodeRecord = tree?.state.records.get(props.data.id)
+	const isLeaf = !nodeRecord?.child
+
+	let nodeContent = <>
+		<Icon noReflow={hasIcon} src={icon} />
+		<div className="text" style={defaultTextStyle}>{name}</div>
+	</>
 
 	return <div
-		className={`
-			${Style.treeItem}
-			${selectable ? Style.selectable : ''}
-			${selected ? Style.active : ''}
-		`}
+		className={clsx(
+			Style.treeItem,
+			selectable && Style.selectable,
+			selected && Style.active,
+			!name && 'opacity-0',
+		)}
 		onClick={() => {
 			if (selectable) {
 				dispatch(actions.setOutlinerValue(obj))
@@ -155,8 +204,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 				/>
 			</div>
 		)}
-		<Icon noReflow={hasIcon} src={icon} />
-		<div className="text" style={defaultTextStyle}>{name}</div>
+		{nodeContent}
 	</div>
 };
 
@@ -173,6 +221,7 @@ export interface OutlinerProps {
 	handleRef?: React.Ref<OutlinerHandle>,
 }
 
+
 export const Outliner = (props: OutlinerProps) => {
 	const [query] = useQueryScope()
 	const layouts = api.useGetLayoutsQuery().data || []
@@ -183,6 +232,8 @@ export const Outliner = (props: OutlinerProps) => {
 	const traits = api.useGetObjectTraitsQuery().data || []
 	const appBlock = api.useGetAppBlockQuery().data
 	const [tree, setTreeRef] = useStateRef<FixedSizeTree<OutlinerNodeData>>()
+	//@ts-ignore
+	window.tree = tree
 	const lookup = useAppSelector(s => s.app.outlinerValue)
 
 	const handle = useImperativeHandle(props.handleRef, () => {
