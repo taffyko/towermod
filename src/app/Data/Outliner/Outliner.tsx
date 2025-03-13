@@ -17,7 +17,7 @@ import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject, LookupForType, towermodObjectIdsEqual } from '@/util';
 import { Animation, ObjectType } from '@/towermod'
-import { QueryScopeFn, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil';
+import { QueryScopeFn, getObjectDisplayName, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';
@@ -44,14 +44,6 @@ function getObjChildren(obj: OutlinerTowermodObject, query: QueryScopeFn | null)
 		} case 'LayoutLayer': {
 			const queryName = `getObjChildren.${getTreeItemId(obj)}`
 			return query?.(api.endpoints.getObjectInstances, obj.id, queryName).data ?? []
-		} case 'Animation': {
-			// return obj.subAnimations
-			return undefined
-		} case 'ObjectType': {
-			return undefined
-			// const queryName = `getObjChildren.${getTreeItemId(obj)}`
-			// const rootAnim = query?.(api.endpoints.getObjectTypeAnimation, { id: obj.id }, queryName).data
-			// return rootAnim?.subAnimations ?? []
 		}
 	}
 }
@@ -123,7 +115,6 @@ function setTreeItemChildren(tree: FixedSizeTree<OutlinerNodeData>, items: Outli
 	_dispatchTreeItemUpdates(tree)
 }
 
-
 const defaultTextStyle = {marginLeft: 10};
 const defaultButtonStyle = {fontFamily: 'Courier New'};
 
@@ -131,56 +122,85 @@ type OutlinerNodeMeta = Readonly<{
 	nestingLevel: number;
 }>;
 
+
+
+function useOutlinerObjectData(lookup: OutlinerTowermodObject | null, idx: number | null): { obj?: UniqueTowermodObject, hasIcon: null | boolean, iconUrl?: string, displayName?: string, children?: OutlinerTowermodObject[] } {
+	const [query] = useQueryScope()
+	let obj: UniqueTowermodObject | undefined
+	let hasIcon: null | boolean = null
+	let iconUrl: string | undefined
+	let displayName: string | undefined
+	let children: OutlinerTowermodObject[] | undefined
+
+	const bulkQueryImplemented = { forObj: false, forIcon: false }
+	if (idx != null) {
+		const pageSize = 500
+		const page = Math.floor(idx / pageSize)
+		let pageData: undefined | any[]
+		let iconsPageData: undefined | { url?: string }[]
+		switch (lookup?._type) {
+			case 'ObjectType':
+				;({ data: pageData } = query(api.endpoints.getOutlinerObjectTypes, { page, pageSize }, 'getObjects'))
+				;({ data: iconsPageData } = query(api.endpoints.getOutlinerObjectTypeIcons, { page, pageSize }, 'getIcons'))
+				bulkQueryImplemented.forObj = true
+				bulkQueryImplemented.forIcon = true
+			break; case 'Animation':
+				bulkQueryImplemented.forObj = true
+				hasIcon = true
+				children = lookup.subAnimations
+				displayName = getObjectDisplayName(lookup)
+		}
+
+		if (pageData) {
+			const idxInPage = idx % pageSize
+			obj = pageData?.[idxInPage]
+			if (bulkQueryImplemented.forIcon) {
+				iconUrl = iconsPageData?.[idxInPage].url
+			}
+			switch (obj?._type) {
+				case 'ObjectType':
+					const isSprite = obj.pluginName === 'Sprite'
+					hasIcon ||= isSprite
+					children = (obj as { animation?: Animation }).animation?.subAnimations
+					displayName = getObjectDisplayName(obj)
+			}
+		}
+	}
+
+	// TODO: update queries for other outliner objects to also fetch in pages
+	const objectIconInfo = useObjectIcon(bulkQueryImplemented.forIcon ? null : lookup)
+	hasIcon ??= objectIconInfo.hasIcon
+	iconUrl ??= objectIconInfo.data
+	const displayName1 = useObjectDisplayName(bulkQueryImplemented.forObj ? null : lookup)
+	displayName ??= displayName1
+	hasIcon ||= !!iconUrl
+
+	return { obj, hasIcon, iconUrl, displayName, children }
+}
+
 type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {name: nameOverride, nestingLevel, obj, idx, id}, isOpen, style, setOpen} = props
 	const tree = useContext(TreeContext) as FixedSizeTree<OutlinerNodeData>
 	const selectable = !!obj;
 
-	// TODO: updating object type tree nodes to fetch the surrounding page and share the cached response
-	// (instead of each node individually fetching its own data) was a huge performance bump
-	// update queries for other outliner objects to also fetch in pages
-	const isObjectType = obj?._type === 'ObjectType'
-	const objName = useObjectDisplayName(isObjectType ? null : obj)
-	let hasIcon: boolean | null = null
-	let icon = undefined
-	;({ data: icon, hasIcon } = useObjectIcon(isObjectType ? null : obj))
+	const { hasIcon, iconUrl, displayName, children } = useOutlinerObjectData(obj, idx)
 
-	let name = nameOverride ?? objName
+	let name = nameOverride ?? displayName
 	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
 
-	// object types
-	const pageSize = 500
-	let page = null
-	if (idx != null && isObjectType) {
-		page = Math.floor(idx / pageSize)
-	}
-	const { data: objTypes } = api.useGetOutlinerObjectTypesQuery(page != null ? { page, pageSize } : skipToken)
-	const { data: icons } = api.useGetOutlinerObjectTypeIconsQuery(page != null ? { page, pageSize } : skipToken)
-	let objType: ObjectType & { animation?: Animation } | undefined
-	if (isObjectType && idx != null) {
-		const idxInPage = idx % pageSize
-		objType = objTypes?.[idxInPage]
-		icon = icons?.[idxInPage].url
-		name ??= objType?.name
-		hasIcon = hasIcon || objType?.pluginName === 'Sprite' /* FIXME: this endpoint is not setting pluginName */
-	}
 	useEffect(() => {
-		// FIXME: batch this
-		if (obj?._type === 'ObjectType') {
-			const children = objType?.animation?.subAnimations ?? []
+		if (children) {
 			setTreeItemChildren(tree, children, id)
-		} else if (obj?._type === 'Animation') {
-			setTreeItemChildren(tree, obj.subAnimations, id)
 		}
-	}, [objType])
+	}, [children])
 
 
 	const nodeRecord = tree?.state.records.get(props.data.id)
 	const isLeaf = !nodeRecord?.child
 
 	let nodeContent = <>
-		<Icon noReflow={hasIcon} src={icon} />
+		<Icon noReflow={hasIcon} src={iconUrl} />
 		<div className="text" style={defaultTextStyle}>{name}</div>
 	</>
 
@@ -189,7 +209,6 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 			Style.treeItem,
 			selectable && Style.selectable,
 			selected && Style.active,
-			!name && 'opacity-0',
 		)}
 		onClick={() => {
 			if (selectable) {
@@ -218,7 +237,14 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 				/>
 			</div>
 		)}
-		{nodeContent}
+		<div
+			className={clsx(
+				Style.treeItemContent,
+				!name && 'opacity-0',
+			)}
+		>
+			{nodeContent}
+		</div>
 	</div>
 };
 

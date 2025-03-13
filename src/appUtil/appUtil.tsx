@@ -76,6 +76,7 @@ export function useQueryScope(): [QueryScopeFn] {
 		}
 
 		// If a query was initiated with an existing queryName but with new params, unsubscribe the old query
+		// TODO: what if the same query is initiated under two different queryNames?
 		const oldKey = queriesRef.current[queryName]
 		if (oldKey && oldKey != key) {
 			const promise = endpointsRef.current[oldKey]?.[2]
@@ -198,10 +199,51 @@ export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined):
 			}
 	}
 	hasIcon = hasIcon || imageId != null
-	const { data: url, isLoading: urlLoading } = api.useGetGameImageUrlQuery(imageId ?? skipToken)
-	return { data: url ?? undefined, hasIcon, isLoading: objIsLoading || imageIdLoading || urlLoading }
+	const { data: img, isLoading: urlLoading } = api.useGetGameImageUrlQuery(imageId ?? skipToken)
+	return { data: img?.url ?? undefined, hasIcon, isLoading: objIsLoading || imageIdLoading || urlLoading }
 }
 
+
+export function getObjectDisplayName(obj: UniqueTowermodObject) {
+	const typeName = obj._type
+	switch (typeName) {
+		case 'Layout':
+			return `Layout: ${obj.name}`
+		case 'LayoutLayer':
+			return `Layer ${obj.id}: ${obj.name}`
+		case 'ObjectInstance': {
+			// TODO: stamp type name and plugin name on instances from backend
+			return `Instance: ${obj.id}`
+		} case 'Animation':
+			if (obj.isAngle) {
+				return `Angle ${obj.angle}°`
+			}
+			return `Animation: ${obj.name}`
+		case 'Behavior':
+			return `Behavior: ${obj.name}`
+		case 'Container':
+			// TODO: stamp object type name on containers from backend
+			return `Container: ${obj.id}`
+		case 'Family':
+			return `Family: ${obj.name}`
+		case 'ObjectType': {
+			if (obj.pluginName === 'Sprite') {
+				return obj.name
+			} else {
+				return `${obj.name} (${obj.pluginName})`
+			}
+		} case 'ObjectTrait':
+			return `Trait: ${obj.name}`
+		case 'ImageMetadata':
+			return `Image: ${obj.id}`
+		case 'AppBlock':
+			return 'Project Settings'
+		default:
+			assertUnreachable(typeName)
+	}
+}
+
+// TODO: eliminate
 export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | undefined): string | undefined {
 	const { data: obj } = useTowermodObject(objLookup ?? undefined);
 
@@ -221,10 +263,6 @@ export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | unde
 	if (!obj) { return }
 	const typeName = obj._type
 	switch (typeName) {
-		case 'Layout':
-			return `Layout: ${obj.name}`
-		case 'LayoutLayer':
-			return `Layer ${obj.id}: ${obj.name}`
 		case 'ObjectInstance': {
 			if (!objType || !plugin) { return }
 			const pluginName = plugin.stringTable.name
@@ -235,28 +273,10 @@ export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | unde
 				return `Angle ${obj.angle}°`
 			}
 			return `Animation: ${obj.name}`
-		case 'Behavior':
-			return `Behavior: ${obj.name}`
 		case 'Container':
 			if (!objType) { return }
 			return `Container: ${objType.name}`
-		case 'Family':
-			return `Family: ${obj.name}`
-		case 'ObjectType': {
-			if (!plugin) { return }
-			const pluginName = plugin.stringTable.name
-			if (pluginName === 'Sprite') {
-				return obj.name
-			} else {
-				return `${obj.name} (${pluginName})`
-			}
-		} case 'ObjectTrait':
-			return `Trait: ${obj.name}`
-		case 'ImageMetadata':
-			return `Image: ${obj.id}`
-		case 'AppBlock':
-			return 'Project Settings'
 		default:
-			assertUnreachable(typeName)
+			return getObjectDisplayName(obj)
 	}
 }

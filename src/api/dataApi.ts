@@ -9,21 +9,24 @@ type LookupArg<T extends UniqueTowermodObject> = Omit<Lookup<T>, '_type'>
 
 export const dataApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
-		getGameImageUrl: builder.query<string | null, number>({
+		getGameImageUrl: builder.query<{ url: string | null }, number>({
 			query: async (id) => {
 				const arrayBuffer = await _getGameImage(id)
 				let blob: Blob | null = null
 				if (arrayBuffer) {
 					blob = new Blob([arrayBuffer], { type: 'image/png' })
 				}
-				return blob && createObjectUrl(blob)
+				return { url: blob && createObjectUrl(blob) }
 			},
 			providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }],
 			onCacheEntryAdded: async (_arg, cacheApi) => {
 				const info = await cacheApi.cacheDataLoaded
-				if (!info.data) { return }
-				await cacheApi.cacheEntryRemoved
-				revokeObjectUrl(info.data)
+				if (!info.data?.url) { return }
+				// revoke the object URL (unless cache data was upserted from another query)
+				if (!('_shared' in info.data)) {
+					await cacheApi.cacheEntryRemoved
+					revokeObjectUrl(info.data.url)
+				}
 			},
 		}),
 		getImageMetadata: builder.query<ImageMetadata | null, { id: number }>({
@@ -158,7 +161,6 @@ export const dataApi = baseApi.injectEndpoints({
 		}),
 		getOutlinerObjectTypeIcons: builder.query<Array<{ url: undefined, imageId: undefined } | { url: string, imageId: int }>, { page: number, pageSize: number }>({
 			query: ({ page, pageSize }) => binaryInvoke('get_outliner_object_type_icons', [page * pageSize, pageSize]),
-			// I wanna share cache entries with getGameImageUrl, but I don't want it to revoke the object URLs prematurely when those entries get evicted
 			transformResponse: (r: Array<null | [int, Uint8Array]>) => {
 				return r.map((o) => {
 					if (!o) { return {} }
@@ -171,7 +173,17 @@ export const dataApi = baseApi.injectEndpoints({
 			onCacheEntryAdded: async (_arg, cacheApi) => {
 				const info = await cacheApi.cacheDataLoaded
 				if (!info.data) { return }
+				const { api } = await import('.')
+				for (const img of info.data) {
+					// share cache entries with getGameImageUrl
+					if (img.url) {
+						// let it know not to revoke the object URLs prematurely when it evicts the cache
+						const record = { url: img.url, _shared: true }
+						api.util.upsertQueryData('getGameImageUrl', img.imageId, record)
+					}
+				}
 				await cacheApi.cacheEntryRemoved
+
 				for (const { url } of info.data) {
 					if (url) {
 						revokeObjectUrl(url)

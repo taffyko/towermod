@@ -61,7 +61,7 @@ export default function Images() {
 
 function ImageEditing() {
 	const imageId = useAppSelector(s => s.app.imageId)
-	const { data: imgUrl } = api.useGetGameImageUrlQuery(imageId);
+	const { data: img } = api.useGetGameImageUrlQuery(imageId);
 	const { data: savedMetadata } = api.useGetImageMetadataQuery({ id: imageId })
 	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
 	const [setImageMetadata] = api.useSetImageMetadataMutation();
@@ -83,7 +83,7 @@ function ImageEditing() {
 			<div className="vbox gap grow">
 				<div className="hbox gap items-center">
 					<SpinBox style={{ width: '5rem' }} int value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
-					<IconButton disabled={!imgUrl} src={folderOpenImg} onClick={onClickBrowseImage} />
+					<IconButton disabled={!img?.url} src={folderOpenImg} onClick={onClickBrowseImage} />
 					<IconButton src={uploadImg} onClick={onClickSetImage} />
 					<IconButton src={refreshImg} onClick={onClickReloadAllImages} />
 					{ isOverridden ? <IconButton src={closeImg} onClick={onClickClearImage} /> : null }
@@ -95,7 +95,7 @@ function ImageEditing() {
 			<div className="vbox gap grow">
 				{ metadata
 					? <Button disabled={!isMetadataDirty} onClick={() => submitMetadata()}>Save metadata</Button>
-					: <Button style={{ alignSelf: 'stretch' }} onClick={onClickSetImage}>{ imgUrl ? "Add metadata" : "Add image" }</Button>
+					: <Button style={{ alignSelf: 'stretch' }} onClick={onClickSetImage}>{ img?.url ? "Add metadata" : "Add image" }</Button>
 				}
 				<InspectorObject value={metadata ?? undefined} onChange={setMetadata as any} />
 			</div>
@@ -205,7 +205,7 @@ function ImagePreview(props: {
 	metadata?: ImageMetadata,
 }) {
 	const { imageId, metadata, showCollision } = props;
-	const { data: imgUrl } = api.useGetGameImageUrlQuery(imageId);
+	const { data: img } = api.useGetGameImageUrlQuery(imageId);
 
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
 	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
@@ -237,12 +237,12 @@ function ImagePreview(props: {
 	useEffect(() => {
 		setNaturalWidth(undefined)
 		imgEl?.parentElement?.classList.add(Style.loading)
-	}, [imgUrl])
+	}, [img?.url])
 
-	if (!imgUrl) { return <div className="centerbox grow">No image</div> }
+	if (!img?.url) { return <div className="centerbox grow">No image</div> }
 
 	return <div className={Style.previewContainer}>
-		<img onLoad={onImageLoad} width={width} height={height} ref={setImgEl} className={Style.preview} src={imgUrl} />
+		<img onLoad={onImageLoad} width={width} height={height} ref={setImgEl} className={Style.preview} src={img?.url} />
 		{ metadata && showCollision ?
 			<canvas style={{ width, height }} ref={setCanvasEl} className={Style.collision} />
 		: null}

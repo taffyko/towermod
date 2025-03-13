@@ -9,7 +9,13 @@
 
 .treeItem {
 	@include unbutton;
-	transition: opacity 0.5s;
+
+	.treeItemContent {
+		height: 100%;
+		display: flex;
+		flex-flow: row nowrap;
+		transition: opacity 0.5s;
+	}
 
 	&.selectable {
 		border: var(--color-border);

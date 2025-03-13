@@ -5,7 +5,7 @@ export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation |
 	| TextObjectData | SpriteObjectData
 
 export const uniqueObjectTypes = new Set([
-	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock'
+	'Layout', 'LayoutLayer', 'ObjectInstance', 'Animation', 'Behavior', 'Container', 'Family', 'ObjectType', 'ObjectTrait', 'AppBlock', 'ImageMetadata'
 ] as const)
 export type UniqueObjectTypes = (typeof uniqueObjectTypes) extends Set<infer T> ? T : never
 /** Towermod objects that possess unique IDs, making it possible to look them up */

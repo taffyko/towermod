@@ -129,7 +129,7 @@ export function addItemToTree<TData extends FixedSizeNodeData>(tree: FixedSizeTr
 	const record = createRecord(tree, data, parent)
 	parent.child = record
 
-	// // previous state isn't used anywhere and this is much faster than `new Map(records)`
+	// previous state isn't used anywhere and this is much faster than `new Map(records)`
 	const records = tree.state.records as Map<string, NodeRecord<FixedSizeNodePublicState<TData>>>
 	records.set(data.id, record)
 	records.set(parent.public.data.id, parent)
@@ -148,7 +148,6 @@ export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: 
 	for (const [parentId, children] of Object.entries(updates)) {
 		let parent = tree.state.records.get(parentId)
 		if (!parent) { return }
-		parent = { ...parent }
 
 		// remove existing children
 		let child = parent.child
