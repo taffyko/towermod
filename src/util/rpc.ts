@@ -1,8 +1,9 @@
 import { spin } from '@/app/GlobalSpinner';
-import { invoke } from '@tauri-apps/api/core';
+import { InvokeArgs, InvokeOptions, invoke } from '@tauri-apps/api/core';
 import { FileDialogOptions } from '@towermod';
 import { DependencyList, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event'
+import { Encoder, Decoder } from '@msgpack/msgpack'
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -65,4 +66,17 @@ export function useTauriEvent<T extends keyof EventTypeMap>(type: T, handler: Ev
 		const unlisten = listen(type, handler)
 		return () => { unlisten.then(fn => fn()) };
 	}, deps ? [type, ...deps] : undefined)
+}
+
+
+const encoder = new Encoder()
+const decoder = new Decoder()
+
+/**
+ * Invoke, but for binary requests and responses.
+ * Arguments tuple is encoded with msgpack, response body decoded with msgpack.
+ */
+export async function binaryInvoke<T>(cmd: string, args?: unknown[], options?: InvokeOptions): Promise<T> {
+	const bytes = await invoke<Uint8Array>(cmd, encoder.encode(args), options)
+	return decoder.decode(bytes) as T
 }

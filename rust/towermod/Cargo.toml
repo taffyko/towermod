@@ -29,6 +29,8 @@ tracing-log.workspace = true
 log.workspace = true
 fs-err.workspace = true
 console-subscriber.workspace = true
+serde.workspace = true
+rmp-serde.workspace = true
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 

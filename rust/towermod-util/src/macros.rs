@@ -59,3 +59,33 @@ macro_rules! clone_async {
 macro_rules! blocking {
 	($($body:tt)*) => { tokio::task::spawn_blocking($crate::clone!($($body)*)) };
 }
+
+#[macro_export]
+macro_rules! json_object {
+	(...$object:ident, $($name:ident: $value:expr),*) => {
+		{
+			use anyhow::Context;
+			let result: anyhow::Result<serde_json::Value> = try {
+				let mut value = serde_json::value::to_value($object)?;
+				{
+					let map = value.as_object_mut()
+						.context(format!("Could not interpret {} as a JSON object", stringify!($object)))?;
+					$(
+						map.insert(stringify!($name).to_string(), ($value).into());
+					)*
+				}
+				value
+			};
+			result
+		}
+	};
+	($($name:ident: $value:expr),*) => {
+		{
+			let mut map: serde_json::Map<String, serde_json::Value> = serde_json::Map::new();
+			$(
+				map.insert(stringify!($name).to_string(), ($value).into());
+			)*
+			serde_json::Value::Object(map)
+		}
+	};
+}

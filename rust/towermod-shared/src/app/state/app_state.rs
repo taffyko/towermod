@@ -65,6 +65,16 @@ where
 /// Easily transform/clone a value before it is returned from the select() function
 #[macro_export]
 macro_rules! select {
+	($selector:expr, |$s:ident, $r:ident| $e:expr) => {
+		{
+			let selector = $selector;
+			let selector = move |$s: &'_ $crate::app::state::app_state::State| {
+				let $r = selector($s);
+				$e
+			};
+			$crate::app::state::select(selector)
+		}
+	};
 	($selector:expr, |$r:ident| $e:expr) => {
 		{
 			let selector = $selector;

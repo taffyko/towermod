@@ -13,4 +13,4 @@ pub mod config_state;
 
 pub use data_state::{Action as DataAction};
 pub use config_state::{TowermodConfig, Action as ConfigAction};
-pub use app_state::{STORE, select, dispatch, Action as AppAction};
+pub use app_state::{STORE, State, select, dispatch, Action as AppAction};

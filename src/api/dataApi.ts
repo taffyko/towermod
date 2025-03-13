@@ -1,4 +1,4 @@
-import { createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl, useObjectUrl } from '@/util';
+import { binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl, useObjectUrl } from '@/util';
 import { baseApi } from './api';
 import { invoke } from '@tauri-apps/api/core';
 import { Animation, Behavior, ImageMetadata, Layout, LayoutLayer, ObjectInstance, ObjectType, PluginData, Container, Family, ObjectTrait, AppBlock, SearchOptions } from '@towermod';
@@ -155,6 +155,29 @@ export const dataApi = baseApi.injectEndpoints({
 				{ ...enhanceObjectType(obj), animation: enhanceAnimation(anim) ?? undefined }
 			)),
 			providesTags: ['ObjectType']
+		}),
+		getOutlinerObjectTypeIcons: builder.query<Array<{ url: undefined, imageId: undefined } | { url: string, imageId: int }>, { page: number, pageSize: number }>({
+			query: ({ page, pageSize }) => binaryInvoke('get_outliner_object_type_icons', [page * pageSize, pageSize]),
+			// I wanna share cache entries with getGameImageUrl, but I don't want it to revoke the object URLs prematurely when those entries get evicted
+			transformResponse: (r: Array<null | [int, Uint8Array]>) => {
+				return r.map((o) => {
+					if (!o) { return {} }
+					const [imageId, data] = o
+					const blob = new Blob([data], { type: 'image/png' })
+					return { url: createObjectUrl(blob), imageId }
+				})
+			},
+			providesTags: ['ObjectType', 'Image'],
+			onCacheEntryAdded: async (_arg, cacheApi) => {
+				const info = await cacheApi.cacheDataLoaded
+				if (!info.data) { return }
+				await cacheApi.cacheEntryRemoved
+				for (const { url } of info.data) {
+					if (url) {
+						revokeObjectUrl(url)
+					}
+				}
+			},
 		}),
 		getObjectTypeAnimation: builder.query<Animation | null, LookupArg<ObjectType>>({
 			query: (args) => invoke('get_object_type_animation', args),

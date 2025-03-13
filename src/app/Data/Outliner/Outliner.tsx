@@ -12,7 +12,7 @@ import {
 import { useImperativeHandle, useStateRef } from '@/util/hooks';
 import { actions, dispatch, useAppSelector } from '@/redux';
 import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util/util';
-import { setTreeItemChildren as baseSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
+import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
 import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject, LookupForType, towermodObjectIdsEqual } from '@/util';
@@ -29,6 +29,7 @@ import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu';
 import { Icon } from '@/components/Icon';
 import { Button } from '@/components/Button';
 import clsx from 'clsx';
+import { debounce } from 'lodash-es';
 
 
 
@@ -107,13 +108,19 @@ const getNodeData = (
 	}
 };
 
+let queuedTreeItemUpdates: Record<string, OutlinerNodeData[]> = {}
+const _dispatchTreeItemUpdates = debounce((tree: FixedSizeTree<OutlinerNodeData>) => {
+	batchSetTreeItemChildren(tree, queuedTreeItemUpdates)
+	queuedTreeItemUpdates = {}
+}, 5, { trailing: true })
 function setTreeItemChildren(tree: FixedSizeTree<OutlinerNodeData>, items: OutlinerTowermodObject[], parentId: string) {
 	const parent = tree.state.records.get(parentId)
 	if (!parent) { return }
 	const children = items.map((item, idx) => (
 		getNodeData(item, idx, parent.public.data.nestingLevel + 1, tree).data
 	))
-	baseSetTreeItemChildren(tree, children, parentId)
+	queuedTreeItemUpdates[parentId] = children
+	_dispatchTreeItemUpdates(tree)
 }
 
 
@@ -130,9 +137,14 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const tree = useContext(TreeContext) as FixedSizeTree<OutlinerNodeData>
 	const selectable = !!obj;
 
+	// TODO: updating object type tree nodes to fetch the surrounding page and share the cached response
+	// (instead of each node individually fetching its own data) was a huge performance bump
+	// update queries for other outliner objects to also fetch in pages
 	const isObjectType = obj?._type === 'ObjectType'
 	const objName = useObjectDisplayName(isObjectType ? null : obj)
-	let { data: icon, hasIcon } = useObjectIcon(obj)
+	let hasIcon: boolean | null = null
+	let icon = undefined
+	;({ data: icon, hasIcon } = useObjectIcon(isObjectType ? null : obj))
 
 	let name = nameOverride ?? objName
 	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
@@ -143,11 +155,13 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	if (idx != null && isObjectType) {
 		page = Math.floor(idx / pageSize)
 	}
-	const info = api.useGetOutlinerObjectTypesQuery(page != null ? { page, pageSize } : skipToken)
+	const { data: objTypes } = api.useGetOutlinerObjectTypesQuery(page != null ? { page, pageSize } : skipToken)
+	const { data: icons } = api.useGetOutlinerObjectTypeIconsQuery(page != null ? { page, pageSize } : skipToken)
 	let objType: ObjectType & { animation?: Animation } | undefined
-	if (idx != null) {
+	if (isObjectType && idx != null) {
 		const idxInPage = idx % pageSize
-		objType = info.data?.[idxInPage]
+		objType = objTypes?.[idxInPage]
+		icon = icons?.[idxInPage].url
 		name ??= objType?.name
 		hasIcon = hasIcon || objType?.pluginName === 'Sprite' /* FIXME: this endpoint is not setting pluginName */
 	}

@@ -141,40 +141,42 @@ export function addItemToTree<TData extends FixedSizeNodeData>(tree: FixedSizeTr
 }
 
 /** Update a tree item's children without having to completely recompute treeWalker */
-export function setTreeItemChildren<TData extends FixedSizeNodeData>(tree: FixedSizeTree<TData>, children: TData[], parentId: string) {
-	let parent = tree.state.records.get(parentId)
-	if (!parent) { return }
-	parent = { ...parent }
-
+export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: FixedSizeTree<TData>, updates: Record<string, TData[]>) {
 	// previous state isn't used anywhere and this is much faster than `new Map(records)`
 	const records = tree.state.records as Map<string, NodeRecord<FixedSizeNodePublicState<TData>>>
-	// remove existing children
-	let child = parent.child
-	while (child) {
-		records.delete(child.public.data.id)
-		child = child.sibling
-	}
-	parent.child = null
 
-	let last = parent
-	let first = true;
-	for (const childData of children) {
-		const record = createRecord(tree, childData, parent)
-		if (first) {
-			last.child = record
-			first = false
-		} else {
-			last.sibling = record
+	for (const [parentId, children] of Object.entries(updates)) {
+		let parent = tree.state.records.get(parentId)
+		if (!parent) { return }
+		parent = { ...parent }
+
+		// remove existing children
+		let child = parent.child
+		while (child) {
+			records.delete(child.public.data.id)
+			child = child.sibling
 		}
-		records.set(childData.id, record)
-		last = record
+		parent.child = null
+
+		let last = parent
+		let first = true;
+		for (const childData of children) {
+			const record = createRecord(tree, childData, parent)
+			if (first) {
+				last.child = record
+				first = false
+			} else {
+				last.sibling = record
+			}
+			records.set(childData.id, record)
+			last = record
+		}
+		records.set(parentId, parent)
 	}
-	records.set(parentId, parent)
 
 	tree.setState({
 		order: tree.state.order,
 		records,
 		updateRequest: {},
 	})
-
 }

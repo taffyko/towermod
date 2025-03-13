@@ -5370,6 +5370,8 @@ dependencies = [
  "console-subscriber",
  "fs-err",
  "log",
+ "rmp-serde",
+ "serde",
  "serde_json",
  "tauri",
  "tauri-build",

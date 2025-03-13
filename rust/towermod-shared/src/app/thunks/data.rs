@@ -1,6 +1,9 @@
+use std::{cell::RefCell, sync::RwLock};
+
 use anyhow::{Context, Result};
+use futures::StreamExt;
 use towermod_cstc::{ImageMetadata, ObjectType};
-use crate::{app::state::{select, DataAction, STORE}, cstc_editing::EdObjectInstance};
+use crate::{app::{selectors, state::{select, DataAction, STORE}}, cstc_editing::EdObjectInstance};
 use fs_err::tokio as fs;
 
 pub async fn get_image(id: i32) -> Option<Vec<u8>> {
@@ -9,6 +12,22 @@ pub async fn get_image(id: i32) -> Option<Vec<u8>> {
 		return Some(image);
 	};
 	get_dumped_game_image(id).await.ok().flatten()
+}
+
+pub async fn get_outliner_object_type_icons(skip: usize, take: usize) -> Vec<Option<(i32, Vec<u8>)>> {
+	let ids = select(selectors::select_outliner_object_type_image_ids(skip, take)).await;
+	let images: RwLock<Vec<Option<(i32, Vec<u8>)>>> = RwLock::new(vec![None; ids.len()]);
+	{
+		let images = &images;
+		futures::stream::iter(ids).enumerate().for_each_concurrent(None, |(idx, id)| async move {
+			if let Some(id) = id {
+				let image = get_image(id).await;
+				let mut images = images.write().unwrap();
+				images[idx] = image.map(|image| (id, image));
+			}
+		}).await;
+	}
+	images.into_inner().unwrap()
 }
 
 async fn get_dumped_game_image(id: i32) -> Result<Option<Vec<u8>>> {

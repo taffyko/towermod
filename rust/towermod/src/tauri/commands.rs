@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use fs_err::tokio as fs;
 use towermod_cstc::ImageMetadata;
 use towermod_shared::{app::{selectors::SearchOptions, state::{dispatch, select, DataAction}}, cstc_editing, select, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType };
-use towermod_util::log_on_error;
+use towermod_util::{json_object, log_on_error};
 
 #[command]
 pub async fn get_image(
@@ -24,10 +24,7 @@ pub async fn get_image(
 }
 
 #[command]
-pub async fn get_file(
-	_window: tauri::Window,
-	request: tauri::ipc::Request<'_>,
-) -> Result<tauri::ipc::Response> {
+pub async fn get_file(_window: tauri::Window, request: tauri::ipc::Request<'_>) -> Result<tauri::ipc::Response> {
 	if let tauri::ipc::InvokeBody::Raw(payload) = request.body() {
 		let payload = String::from_utf8_lossy(payload).to_string();
 		let path: String = serde_json::from_str(&payload)?;
@@ -267,16 +264,14 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_object_types() -> Vec<i32> {
 	selectors::get_object_types().await
 }
+
 #[command] pub async fn get_object_type(id: i32) -> Option<serde_json::Value> {
-	let object_type = selectors::get_object_type(id).await?;
-	let plugin_name = select!(selectors::select_editor_plugin_name(object_type.plugin_id), |r| r.cloned()).await;
-	let mut value = serde_json::value::to_value(object_type).ok()?;
-	{
-		let value = value.as_object_mut()?;
-		value.insert(String::from("pluginName"), plugin_name.into());
-	}
-	Some(value)
+	select!(
+		selectors::select_object_type(id),
+		|s, r| r.cloned().map(|obj| enhance_object_type(s, obj))
+	).await
 }
+
 #[command] pub async fn search_object_types(options: SearchOptions) -> Vec<(i32, String)> {
 	selectors::search_object_types(options).await
 }
@@ -369,28 +364,52 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_object_type_animation(id: i32) -> Option<towermod_cstc::Animation> {
 	select!(selectors::select_object_type_animation(id), |r| r.cloned()).await
 }
-#[command] pub async fn get_outliner_object_types(skip: usize, take: usize) -> Vec<(cstc_editing::EdObjectType, Option<towermod_cstc::Animation>)> {
-	select!(selectors::select_outliner_object_types(skip, take), |l| {
-		l.into_iter().map(|(obj, anim)| (obj.clone(), anim.cloned())).collect()
+
+fn enhance_object_type(s: &towermod_shared::app::State, object_type: cstc_editing::EdObjectType) -> serde_json::Value {
+	let plugin_name = selectors::select_editor_plugin_name(object_type.plugin_id)(s);
+	json_object! {
+		...object_type,
+		pluginName: plugin_name.map(|s| s.as_str())
+	}.unwrap()
+}
+
+#[command] pub async fn get_outliner_object_types(skip: usize, take: usize) -> Vec<(serde_json::Value, Option<towermod_cstc::Animation>)> {
+	select(move |s| {
+		selectors::select_outliner_object_types(skip, take)(s).into_iter()
+			.map(|(obj, anim)| (enhance_object_type(s, obj.clone()), anim.cloned()))
+			.collect()
 	}).await
 }
-#[command]
-pub async fn get_outliner_object_type_icons(_window: tauri::Window, request: tauri::ipc::Request<'_>) -> Result<tauri::ipc::Response> {
-	if let tauri::ipc::InvokeBody::Raw(payload) = request.body() {
-		let payload = String::from_utf8_lossy(payload).to_string();
-		let map: serde_json::Map<String, serde_json::Value> = serde_json::from_str(&payload)?;
-		let skip = map.get("skip").and_then(|v| v.as_i64()).context("'skip' missing")? as usize;
-		let take = map.get("take").and_then(|v| v.as_i64()).context("'take' missing")? as usize;
 
-		// get_outliner_object_type_icons(skip, take).await
-		let data: Vec<u8> = todo!();
+macro_rules! binary_command {
+	($name:ident($($arg:ident: $arg_type:ty),*) $body:block) => {
+		#[command]
+		pub async fn $name(_window: tauri::Window, request: tauri::ipc::Request<'_>) -> Result<tauri::ipc::Response> {
+			use serde::ser::Serialize;
+			if let tauri::ipc::InvokeBody::Raw(payload) = request.body() {
+				let ($($arg,)*) = rmp_serde::from_slice::<($($arg_type,)*)>(payload)?;
 
-		Ok(tauri::ipc::Response::new(data))
-	} else {
-		Err(anyhow::anyhow!("Invalid request").into())
-	}
+				let data = $body;
+
+				let mut se = rmp_serde::Serializer::new(Vec::new())
+					.with_bytes(rmp_serde::config::BytesMode::ForceIterables);
+				data.serialize(&mut se).map_err(|e| anyhow::anyhow!("Failed to serialize response: {}", e))?;
+				let data = se.into_inner();
+
+				Ok(tauri::ipc::Response::new(data))
+			} else {
+				Err(anyhow::anyhow!("Invalid request").into())
+			}
+		}
+	};
 }
 
+binary_command! {
+	get_outliner_object_type_icons(skip: i64, take: i64) {
+		let icons = towermod_shared::app::thunks::get_outliner_object_type_icons(skip as usize, take as usize).await;
+		icons
+	}
+}
 
 #[command] pub async fn update_animation(animation: towermod_cstc::Animation) {
 	dispatch(DataAction::UpdateAnimation(animation)).await
