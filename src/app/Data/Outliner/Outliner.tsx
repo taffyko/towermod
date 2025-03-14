@@ -26,7 +26,7 @@ import { LineEdit } from '@/components/LineEdit';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { createSelector } from '@reduxjs/toolkit';
 import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu';
-import { Icon } from '@/components/Icon';
+import { Image } from '@/components/Image/Image';
 import { Button } from '@/components/Button';
 import clsx from 'clsx';
 import { debounce } from 'lodash-es';
@@ -200,7 +200,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const isLeaf = !nodeRecord?.child
 
 	let nodeContent = <>
-		<Icon noReflow={hasIcon} src={iconUrl} />
+		<Image noReflow={hasIcon} src={iconUrl} />
 		<div className="text" style={defaultTextStyle}>{name}</div>
 	</>
 

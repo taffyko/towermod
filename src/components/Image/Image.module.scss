@@ -1,0 +1,19 @@
+@use '@/css/mixins' as *;
+
+.imageButton {
+	@include pressable;
+	padding: 0;
+	border: none;
+	background: url('@/images/transparent.png');
+	transition: 0.1s filter ease-out;
+
+	&:hover {
+		transition: none;
+		filter: brightness(125%);
+	}
+
+	&:active {
+		filter: brightness(75%) !important;
+		transform: scale(0.95);
+	}
+}

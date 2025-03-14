@@ -13,6 +13,7 @@
 	transition: none;
 }
 img.preview {
+	max-width: none;
 	position: absolute;
 	object-fit: fill;
 	background: url('@/images/transparent.png');

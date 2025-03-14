@@ -27,6 +27,7 @@ export default function Images() {
 	const [dumpImages] = api.useDumpImagesMutation();
 	const { data: imageDumpDir } = api.useImageDumpDirPathQuery();
 	const { data: project } = api.useGetProjectQuery();
+	const { data: isDataLoaded } = api.useIsDataLoadedQuery();
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
 
 	return <div className="vbox gap grow">
@@ -35,10 +36,10 @@ export default function Images() {
 			<Button disabled={!imageDumpDir} onClick={onClickBrowseDumpedImages}>Browse dump</Button>
 			<Button disabled={!projectImagesDir} onClick={onClickBrowseProjectImages}>Browse project images</Button>
 		</div>
-		{project ?
+		{isDataLoaded ?
 			<ImageEditing />
 		:
-			<div className="subtle">Load a saved Towermod project to see more options</div>
+			<div className="subtle">Create/load a Towermod project to see image data</div>
 		}
 	</div>
 	async function onClickDumpImages() {
@@ -61,7 +62,7 @@ export default function Images() {
 
 function ImageEditing() {
 	const imageId = useAppSelector(s => s.app.imageId)
-	const { data: img } = api.useGetGameImageUrlQuery(imageId);
+	const { currentData: img } = api.useGetGameImageUrlQuery(imageId);
 	const { data: savedMetadata } = api.useGetImageMetadataQuery({ id: imageId })
 	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
 	const [setImageMetadata] = api.useSetImageMetadataMutation();
@@ -73,8 +74,14 @@ function ImageEditing() {
 	const showCollision = useAppSelector(s => s.app.showImageCollisionPreview)
 
 	return <>
+		{!imageDumpDir ?
+			<div className="text-(--color-warn)">Game images not yet dumped, unable to display.</div>
+		: null}
+		{!project ?
+			<div className="subtle">Save your project to enable adding/overriding images</div>
+		: null}
 		<div className="hbox gap">
-			<Button onClick={onClickSetImage}>Set image</Button>
+			<Button disabled={!project} onClick={onClickSetImage}>Set image</Button>
 			<Toggle value={showCollision} onChange={(v) => dispatch(actions.setShowImageCollisionPreview(v))}>
 				Show collision
 			</Toggle>
@@ -84,8 +91,8 @@ function ImageEditing() {
 				<div className="hbox gap items-center">
 					<SpinBox style={{ width: '5rem' }} int value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
 					<IconButton disabled={!img?.url} src={folderOpenImg} onClick={onClickBrowseImage} />
-					<IconButton src={uploadImg} onClick={onClickSetImage} />
-					<IconButton src={refreshImg} onClick={onClickReloadAllImages} />
+					<IconButton disabled={!project} src={uploadImg} onClick={onClickSetImage} />
+					<IconButton disabled={!project} src={refreshImg} onClick={onClickReloadAllImages} />
 					{ isOverridden ? <IconButton src={closeImg} onClick={onClickClearImage} /> : null }
 					<Button disabled={!metadata} onClick={onClickSetMask}>Set mask</Button>
 					<Button disabled={!metadata} onClick={onClickExportMask}>Export mask</Button>
@@ -95,7 +102,7 @@ function ImageEditing() {
 			<div className="vbox gap grow">
 				{ metadata
 					? <Button disabled={!isMetadataDirty} onClick={() => submitMetadata()}>Save metadata</Button>
-					: <Button style={{ alignSelf: 'stretch' }} onClick={onClickSetImage}>{ img?.url ? "Add metadata" : "Add image" }</Button>
+					: <Button disabled={!img?.url && !project} style={{ alignSelf: 'stretch' }} onClick={onClickSetImage}>{ img?.url ? "Add metadata" : "Add image" }</Button>
 				}
 				<InspectorObject value={metadata ?? undefined} onChange={setMetadata as any} />
 			</div>
@@ -205,7 +212,8 @@ function ImagePreview(props: {
 	metadata?: ImageMetadata,
 }) {
 	const { imageId, metadata, showCollision } = props;
-	const { data: img } = api.useGetGameImageUrlQuery(imageId);
+	const { currentData: imgDataObj, isFetching } = api.useGetGameImageUrlQuery(imageId);
+	const imgUrl = imgDataObj?.url ?? undefined
 
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
 	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
@@ -237,12 +245,12 @@ function ImagePreview(props: {
 	useEffect(() => {
 		setNaturalWidth(undefined)
 		imgEl?.parentElement?.classList.add(Style.loading)
-	}, [img?.url])
+	}, [imgUrl])
 
-	if (!img?.url) { return <div className="centerbox grow">No image</div> }
+	if (!imgUrl && !isFetching) { return <div className="centerbox grow">No image</div> }
 
 	return <div className={Style.previewContainer}>
-		<img onLoad={onImageLoad} width={width} height={height} ref={setImgEl} className={Style.preview} src={img?.url} />
+		<img onLoad={onImageLoad} width={width} height={height} ref={setImgEl} className={Style.preview} src={imgUrl} />
 		{ metadata && showCollision ?
 			<canvas style={{ width, height }} ref={setCanvasEl} className={Style.collision} />
 		: null}

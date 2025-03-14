@@ -178,9 +178,7 @@ export const baseApi = createApi({
 		}),
 
 		saveNewProject: builder.mutation<void, { dirPath: string, author: string, name: string, displayName: string }>({
-			query: async (dirPath) => {
-				return await invoke('save_new_project', { dirPath })
-			},
+			query: async (args) => await invoke('save_new_project', args),
 			invalidatesTags: ['Project'],
 		}),
 
@@ -188,13 +186,14 @@ export const baseApi = createApi({
 			query: async () => {
 				return await invoke('dump_images')
 			},
+			invalidatesTags: ['Game', 'Image']
 		}),
 
 		imageDumpDirPath: builder.query<string | null, void>({
 			query: async () => {
 				return await invoke('image_dump_dir_path') ?? null
 			},
-			providesTags: ['Game']
+			providesTags: ['Game', { type: 'Image', id: 'DUMP' }]
 		}),
 
 		modCacheExists: builder.query<boolean, ModInfo>({

@@ -117,7 +117,7 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 		onChange?.(newArr)
 	} : undefined
 
-	const { ref, isOpen, ToggleCollapse } = useCollapsible()
+	const { ref, isOpen, ToggleCollapse } = useCollapsible(arrPinfo.uncollapsedByDefault)
 
 	return <div ref={ref} className="vbox grow gap">
 		<ToggleCollapse />
@@ -140,14 +140,14 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 	</div>
 }
 
-function useCollapsible() {
+function useCollapsible(isOpenInitialValue?: boolean) {
 	const [el, setEl] = useStateRef<HTMLDivElement>()
 	// portal so that elements can be placed inside the label, if one exists
 	const labelEl = useMemo(() => {
 		if (!el) { return null }
 		return el.parentElement?.previousElementSibling?.querySelector('.labelPortal')
 	}, [el])
-	const [isOpen, setIsOpen] = useState(false)
+	const [isOpen, setIsOpen] = useState(isOpenInitialValue ?? false)
 
 	const ToggleCollapse = useCallback(() =>
 		<Portal parent={labelEl}>
@@ -209,7 +209,7 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		onChange(newObj as Record<InspectorKeyTypes, AnyInspectorValue>)
 	} : undefined
 
-	const { ref, isOpen, ToggleCollapse } = useCollapsible()
+	const { ref, isOpen, ToggleCollapse } = useCollapsible(dictPinfo.uncollapsedByDefault)
 
 	return <div ref={ref} className="vbox grow gap" key={dictPinfo.key}>
 		<ToggleCollapse />

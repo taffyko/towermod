@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import Style from './SpinBox.module.scss'
-import { useStateRef, useOptimisticTwoWayBinding } from '@/util';
+import { useStateRef, useOptimisticTwoWayBinding, useEventListener } from '@/util';
 import clsx from 'clsx';
 
 export function SpinBox(props: Omit<React.ComponentProps<'input'>, 'onChange' | 'value'> & {
@@ -21,6 +21,11 @@ export function SpinBox(props: Omit<React.ComponentProps<'input'>, 'onChange' | 
 		if (isNaN(processedValue)) { return }
 		externalOnChange?.(processedValue)
 	}, [setValue, externalOnChange])
+
+	// prevent spinning the input from scrolling the page
+	useEventListener(el, 'wheel', e => {
+		e.stopPropagation()
+	})
 
 	return <input
 		ref={setEl}

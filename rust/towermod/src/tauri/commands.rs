@@ -137,7 +137,7 @@ pub async fn get_image_metadata(id: i32) -> Option<ImageMetadata> {
 }
 
 #[command]
-pub async fn is_image_overridden(id: i32) -> Result<bool> {
+pub async fn is_image_overridden(id: i32) -> bool {
 	thunks::is_image_overridden(id).await
 }
 
@@ -164,6 +164,11 @@ pub async fn load_project_preflight(manifest_path: PathBuf) -> Result<Option<Str
 #[command]
 pub async fn load_project(manifest_path: PathBuf) -> Result<()> {
 	thunks::load_project(manifest_path).await
+}
+
+#[command]
+pub async fn save_new_project(dir_path: PathBuf, author: String, name: String, display_name: String) -> Result<()> {
+	thunks::save_new_project(dir_path, author, name, display_name).await
 }
 
 #[command]
@@ -227,6 +232,7 @@ pub async fn install_mod(resource: &str) -> Result<ModInfo> { thunks::install_mo
 #[command]
 pub async fn set_game(file_path: Option<PathBuf>) -> Result<()> { thunks::set_game(file_path).await }
 
+// TODO: use msgpack here
 #[command]
 pub async fn get_installed_mods() -> Result<Vec<ModInfo>> {
 	thunks::get_installed_mods().await

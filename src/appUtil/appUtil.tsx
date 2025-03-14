@@ -199,7 +199,7 @@ export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined):
 			}
 	}
 	hasIcon = hasIcon || imageId != null
-	const { data: img, isLoading: urlLoading } = api.useGetGameImageUrlQuery(imageId ?? skipToken)
+	const { currentData: img, isFetching: urlLoading } = api.useGetGameImageUrlQuery(imageId ?? skipToken)
 	return { data: img?.url ?? undefined, hasIcon, isLoading: objIsLoading || imageIdLoading || urlLoading }
 }
 

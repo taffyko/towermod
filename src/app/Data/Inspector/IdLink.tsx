@@ -7,7 +7,7 @@ import { api } from "@/api";
 import { useState } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { ComboboxButton } from "@/components/Combobox";
-import { Icon } from "@/components/Icon";
+import { Image, ImageButton } from "@/components/Image/Image";
 
 export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
 	const { lookup, onChange } = props;
@@ -20,7 +20,7 @@ export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: Uniqu
 		:
 			<Button
 				onClick={() => { dispatch(actions.setOutlinerValue(lookup)) }}
-				icon={<Icon src={url} noReflow={hasIcon} className="w-[32px] h-[32px]"/>}
+				icon={<Image src={url} noReflow={hasIcon} className="w-[32px] h-[32px]"/>}
 			>
 				 {displayName}
 			</Button>
@@ -34,10 +34,12 @@ function LookupEdit(props: { name?: string, icon?: string, lookup: UniqueObjectL
 	switch (lookup._type) {
 		case 'ObjectType':
 			return <ObjectTypeEdit value={lookup.id} onChange={(v) => onChange?.({ ...lookup, id: v })} />
+		case 'ImageMetadata':
+			return <ImageEdit src={icon} value={lookup.id} onChange={(v) => onChange?.({ ...lookup, id: v })} />
 		default:
 			if ('id' in lookup) {
 				return <>
-					<Icon src={icon} className="h-[32px] aspect-square" />
+					<Image src={icon} className="h-[32px] aspect-square" />
 					<SpinBox small value={lookup.id} onChange={(v) => onChange?.({ ...lookup, id: v })} />
 				</>
 			}
@@ -45,6 +47,16 @@ function LookupEdit(props: { name?: string, icon?: string, lookup: UniqueObjectL
 	return undefined
 }
 
+function ImageEdit(props: { src: string | undefined, value: int, onChange: (v: int) => void }) {
+	const {src, value, onChange} = props
+	return <>
+		<ImageButton src={src} className="h-[64px] aspect-square" onClick={() => {
+			dispatch(actions.setCurrentTab('Images'))
+			dispatch(actions.setImageId(value))
+		}} />
+		<SpinBox small value={value} onChange={onChange} />
+	</>
+}
 
 function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
 	const { value: selectedId, onChange } = props;
@@ -65,6 +77,6 @@ function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
 		query={query}
 		setQuery={setQuery}
 		options={objectTypes ?? []}
-		icon={<Icon src={icon} />}
+		icon={<Image src={icon} />}
 	/>
 }

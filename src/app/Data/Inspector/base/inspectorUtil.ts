@@ -46,6 +46,7 @@ export type ArrayPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> =
 	fixed?: boolean,
 	/** List of type names representing the union of types this array can contain */
 	valueTypes?: Array<string & (KeyOfValue<TypeNameToValue, T> | 'unknown')>
+	uncollapsedByDefault?: boolean,
 }
 
 export type DictionaryPropertyInfo<T extends AnyInspectorValue = AnyInspectorValue, TKey extends InspectorKeyTypes = InspectorKeyTypes> = BasePropertyInfo & {
@@ -58,6 +59,7 @@ export type DictionaryPropertyInfo<T extends AnyInspectorValue = AnyInspectorVal
 	keyTypes: Array<KeyOfValue<TypeNameToValue, TKey>>,
 	/** List of type names representing the union of value types this dictionary can contain */
 	valueTypes: Array<string & (KeyOfValue<TypeNameToValue, T> | 'unknown')>,
+	uncollapsedByDefault?: boolean,
 }
 export type SimplePropertyInfo<T extends AnyInspectorValue = AnyInspectorValue> = BasePropertyInfo & {
 	key: InspectorKeyTypes,
@@ -68,6 +70,7 @@ export type ObjectPropertyInfo<T extends InspectorObjectValue = InspectorObjectV
 	key: keyof T,
 	value: T,
 	type: T['_type'],
+	uncollapsedByDefault?: boolean,
 }
 type CustomPropertyInfo = BasePropertyInfo & { key: InspectorKeyTypes, custom: true, type: 'unknown', value: unknown }
 

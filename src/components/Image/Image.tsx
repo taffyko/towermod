@@ -1,14 +1,15 @@
 import { useStateRef } from "@/util"
 import clsx from "clsx"
 import { useEffect, useState } from "react"
+import Style from './Image.module.scss'
 
-export function Icon(props: {
+export function Image(props: {
 	src?: string | null,
 	/** if true, icon is known to exist and image should not be taken out of flow while loading */
 	noReflow?: boolean | null,
 	className?: string
-}) {
-	const { src, className, noReflow } = props
+} & React.ComponentProps<'img'>) {
+	const { src, className, noReflow, ...htmlProps } = props
 	const [el, setEl] = useStateRef<HTMLImageElement>()
 	const [loading, setLoading] = useState(true)
 	useEffect(() => {
@@ -30,6 +31,18 @@ export function Icon(props: {
 				className || 'h-[100%] aspect-square',
 			)}
 			src={src ?? undefined}
+			{...htmlProps}
 		/>
 	</>
+}
+
+export function ImageButton(props: React.ComponentProps<'button'> & { src: string | undefined }) {
+	const { className, src, ...rest } = props
+	return <button className={clsx(Style.imageButton, className, !src && 'opacity-0')} {...rest}>
+		<Image
+			noReflow={true}
+			src={src}
+		>
+		</Image>
+	</button>
 }

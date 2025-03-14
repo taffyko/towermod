@@ -68,7 +68,7 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 			case 'AnimationFrame':
 				switch (key) {
 					case 'imageId':
-						return <IdLink lookup={{ _type: 'ImageMetadata', id: pinfo.value as any }} onChange={onChange as any} />
+						return <IdLink lookup={{ _type: 'ImageMetadata', id: pinfo.value as any }} onChange={(lookup: any) => onChange(lookup.id)} />
 				}
 			break; case 'ObjectInstance':
 				switch (key) {
@@ -143,12 +143,29 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		case 'Animation':
 			override(type, {
 				id: { type: 'int', readonly: true },
-				frames: { valueTypes: ['AnimationFrame'] },
+				frames: { valueTypes: ['AnimationFrame'], uncollapsedByDefault: true },
 				subAnimations: { valueTypes: ['Animation'], hidden: true },
 				tag: { type: 'int' },
 				repeatCount: { type: 'int' },
 				repeatTo: { type: 'int' },
+				isAngle: { hidden: true }
 			})
+			if (obj.isAngle) {
+				override(type, {
+					name: { hidden: true },
+					tag: { hidden: true },
+				})
+			} else {
+				override(type, {
+					speed: { hidden: true },
+					isAngle: { hidden: true },
+					angle: { hidden: true },
+					repeatCount: { hidden: true },
+					repeatTo: { hidden: true },
+					pingPong: { hidden: true },
+					frames: { hidden: true },
+				})
+			}
 		break; case 'AnimationFrame':
 			override(type, {
 				imageId: { type: 'int' },
@@ -181,7 +198,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				id: { type: 'int', readonly: true },
 				data: dataPinfo,
 				objectTypeId: { type: 'int' },
-				privateVariables: { type: 'Dictionary', fixed: true, valueTypes: ['number', 'string'] },
+				privateVariables: { type: 'Dictionary', fixed: true, valueTypes: ['number', 'string'], uncollapsedByDefault: true },
 				x: { type: 'int' },
 				y: { type: 'int' },
 				width: { type: 'int' },
@@ -199,7 +216,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				pluginId: { hidden: true },
 				pluginName: { readonly: true },
 				descriptors: { hidden: true, },
-				privateVariables: { valueTypes: ['VariableType'], readonly: true },
+				privateVariables: { valueTypes: ['VariableType'], uncollapsedByDefault: true, readonly: true },
 				destroyWhen: { type: 'DisableShaderWhen' }
 			})
 		break; case 'Behavior':
@@ -218,13 +235,13 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'Container':
 			override(type, {
 				id: { readonly: true, type: 'int' },
-				objectIds: { valueTypes: ['int'] }
+				objectIds: { valueTypes: ['int'], uncollapsedByDefault: true }
 			})
 		break; case 'Family':
 			override(type, {
 				name: { readonly: true },
-				objectTypeIds: { valueTypes: ['int'], readonly: true },
-				privateVariables: { valueTypes: ['VariableType'], readonly: true },
+				objectTypeIds: { valueTypes: ['int'], readonly: true, uncollapsedByDefault: true },
+				privateVariables: { valueTypes: ['VariableType'], readonly: true, uncollapsedByDefault: true },
 			})
 		break; case 'ImageMetadata':
 			override(type, {
@@ -233,7 +250,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				collisionPitch: { readonly: true },
 				collisionWidth: { readonly: true },
 				collisionHeight: { readonly: true },
-				apoints: { valueTypes: ['ActionPoint'] },
+				apoints: { valueTypes: ['ActionPoint'], uncollapsedByDefault: true },
 			})
 		break; case 'ActionPoint':
 			override(type, {
@@ -243,7 +260,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 		break; case 'ObjectTrait':
 			override(type, {
 				name: { readonly: true },
-				objectTypeIds: { valueTypes: ['int'] },
+				objectTypeIds: { valueTypes: ['int'], uncollapsedByDefault: true },
 			})
 		break; case 'AppBlock':
 			override(type, {

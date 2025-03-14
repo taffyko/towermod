@@ -54,10 +54,10 @@ lazy_static! {
 	pub static ref STORE: AppStore = Store::new(reducer);
 }
 
-pub async fn select<S: Fn(&State) -> Result, Result>(selector: S) -> Result
+pub async fn select<S: Fn(&State) -> TResult, TResult>(selector: S) -> TResult
 where
-	S: Selector<State, Result = Result> + Send + 'static,
-	Result: Send + 'static,
+	S: Selector<State, Result = TResult> + Send + 'static,
+	TResult: Send + 'static,
 {
 	STORE.select(selector).await
 }

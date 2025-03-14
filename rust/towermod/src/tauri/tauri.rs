@@ -61,6 +61,7 @@ pub fn run() {
 				commands::new_project,
 				commands::load_project_preflight,
 				commands::load_project,
+				commands::save_new_project,
 				commands::save_project,
 				commands::edit_project_info,
 				commands::nuke_cache,

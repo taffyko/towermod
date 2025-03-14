@@ -41,7 +41,10 @@ async fn get_dumped_game_image(id: i32) -> Result<Option<Vec<u8>>> {
 }
 
 async fn get_image_override(id: i32) -> Result<Option<Vec<u8>>> {
-	let mut path = select(|s| s.project.as_ref().context("No project loaded").map(|p| p.images_path())).await??;
+	let Some(mut path) = select(|s| s.project.as_ref().map(|p| p.images_path().ok()).flatten()).await else {
+		// no project dir set
+		return Ok(None)
+	};
 	path.push(format!("{id}.png"));
 	match fs::read(&path).await {
 		Ok(v) => Ok(Some(v)),
@@ -50,10 +53,13 @@ async fn get_image_override(id: i32) -> Result<Option<Vec<u8>>> {
 	}
 }
 
-pub async fn is_image_overridden(id: i32) -> Result<bool> {
-	let mut path = select(|s| s.project.as_ref().context("No project loaded").map(|p| p.images_path())).await??;
+pub async fn is_image_overridden(id: i32) -> bool {
+	let Some(mut path) = select(|s| s.project.as_ref().map(|p| p.images_path().ok()).flatten()).await else {
+		// no project dir set
+		return false
+	};
 	path.push(format!("{id}.png"));
-	Ok(path.exists())
+	path.exists()
 }
 
 pub async fn set_image_metadata(data: ImageMetadata) {

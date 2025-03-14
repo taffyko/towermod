@@ -7,7 +7,9 @@
 	overflow-y: scroll;
 
 	&.active {
-		display: block;
+		display: flex;
+		flex-flow: column nowrap;
+		gap: var(--gap);
 		background-color: rgb(from var(--color-root-bg) r g b / 0.5);
 	}
 }
