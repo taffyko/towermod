@@ -190,7 +190,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
 
 	useEffect(() => {
-		if (children) {
+		if (children && children.length) {
 			setTreeItemChildren(tree, children, id)
 		}
 	}, [children])

@@ -26,6 +26,8 @@ $outlineWeight: 4px;
 	height: $size;
 	isolation: isolate;
 	filter: url(#salinear5) brightness(0.9) contrast(0.8);
+	align-self: center;
+	justify-self: center;
 
 	.spinnerBg {
 		position: absolute;

@@ -5,7 +5,7 @@ import { openModal } from "@/app/Modal";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { awaitRtk } from "@/api/helpers";
 import { toast } from "@/app/Toast";
-import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, useMountEffect, useRerender } from "@/util";
+import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, useMountEffect, useRerender } from "@/util";
 import { assertUnreachable } from "@/util";
 import { ApiEndpointQuery, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -28,6 +28,7 @@ export async function saveProject() {
 
 
 export async function installMods(files: string[]) {
+	activateWindow()
 	const { dispatch, actions } = await import('@/redux');
 	for (const file of files) {
 		const modInfo = await awaitRtk(spin(dispatch(api.endpoints.installMod.initiate(file))))

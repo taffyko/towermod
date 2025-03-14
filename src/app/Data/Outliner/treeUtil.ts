@@ -102,6 +102,13 @@ export const TreeContext = createContext<VTree | null>(null)
 export const getTreeItemId = getObjectStringId
 
 export function createRecord<TData extends FixedSizeNodeData>(tree: FixedSizeTree<TData>, data: TData, parent: NodeRecord<FixedSizeNodePublicState<TData>>): NodeRecord<FixedSizeNodePublicState<TData>> {
+	const existingRecord = tree.state.records.get(data.id)
+	if (existingRecord) {
+		//@ts-ignore
+		existingRecord.parent = parent
+		return existingRecord
+	}
+
 	const pub: FixedSizeNodePublicState<TData> = {
 		data,
 		isOpen: data.isOpenByDefault,
@@ -145,14 +152,15 @@ export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: 
 	// previous state isn't used anywhere and this is much faster than `new Map(records)`
 	const records = tree.state.records as Map<string, NodeRecord<FixedSizeNodePublicState<TData>>>
 
+	const oldChildren = new Set<string>();
 	for (const [parentId, children] of Object.entries(updates)) {
 		let parent = tree.state.records.get(parentId)
 		if (!parent) { return }
 
-		// remove existing children
+		// record existing children
 		let child = parent.child
 		while (child) {
-			records.delete(child.public.data.id)
+			oldChildren.add(child.public.data.id)
 			child = child.sibling
 		}
 		parent.child = null
@@ -161,6 +169,7 @@ export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: 
 		let first = true;
 		for (const childData of children) {
 			const record = createRecord(tree, childData, parent)
+			oldChildren.delete(childData.id)
 			if (first) {
 				last.child = record
 				first = false
@@ -171,6 +180,10 @@ export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: 
 			last = record
 		}
 		records.set(parentId, parent)
+	}
+	// remove old children no longer in the tree
+	for (const childId of oldChildren) {
+		records.delete(childId)
 	}
 
 	tree.setState({

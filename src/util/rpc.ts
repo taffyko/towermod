@@ -4,6 +4,7 @@ import { FileDialogOptions } from '@towermod';
 import { DependencyList, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event'
 import { Encoder, Decoder } from '@msgpack/msgpack'
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -35,6 +36,11 @@ export async function getModsDirPath(): Promise<string> {
 
 export async function getVersion(): Promise<string> {
 	return await invoke('get_version');
+}
+
+export function activateWindow(): Promise<void> {
+	const window = getCurrentWindow()
+	return window.setFocus()
 }
 
 

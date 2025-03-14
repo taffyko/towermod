@@ -25,8 +25,8 @@ export function LoadContainer(props: React.ComponentProps<'div'> & {
 
 function SpinnerBox(props: React.ComponentProps<'div'> & { small?: boolean }) {
 	const { small, className, ...htmlProps } = props;
-	return <div {...htmlProps} className={`${Style.spinnerContainer} ${className || ''}`}>
-		<div className={clsx(small ? Style.spinnerBoxSmall : Style.spinnerBox, className)}>
+	return <div {...htmlProps} className={clsx(Style.spinnerContainer, className)}>
+		<div className={small ? Style.spinnerBoxSmall : Style.spinnerBox}>
 			<div className={Style.spinnerBg} />
 			<div className={Style.spinnerSegment} />
 			<div className={Style.outlineInner} />
