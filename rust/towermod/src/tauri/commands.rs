@@ -5,6 +5,31 @@ use fs_err::tokio as fs;
 use towermod_cstc::ImageMetadata;
 use towermod_shared::{app::{selectors::SearchOptions, state::{dispatch, select, DataAction}}, cstc_editing, select, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType };
 use towermod_util::{json_object, log_on_error};
+use towermod_shared::{towermod_util, towermod_win32, towermod_cstc};
+
+macro_rules! binary_command {
+	($name:ident($($arg:ident: $arg_type:ty),*) $body:block) => {
+		#[command]
+		pub async fn $name(_window: tauri::Window, request: tauri::ipc::Request<'_>) -> Result<tauri::ipc::Response> {
+			use serde::ser::Serialize;
+			if let tauri::ipc::InvokeBody::Raw(payload) = request.body() {
+				let ($($arg,)*) = rmp_serde::from_slice::<($($arg_type,)*)>(payload)?;
+
+				let data = $body;
+
+				let mut se = rmp_serde::Serializer::new(Vec::new())
+					.with_struct_map()
+					.with_bytes(rmp_serde::config::BytesMode::ForceIterables);
+				Serialize::serialize(&data, &mut se).map_err(|e| anyhow::anyhow!("Failed to serialize response: {}", e))?;
+				let data = se.into_inner();
+
+				Ok(tauri::ipc::Response::new(data))
+			} else {
+				Err(anyhow::anyhow!("Invalid request").into())
+			}
+		}
+	};
+}
 
 #[command]
 pub async fn get_image(
@@ -147,6 +172,11 @@ pub async fn set_image_metadata(data: ImageMetadata) {
 }
 
 #[command]
+pub async fn get_new_image_id() -> i32 {
+	select(selectors::select_new_image_id).await
+}
+
+#[command]
 pub async fn image_dump_dir_path() -> Result<Option<PathBuf>> {
 	thunks::image_dump_dir_path().await
 }
@@ -226,16 +256,19 @@ pub async fn play_vanilla() -> Result<u32> {
 	thunks::play_vanilla().await
 }
 
-#[command]
-pub async fn install_mod(resource: &str) -> Result<ModInfo> { thunks::install_mod(resource).await }
+binary_command! {
+	install_mod(resource: String) {
+		thunks::install_mod(&resource).await?
+	}
+}
 
 #[command]
 pub async fn set_game(file_path: Option<PathBuf>) -> Result<()> { thunks::set_game(file_path).await }
 
-// TODO: use msgpack here
-#[command]
-pub async fn get_installed_mods() -> Result<Vec<ModInfo>> {
-	thunks::get_installed_mods().await
+binary_command! {
+	get_installed_mods() {
+		thunks::get_installed_mods().await?
+	}
 }
 
 #[command]
@@ -387,28 +420,7 @@ fn enhance_object_type(s: &towermod_shared::app::State, object_type: cstc_editin
 	}).await
 }
 
-macro_rules! binary_command {
-	($name:ident($($arg:ident: $arg_type:ty),*) $body:block) => {
-		#[command]
-		pub async fn $name(_window: tauri::Window, request: tauri::ipc::Request<'_>) -> Result<tauri::ipc::Response> {
-			use serde::ser::Serialize;
-			if let tauri::ipc::InvokeBody::Raw(payload) = request.body() {
-				let ($($arg,)*) = rmp_serde::from_slice::<($($arg_type,)*)>(payload)?;
 
-				let data = $body;
-
-				let mut se = rmp_serde::Serializer::new(Vec::new())
-					.with_bytes(rmp_serde::config::BytesMode::ForceIterables);
-				data.serialize(&mut se).map_err(|e| anyhow::anyhow!("Failed to serialize response: {}", e))?;
-				let data = se.into_inner();
-
-				Ok(tauri::ipc::Response::new(data))
-			} else {
-				Err(anyhow::anyhow!("Invalid request").into())
-			}
-		}
-	};
-}
 
 binary_command! {
 	get_outliner_object_type_icons(skip: i64, take: i64) {

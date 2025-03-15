@@ -16,9 +16,6 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [dependencies]
 tauri = { version = "2", features = ["unstable"] }
 tauri-plugin-opener = "2"
-towermod-util.workspace = true
-towermod-win32.workspace = true
-towermod-cstc.workspace = true
 towermod-shared.workspace = true
 anyhow.workspace = true
 serde_json.workspace = true
@@ -34,7 +31,5 @@ rmp-serde.workspace = true
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 
-
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
-

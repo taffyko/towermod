@@ -335,6 +335,10 @@ pub fn select_animation_image_id(animation_id: i32) -> impl Fn(&State) -> Option
 	}
 }
 
+pub fn select_new_image_id(s: &State) -> i32 {
+	s.data.image_block.iter().map(|i| i.id).max().unwrap_or(0) + 1
+}
+
 pub fn select_behaviors() -> impl Fn(&State) -> Vec<(i32, i32)> {
 	move |s| s.data.behaviors.iter().map(|b| (b.object_type_id, b.mov_index)).collect()
 }

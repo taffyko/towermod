@@ -38,6 +38,10 @@ export const dataApi = baseApi.injectEndpoints({
 			query: (data) => invoke('set_image_metadata', { data }),
 			invalidatesTags: (_r, _e, arg) => [{ type: 'ImageMetadata', id: String(arg.id) }]
 		}),
+		selectNewImageId: builder.query<int, void>({
+			query: () => invoke('select_new_image_id'),
+			providesTags: [{ type: 'Image', id: 'LIST' }],
+		}),
 		isImageOverridden: builder.query<boolean, number>({
 			query: (id) => invoke('is_image_overridden', { id }),
 			providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]

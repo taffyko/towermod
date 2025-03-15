@@ -154,6 +154,10 @@
 		"fs:allow-write-file",
 		"fs:write-all",
 		"fs:write-files",
-    "dialog:default"
-  ]
+		{
+			"identifier": "fs:scope",
+			"allow": [{ "path": "/*" }]
+		},
+		"dialog:default"
+	]
 }

@@ -57,6 +57,7 @@ pub fn run() {
 				commands::get_image_metadata,
 				commands::is_image_overridden,
 				commands::set_image_metadata,
+				commands::get_new_image_id,
 				commands::image_dump_dir_path,
 				commands::new_project,
 				commands::load_project_preflight,

@@ -1,5 +1,6 @@
 use tauri::{AppHandle, Emitter};
 use anyhow::Result;
+use towermod_shared::towermod_util;
 use towermod_util::log_on_error;
 
 /// Log error, send error event to the frontend

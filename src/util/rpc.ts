@@ -5,6 +5,8 @@ import { DependencyList, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event'
 import { Encoder, Decoder } from '@msgpack/msgpack'
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeFile } from '@tauri-apps/plugin-fs';
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })

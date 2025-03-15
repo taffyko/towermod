@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Game, ImageMetadata, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod';
 import { useObjectUrl } from '@/util/hooks';
 import { customBaseQuery } from './baseApiUtil';
-import { enhanceModInfo, svgToDataUri } from '@/util';
+import { binaryInvoke, enhanceModInfo, svgToDataUri } from '@/util';
 
 const cstcObjectTagTypes = [
 	'Data', 'Image', 'ImageMetadata', 'ObjectType', 'ObjectInstance', 'Behavior', 'Container', 'Family', 'ObjectTrait', 'AppBlock', 'Layout', 'LayoutLayer', 'Animation'
@@ -53,7 +53,7 @@ export const baseApi = createApi({
 		}),
 		getInstalledMods: builder.query<ModInfo[], void>({
 			query: async () => {
-				const mods: ModInfo[] = await invoke('get_installed_mods')
+				const mods: ModInfo[] = await binaryInvoke('get_installed_mods')
 				for (const mod of mods) { enhanceModInfo(mod) }
 				return mods
 			},
@@ -61,7 +61,7 @@ export const baseApi = createApi({
 		}),
 		installMod: builder.mutation<ModInfo, string>({
 			query: async (resource) => {
-				return enhanceModInfo(await invoke('install_mod', { resource }))
+				return enhanceModInfo(await binaryInvoke('install_mod', [resource]))
 			},
 			invalidatesTags: ['ModInfo'],
 		}),
