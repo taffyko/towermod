@@ -1,5 +1,8 @@
 $iconSize: 16px;
 
+@layer base {
+
+
 .iconButton {
 	padding: 0;
 	display: inline-flex;
@@ -52,4 +55,6 @@ $iconSize: 16px;
 	&:disabled {
 		opacity: 0.5;
 	}
+}
+
 }

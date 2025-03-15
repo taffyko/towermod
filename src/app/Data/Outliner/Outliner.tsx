@@ -21,6 +21,7 @@ import { QueryScopeFn, getObjectDisplayName, useObjectDisplayName, useObjectIcon
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';
+import plusImg from '@/icons/plus.svg';
 import { api } from '@/api';
 import { LineEdit } from '@/components/LineEdit';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -195,9 +196,11 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 		}
 	}, [children])
 
-
 	const nodeRecord = tree?.state.records.get(props.data.id)
 	const isLeaf = !nodeRecord?.child
+
+	// TODO
+	const canAddChildren = obj?._type === 'ObjectType' && hasIcon
 
 	let nodeContent = <>
 		<Image noReflow={hasIcon} src={iconUrl} />
@@ -209,6 +212,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 			Style.treeItem,
 			selectable && Style.selectable,
 			selected && Style.active,
+			'group',
 		)}
 		onClick={() => {
 			if (selectable) {
@@ -245,6 +249,13 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 		>
 			{nodeContent}
 		</div>
+		<div className="w-1" />
+		{ canAddChildren ?
+			<IconButton src={plusImg} className={clsx(
+				!selected && 'opacity-0',
+				'group-hover:opacity-100 transition-opacity ease-[cubic-bezier(0,0.1,0,1)]',
+			)} />
+		: null }
 	</div>
 };
 
@@ -358,8 +369,8 @@ function OutlinerSearch() {
 			}}
 		>
 			{search ?
-				matchIdx !== -1
-					? <div>{`${matchIdx+1}/${matchCount}`}</div>
+				matchCount !== 0
+					? matchIdx === -1 ? null : <div>{`${matchIdx+1}/${matchCount}`}</div>
 					: <div className="text-(--color-error)">0/0</div>
 			: null }
 		</LineEdit>

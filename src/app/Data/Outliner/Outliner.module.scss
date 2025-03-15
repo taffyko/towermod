@@ -15,6 +15,7 @@
 		display: flex;
 		flex-flow: row nowrap;
 		transition: opacity 0.5s;
+		align-items: center;
 	}
 
 	&.selectable {

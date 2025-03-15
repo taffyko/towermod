@@ -2,7 +2,7 @@ import { api } from "@/api";
 import { Button } from "@/components/Button";
 import { useEffect, useMemo, useState } from "react";
 import { InspectorObject } from "../Data/Inspector";
-import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useStateRef, useTwoWaySubmitBinding } from "@/util";
+import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useSize, useStateRef, useTwoWaySubmitBinding } from "@/util";
 import { toast } from "../Toast";
 import { spin } from "../GlobalSpinner";
 import { awaitRtk } from "@/api/helpers";
@@ -22,6 +22,7 @@ import refreshImg from '@/icons/refresh.svg'
 import { ImageMetadata } from "@towermod";
 import { save } from "@tauri-apps/plugin-dialog";
 import { exists, writeFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@tauri-apps/api/core";
 
 export default function Images() {
 	const [dumpImages] = api.useDumpImagesMutation();
@@ -63,11 +64,11 @@ export default function Images() {
 function ImageEditing() {
 	const imageId = useAppSelector(s => s.app.imageId)
 	const { currentData: img } = api.useGetGameImageUrlQuery(imageId);
-	const { data: savedMetadata } = api.useGetImageMetadataQuery({ id: imageId })
-	const { data: isOverridden } = api.useIsImageOverriddenQuery(imageId)
+	const { currentData: savedMetadata } = api.useGetImageMetadataQuery({ id: imageId })
+	const { currentData: isOverridden } = api.useIsImageOverriddenQuery(imageId)
 	const [setImageMetadata] = api.useSetImageMetadataMutation();
-	const { data: project } = api.useGetProjectQuery();
-	const { data: imageDumpDir } = api.useImageDumpDirPathQuery();
+	const { currentData: project } = api.useGetProjectQuery();
+	const { currentData: imageDumpDir } = api.useImageDumpDirPathQuery();
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
 
 	const [metadata, setMetadata, isMetadataDirty, submitMetadata] = useTwoWaySubmitBinding(savedMetadata, (m) => m && setImageMetadata(m))
@@ -81,7 +82,7 @@ function ImageEditing() {
 			<div className="subtle">Save your project to enable adding/overriding images</div>
 		: null}
 		<div className="hbox gap">
-			<Button disabled={!project} onClick={onClickSetImage}>Set image</Button>
+			<Button disabled={!project} onClick={onClickNewImage}>New image</Button>
 			<Toggle value={showCollision} onChange={(v) => dispatch(actions.setShowImageCollisionPreview(v))}>
 				Show collision
 			</Toggle>
@@ -91,7 +92,7 @@ function ImageEditing() {
 				<div className="hbox gap items-center">
 					<SpinBox style={{ width: '5rem' }} int value={imageId} onChange={id => dispatch(actions.setImageId(id))} />
 					<IconButton disabled={!img?.url} src={folderOpenImg} onClick={onClickBrowseImage} />
-					<IconButton disabled={!project} src={uploadImg} onClick={onClickSetImage} />
+					<IconButton disabled={!project} src={uploadImg} onClick={() => onClickSetImage(imageId, metadata)} />
 					<IconButton disabled={!project} src={refreshImg} onClick={onClickReloadAllImages} />
 					{ isOverridden ? <IconButton src={closeImg} onClick={onClickClearImage} /> : null }
 					<Button disabled={!metadata} onClick={onClickSetMask}>Set mask</Button>
@@ -102,7 +103,7 @@ function ImageEditing() {
 			<div className="vbox gap grow">
 				{ metadata
 					? <Button disabled={!isMetadataDirty} onClick={() => submitMetadata()}>Save metadata</Button>
-					: <Button disabled={!img?.url && !project} style={{ alignSelf: 'stretch' }} onClick={onClickSetImage}>{ img?.url ? "Add metadata" : "Add image" }</Button>
+					: <Button disabled={!img?.url && !project} style={{ alignSelf: 'stretch' }} onClick={() => onClickSetImage(imageId, metadata)}>{ img?.url ? "Add metadata" : "Add image" }</Button>
 				}
 				<InspectorObject value={metadata ?? undefined} onChange={setMetadata as any} />
 			</div>
@@ -169,17 +170,28 @@ function ImageEditing() {
 		}
 	}
 
-	async function onClickSetImage() {
+	async function onClickNewImage() {
+		assert(projectImagesDir, "Project not set")
+		const newImageId = await invoke<number>('get_new_image_id')
+		dispatch(api.util.invalidateTags([{ type: 'Image' }]))
+		const imgPath = await filePicker({ title: "Select image", filters: [{ name: 'PNG Image', extensions: ['png'] }] })
+		if (!imgPath) { return }
+		dispatch(actions.setImageId(newImageId))
+		await onClickSetImage(newImageId, null, imgPath)
+	}
+
+	async function onClickSetImage(imageId: number, metadata: ImageMetadata | null, imgPath?: string | null) {
 		assert(projectImagesDir, "Project not set")
 		const destImgPath = path.join(projectImagesDir, `${imageId}.png`)
-		let imgPath
-		if (!metadata && await exists(destImgPath)) {
+		if (!imgPath && !metadata && await exists(destImgPath)) {
 			// If metadata is not set, but a custom image *has* been provided, generate metadata from that image instead of prompting for a new image
 			imgPath = destImgPath
 		} else {
-			imgPath = await filePicker({ title: "Select image", filters: [{ name: 'PNG Image', extensions: ['png'] }] })
+			if (!imgPath) {
+				imgPath = await filePicker({ title: "Select image", filters: [{ name: 'PNG Image', extensions: ['png'] }] })
+			}
 			if (!imgPath) { return }
-			copyFile(imgPath, destImgPath)
+			await spin(copyFile(imgPath, destImgPath))
 		}
 		dispatch(api.util.invalidateTags([{ type: 'Image', id: String(imageId) }]))
 		if (!metadata) {
@@ -218,7 +230,9 @@ function ImagePreview(props: {
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
 	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
 
-	const width = notNaN(naturalWidth) ? naturalWidth * 5 : 100;
+	const [containerEl, setContainerEl] = useStateRef<HTMLDivElement>()
+	const size = useSize(containerEl)
+	const width = Math.min(notNaN(naturalWidth) ? naturalWidth * 5 : 100, size?.width || Infinity);
 	let heightOverWidth = 1
 	if (notNaN(imgEl?.naturalHeight) && notNaN(imgEl?.naturalWidth) && imgEl.naturalWidth !== 0) {
 		heightOverWidth = imgEl.naturalHeight / imgEl.naturalWidth
@@ -242,6 +256,7 @@ function ImagePreview(props: {
 		}
 	}
 
+
 	useEffect(() => {
 		setNaturalWidth(undefined)
 		imgEl?.parentElement?.classList.add(Style.loading)
@@ -249,7 +264,7 @@ function ImagePreview(props: {
 
 	if (!imgUrl && !isFetching) { return <div className="centerbox grow">No image</div> }
 
-	return <div className={Style.previewContainer}>
+	return <div ref={setContainerEl} className={Style.previewContainer}>
 		<img onLoad={onImageLoad} width={width} height={height} ref={setImgEl} className={Style.preview} src={imgUrl} />
 		{ metadata && showCollision ?
 			<canvas style={{ width, height }} ref={setCanvasEl} className={Style.collision} />
