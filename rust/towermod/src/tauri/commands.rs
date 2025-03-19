@@ -432,6 +432,9 @@ binary_command! {
 #[command] pub async fn update_animation(animation: towermod_cstc::Animation) {
 	dispatch(DataAction::UpdateAnimation(animation)).await
 }
+#[command] pub async fn create_animation(object_type_id: i32) -> i32 {
+	dispatch(DataAction::CreateAnimation(object_type_id)).await;
+}
 
 #[command] pub async fn get_behaviors() -> Vec<(i32, i32)> {
 	select(selectors::select_behaviors()).await

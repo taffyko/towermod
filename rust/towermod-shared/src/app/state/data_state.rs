@@ -25,6 +25,7 @@ pub enum Action {
 	UpdateLayoutLayer(EdLayoutLayer),
 
 	UpdateAnimation(Animation),
+	CreateAnimation { id: i32, object_type_id: i32 },
 
 	UpdateBehavior(Behavior),
 
