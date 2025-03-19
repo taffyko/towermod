@@ -120,6 +120,7 @@ pub fn run() {
 				commands::get_outliner_object_type_icons,
 				commands::get_object_type_animation,
 				commands::update_animation,
+				commands::create_animation,
 
 				commands::get_behaviors,
 				commands::get_behavior,
