@@ -31,6 +31,7 @@ import { Image } from '@/components/Image/Image';
 import { Button } from '@/components/Button';
 import clsx from 'clsx';
 import { debounce } from 'lodash-es';
+import { awaitRtk } from '@/api/helpers';
 
 
 
@@ -179,13 +180,25 @@ function useOutlinerObjectData(lookup: OutlinerTowermodObject | null, idx: numbe
 	return { obj, hasIcon, iconUrl, displayName, children }
 }
 
+function getAddChildImplementation(obj?: UniqueTowermodObject): (() => Promise<void>) | undefined {
+	switch (obj?._type) {
+		case 'ObjectType':
+			if (obj.pluginName === 'Sprite') {
+				return async () => {
+					const id = await awaitRtk(dispatch(api.endpoints.createAnimation.initiate({ objectTypeId: obj.id })))
+					dispatch(actions.setOutlinerValue({ _type: 'Animation', id }))
+				}
+			}
+	}
+}
+
 type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {name: nameOverride, nestingLevel, obj, idx, id}, isOpen, style, setOpen} = props
 	const tree = useContext(TreeContext) as FixedSizeTree<OutlinerNodeData>
 	const selectable = !!obj;
 
-	const { hasIcon, iconUrl, displayName, children } = useOutlinerObjectData(obj, idx)
+	const { obj: objData, hasIcon, iconUrl, displayName, children } = useOutlinerObjectData(obj, idx)
 
 	let name = nameOverride ?? displayName
 	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
@@ -199,8 +212,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const nodeRecord = tree?.state.records.get(props.data.id)
 	const isLeaf = !nodeRecord?.child
 
-	// TODO
-	const canAddChildren = obj?._type === 'ObjectType' && hasIcon
+	const addChild = getAddChildImplementation(objData)
 
 	let nodeContent = <>
 		<Image noReflow={hasIcon} src={iconUrl} />
@@ -250,8 +262,8 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 			{nodeContent}
 		</div>
 		<div className="w-1" />
-		{ canAddChildren ?
-			<IconButton src={plusImg} className={clsx(
+		{ addChild ?
+			<IconButton onClick={addChild} src={plusImg} className={clsx(
 				!selected && 'opacity-0',
 				'group-hover:opacity-100 transition-opacity ease-[cubic-bezier(0,0.1,0,1)]',
 			)} />

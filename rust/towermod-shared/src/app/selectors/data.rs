@@ -304,6 +304,19 @@ pub fn select_object_type_animation(object_type_id: i32) -> impl Fn(&State) -> O
 		s.data.animations.get(&data.animation)
 	}
 }
+pub fn select_object_type_animation_mut(object_type_id: i32) -> impl Fn(&mut State) -> Option<&mut Animation> {
+	move |s| {
+		let animation_id = {
+			let plugin = select_object_type_plugin_name(object_type_id)(s)?;
+			if plugin != "Sprite" { return None }
+			let instance = select_object_type_first_instance(object_type_id)(s)?;
+			let ObjectData::Sprite(data) = &instance.data else { return None };
+			data.animation
+		};
+		s.data.animations.get_mut(&animation_id)
+	}
+}
+
 pub fn select_outliner_object_types(skip: usize, take: usize) -> impl Fn(&State) -> Vec<(&EdObjectType, Option<&Animation>)> {
 	move |s| {
 		let Some((sprite_plugin_id, _)) = s.data.editor_plugins.iter().find(|(_, p)| p.string_table.name == "Sprite") else { return vec![] };
@@ -339,8 +352,16 @@ pub fn select_new_image_id(s: &State) -> i32 {
 	s.data.image_block.iter().map(|i| i.id).max().unwrap_or(0) + 1
 }
 
+// Recurse through animations, choose max id
 pub fn select_new_animation_id(s: &State) -> i32 {
-	s.data.animations.iter().map(|(id, _)| *id).max().unwrap_or(0) + 1
+	fn flatten<'a>(animations: impl Iterator<Item = &'a Animation>) -> Vec<&'a Animation> {
+		animations.flat_map(|a| {
+			let mut v = vec![a];
+			v.extend(flatten(a.sub_animations.iter()));
+			v
+		}).collect()
+	}
+	flatten(s.data.animations.values()).iter().map(|a| a.id).max().unwrap_or(0) + 1
 }
 
 pub fn select_behaviors() -> impl Fn(&State) -> Vec<(i32, i32)> {

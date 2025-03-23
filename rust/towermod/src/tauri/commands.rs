@@ -433,7 +433,9 @@ binary_command! {
 	dispatch(DataAction::UpdateAnimation(animation)).await
 }
 #[command] pub async fn create_animation(object_type_id: i32) -> i32 {
-	dispatch(DataAction::CreateAnimation(object_type_id)).await;
+	let id = select(selectors::select_new_animation_id).await;
+	dispatch(DataAction::CreateAnimation { id, object_type_id }).await;
+	id
 }
 
 #[command] pub async fn get_behaviors() -> Vec<(i32, i32)> {

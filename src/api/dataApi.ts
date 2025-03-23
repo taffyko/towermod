@@ -157,7 +157,9 @@ export const dataApi = baseApi.injectEndpoints({
 			transformResponse: (r: [ObjectType, Animation | null][]) => r.map(([obj, anim]) => (
 				{ ...enhanceObjectType(obj), animation: enhanceAnimation(anim) ?? undefined }
 			)),
-			providesTags: ['ObjectType']
+			providesTags: (r) => r
+				? r.map((obj) => ({ type: 'ObjectType', id: String(obj.id) }))
+				: ['ObjectType']
 		}),
 		getOutlinerObjectTypeIcons: builder.query<Array<{ url: undefined, imageId: undefined } | { url: string, imageId: int }>, { page: number, pageSize: number }>({
 			query: ({ page, pageSize }) => binaryInvoke('get_outliner_object_type_icons', [page * pageSize, pageSize]),
@@ -209,6 +211,10 @@ export const dataApi = baseApi.injectEndpoints({
 		updateAnimation: builder.mutation<void, Animation>({
 			query: (animation) => invoke('update_animation', { animation }),
 			invalidatesTags: (_r, _e, arg) => [{ type: 'Animation', id: String(arg.id) }]
+		}),
+		createAnimation: builder.mutation<int, { objectTypeId: int }>({
+			query: (args) => invoke('create_animation', args),
+			invalidatesTags: (r, _e, arg) => [{ type: 'ObjectType', id: String(arg.objectTypeId) }, r && { type: 'Animation', id: String(r) }]
 		}),
 
 		getBehavior: builder.query<Behavior | null, LookupArg<Behavior>>({

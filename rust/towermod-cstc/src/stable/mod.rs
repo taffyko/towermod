@@ -304,6 +304,23 @@ pub struct Animation {
 	#[serde(default)]
 	pub sub_animations: Vec<Animation>,
 }
+impl Default for Animation {
+	fn default() -> Self {
+		Animation {
+			id: 0,
+			name: String::new(),
+			tag: 0,
+			speed: 50.0,
+			is_angle: false,
+			angle: 0.0,
+			repeat_count: -1,
+			repeat_to: 0,
+			ping_pong: false,
+			frames: Vec::new(),
+			sub_animations: Vec::new(),
+		}
+	}
+}
 
 #[serde_alias(SnakeCase, CamelCase)]
 #[derive(Debug, Clone, Serialize, Deserialize)]

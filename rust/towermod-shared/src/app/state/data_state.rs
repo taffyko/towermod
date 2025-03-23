@@ -33,6 +33,8 @@ pub enum Action {
 	CreateContainer(i32),
 	DeleteContainer(i32),
 
+	CreateFamily { name: String },
+	DeleteFamily { name: String },
 	FamilyAddObject { name: String, object_type_id: i32 },
 	FamilyRemoveObject { name: String, object_type_id: i32 },
 	FamilyAddVariable { name: String, var_name: String, value: VariableValue },
@@ -70,6 +72,7 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			}
 		},
 		Action::CreateObjectType { id, plugin_id } => {
+			// FIXME: create animation and first instance for sprites
 			s.data.object_types.insert(id, EdObjectType {
 				id,
 				plugin_id,
@@ -151,6 +154,21 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 				*original_anim = anim;
 			}
 		},
+		Action::CreateAnimation { id, object_type_id } => {
+			if let Some(root_animation) = selectors::select_object_type_animation_mut(object_type_id)(&mut s) {
+				root_animation.sub_animations.push(Animation {
+					name: String::from("Default"),
+					id,
+					sub_animations: vec![Animation {
+						name: String::from("Animation"),
+						id: id + 1,
+						is_angle: true,
+						..Animation::default()
+					}],
+					..Animation::default()
+				});
+			}
+		},
 
 		Action::UpdateBehavior(behavior) => {
 			if let Some(original_behavior) = selectors::select_behavior_mut(behavior.object_type_id, behavior.mov_index)(&mut s) {
@@ -170,6 +188,17 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			s.data.containers.shift_remove(&id);
 		}
 
+		Action::CreateFamily { name } => {
+			if s.data.families.iter().any(|f| f.name == name) { return s }
+			s.data.families.push(EdFamily {
+				name,
+				object_type_ids: vec![],
+				private_variables: std::collections::HashMap::new(),
+			});
+		},
+		Action::DeleteFamily { name } => {
+			s.data.families.retain(|f| f.name != name);
+		},
 		Action::FamilyAddObject { name, object_type_id } => {
 			let Some(family) = selectors::select_family_mut(name)(&mut s) else { return s };
 			if !family.object_type_ids.contains(&object_type_id) {

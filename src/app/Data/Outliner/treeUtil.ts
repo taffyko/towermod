@@ -152,6 +152,8 @@ export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: 
 	// previous state isn't used anywhere and this is much faster than `new Map(records)`
 	const records = tree.state.records as Map<string, NodeRecord<FixedSizeNodePublicState<TData>>>
 
+	const opened: Record<string, boolean> = {}
+
 	const oldChildren = new Set<string>();
 	for (const [parentId, children] of Object.entries(updates)) {
 		let parent = tree.state.records.get(parentId)
@@ -164,6 +166,9 @@ export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: 
 			child = child.sibling
 		}
 		parent.child = null
+		if (parent.public.isOpen) {
+			opened[parentId] = true
+		}
 
 		let last = parent
 		let first = true;
@@ -191,4 +196,5 @@ export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: 
 		records,
 		updateRequest: {},
 	})
+	tree.recomputeTree(opened)
 }
