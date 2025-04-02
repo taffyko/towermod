@@ -281,8 +281,3 @@ async function _getFileBlob(path: string): Promise<Blob | null> {
 	return blob
 }
 
-export function useFileUrl(path: string | null | undefined): string | undefined {
-	const { data: blob } = baseApi.useGetFileQuery(path)
-	const href = useObjectUrl(blob);
-	return href ?? undefined
-}

@@ -1,6 +1,6 @@
 import { filePicker, useIsPressed, useStateRef, useTwoWayBinding } from '@/util';
 import Style from './ImagePathEdit.module.scss'
-import { useFileUrl } from "@/api";
+import { useFileUrl } from '@/appUtil';
 
 export default function ImagePathEdit(props: Omit<React.ComponentProps<'img'>, 'onChange'> & {
 	value?: string,

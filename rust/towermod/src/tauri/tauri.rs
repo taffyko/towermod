@@ -139,11 +139,14 @@ pub fn run() {
 				commands::family_remove_object,
 				commands::family_add_variable,
 				commands::family_delete_variable,
+				commands::create_family,
+				commands::delete_family,
 
 				commands::get_traits,
 				commands::get_trait,
 				commands::update_trait,
 				commands::create_trait,
+				commands::delete_trait,
 
 				commands::get_app_block,
 				commands::update_app_block,

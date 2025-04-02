@@ -485,6 +485,12 @@ binary_command! {
 #[command] pub async fn family_delete_variable(name: String, var_name: String) {
 	dispatch(DataAction::FamilyDeleteVariable { name, var_name }).await
 }
+#[command] pub async fn create_family(name: String) {
+	dispatch(DataAction::CreateFamily { name }).await
+}
+#[command] pub async fn delete_family(name: String) {
+	dispatch(DataAction::DeleteFamily { name }).await
+}
 
 #[command] pub async fn get_traits() -> Vec<String> {
 	select!(selectors::select_traits(), |r| r.into_iter().map(|name| name.clone()).collect()).await
@@ -497,6 +503,9 @@ binary_command! {
 }
 #[command] pub async fn create_trait(name: String) {
 	dispatch(DataAction::CreateTrait(name)).await
+}
+#[command] pub async fn delete_trait(name: String) {
+	dispatch(DataAction::DeleteTrait(name)).await
 }
 
 #[command] pub async fn get_app_block() -> Option<cstc_editing::EdAppBlock> {

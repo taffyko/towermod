@@ -5,9 +5,9 @@ import { openModal } from "@/app/Modal";
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
 import { awaitRtk } from "@/api/helpers";
 import { toast } from "@/app/Toast";
-import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, useMountEffect, useRerender } from "@/util";
+import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, useMountEffect, useObjectUrl, useRerender } from "@/util";
 import { assertUnreachable } from "@/util";
-import { ApiEndpointQuery, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query";
+import { ApiEndpointMutation, ApiEndpointQuery, MutationDefinition, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 export async function saveProject() {
@@ -281,3 +281,21 @@ export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | unde
 			return getObjectDisplayName(obj)
 	}
 }
+
+export function fetchRtk<TEndpointName extends keyof typeof api.endpoints>(
+	endpointName: TEndpointName, ...args: Parameters<typeof api.endpoints[TEndpointName]['initiate']>
+):
+	typeof api.endpoints[TEndpointName] extends ApiEndpointQuery<QueryDefinition<any, any, any, infer TResult, any>, any> ? Promise<TResult>
+	: typeof api.endpoints[TEndpointName] extends ApiEndpointMutation<MutationDefinition<any, any, any, infer TResult, any>, any> ? Promise<TResult>
+	: never
+{
+	// @ts-ignore
+	return awaitRtk(dispatch(api.endpoints[endpointName].initiate(...args)))
+}
+
+export function useFileUrl(path: string | null | undefined): string | undefined {
+	const { data: blob } = api.useGetFileQuery(path)
+	const href = useObjectUrl(blob);
+	return href ?? undefined
+}
+

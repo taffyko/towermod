@@ -82,6 +82,15 @@ export const dataApi = baseApi.injectEndpoints({
 			query: (id) => invoke('delete_object_type', { id }),
 			invalidatesTags: (_r, _e, id) => [{ type: 'ObjectType', id: String(id) }, { type: 'ObjectType', id: 'LIST' }]
 		}),
+		objectTypeAddVariable: builder.mutation<void, { id: int, name: string, value: number | string }>({
+			query: (args) => invoke('object_type_add_variable', args),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id) }]
+		}),
+		objectTypeDeleteVariable: builder.mutation<void, { id: int, name: string }>({
+			query: (args) => invoke('object_type_delete_variable', args),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id) }]
+		}),
+
 
 		getObjectInstance: builder.query<ObjectInstance | null, LookupArg<ObjectInstance>>({
 			query: (args) => invoke('get_object_instance', args),
@@ -274,6 +283,14 @@ export const dataApi = baseApi.injectEndpoints({
 		familyDeleteVariable: builder.mutation<void, { name: string, varName: string }>({
 			query: (args) => invoke('family_delete_variable', args),
 		}),
+		createFamily: builder.mutation<void, string>({
+			query: (name) => invoke('create_family', { name }),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'Family', id: arg }]
+		}),
+		deleteFamily: builder.mutation<void, string>({
+			query: (name) => invoke('delete_family', { name }),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'Family', id: arg }]
+		}),
 
 		getObjectTrait: builder.query<ObjectTrait | null, LookupArg<ObjectTrait>>({
 			query: (args) => invoke('get_trait', args),
@@ -288,6 +305,14 @@ export const dataApi = baseApi.injectEndpoints({
 		updateObjectTrait: builder.mutation<void, ObjectTrait>({
 			query: (objectTrait) => invoke('update_trait', { objectTrait }),
 			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectTrait', id: String(arg.name) }]
+		}),
+		createObjectTrait: builder.mutation<void, string>({
+			query: (name) => invoke('create_trait', { name }),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectTrait', id: arg }]
+		}),
+		deleteObjectTrait: builder.mutation<void, string>({
+			query: (name) => invoke('delete_trait', { name }),
+			invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectTrait', id: arg }]
 		}),
 
 		getAppBlock: builder.query<AppBlock, void>({

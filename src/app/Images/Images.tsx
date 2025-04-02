@@ -23,6 +23,7 @@ import { ImageMetadata } from "@towermod";
 import { save } from "@tauri-apps/plugin-dialog";
 import { exists, writeFile } from "@tauri-apps/plugin-fs";
 import { invoke } from "@tauri-apps/api/core";
+import { fetchRtk } from "@/appUtil";
 
 export default function Images() {
 	const [dumpImages] = api.useDumpImagesMutation();
@@ -111,7 +112,7 @@ function ImageEditing() {
 	</>
 
 	async function applyMaskFromImagePath(metadata: ImageMetadata, filePath: string): Promise<ImageMetadata> {
-		const blob = await awaitRtk(spin(dispatch(api.endpoints.getFile.initiate(filePath))))
+		const blob = await spin(fetchRtk('getFile', filePath))
 		if (!blob) { throw new Error("No data") }
 		const [free, img] = await blobToImage(blob)
 		try {

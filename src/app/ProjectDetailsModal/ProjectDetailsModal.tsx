@@ -1,6 +1,6 @@
 import { win32 as path } from "path";
 import { useState } from "react";
-import { api, useFileUrl } from "@/api";
+import { api } from "@/api";
 import { ConfirmModal } from "../Modal";
 import { spin } from "@/app/GlobalSpinner";
 import { LineEdit } from "@/components/LineEdit";

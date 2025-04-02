@@ -17,7 +17,7 @@ import { TreeComponent } from './Tree';
 import Style from './Outliner.module.scss'
 import { UniqueObjectLookup, UniqueTowermodObject, LookupForType, towermodObjectIdsEqual } from '@/util';
 import { Animation, ObjectType } from '@/towermod'
-import { QueryScopeFn, getObjectDisplayName, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil';
+import { QueryScopeFn, fetchRtk, getObjectDisplayName, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil';
 import IconButton from '@/components/IconButton';
 import arrowDownImg from '@/icons/arrowDown.svg';
 import arrowRightImg from '@/icons/arrowRight.svg';
@@ -185,7 +185,7 @@ function getAddChildImplementation(obj?: UniqueTowermodObject): (() => Promise<v
 		case 'ObjectType':
 			if (obj.pluginName === 'Sprite') {
 				return async () => {
-					const id = await awaitRtk(dispatch(api.endpoints.createAnimation.initiate({ objectTypeId: obj.id })))
+					const id = await fetchRtk('createAnimation', { objectTypeId: obj.id })
 					dispatch(actions.setOutlinerValue({ _type: 'Animation', id }))
 				}
 			}
