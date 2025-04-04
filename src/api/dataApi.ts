@@ -217,6 +217,7 @@ export const dataApi = baseApi.injectEndpoints({
 			transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'Animation' })),
 			providesTags: ['Animation']
 		}),
+		// TODO: include objectTypeId on Animations and invalidate the corresponding object type
 		updateAnimation: builder.mutation<void, Animation>({
 			query: (animation) => invoke('update_animation', { animation }),
 			invalidatesTags: (_r, _e, arg) => [{ type: 'Animation', id: String(arg.id) }]

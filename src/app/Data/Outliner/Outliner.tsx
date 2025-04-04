@@ -1,5 +1,5 @@
 /* eslint-disable max-depth */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	FixedSizeNodeData,
 	FixedSizeNodePublicState as NodePublicState,
@@ -9,7 +9,7 @@ import {
 	FixedSizeTree,
 	NodeRecord,
 } from 'react-vtree';
-import { useImperativeHandle, useStateRef } from '@/util/hooks';
+import { useImperativeHandle, useRerender, useStateRef } from '@/util/hooks';
 import { actions, dispatch, useAppSelector } from '@/redux';
 import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util/util';
 import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
@@ -32,6 +32,7 @@ import { Button } from '@/components/Button';
 import clsx from 'clsx';
 import { debounce } from 'lodash-es';
 import { awaitRtk } from '@/api/helpers';
+import { spin } from '@/app/GlobalSpinner';
 
 
 
@@ -102,20 +103,6 @@ const getNodeData = (
 	}
 };
 
-let queuedTreeItemUpdates: Record<string, OutlinerNodeData[]> = {}
-const _dispatchTreeItemUpdates = debounce((tree: FixedSizeTree<OutlinerNodeData>) => {
-	batchSetTreeItemChildren(tree, queuedTreeItemUpdates)
-	queuedTreeItemUpdates = {}
-}, 5, { trailing: true })
-function setTreeItemChildren(tree: FixedSizeTree<OutlinerNodeData>, items: OutlinerTowermodObject[], parentId: string) {
-	const parent = tree.state.records.get(parentId)
-	if (!parent) { return }
-	const children = items.map((item, idx) => (
-		getNodeData(item, idx, parent.public.data.nestingLevel + 1, tree).data
-	))
-	queuedTreeItemUpdates[parentId] = children
-	_dispatchTreeItemUpdates(tree)
-}
 
 const defaultTextStyle = {marginLeft: 10};
 const defaultButtonStyle = {fontFamily: 'Courier New'};
@@ -185,7 +172,7 @@ function getAddChildImplementation(obj?: UniqueTowermodObject): (() => Promise<v
 		case 'ObjectType':
 			if (obj.pluginName === 'Sprite') {
 				return async () => {
-					const id = await fetchRtk('createAnimation', { objectTypeId: obj.id })
+					const id = await spin(fetchRtk('createAnimation', { objectTypeId: obj.id }))
 					dispatch(actions.setOutlinerValue({ _type: 'Animation', id }))
 				}
 			}
@@ -195,7 +182,8 @@ function getAddChildImplementation(obj?: UniqueTowermodObject): (() => Promise<v
 type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {name: nameOverride, nestingLevel, obj, idx, id}, isOpen, style, setOpen} = props
-	const tree = useContext(TreeContext) as FixedSizeTree<OutlinerNodeData>
+	const context = useContext(OutlinerContext)
+	const { tree } = context
 	const selectable = !!obj;
 
 	const { obj: objData, hasIcon, iconUrl, displayName, children } = useOutlinerObjectData(obj, idx)
@@ -205,11 +193,11 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 
 	useEffect(() => {
 		if (children && children.length) {
-			setTreeItemChildren(tree, children, id)
+			context.setTreeItemChildren(children, id)
 		}
 	}, [children])
 
-	const nodeRecord = tree?.state.records.get(props.data.id)
+	const nodeRecord = tree.state.records.get(props.data.id)
 	const isLeaf = !nodeRecord?.child
 
 	const addChild = getAddChildImplementation(objData)
@@ -249,6 +237,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 							setOpen(!isOpen)
 						}
 					}}
+					onClick={e => e.stopPropagation()}
 					style={defaultButtonStyle}
 				/>
 			</div>
@@ -263,10 +252,17 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 		</div>
 		<div className="w-1" />
 		{ addChild ?
-			<IconButton onClick={addChild} src={plusImg} className={clsx(
-				!selected && 'opacity-0',
-				'group-hover:opacity-100 transition-opacity ease-[cubic-bezier(0,0.1,0,1)]',
-			)} />
+			<IconButton
+				onClick={e => {
+					e.stopPropagation()
+					addChild?.()
+				}}
+				src={plusImg}
+				className={clsx(
+					!selected && 'opacity-0',
+					'group-hover:opacity-100 transition-opacity ease-[cubic-bezier(0,0.1,0,1)]',
+				)}
+			/>
 		: null }
 	</div>
 };
@@ -274,8 +270,10 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 export interface OutlinerHandle {
 	tree: FixedSizeTree<OutlinerNodeData>
 	jumpToItem(obj: UniqueObjectLookup): void
+	hasItem(obj: UniqueObjectLookup): boolean
 	setOpen(obj: UniqueObjectLookup, open: boolean): void
 	setOpenRecursive(obj: UniqueObjectLookup, open: boolean): void
+	setTreeItemChildren(items: OutlinerTowermodObject[], parentId: string): void
 }
 
 export const OutlinerContext = createContext<OutlinerHandle>(null!);
@@ -298,6 +296,16 @@ export const Outliner = (props: OutlinerProps) => {
 	//@ts-ignore
 	window.tree = tree
 	const lookup = useAppSelector(s => s.app.outlinerValue)
+	const rerender = useRerender()
+
+	let queuedTreeItemUpdates = useRef<Record<string, OutlinerNodeData[]>>({})
+	const _dispatchTreeItemUpdates = useMemo(() =>
+		debounce((tree: FixedSizeTree<OutlinerNodeData>) => {
+			batchSetTreeItemChildren(tree, queuedTreeItemUpdates.current)
+			queuedTreeItemUpdates.current = {}
+			rerender()
+		}, 5, { trailing: true })
+	, [tree, rerender])
 
 	const handle = useImperativeHandle(props.handleRef, () => {
 		return {
@@ -305,6 +313,15 @@ export const Outliner = (props: OutlinerProps) => {
 			jumpToItem(obj) {
 				const treeItemId = getTreeItemId(obj)
 				if (tree) { jumpToTreeItem(tree, treeItemId) }
+			},
+			hasItem(obj) {
+				if (tree) {
+					const treeItemId = getTreeItemId(obj)
+					if (tree.state.records.get(treeItemId)) {
+						return true
+					}
+				}
+				return false
 			},
 			setOpen(obj, open: boolean) {
 				const treeItemId = getTreeItemId(obj)
@@ -314,13 +331,30 @@ export const Outliner = (props: OutlinerProps) => {
 				const treeItemId = getTreeItemId(obj)
 				setOpenRecursive(tree!, treeItemId, open)
 			},
+			setTreeItemChildren(items: OutlinerTowermodObject[], parentId: string) {
+				if (!tree) { return }
+				const parent = tree.state.records.get(parentId)
+				if (!parent) { return }
+				const children = items.map((item, idx) => (
+					getNodeData(item, idx, parent.public.data.nestingLevel + 1, tree).data
+				))
+				queuedTreeItemUpdates.current[parentId] = children
+				_dispatchTreeItemUpdates(tree)
+			}
 		} as OutlinerHandle
 	}, [tree])
 
+	// const hasItem = useMemo(() => {
+	// 	return lookup ? handle.hasItem(lookup) : false
+	// }, [tree?.state.records.size])
+	const hasItem = lookup ? handle.hasItem(lookup) : false
+
 	useEffect(() => {
 		// jump to selected item
-		if (lookup) { handle.jumpToItem(lookup) }
-	}, [handle, lookup])
+		if (lookup && hasItem) {
+			handle.jumpToItem(lookup)
+		}
+	}, [handle, lookup, hasItem])
 
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
 		yield getRootContainerData('Layouts', layouts)
