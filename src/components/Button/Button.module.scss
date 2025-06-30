@@ -1,4 +1,6 @@
 @use '@/css/mixins' as *;
+@reference "#main.css";
+
 .button {
 	@include pressable;
 	padding: 0 calc(var(--spacing) * 3);

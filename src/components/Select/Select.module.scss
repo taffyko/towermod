@@ -1,4 +1,5 @@
 @use '@/css/mixins' as *;
+@reference "#main.css";
 
 .listboxButton {
 	@include pressable(--t-pressable);

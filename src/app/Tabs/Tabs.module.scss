@@ -1,4 +1,5 @@
 @use '@/css/mixins' as *;
+@reference "#main.css";
 
 $height: 1.5rem;
 $heightExpanded: 2.2rem;

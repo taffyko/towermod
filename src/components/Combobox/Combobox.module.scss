@@ -1,4 +1,5 @@
 @use "@/css/mixins" as *;
+@reference "#main.css";
 
 .comboboxInput {
 	border: solid 1px var(--color-border);

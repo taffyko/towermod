@@ -1,5 +1,5 @@
 import type { Preview } from "@storybook/react";
-import "../src/css/main.scss";
+import "@/css/main.css";
 import { DecoratorFunction } from "storybook/internal/types";
 import React from "react";
 import { Provider } from 'react-redux'

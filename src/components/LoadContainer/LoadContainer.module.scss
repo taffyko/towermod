@@ -1,4 +1,5 @@
 @use 'sass:math';
+@reference "#main.css";
 
 .spinnerContainer {
 	isolation: isolate;

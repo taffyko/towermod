@@ -1,3 +1,5 @@
+@reference "#main.css";
+
 @mixin marching-ants-init($ant-size,$ant-width,$speed,$id){
 	padding: 5px + $ant-width;
 	margin: 20px;

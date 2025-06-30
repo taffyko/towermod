@@ -12,6 +12,9 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
+  "imports": {
+    "#main.css": "./src/css/main.css"
+  },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@karmaniverous/serify-deserify": "^2.0.11",
