@@ -1,5 +1,10 @@
 {
   "tailwindCSS.experimental.configFile": {
     "src/css/main.css": ["index.html", "src/**"]
-  }
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "javascript.format.semicolons": "remove",
+  "typescript.format.semicolons": "remove"
 }

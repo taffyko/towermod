@@ -18,7 +18,7 @@ fn main() {
 			.env_remove("CARGO_FEATURE_BUNDLED_DLLREADER")
 			.arg("build")
 			.args(["-Z", "unstable-options"])
-			.args(["--package", "dllreader"])
+			.args(["--package", "towermod-dllreader"])
 			.args(["--target", "i686-pc-windows-msvc"])
 			// .args(["--target-dir", out_dir.join("dllreader-target").to_str().unwrap()]) // prevent file-locking issues from running cargo concurrently
 			.args(["--artifact-dir", out_dir.to_str().unwrap()]);
@@ -26,7 +26,8 @@ fn main() {
 			command.arg("--release");
 		}
 		if !command.status().unwrap().success() {
-			println!("cargo::warning=FAILED to build dllreader.exe!");
+			println!("cargo::error=FAILED to build dllreader.exe!");
+			panic!("FAILED to build dllreader.exe!");
 		}
 		println!("cargo:rustc-env=DLLREADER_EXE={}", out_dir.join("dllreader.exe").to_str().unwrap());
 	}}
