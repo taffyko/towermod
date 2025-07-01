@@ -1,11 +1,11 @@
-import { Combobox as BaseCombobox, ComboboxInput, ComboboxOptions, ComboboxOption } from '@headlessui/react';
+import { Combobox as BaseCombobox, ComboboxInput, ComboboxOptions, ComboboxOption } from '@headlessui/react'
 import Style from './Combobox.module.scss'
-import { triggerTransition, useStateRef } from '@/util';
-import { useState } from 'react';
-import IconButton from '../IconButton';
+import { triggerTransition, useStateRef } from '@/util'
+import { useState } from 'react'
+import IconButton from '../IconButton'
 import editImg from '@/icons/edit.svg'
-import clsx from 'clsx';
-import { Button } from '../Button';
+import clsx from 'clsx'
+import { Button } from '../Button'
 
 export function Combobox<TValue extends { name: string }>(props: {
 	value?: TValue,
@@ -79,7 +79,7 @@ export function ComboboxButton<TValue extends { name: string }>(props: {
 				query={query}
 				setQuery={setQuery}
 				onChange={(v) => {
-					setEditing(false);
+					setEditing(false)
 					triggerTransition(el, Style.transitionSubmitted)
 					onChange?.(v)
 				}}
@@ -91,11 +91,11 @@ export function ComboboxButton<TValue extends { name: string }>(props: {
 				placeholder={placeholder}
 				disabled={disableEditing}
 			/>
-		:
+			:
 			<Button icon={icon} disabled={disableButton || !value?.name} onClick={onClick}>{value?.name ?? placeholder ?? 'Enter value...'}</Button>
 		}
 		{!editing ?
 			<IconButton disabled={disableEditing} src={editImg} onClick={() => { setQuery?.(""); setEditing(true) }} />
-		: null}
+			: null}
 	</div>
 }

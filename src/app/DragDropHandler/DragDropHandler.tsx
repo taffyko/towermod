@@ -1,13 +1,13 @@
 import { useTauriEvent } from '@/util'
 import { installMods } from '@/appUtil'
 import Style from './DragDropHandler.module.scss'
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react'
 
 export function DragDropHandler() {
 	const [dragFiles, setDragFiles] = useState<string[] | undefined>(undefined)
-	const [isDragging, setIsDragging] = useState(false);
-	const [success, setSuccess] = useState(false);
-	const [failure, setFailure] = useState(false);
+	const [isDragging, setIsDragging] = useState(false)
+	const [success, setSuccess] = useState(false)
+	const [failure, setFailure] = useState(false)
 	const plural = dragFiles && dragFiles.length > 1
 
 	const isValid = useMemo(() => {
@@ -22,27 +22,25 @@ export function DragDropHandler() {
 
 	useTauriEvent('tauri://drag-enter', (e) => {
 		setDragFiles(e.payload?.paths)
-		setIsDragging(true);
-		setSuccess(false);
-		setFailure(false);
-	});
-
+		setIsDragging(true)
+		setSuccess(false)
+		setFailure(false)
+	})
 	useTauriEvent('tauri://drag-leave', () => {
-		setIsDragging(false);
-		setSuccess(false);
-		setFailure(false);
-	});
-
+		setIsDragging(false)
+		setSuccess(false)
+		setFailure(false)
+	})
 	useTauriEvent('tauri://drag-drop', async (e) => {
-		const dragFiles = e.payload?.paths;
-		setIsDragging(false);
+		const dragFiles = e.payload?.paths
+		setIsDragging(false)
 		if (dragFiles && isValid) {
-			setSuccess(true);
+			setSuccess(true)
 			await installMods(dragFiles)
 		} else {
 			setFailure(true)
 		}
-	}, [isValid, dragFiles]);
+	}, [isValid, dragFiles])
 
 	return <div className={`
 		${Style.backdrop}

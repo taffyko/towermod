@@ -18,10 +18,10 @@ import { debounce } from 'lodash-es'
 const updateTowermodObjectDebounced = debounce(updateTowermodObject, 500, { leading: true  })
 
 export function Data() {
-	const searchValue = useAppSelector((s) => s.app.outlinerValue);
-	const { data: externalValue } = useTowermodObject(searchValue);
+	const searchValue = useAppSelector((s) => s.app.outlinerValue)
+	const { data: externalValue } = useTowermodObject(searchValue)
 
-	const [outlinerRef, setOutlinerRef] = useStateRef<OutlinerHandle>();
+	const [outlinerRef, setOutlinerRef] = useStateRef<OutlinerHandle>()
 
 	const [value, setValue] = useOptimisticTwoWayBinding({ externalValue })
 	const onChange = (obj: UniqueTowermodObject) => {
@@ -37,7 +37,7 @@ export function Data() {
 				<div className="vbox grow" style={{ flexBasis: 0, overflow: 'hidden' }}>
 					{ value ?
 						<Inspector pinfo={inferPropertyInfoFromValue(value, undefined, 'root') as any} onChange={onChange as any} />
-					: null }
+						: null }
 				</div>
 			</div>
 		</OutlinerContext.Provider>

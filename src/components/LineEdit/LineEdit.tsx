@@ -1,12 +1,12 @@
-import clsx from 'clsx';
+import clsx from 'clsx'
 import Style from './LineEdit.module.scss'
-import { useSize, useStateRef } from '@/util';
+import { useSize, useStateRef } from '@/util'
 import Text from '@/components/Text'
 
 export function LineEdit(props: React.ComponentProps<'input'> & {
 	children?: React.ReactNode
 }) {
-	const { className, children, disabled, placeholder, value, ...htmlProps } = props;
+	const { className, children, disabled, placeholder, value, ...htmlProps } = props
 	const [el, setEl] = useStateRef<HTMLDivElement>()
 	const size = useSize(el)
 

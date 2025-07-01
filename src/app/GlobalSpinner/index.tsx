@@ -1,2 +1,2 @@
-export * from './GlobalSpinner.tsx';
-export * from './globalSpinner.ts';
+export * from './GlobalSpinner.tsx'
+export * from './globalSpinner.ts'

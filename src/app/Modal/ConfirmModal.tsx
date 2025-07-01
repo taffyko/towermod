@@ -1,8 +1,8 @@
-import Style from "./Modal.module.scss";
-import { Button } from "@/components/Button";
-import { BaseModal } from "./BaseModal";
-import { useMemo } from "react";
-import { useModalContext } from "./modalStore";
+import Style from "./Modal.module.scss"
+import { Button } from "@/components/Button"
+import { BaseModal } from "./BaseModal"
+import { useMemo } from "react"
+import { useModalContext } from "./modalStore"
 
 export function ChoiceModal<TOption extends string>(props: {
 	children?: React.ReactNode,
@@ -10,8 +10,8 @@ export function ChoiceModal<TOption extends string>(props: {
 	onChoose?: (option: TOption | 'cancel') => void,
 	title?: string,
 }) {
-	const { title, children, options, onChoose } = props;
-	const { close } = useModalContext();
+	const { title, children, options, onChoose } = props
+	const { close } = useModalContext()
 
 	return <BaseModal title={title} onCancel={() => onChoose?.('cancel')}>
 		<div className="vbox gap grow">
@@ -34,8 +34,8 @@ export function AlertModal(props: {
 	onClose?: () => void,
 	title?: string,
 }) {
-	const { children, onClose, title } = props;
-	const buttonText = props.buttonText ?? "OK";
+	const { children, onClose, title } = props
+	const buttonText = props.buttonText ?? "OK"
 	const options = useMemo(() => ({ ok: buttonText }), [buttonText])
 	return <ChoiceModal title={title} onChoose={onClose} options={options}>
 		{children}
@@ -57,8 +57,8 @@ export function ConfirmModal(props: {
 	const options = useMemo(() => ({ cancel: { name: cancelText }, confirm: { disabled, name: confirmText } }), [cancelText, confirmText, disabled])
 	return <ChoiceModal title={title ?? "Confirm"} options={options} onChoose={choice => {
 		switch (choice) {
-			case 'cancel': props.onCancel?.(); break;
-			case 'confirm': props.onConfirm?.(); break;
+			case 'cancel': props.onCancel?.(); break
+			case 'confirm': props.onConfirm?.(); break
 		}
 	}}>
 		{children}

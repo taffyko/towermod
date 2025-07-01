@@ -1,17 +1,17 @@
 import React, { useCallback } from "react"
 import Style from './Tabs.module.scss'
-import { useEventListener, useIsInert } from "@/util/hooks";
+import { useEventListener, useIsInert } from "@/util/hooks"
 import Text from '@/components/Text'
-import { actions, selectTabs, useAppDispatch, useAppSelector } from "@/redux";
+import { actions, selectTabs, useAppDispatch, useAppSelector } from "@/redux"
 
 export const Tabs = (props: {
 	tabs: Record<string, React.ReactNode>,
 }) => {
-	const dispatch = useAppDispatch();
-	const tabs = useAppSelector(selectTabs);
-	const currentTab = useAppSelector(s => s.app.currentTab);
+	const dispatch = useAppDispatch()
+	const tabs = useAppSelector(selectTabs)
+	const currentTab = useAppSelector(s => s.app.currentTab)
 
-	const isInert = useIsInert();
+	const isInert = useIsInert()
 	const onKeyDown = useCallback((e: KeyboardEvent | React.KeyboardEvent) => {
 		if (isInert) {
 			return

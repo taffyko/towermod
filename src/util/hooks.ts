@@ -1,13 +1,13 @@
-import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { MiniEvent, assert, createObjectUrl, revokeObjectUrl } from './util';
-import { useIsSpinning } from '@/app/GlobalSpinner';
-import { useIsModalOpen } from '@/app/Modal/modalStore';
+import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { MiniEvent, assert, createObjectUrl, revokeObjectUrl } from './util'
+import { useIsSpinning } from '@/app/GlobalSpinner'
+import { useIsModalOpen } from '@/app/Modal/modalStore'
 import useResizeObserver from '@react-hook/resize-observer'
 
 function setRef<T>(ref: React.Ref<T> | undefined, value: T) {
-	if (!ref) return;
+	if (!ref) return
 	if (typeof ref === 'function') {
-		ref(value);
+		ref(value)
 	} else {
 		(ref.current as any) = value
 	}
@@ -26,22 +26,22 @@ export function useForwardRef<T>(inputRef?: React.Ref<T>): React.RefObject<T> {
 	}, [inputRef, valueHolder])
 }
 
-export function useEventListener<K extends keyof WindowEventMap>(el: Window | null | undefined, type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
-export function useEventListener<K extends keyof DocumentEventMap>(el: Document | null | undefined, type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
-export function useEventListener<K extends keyof HTMLElementEventMap, E extends HTMLElement>(el: E | null | undefined, type: K, listener: (this: E, ev: HTMLElementEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void;
+export function useEventListener<K extends keyof WindowEventMap>(el: Window | null | undefined, type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void
+export function useEventListener<K extends keyof DocumentEventMap>(el: Document | null | undefined, type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void
+export function useEventListener<K extends keyof HTMLElementEventMap, E extends HTMLElement>(el: E | null | undefined, type: K, listener: (this: E, ev: HTMLElementEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void
 export function useEventListener(el: any, type: string, listener: EventListener, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions) {
-	let cb = listener;
+	let cb = listener
 	if (deps) {
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		cb = useCallback(listener, deps);
+		 
+		cb = useCallback(listener, deps)
 	}
 	useEffect(() => {
-		el?.addEventListener(type, cb, options);
+		el?.addEventListener(type, cb, options)
 		return () => {
-			el?.removeEventListener(type, cb, options);
+			el?.removeEventListener(type, cb, options)
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [el, cb]);
+	}, [el, cb])
 }
 
 
@@ -54,8 +54,8 @@ export function useImperativeHandle<T, R extends T>(ref: React.Ref<T> | undefine
 
 /** Won't trigger re-renders in child components that depend on it */
 export function useStableHandle<T extends object>(value: T): T {
-	const ref = useRef<T>({} as any);
-	Object.assign(ref.current, value);
+	const ref = useRef<T>({} as any)
+	Object.assign(ref.current, value)
 	return ref.current
 }
 
@@ -73,7 +73,7 @@ export function useMemoAsync<T>(fn: () => Promise<T> | T, deps?: DependencyList)
 export function useMemoAsyncWithCleanup<T>(factory: () => [Promise<T> | undefined] | [Promise<T> | undefined, () => void], deps: DependencyList): T | undefined {
 	const resultRef = useRef<null | [Promise<T> | undefined] | [Promise<T> | undefined, ReturnType<EffectCallback>]>(null)
 	const [result, setResult] = useState<T | undefined>(undefined)
-	const rerender = useRerender();
+	const rerender = useRerender()
 
 	// recompute value
 	if (!resultRef.current) {
@@ -84,7 +84,7 @@ export function useMemoAsyncWithCleanup<T>(factory: () => [Promise<T> | undefine
 		if (!resultRef.current) { return }
 		const [promise, ] = resultRef.current
 		;(async () => {
-			const result = await promise;
+			const result = await promise
 			// only use result if the promise hasn't been invalidated
 			if (promise === resultRef.current?.[0]) {
 				setResult(result)
@@ -109,7 +109,7 @@ export function useMemoAsyncWithCleanup<T>(factory: () => [Promise<T> | undefine
 /** Allows you to return both a value and a cleanup function that runs before the value recomputes */
 export function useMemoWithCleanup<T>(factory: () => [T] | [T, ReturnType<EffectCallback>], deps: DependencyList): T {
 	const resultRef = useRef<null | [T] | [T, ReturnType<EffectCallback>]>(null)
-	const rerender = useRerender();
+	const rerender = useRerender()
 	// recompute value
 	if (!resultRef.current) {
 		resultRef.current = factory()
@@ -148,54 +148,54 @@ export function useMountEffect(effect: React.EffectCallback): void {
 	if (import.meta.env.PROD) {
 		useEffect(effect, [])
 	} else {
-		const strictModeMount = useRef(false);
+		const strictModeMount = useRef(false)
 		useEffect(() => {
 			if (!strictModeMount.current) {
 				strictModeMount.current = true
 				return
 			}
 			return effect()
-		}, []);
+		}, [])
 	}
 }
 
 export function useMiniEvent<T>(event: MiniEvent<T> | null | undefined, cb: (e: T) => void, deps: React.DependencyList) {
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	const fn = useCallback(cb, deps);
+	const fn = useCallback(cb, deps)
 	useEffect(() => {
-		event?.subscribe(fn);
-		return () => event?.unsubscribe(fn);
-	}, [event, fn]);
+		event?.subscribe(fn)
+		return () => event?.unsubscribe(fn)
+	}, [event, fn])
 }
 
 export function useMiniEventValue<T>(event: MiniEvent<T>): T
 export function useMiniEventValue(event: undefined): undefined
 export function useMiniEventValue<T>(event?: MiniEvent<T>): T | undefined {
-	const subscribe = useCallback(event?.subscribe.bind(event) ?? (() => () => {}), [event]);
+	const subscribe = useCallback(event?.subscribe.bind(event) ?? (() => () => {}), [event])
 	return useSyncExternalStore(subscribe, () => event?.lastValue as T)
 }
 
 export function useRerender() {
-	const [, setState] = useState({});
-	const rerender = useMemo(() => () => setState({}), [setState]);
-	return rerender;
+	const [, setState] = useState({})
+	const rerender = useMemo(() => () => setState({}), [setState])
+	return rerender
 }
 
 export function useIsHovered(el: HTMLElement | null) {
-	const [hovered, setHovered] = useState(false);
+	const [hovered, setHovered] = useState(false)
 	useEventListener(el, 'mouseenter', () => {
-		setHovered(true);
+		setHovered(true)
 	})
 	useEventListener(el, 'mouseleave', () => {
-		setHovered(false);
+		setHovered(false)
 	})
 	return hovered
 }
 
 export function useIsFocused(el: HTMLElement | null) {
-	const [focused, setFocused] = useState(false);
+	const [focused, setFocused] = useState(false)
 	useEventListener(el, 'focus', () => {
-		setFocused(true);
+		setFocused(true)
 	})
 	useEventListener(el, 'blur', (e) => {
 		assert(e.currentTarget instanceof Node)
@@ -208,18 +208,18 @@ export function useIsFocused(el: HTMLElement | null) {
 }
 
 export function useIsPressed(el: HTMLElement | null) {
-	const [pressed, setPressed] = useState(false);
+	const [pressed, setPressed] = useState(false)
 	useEffect(() => {
-		setPressed(false);
+		setPressed(false)
 	}, [el])
 	useEventListener(el, 'mousedown', () => {
-		setPressed(true);
+		setPressed(true)
 	})
 	useEventListener(el, 'mouseup', () => {
-		setPressed(false);
+		setPressed(false)
 	})
 	useEventListener(window, 'mouseup', () => {
-		setPressed(false);
+		setPressed(false)
 	})
 	return pressed
 }
@@ -233,18 +233,18 @@ export function useObjectUrl(blob?: Blob | null): string | undefined
 export function useObjectUrl(data?: Blob | BlobPart | number[] | null, options?: BlobPropertyBag): string | undefined {
 	const href = useMemoWithCleanup(() => {
 		// convert to Blob if raw data given
-		let blob: Blob | undefined;
+		let blob: Blob | undefined
 		if (data instanceof Blob) {
 			blob = data
 		} else if (data) {
-			let binary;
+			let binary
 			if (data instanceof Array) { binary = new Uint8Array(data) }
 			else { binary = data }
 			blob = new Blob([binary], options)
 		}
 
 		if (blob) {
-			const href = createObjectUrl(blob);
+			const href = createObjectUrl(blob)
 			return [href, () => revokeObjectUrl(href)]
 		} else {
 			return [undefined]
@@ -257,14 +257,14 @@ export function useObjectUrl(data?: Blob | BlobPart | number[] | null, options?:
 export function useTwoWayBinding<T>(externalValue: T | undefined, onChange: ((value: T) => void) | undefined, initialValue: T): [T, (value: T) => void]
 export function useTwoWayBinding<T>(externalValue: T, onChange?: (value: T) => void, initialValue?: T): [T, (value: T) => void]
 export function useTwoWayBinding<T>(externalValue?: T, onChange?: (value: T) => void, initialValue?: T): any {
-	const [internalValue, _setInternalValue] = useState(externalValue ?? initialValue as T);
+	const [internalValue, _setInternalValue] = useState(externalValue ?? initialValue as T)
 
 	// For consistency with React's native `<input>` components,
 	// only value changes that originate internally should trigger the `onChange` handler.
 	const setInternalValue = useCallback((value: T) => {
 		// If no external value is being used, update the internal value
 		if (externalValue === undefined) { _setInternalValue(value) }
-		onChange?.(value);
+		onChange?.(value)
 	}, [externalValue, onChange])
 
 	useEffect(() => {
@@ -279,9 +279,9 @@ export function useTwoWayBinding<T>(externalValue?: T, onChange?: (value: T) => 
  * `useTwoWayBinding` variant that allows its value to be edited internally, only propagating changes to the external value when `submit` is called.
  */
 export function useTwoWaySubmitBinding<T>(externalValue?: T, onSubmit?: (value: T) => void, initialValue?: T): [T, (value: T) => void, boolean, (value?: T) => void] {
-	const [internalValue, _setInternalValue] = useState(externalValue ?? initialValue as T);
-	const [dirty, setDirty] = useState(false);
-	const [resetToExternalValue, setResetToExternalValue] = useState(false);
+	const [internalValue, _setInternalValue] = useState(externalValue ?? initialValue as T)
+	const [dirty, setDirty] = useState(false)
+	const [resetToExternalValue, setResetToExternalValue] = useState(false)
 
 	const setInternalValue = useCallback((value: T) => {
 		if (externalValue !== undefined && value !== externalValue) { setDirty(true) }
@@ -342,7 +342,7 @@ export function useOptimisticTwoWayBinding<T, TInternal = T>(options: {
 				if (!el?.contains(document.activeElement)) {
 					setValue(transform(externalValue))
 				}
-		 	} else {
+			} else {
 				setValue(transform(externalValue))
 			}
 		}
@@ -351,9 +351,9 @@ export function useOptimisticTwoWayBinding<T, TInternal = T>(options: {
 }
 
 export function useIsInert() {
-	const isSpinning = useIsSpinning();
-	const isModalOpen = useIsModalOpen();
-	return isSpinning || isModalOpen;
+	const isSpinning = useIsSpinning()
+	const isModalOpen = useIsModalOpen()
+	return isSpinning || isModalOpen
 }
 
 export function useSize(target?: HTMLElement | null) {

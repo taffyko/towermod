@@ -1,12 +1,12 @@
 import Style from './Modal.module.scss'
 import { useEventListener } from "@/util/hooks"
 import { useModalContext } from "./modalStore"
-import IconButton from '@/components/IconButton';
-import closeImg from '@/icons/close.svg';
+import IconButton from '@/components/IconButton'
+import closeImg from '@/icons/close.svg'
 
 export function BaseModal(props: { children: React.ReactNode, title?: string, onCancel?: () => void }) {
-	const { children, onCancel } = props;
-	const { active, close, parent } = useModalContext();
+	const { children, onCancel } = props
+	const { active, close, parent } = useModalContext()
 
 	useEventListener(document.body, 'keydown', (e) => {
 		if (!active) { return }

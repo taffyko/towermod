@@ -1,8 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { IconButton } from "@/components/IconButton";
-import editImg from '@/icons/edit.svg';
-import addImg from '@/icons/add.svg';
-import refreshImg from '@/icons/refresh.svg';
+import type { Meta, StoryObj } from "@storybook/react"
+import { IconButton } from "@/components/IconButton"
+import editImg from '@/icons/edit.svg'
+import addImg from '@/icons/add.svg'
+import refreshImg from '@/icons/refresh.svg'
 
 const meta = {
 	title: 'Components/IconButton',
@@ -21,7 +21,7 @@ const meta = {
 			mapping: { edit: editImg, add: addImg, refresh: refreshImg }
 		}
 	}
-} satisfies Meta<typeof IconButton>;
-export default meta;
+} satisfies Meta<typeof IconButton>
+export default meta
 
-export const MainStory: StoryObj<typeof meta> = { name: "IconButton" };
+export const MainStory: StoryObj<typeof meta> = { name: "IconButton" }

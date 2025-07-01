@@ -1,5 +1,5 @@
-import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData, TextObjectData, SpriteObjectData, AnimationFrame, ActionPoint, BehaviorControl, GlobalVariable } from "@towermod";
-import { assert, assertUnreachable } from "./util";
+import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData, TextObjectData, SpriteObjectData, AnimationFrame, ActionPoint, BehaviorControl, GlobalVariable } from "@towermod"
+import { assert, assertUnreachable } from "./util"
 
 export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | ImageMetadata | ActionPoint | BehaviorControl | GlobalVariable
 	| TextObjectData | SpriteObjectData
@@ -42,7 +42,7 @@ export function getUniqueName(mod: ModInfo | string): string
 export function getUniqueName(a: any, b?: string)
 {
 	if (b !== undefined) { return _getUniqueName(a, b) }
-	const mod = a;
+	const mod = a
 	if (typeof mod === 'string') {
 		const [author, name] = mod.split('.')
 		return `${author}.${name}`
@@ -51,12 +51,12 @@ export function getUniqueName(a: any, b?: string)
 	return _getUniqueName(mod.author, mod.name)
 }
 function _getUniqueName(author: string, name: string) {
-	return `${author}.${name}`.toLowerCase().replace(/_ /, '-');
+	return `${author}.${name}`.toLowerCase().replace(/_ /, '-')
 }
 
 function getUniqueVersionName(mod: ModInfo) {
 	if (mod.error) { return mod.filePath! }
-	return `${mod.author}.${mod.name}.${mod.version}`.toLowerCase().replace(/_ /, '-');
+	return `${mod.author}.${mod.name}.${mod.version}`.toLowerCase().replace(/_ /, '-')
 }
 
 export function enhanceModInfo(modInfo: ModInfo): ModInfo {
@@ -70,14 +70,14 @@ export function enhanceModInfo(modInfo: ModInfo): ModInfo {
 export function enhanceLayout(layout: Layout): Layout {
 	layout._type = 'Layout'
 	// @ts-ignore
-	delete layout.layers;
+	delete layout.layers
 	return layout
 }
 
 export function enhanceLayoutLayer(layer: LayoutLayer): LayoutLayer {
 	layer._type = 'LayoutLayer'
 	// @ts-ignore
-	delete layer.objects;
+	delete layer.objects
 	return layer
 }
 
@@ -148,7 +148,7 @@ export function enhanceImageMetadata<T extends ImageMetadata>(imageMetadata: T):
 }
 
 export const getObjectStringId = (obj: UniqueObjectLookup) => {
-	const objType = obj._type;
+	const objType = obj._type
 	let id: string | number
 	switch (objType) {
 		case 'LayoutLayer':
@@ -158,15 +158,15 @@ export const getObjectStringId = (obj: UniqueObjectLookup) => {
 		case 'ObjectType':
 		case 'Container':
 			id = obj.id
-		break; case 'Layout':
+			break; case 'Layout':
 		case 'Family':
 		case 'ObjectTrait':
 			id = obj.name
-		break; case 'Behavior':
+			break; case 'Behavior':
 			id = `${obj.objectTypeId}-${obj.movIndex}`
-		break; case 'AppBlock':
+			break; case 'AppBlock':
 			id = ''
-		break; default:
+			break; default:
 			assertUnreachable(objType, obj)
 	}
 	return `${obj._type}-${id}`

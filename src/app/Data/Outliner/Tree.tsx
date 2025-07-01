@@ -10,7 +10,7 @@ export const TreeComponent = <
 		treeRef?: React.Ref<FixedSizeTree<TData>>
 	},
 ) => {
-	const treeRef = useForwardRef(props.treeRef ?? null);
+	const treeRef = useForwardRef(props.treeRef ?? null)
 
 	return <div className="grow">
 		<AutoSizer disableWidth>

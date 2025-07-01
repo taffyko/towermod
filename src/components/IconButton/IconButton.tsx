@@ -1,5 +1,5 @@
-import Svg from "../Svg";
-import Style from "./IconButton.module.scss";
+import Svg from "../Svg"
+import Style from "./IconButton.module.scss"
 
 export function IconButton(props: {
 	src: string,

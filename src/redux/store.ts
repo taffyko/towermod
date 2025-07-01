@@ -1,7 +1,7 @@
-import { combineSlices, configureStore } from '@reduxjs/toolkit';
-import { slices } from './reducers';
-import { api } from '../api';
-import { useStore, useSelector, useDispatch } from 'react-redux';
+import { combineSlices, configureStore } from '@reduxjs/toolkit'
+import { slices } from './reducers'
+import { api } from '../api'
+import { useStore, useSelector, useDispatch } from 'react-redux'
 
 const rootReducer = combineSlices(...slices, api)
 export const store = configureStore({
@@ -9,7 +9,7 @@ export const store = configureStore({
 	middleware: (gdm) => gdm({ immutableCheck: false, serializableCheck: false }).concat(api.middleware),
 })
 
-export const dispatch = store.dispatch;
+export const dispatch = store.dispatch
 
 export type AppStore = typeof store
 export type RootState = ReturnType<AppStore['getState']>

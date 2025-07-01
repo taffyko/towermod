@@ -1,14 +1,14 @@
-import { spin } from "@/app/GlobalSpinner";
-import { dispatch, store } from "@/redux";
+import { spin } from "@/app/GlobalSpinner"
+import { dispatch, store } from "@/redux"
 import { api } from '@/api'
-import { openModal } from "@/app/Modal";
-import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
-import { awaitRtk } from "@/api/helpers";
-import { toast } from "@/app/Toast";
-import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, useMountEffect, useObjectUrl, useRerender } from "@/util";
-import { assertUnreachable } from "@/util";
-import { ApiEndpointMutation, ApiEndpointQuery, MutationDefinition, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { openModal } from "@/app/Modal"
+import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
+import { awaitRtk } from "@/api/helpers"
+import { toast } from "@/app/Toast"
+import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, useMountEffect, useObjectUrl, useRerender } from "@/util"
+import { assertUnreachable } from "@/util"
+import { ApiEndpointMutation, ApiEndpointQuery, MutationDefinition, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query"
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 
 export async function saveProject() {
 	const saveProject = (dirPath: string) => awaitRtk(dispatch(api.endpoints.saveProject.initiate(dirPath)))
@@ -29,11 +29,11 @@ export async function saveProject() {
 
 export async function installMods(files: string[]) {
 	activateWindow()
-	const { dispatch, actions } = await import('@/redux');
+	const { dispatch, actions } = await import('@/redux')
 	for (const file of files) {
 		const modInfo = await awaitRtk(spin(dispatch(api.endpoints.installMod.initiate(file))))
 		if (modInfo) {
-			toast(`Installed mod: "${modInfo.name}" (v${modInfo.version})`);
+			toast(`Installed mod: "${modInfo.name}" (v${modInfo.version})`)
 			dispatch(actions.setCurrentTab('Mods'))
 			dispatch(actions.selectMod(modInfo.id))
 		}
@@ -53,10 +53,10 @@ export function useQueryScope(): [QueryScopeFn] {
 	const [selection, setSelection] = useState<Record<string, unknown>>({})
 	const selectionRef = useRef<Record<string, unknown>>({})
 	const queriesRef = useRef<Record<string, string>>({})
-	const endpointsRef = useRef<Record<string, [endpoint: QueryEndpoint, arg: any, promise: any, select: any, rendersSinceLastUse: number]>>({});
+	const endpointsRef = useRef<Record<string, [endpoint: QueryEndpoint, arg: any, promise: any, select: any, rendersSinceLastUse: number]>>({})
 
 	for (const value of Object.values(endpointsRef.current)) {
-		value[4]++;
+		value[4]++
 	}
 
 	// Unsubscribe everything on unmount
@@ -81,19 +81,19 @@ export function useQueryScope(): [QueryScopeFn] {
 		const oldKey = queriesRef.current[queryName]
 		if (oldKey && oldKey != key) {
 			const promise = endpointsRef.current[oldKey]?.[2]
-			promise?.unsubscribe();
+			promise?.unsubscribe()
 			delete endpointsRef.current[oldKey]
 		}
 		queriesRef.current[queryName] = key
 
-		const state = store.getState();
+		const state = store.getState()
 		const select = endpointsRef.current[key][3]
 		return select(state as any) as any
 	}, [endpointsRef, selection])
 
 	useSyncExternalStore(store.subscribe, () => {
-		const state = store.getState();
-		const selection: Record<string, unknown> = {};
+		const state = store.getState()
+		const selection: Record<string, unknown> = {}
 		for (const [key, [_endpoint, _arg, _promise, select]] of Object.entries(endpointsRef.current)) {
 			selection[key] = select(state as any)
 		}
@@ -120,26 +120,26 @@ export function useQueryScope(): [QueryScopeFn] {
 }
 
 export async function updateTowermodObject<T extends UniqueTowermodObject>(obj: T) {
-	let endpoint: any;
+	let endpoint: any
 	const type = obj._type
 	switch (type) {
 		case 'ObjectType': endpoint = api.endpoints.updateObjectType
-		break; case 'ObjectInstance': endpoint = api.endpoints.updateObjectInstance
-		break; case 'Container': endpoint = api.endpoints.updateContainer
-		break; case 'Animation': endpoint = api.endpoints.updateAnimation
-		break; case 'Behavior': endpoint = api.endpoints.updateBehavior
-		break; case 'ObjectTrait': endpoint = api.endpoints.updateObjectTrait
-		break; case 'AppBlock': endpoint = api.endpoints.updateAppBlock
-		break; case 'Layout': endpoint = api.endpoints.updateLayout
-		break; case 'LayoutLayer': endpoint = api.endpoints.updateLayoutLayer
-		break; default: endpoint = undefined
+			break; case 'ObjectInstance': endpoint = api.endpoints.updateObjectInstance
+			break; case 'Container': endpoint = api.endpoints.updateContainer
+			break; case 'Animation': endpoint = api.endpoints.updateAnimation
+			break; case 'Behavior': endpoint = api.endpoints.updateBehavior
+			break; case 'ObjectTrait': endpoint = api.endpoints.updateObjectTrait
+			break; case 'AppBlock': endpoint = api.endpoints.updateAppBlock
+			break; case 'Layout': endpoint = api.endpoints.updateLayout
+			break; case 'LayoutLayer': endpoint = api.endpoints.updateLayoutLayer
+			break; default: endpoint = undefined
 	}
 	if (!endpoint) { return }
 	await awaitRtk(dispatch(endpoint.initiate(obj)))
 }
 
 export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined, scope?: { query: QueryScopeFn, queryName: string }): { data: ObjectForType<T['_type']> | undefined, isLoading: boolean } {
-	let query: QueryScopeFn;
+	let query: QueryScopeFn
 	let queryName = 'useTowermodObject'
 	if (scope) {
 		({ query, queryName } = scope)
@@ -148,21 +148,21 @@ export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefin
 	}
 
 	const type = obj?._type
-	let endpoint: any;
+	let endpoint: any
 	switch (type) {
 		case 'ObjectType': endpoint = api.endpoints.getObjectType
-		break; case 'ObjectInstance': endpoint = api.endpoints.getObjectInstance
-		break; case 'Container': endpoint = api.endpoints.getContainer
-		break; case 'Animation': endpoint = api.endpoints.getAnimation
-		break; case 'Behavior': endpoint = api.endpoints.getBehavior
-		break; case 'Family': endpoint = api.endpoints.getFamily
-		break; case 'ObjectTrait': endpoint = api.endpoints.getObjectTrait
-		break; case 'AppBlock': endpoint = api.endpoints.getAppBlock
-		break; case 'Layout': endpoint = api.endpoints.getLayout
-		break; case 'LayoutLayer': endpoint = api.endpoints.getLayoutLayer
-		break; case 'ImageMetadata': endpoint = api.endpoints.getImageMetadata
-		break; case undefined: endpoint = undefined
-		break; default: assertUnreachable(type)
+			break; case 'ObjectInstance': endpoint = api.endpoints.getObjectInstance
+			break; case 'Container': endpoint = api.endpoints.getContainer
+			break; case 'Animation': endpoint = api.endpoints.getAnimation
+			break; case 'Behavior': endpoint = api.endpoints.getBehavior
+			break; case 'Family': endpoint = api.endpoints.getFamily
+			break; case 'ObjectTrait': endpoint = api.endpoints.getObjectTrait
+			break; case 'AppBlock': endpoint = api.endpoints.getAppBlock
+			break; case 'Layout': endpoint = api.endpoints.getLayout
+			break; case 'LayoutLayer': endpoint = api.endpoints.getLayoutLayer
+			break; case 'ImageMetadata': endpoint = api.endpoints.getImageMetadata
+			break; case undefined: endpoint = undefined
+			break; default: assertUnreachable(type)
 	}
 
 	if (obj) {
@@ -175,23 +175,23 @@ export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefin
 export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined): { hasIcon: boolean | null, data: string | undefined, isLoading: boolean } {
 	const [query] = useQueryScope()
 	const queryName = 'useObjectIcon'
-	const { data: obj, isLoading: objIsLoading } = useTowermodObject(objLookup ?? undefined, { query, queryName: 'useTowermodObject' });
+	const { data: obj, isLoading: objIsLoading } = useTowermodObject(objLookup ?? undefined, { query, queryName: 'useTowermodObject' })
 	let imageId = null
 	let hasIcon = null
 	let imageIdLoading = false
 	switch (obj?._type) {
 		case 'ObjectType':
-			hasIcon = obj.pluginName === 'Sprite';
+			hasIcon = obj.pluginName === 'Sprite'
+			;({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id, queryName))
+			break; case 'Container':
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id, queryName))
-		break; case 'Container':
-			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id, queryName))
-		break; case 'Behavior':
+			break; case 'Behavior':
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.objectTypeId, queryName))
-		break; case 'ObjectInstance':
+			break; case 'ObjectInstance':
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectInstanceImageId, obj.id, queryName))
-		break; case 'ImageMetadata':
+			break; case 'ImageMetadata':
 			imageId = obj.id
-		break; case 'Animation':
+			break; case 'Animation':
 			const { data: animation, isLoading } = query(api.endpoints.getAnimation, { id: obj.id }, queryName)
 			imageIdLoading = isLoading
 			if (animation) {
@@ -246,14 +246,14 @@ export function getObjectDisplayName(obj: UniqueTowermodObject) {
 
 // TODO: eliminate
 export function useObjectDisplayName(objLookup: UniqueObjectLookup | null | undefined): string | undefined {
-	const { data: obj } = useTowermodObject(objLookup ?? undefined);
+	const { data: obj } = useTowermodObject(objLookup ?? undefined)
 
-	let objTypeId;
-	let pluginId;
+	let objTypeId
+	let pluginId
 	switch (obj?._type) {
 		case 'ObjectInstance': objTypeId = obj.objectTypeId
-		break; case 'ObjectType': pluginId = obj.pluginId
-		break; case 'Container': objTypeId = obj.id
+			break; case 'ObjectType': pluginId = obj.pluginId
+			break; case 'Container': objTypeId = obj.id
 	}
 	const { currentData: objType } = api.useGetObjectTypeQuery(objTypeId != null ? { id: objTypeId } : skipToken)
 	switch (obj?._type) {
@@ -286,8 +286,8 @@ export function fetchRtk<TEndpointName extends keyof typeof api.endpoints>(
 	endpointName: TEndpointName, ...args: Parameters<typeof api.endpoints[TEndpointName]['initiate']>
 ):
 	typeof api.endpoints[TEndpointName] extends ApiEndpointQuery<QueryDefinition<any, any, any, infer TResult, any>, any> ? Promise<TResult>
-	: typeof api.endpoints[TEndpointName] extends ApiEndpointMutation<MutationDefinition<any, any, any, infer TResult, any>, any> ? Promise<TResult>
-	: never
+		: typeof api.endpoints[TEndpointName] extends ApiEndpointMutation<MutationDefinition<any, any, any, infer TResult, any>, any> ? Promise<TResult>
+			: never
 {
 	// @ts-ignore
 	return awaitRtk(dispatch(api.endpoints[endpointName].initiate(...args)))
@@ -295,7 +295,7 @@ export function fetchRtk<TEndpointName extends keyof typeof api.endpoints>(
 
 export function useFileUrl(path: string | null | undefined): string | undefined {
 	const { data: blob } = api.useGetFileQuery(path)
-	const href = useObjectUrl(blob);
+	const href = useObjectUrl(blob)
 	return href ?? undefined
 }
 

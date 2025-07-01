@@ -1,4 +1,4 @@
-import { MiniEvent, Timer } from "@/util/util";
+import { MiniEvent, Timer } from "@/util/util"
 import React from "react"
 
 export interface ToastOptions {
@@ -6,7 +6,7 @@ export interface ToastOptions {
 	time?: number,
 }
 
-const DEFAULT_TIME = 1.0;
+const DEFAULT_TIME = 1.0
 
 export function toast(content: React.ReactNode, options?: Partial<ToastOptions>) {
 	const id = crypto.randomUUID()
@@ -16,8 +16,8 @@ export function toast(content: React.ReactNode, options?: Partial<ToastOptions>)
 		id,
 		timer: new Timer(options?.time ?? DEFAULT_TIME),
 		type: options?.type || 'info',
-	});
-	toastsUpdated.fire(toasts);
+	})
+	toastsUpdated.fire(toasts)
 }
 
 /** @internal */
@@ -28,15 +28,15 @@ export interface ToastData extends ToastOptions {
 }
 
 /** @internal */
-export let toasts: ToastData[] = [];
+export let toasts: ToastData[] = []
 /** @internal */
-export const toastsUpdated = new MiniEvent(toasts);
+export const toastsUpdated = new MiniEvent(toasts)
 
 /** @internal */
 export function closeToast(id: string) {
-	const idx = toasts.findIndex(t => t.id === id);
+	const idx = toasts.findIndex(t => t.id === id)
 	toasts = [...toasts]
-	if (idx === -1) return;
-	toasts.splice(idx, 1);
-	toastsUpdated.fire(toasts);
+	if (idx === -1) return
+	toasts.splice(idx, 1)
+	toastsUpdated.fire(toasts)
 }

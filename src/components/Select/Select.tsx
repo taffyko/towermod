@@ -1,13 +1,13 @@
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react'
 import Style from './Select.module.scss'
-import Svg from '../Svg';
+import Svg from '../Svg'
 import downImg from '@/icons/arrowDown.svg'
 import rightImg from '@/icons/arrowRight.svg'
-import clsx from 'clsx';
-import { useMemo, useState } from 'react';
+import clsx from 'clsx'
+import { useMemo, useState } from 'react'
 import checkboxOnImg from '@/images/checkboxOn.png'
 import checkboxOffImg from '@/images/checkboxOff.png'
-import { triggerTransition, useStateRef, useTwoWayBinding } from '@/util';
+import { triggerTransition, useStateRef, useTwoWayBinding } from '@/util'
 
 export function Select2(props: Omit<React.ComponentProps<'div'>, 'onChange'> & {
 	options: Record<string, string> | string[],
@@ -15,7 +15,7 @@ export function Select2(props: Omit<React.ComponentProps<'div'>, 'onChange'> & {
 	value?: string,
 	disabled?: boolean,
 }) {
-	const { options, onChange, value, className, disabled, ...htmlProps } = props;
+	const { options, onChange, value, className, disabled, ...htmlProps } = props
 	return <select {...(htmlProps as any)}
 		disabled={disabled}
 		className={`${Style.select} ${className || ''}`}

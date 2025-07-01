@@ -1,7 +1,7 @@
 import { fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import type { BaseEndpointDefinition, BaseQueryFn, FetchArgs, FetchBaseQueryError, FetchBaseQueryMeta } from '@reduxjs/toolkit/query'
 
-export type MaybePromise<T> = Promise<T> | T;
+export type MaybePromise<T> = Promise<T> | T
 
 export type CustomBaseQueryArgs = FetchArgs | Promise<any>
 export type CustomBaseQueryError = FetchBaseQueryError
@@ -11,7 +11,7 @@ export const customBaseQuery: BaseQueryFn<string | CustomBaseQueryArgs, unknown,
 async (args, api, extraOptions) => {
 	if (args instanceof Promise) {
 		try {
-			let data: unknown = await args
+			const data: unknown = await args
 			return { data }
 		} catch (e) {
 			console.error(e)
@@ -22,17 +22,17 @@ async (args, api, extraOptions) => {
 			args,
 			api,
 			extraOptions
-		);
+		)
 		return baseResult
 	}
-};
+}
 type CustomBaseQueryFn = typeof customBaseQuery
 type QueryFn<ResultType, QueryArg> = Exclude<BaseEndpointDefinition<QueryArg, CustomBaseQueryFn, ResultType>['queryFn'], undefined>
 
 export function queryFn<ResultType, QueryArg>(fn: (arg: QueryArg) => Promise<ResultType>): QueryFn<ResultType, QueryArg> {
 	return async (arg) => {
 		try {
-			let data: ResultType = await fn(arg)
+			const data: ResultType = await fn(arg)
 			return {
 				data,
 			}

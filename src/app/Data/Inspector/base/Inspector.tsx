@@ -8,8 +8,8 @@ import React, { useCallback, useMemo, useState } from "react"
 import IconButton from "@/components/IconButton"
 import plusImg from '@/icons/plus.svg'
 import closeImg from '@/icons/close.svg'
-import arrowDownImg from '@/icons/arrowDown.svg';
-import arrowRightImg from '@/icons/arrowRight.svg';
+import arrowDownImg from '@/icons/arrowDown.svg'
+import arrowRightImg from '@/icons/arrowRight.svg'
 import { LineEdit } from "@/components/LineEdit"
 import { SpinBox } from "@/components/SpinBox"
 import { Toggle } from "@/components/Toggle"
@@ -37,7 +37,7 @@ export const InspectorObject = (props: {
 }) => {
 	const { value: inputValue, pinfo, onChange } = props
 
-	let objPinfo: ObjectPropertyInfo;
+	let objPinfo: ObjectPropertyInfo
 	if (pinfo) {
 		objPinfo = pinfo
 	} else if (inputValue) {
@@ -96,7 +96,7 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 	const valueComponents: React.ReactNode[] = useMemo(() => arrPinfo.value.map((val, i) => {
 		let valueComponent
 		const getValComponent = props.getValueComponent ?? getValueComponent
-		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo as ArrayPropertyInfo<AnyInspectorValue>, i);
+		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo as ArrayPropertyInfo<AnyInspectorValue>, i)
 		valueComponent = getValComponent(pinfo as any, (v) => { onElementChange(pinfo.key, v) })
 
 		return <KeyValuePair key={i} value={valueComponent} label={<>
@@ -132,10 +132,10 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 							onChange={v => setNewValueType(v as any)}
 							options={arrPinfo.valueTypes}
 						/>
-					: null}
+						: null}
 					<IconButton src={plusImg} onClick={() => addElement?.()} />
 				</div>
-			: null}
+				: null}
 		</> : <div className="subtle">{valueComponents.length} items...</div>}
 	</div>
 }
@@ -185,7 +185,7 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 					<Text>{pinfo.key}:</Text>
 					{dictPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />}
 				</>} />
-	}), [dictPinfo.value])
+			}), [dictPinfo.value])
 
 	// adding properties
 	let canAddProperties = !dictPinfo.fixed
@@ -229,10 +229,10 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 							onChange={v => setNewValueType(v as any)}
 							options={dictPinfo.valueTypes}
 						/>
-					: null}
+						: null}
 					<IconButton src={plusImg} disabled={!newKeyText} onClick={() => addProperty()} />
 				</div>
-			: null}
+				: null}
 		</> : <div className="subtle">{propertyComponents.length} entries...</div>}
 	</div>
 }

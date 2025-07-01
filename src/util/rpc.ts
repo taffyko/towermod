@@ -1,12 +1,12 @@
-import { spin } from '@/app/GlobalSpinner';
-import { InvokeArgs, InvokeOptions, invoke } from '@tauri-apps/api/core';
-import { FileDialogOptions } from '@towermod';
-import { DependencyList, useEffect } from 'react';
+import { spin } from '@/app/GlobalSpinner'
+import { InvokeArgs, InvokeOptions, invoke } from '@tauri-apps/api/core'
+import { FileDialogOptions } from '@towermod'
+import { DependencyList, useEffect } from 'react'
 import { listen } from '@tauri-apps/api/event'
 import { Encoder, Decoder } from '@msgpack/msgpack'
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import { save } from '@tauri-apps/plugin-dialog';
-import { writeFile } from '@tauri-apps/plugin-fs';
+import { getCurrentWindow } from '@tauri-apps/api/window'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeFile } from '@tauri-apps/plugin-fs'
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -25,11 +25,11 @@ export async function waitUntilProcessExits(pid: number) {
 }
 
 export async function filePicker(options?: FileDialogOptions): Promise<string | null> {
-	return await spin(invoke<string | null>("file_picker", { options }), true);
+	return await spin(invoke<string | null>("file_picker", { options }), true)
 }
 
 export async function folderPicker(options?: FileDialogOptions): Promise<string | null> {
-	return await spin(invoke<string | null>("folder_picker", { options }), true);
+	return await spin(invoke<string | null>("folder_picker", { options }), true)
 }
 
 export async function getModsDirPath(): Promise<string> {
@@ -37,7 +37,7 @@ export async function getModsDirPath(): Promise<string> {
 }
 
 export async function getVersion(): Promise<string> {
-	return await invoke('get_version');
+	return await invoke('get_version')
 }
 
 export function activateWindow(): Promise<void> {
@@ -72,7 +72,7 @@ interface EventTypeMap {
 export function useTauriEvent<T extends keyof EventTypeMap>(type: T, handler: EventCallback<EventTypeMap[T]>, deps: DependencyList = []): void {
 	useEffect(() => {
 		const unlisten = listen(type, handler)
-		return () => { unlisten.then(fn => fn()) };
+		return () => { unlisten.then(fn => fn()) }
 	}, deps ? [type, ...deps] : undefined)
 }
 

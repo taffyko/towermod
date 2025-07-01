@@ -1,10 +1,10 @@
-import { ObjectInstance, ObjectType, SpriteObjectData, int } from "@towermod";
-import { ArrayPropertyInfo } from "./base/inspectorUtil";
-import { api } from "@/api";
+import { ObjectInstance, ObjectType, SpriteObjectData, int } from "@towermod"
+import { ArrayPropertyInfo } from "./base/inspectorUtil"
+import { api } from "@/api"
 import { lazy } from 'react'
-import { skipToken } from "@reduxjs/toolkit/query";
-import { IdLink } from "./IdLink";
-import { UniqueObjectLookup } from "@/util";
+import { skipToken } from "@reduxjs/toolkit/query"
+import { IdLink } from "./IdLink"
+import { UniqueObjectLookup } from "@/util"
 
 
 const InspectorArray = lazy(() => import('./base/Inspector').then(m => ({ default: m.InspectorArray })))

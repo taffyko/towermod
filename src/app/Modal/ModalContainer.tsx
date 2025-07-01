@@ -1,12 +1,12 @@
 
-import { useMiniEventValue, useStateRef } from '@/util/hooks';
-import Style from './Modal.module.scss';
-import { modalsUpdated, thisModalContext } from './modalStore';
+import { useMiniEventValue, useStateRef } from '@/util/hooks'
+import Style from './Modal.module.scss'
+import { modalsUpdated, thisModalContext } from './modalStore'
 
 export function ModalParent() {
-	const modals = useMiniEventValue(modalsUpdated);
-	const isModalOpen = !!modals.length;
-	const [el, setEl] = useStateRef<HTMLDivElement>();
+	const modals = useMiniEventValue(modalsUpdated)
+	const isModalOpen = !!modals.length
+	const [el, setEl] = useStateRef<HTMLDivElement>()
 
 	return <div
 		ref={setEl}

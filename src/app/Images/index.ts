@@ -1,3 +1,3 @@
-export * from './Images';
+export * from './Images'
 import Images from './Images'
 export default Images

@@ -31,8 +31,7 @@ export default tseslint.config(
 			],
 			'@stylistic/semi': ['error', 'never', { "beforeStatementContinuationChars": "always" }],
 			'@stylistic/semi-style': ['warn', 'first'],
-			'@stylistic/member-delimiter-style': ['warn', { singleline: { delimiter: 'comma' }, multiline: { delimiter: 'none' } }],
-			'@stylistic/indent': ['warn', 4],
+			'@stylistic/indent': ['warn', 'tab'],
 		},
 	},
 )

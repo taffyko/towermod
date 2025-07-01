@@ -1,8 +1,8 @@
-import { useMiniEventValue } from "@/util/hooks";
-import { MiniEvent } from "@/util/util";
-import { useEffect, useRef } from "react";
+import { useMiniEventValue } from "@/util/hooks"
+import { MiniEvent } from "@/util/util"
+import { useEffect, useRef } from "react"
 
-let timeout = 0;
+const timeout = 0
 /**
  * Activate loading spinner until a promise resolves
  * With `noSpinner: true`, still greys the page and prevents interactivity, but does not show the spinner.
@@ -13,7 +13,7 @@ export function spin(promiseOrFn: any, noSpinner?: boolean): any {
 	if (typeof promiseOrFn === 'function') {
 		return (...args: any[]) => spin(promiseOrFn(...args))
 	} else {
-		const promise = promiseOrFn;
+		const promise = promiseOrFn
 		const event = noSpinner ? noSpinnerPromisesUpdated : spinnerPromisesUpdated
 
 		const promises = [...event.lastValue!]
@@ -32,7 +32,7 @@ export function spin(promiseOrFn: any, noSpinner?: boolean): any {
 export function useSpinQuery<T extends { isFetching: boolean }>(queryInfo: T): T {
 	const promiseRef = useRef<Promise<unknown>>(null!)
 	if (!promiseRef.current) {
-		promiseRef.current = new Promise<unknown>(() => {});
+		promiseRef.current = new Promise<unknown>(() => {})
 	}
 	useEffect(() => {
 		if (queryInfo.isFetching) {
@@ -48,9 +48,9 @@ export function useSpinQuery<T extends { isFetching: boolean }>(queryInfo: T): T
 
 function removePromise(promise: Promise<unknown>) {
 	for (const event of [spinnerPromisesUpdated, noSpinnerPromisesUpdated]) {
-		let promises = event.lastValue!;
+		let promises = event.lastValue!
 		const idx = promises.indexOf(promise)
-		if (idx === -1) continue;
+		if (idx === -1) continue
 		promises = [...promises]
 		promises.splice(idx, 1)
 		event.fire(promises)
@@ -58,21 +58,21 @@ function removePromise(promise: Promise<unknown>) {
 }
 
 export function useIsSpinning() {
-	const spinnerPromises = useMiniEventValue(spinnerPromisesUpdated);
-	const noSpinnerPromises = useMiniEventValue(noSpinnerPromisesUpdated);
-	return !!spinnerPromises.length || !!noSpinnerPromises.length;
+	const spinnerPromises = useMiniEventValue(spinnerPromisesUpdated)
+	const noSpinnerPromises = useMiniEventValue(noSpinnerPromisesUpdated)
+	return !!spinnerPromises.length || !!noSpinnerPromises.length
 }
 
 /** @internal */
 export function useShouldShowSpinner() {
-	const promises = useMiniEventValue(spinnerPromisesUpdated);
-	return !!promises.length;
+	const promises = useMiniEventValue(spinnerPromisesUpdated)
+	return !!promises.length
 }
 
 /** @internal */
-export const spinnerPromisesUpdated = new MiniEvent<Promise<unknown>[]>([]);
+export const spinnerPromisesUpdated = new MiniEvent<Promise<unknown>[]>([])
 
 /** @internal */
-export const noSpinnerPromisesUpdated = new MiniEvent<Promise<unknown>[]>([]);
+export const noSpinnerPromisesUpdated = new MiniEvent<Promise<unknown>[]>([])
 
 

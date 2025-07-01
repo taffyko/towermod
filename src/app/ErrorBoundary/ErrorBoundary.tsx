@@ -1,7 +1,7 @@
-import React from "react";
-import { ErrorInfo } from "react";
-import { showError, ErrorMsg } from "@/components/Error";
-import Style from '@/components/Error/Error.module.scss';
+import React from "react"
+import { ErrorInfo } from "react"
+import { showError, ErrorMsg } from "@/components/Error"
+import Style from '@/components/Error/Error.module.scss'
 
 export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 	state: { error: any } = {
@@ -25,7 +25,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 	}
 
 	componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-		console.error('Uncaught error:', error, errorInfo);
+		console.error('Uncaught error:', error, errorInfo)
 	}
 
 	render() {
@@ -34,7 +34,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 				<ErrorMsg error={this.state.error} />
 			</div>
 		} else {
-			return this.props.children;
+			return this.props.children
 		}
 	}
 }

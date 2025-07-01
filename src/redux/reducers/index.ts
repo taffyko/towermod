@@ -1,6 +1,6 @@
-import { Dispatch as BaseDispatch, UnknownAction, Observable, combineSlices, Reducer } from "@reduxjs/toolkit";
+import { Dispatch as BaseDispatch, UnknownAction, Observable, combineSlices, Reducer } from "@reduxjs/toolkit"
 
-import { appSlice } from './app';
+import { appSlice } from './app'
 
 export const slices = [appSlice ] as const
 

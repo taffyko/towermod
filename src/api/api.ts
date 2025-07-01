@@ -1,9 +1,9 @@
 import { createApi } from '@reduxjs/toolkit/query/react'
-import { invoke } from "@tauri-apps/api/core";
-import { Game, ImageMetadata, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod';
-import { useObjectUrl } from '@/util/hooks';
-import { customBaseQuery } from './baseApiUtil';
-import { binaryInvoke, enhanceModInfo, svgToDataUri } from '@/util';
+import { invoke } from "@tauri-apps/api/core"
+import { Game, ImageMetadata, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod'
+import { useObjectUrl } from '@/util/hooks'
+import { customBaseQuery } from './baseApiUtil'
+import { binaryInvoke, enhanceModInfo, svgToDataUri } from '@/util'
 
 const cstcObjectTagTypes = [
 	'Data', 'Image', 'ImageMetadata', 'ObjectType', 'ObjectInstance', 'Behavior', 'Container', 'Family', 'ObjectTrait', 'AppBlock', 'Layout', 'LayoutLayer', 'Animation'
@@ -129,14 +129,14 @@ export const baseApi = createApi({
 			query: async (href) => {
 				const data = await fetch(href).then(res => res.text())
 				if (!data) { return null }
-				const svgDoc = (new DOMParser).parseFromString(data, 'image/svg+xml');
+				const svgDoc = (new DOMParser).parseFromString(data, 'image/svg+xml')
 				const svg = svgDoc.querySelector('svg')
 				if (!svg) {
-					console.error("SVG not found in loaded content");
+					console.error("SVG not found in loaded content")
 					return null
 				}
-				svg.setAttribute('shape-rendering', 'crispEdges');
-				const url = svgToDataUri(svg);
+				svg.setAttribute('shape-rendering', 'crispEdges')
+				const url = svgToDataUri(svg)
 				return url
 			}
 		}),
@@ -253,12 +253,12 @@ export const baseApi = createApi({
 			},
 		}),
 	}),
-});
+})
 
 async function _getFile(path: string): Promise<Uint8Array | null> {
-	const enc = new TextEncoder();
+	const enc = new TextEncoder()
 	const bytes = enc.encode(JSON.stringify(path))
-	const resp = new Uint8Array(await invoke("get_file", bytes));
+	const resp = new Uint8Array(await invoke("get_file", bytes))
 	if (!resp.length) {
 		return null
 	}
@@ -269,11 +269,11 @@ async function _getFileBlob(path: string): Promise<Blob | null> {
 	let blob: Blob | null = null
 	if (arrayBuffer) {
 		const fileExtension = path!.split('.').pop()?.toLowerCase()
-		let options: BlobPropertyBag | undefined;
+		let options: BlobPropertyBag | undefined
 		switch (fileExtension) {
 			case '.jpg': case '.jpeg':
 				options = { type: 'image/jpeg' }
-			break; case '.png':
+				break; case '.png':
 				options = { type: 'image/png' }
 		}
 		blob = new Blob([arrayBuffer], options)

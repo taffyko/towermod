@@ -1,30 +1,30 @@
-import Style from './App.module.scss';
-import Mods from '@/app/Mods';
-import { ErrorBoundary } from '@/app/ErrorBoundary';
-import { Tabs } from '@/app/Tabs';
-import { useEffect, useMemo } from 'react';
-import { TitleBar } from '@/app/TitleBar';
-import { Data } from '@/app/Data';
+import Style from './App.module.scss'
+import Mods from '@/app/Mods'
+import { ErrorBoundary } from '@/app/ErrorBoundary'
+import { Tabs } from '@/app/Tabs'
+import { useEffect, useMemo } from 'react'
+import { TitleBar } from '@/app/TitleBar'
+import { Data } from '@/app/Data'
 import { Events } from '@/app/Events'
-import Images from '@/app/Images';
-import Config from '@/app/Config';
-import { useEventListener, useIsInert, useMountEffect, useStateRef } from '@/util/hooks';
-import { ModalParent } from '@/app/Modal';
-import { api } from '@/api';
-import { ToastContainer, toast } from '@/app/Toast';
-import { Portal } from '@/components/Portal';
-import { GlobalSpinner, spin } from '../GlobalSpinner';
-import { DragDropHandler } from '../DragDropHandler';
-import { useTauriEvent } from '@/util';
-import { installMods } from '@/appUtil';
-import { awaitRtk } from '@/api/helpers';
-import { actions, dispatch } from '@/redux';
-import { showError } from '@/components/Error';
+import Images from '@/app/Images'
+import Config from '@/app/Config'
+import { useEventListener, useIsInert, useMountEffect, useStateRef } from '@/util/hooks'
+import { ModalParent } from '@/app/Modal'
+import { api } from '@/api'
+import { ToastContainer, toast } from '@/app/Toast'
+import { Portal } from '@/components/Portal'
+import { GlobalSpinner, spin } from '../GlobalSpinner'
+import { DragDropHandler } from '../DragDropHandler'
+import { useTauriEvent } from '@/util'
+import { installMods } from '@/appUtil'
+import { awaitRtk } from '@/api/helpers'
+import { actions, dispatch } from '@/redux'
+import { showError } from '@/components/Error'
 
 const App = () => {
 	const { data: dataIsLoaded } = api.useIsDataLoadedQuery()
-	const [init] = api.useInitMutation();
-	const { data: game } = api.useGetGameQuery();
+	const [init] = api.useInitMutation()
+	const { data: game } = api.useGetGameQuery()
 
 	useEffect(() => {
 		dispatch(actions.setTabEnabled({ tab: 'Mods', enabled: !!game }))
@@ -47,12 +47,12 @@ const App = () => {
 		awaitRtk(spin(init()))
 	})
 
-	const [titleRef, setTitleRef] = useStateRef<HTMLDivElement>();
-	const isInert = useIsInert();
+	const [titleRef, setTitleRef] = useStateRef<HTMLDivElement>()
+	const isInert = useIsInert()
 
 	useEventListener(document.body, 'contextmenu', (e) => {
 		if (e.target instanceof HTMLImageElement) {
-			e.preventDefault();
+			e.preventDefault()
 		}
 	})
 
@@ -62,11 +62,11 @@ const App = () => {
 
 	useTauriEvent('towermod/request-install-mod', (e) => {
 		// give time for tabs to finish mounting
-		installMods([e.payload]);
+		installMods([e.payload])
 	}, [])
 
 	useTauriEvent('towermod/error', (e) => {
-		showError(e.payload);
+		showError(e.payload)
 	})
 
 	return <>
@@ -89,6 +89,6 @@ const App = () => {
 			</ErrorBoundary>
 		</div>
 	</>
-};
+}
 
-export default App;
+export default App

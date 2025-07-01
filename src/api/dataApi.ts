@@ -1,8 +1,8 @@
-import { binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl, useObjectUrl } from '@/util';
-import { baseApi } from './api';
-import { invoke } from '@tauri-apps/api/core';
-import { Animation, Behavior, ImageMetadata, Layout, LayoutLayer, ObjectInstance, ObjectType, PluginData, Container, Family, ObjectTrait, AppBlock, SearchOptions } from '@towermod';
-import type { LookupForType, UniqueTowermodObject } from '@/util';
+import { binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl, useObjectUrl } from '@/util'
+import { baseApi } from './api'
+import { invoke } from '@tauri-apps/api/core'
+import { Animation, Behavior, ImageMetadata, Layout, LayoutLayer, ObjectInstance, ObjectType, PluginData, Container, Family, ObjectTrait, AppBlock, SearchOptions } from '@towermod'
+import type { LookupForType, UniqueTowermodObject } from '@/util'
 
 type Lookup<T extends UniqueTowermodObject> = LookupForType<T['_type']>
 type LookupArg<T extends UniqueTowermodObject> = Omit<Lookup<T>, '_type'>
@@ -329,9 +329,9 @@ export const dataApi = baseApi.injectEndpoints({
 })
 
 async function _getGameImage(id: int): Promise<Uint8Array | null> {
-	const enc = new TextEncoder();
+	const enc = new TextEncoder()
 	const bytes = enc.encode(JSON.stringify(id))
-	const resp = new Uint8Array(await invoke("get_image", bytes));
+	const resp = new Uint8Array(await invoke("get_image", bytes))
 	if (!resp.length) {
 		return null
 	}

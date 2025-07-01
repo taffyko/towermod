@@ -1,6 +1,6 @@
-import clsx from 'clsx';
+import clsx from 'clsx'
 import Style from './LoadContainer.module.scss'
-import { ErrorMsg } from '@/components/Error';
+import { ErrorMsg } from '@/components/Error'
 export function LoadContainer(props: React.ComponentProps<'div'> & {
 	isLoading?: boolean
 	error?: any,
@@ -8,7 +8,7 @@ export function LoadContainer(props: React.ComponentProps<'div'> & {
 	small?: boolean,
 	render?: boolean,
 }) {
-	const { isLoading, error, small, render, children, ...htmlProps } = props;
+	const { isLoading, error, small, render, children, ...htmlProps } = props
 	if (isLoading) {
 		return <>
 			<SpinnerBox small={small} {...htmlProps} />
@@ -24,7 +24,7 @@ export function LoadContainer(props: React.ComponentProps<'div'> & {
 }
 
 function SpinnerBox(props: React.ComponentProps<'div'> & { small?: boolean }) {
-	const { small, className, ...htmlProps } = props;
+	const { small, className, ...htmlProps } = props
 	return <div {...htmlProps} className={clsx(Style.spinnerContainer, className)}>
 		<div className={small ? Style.spinnerBoxSmall : Style.spinnerBox}>
 			<div className={Style.spinnerBg} />

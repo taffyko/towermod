@@ -1,16 +1,16 @@
-import Style from './Toast.module.scss';
-import { useEffect } from "react";
-import { ToastData, closeToast, toastsUpdated } from './toastStore';
-import IconButton from "@/components/IconButton";
-import closeSvg from '@/icons/close.svg';
-import { useIsHovered, useMiniEvent, useMiniEventValue, useStateRef } from '@/util/hooks';
-import Text from '@/components/Text';
+import Style from './Toast.module.scss'
+import { useEffect } from "react"
+import { ToastData, closeToast, toastsUpdated } from './toastStore'
+import IconButton from "@/components/IconButton"
+import closeSvg from '@/icons/close.svg'
+import { useIsHovered, useMiniEvent, useMiniEventValue, useStateRef } from '@/util/hooks'
+import Text from '@/components/Text'
 
 function Toast(props: ToastData & { idx: number }) {
-	const { content, id, idx, timer, type } = props;
-	const timerProgress = useMiniEventValue(timer.progressEvent);
-	const [el, setEl] = useStateRef<HTMLDivElement>();
-	const hovered = useIsHovered(el);
+	const { content, id, idx, timer, type } = props
+	const timerProgress = useMiniEventValue(timer.progressEvent)
+	const [el, setEl] = useStateRef<HTMLDivElement>()
+	const hovered = useIsHovered(el)
 
 	useEffect(() => {
 		if (idx > 0 || hovered) {
@@ -23,7 +23,7 @@ function Toast(props: ToastData & { idx: number }) {
 
 	useMiniEvent(timer.timeoutEvent, () => {
 		closeToast(id)
-	}, [closeToast, id]);
+	}, [closeToast, id])
 
 	return <div
 		ref={setEl}
@@ -41,7 +41,7 @@ function Toast(props: ToastData & { idx: number }) {
 }
 
 export function ToastContainer() {
-	const toasts = useMiniEventValue(toastsUpdated);
+	const toasts = useMiniEventValue(toastsUpdated)
 
 	return <div
 		className={Style.toastContainer}

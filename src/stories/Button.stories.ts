@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { Button } from "@/components/Button";
+import type { Meta, StoryObj } from "@storybook/react"
+import { Button } from "@/components/Button"
 
 const meta = {
 	title: 'Components/Button',
@@ -9,7 +9,7 @@ const meta = {
 		disabled: false,
 		children: "Button",
 	}
-} satisfies Meta<typeof Button>;
-export default meta;
+} satisfies Meta<typeof Button>
+export default meta
 
-export const MainStory: StoryObj<typeof meta> = { name: "Button" };
+export const MainStory: StoryObj<typeof meta> = { name: "Button" }

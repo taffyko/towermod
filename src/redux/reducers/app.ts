@@ -1,6 +1,6 @@
-import { UniqueObjectLookup, posmod } from "@/util";
-import { PayloadAction, createDraftSafeSelector, createSelector, createSlice } from "@reduxjs/toolkit";
-import { Game, ModInfo, Project } from "@towermod";
+import { UniqueObjectLookup, posmod } from "@/util"
+import { PayloadAction, createDraftSafeSelector, createSelector, createSlice } from "@reduxjs/toolkit"
+import { Game, ModInfo, Project } from "@towermod"
 
 const MAX_OUTLINER_HISTORY = 50
 
@@ -51,35 +51,35 @@ export const appSlice = createSlice({
 			state.currentTab = tabs[tabIdx]
 		},
 		setCurrentTab(state, action: PayloadAction<string>) {
-			const tab = action.payload;
+			const tab = action.payload
 			const tabs = selectTabsInternal(state)
 			if (tabs.includes(tab)) {
-				state.currentTab = tab;
+				state.currentTab = tab
 			}
 		},
 
 		setTabEnabled(state, action: PayloadAction<{ tab: string, enabled: boolean }>) {
-			const { tab, enabled } = action.payload;
-			const isTabEnabled = state.enabledTabsUnordered.includes(tab);
+			const { tab, enabled } = action.payload
+			const isTabEnabled = state.enabledTabsUnordered.includes(tab)
 			if (enabled && !isTabEnabled) {
-				state.enabledTabsUnordered.push(tab);
+				state.enabledTabsUnordered.push(tab)
 			} else if (!enabled && isTabEnabled) {
-				state.enabledTabsUnordered = state.enabledTabsUnordered.filter((enabledTab) => enabledTab !== tab);
+				state.enabledTabsUnordered = state.enabledTabsUnordered.filter((enabledTab) => enabledTab !== tab)
 				if (state.currentTab === tab) {
-					state.currentTab = state.enabledTabsUnordered[0];
+					state.currentTab = state.enabledTabsUnordered[0]
 				}
 			}
 		},
 
 		selectMod(state, action: PayloadAction<string | undefined>) {
-			state.selectedModId = action.payload;
+			state.selectedModId = action.payload
 		},
 		setModRunning(state, action: PayloadAction<{ modId: string, running: boolean }>) {
-			const { modId, running } = action.payload;
+			const { modId, running } = action.payload
 			if (running) {
-				state.runningMods.push(modId);
+				state.runningMods.push(modId)
 			} else {
-				state.runningMods = state.runningMods.filter((runningMod) => runningMod !== modId);
+				state.runningMods = state.runningMods.filter((runningMod) => runningMod !== modId)
 			}
 		},
 
@@ -104,13 +104,13 @@ export const appSlice = createSlice({
 			state.outlinerValue = state.outlinerHistory[state.outlinerHistoryIdx]
 		},
 		setShowImageCollisionPreview(state, action: PayloadAction<boolean>) {
-			state.showImageCollisionPreview = action.payload;
+			state.showImageCollisionPreview = action.payload
 		},
 
 		setImageId(state, action: PayloadAction<number>) {
-			state.imageId = action.payload;
+			state.imageId = action.payload
 		},
 	},
-});
-export const appReducer = appSlice.reducer;
-export const appActions = appSlice.actions;
+})
+export const appReducer = appSlice.reducer
+export const appActions = appSlice.actions

@@ -1,5 +1,5 @@
-import { getObjectStringId } from '@/util';
-import { createContext } from 'react';
+import { getObjectStringId } from '@/util'
+import { createContext } from 'react'
 import {
 	FixedSizeNodePublicState,
 	FixedSizeNodeData,
@@ -8,8 +8,8 @@ import {
 	VariableSizeNodeData,
 	VariableSizeTree,
 	NodeRecord
-} from 'react-vtree';
-import { Align } from 'react-window';
+} from 'react-vtree'
+import { Align } from 'react-window'
 
 export type VTree = FixedSizeTree<any> | VariableSizeTree<any>
 export type NodePublicState = FixedSizeNodePublicState<FixedSizeNodeData> | VariableSizeNodePublicState<VariableSizeNodeData>
@@ -48,7 +48,7 @@ function showTreeItemUpdate(tree: VTree, id: string) {
  * Recursively expand/collapse all children of an item
  */
 export function setOpenRecursive(tree: VTree, id: string, open: boolean) {
-	let node: NodeRecord<NodePublicState> | null | undefined = tree.state.records.get(id)
+	const node: NodeRecord<NodePublicState> | null | undefined = tree.state.records.get(id)
 	if (!node) { return }
 
 	// update outer modes tree nodes before updating children
@@ -68,7 +68,7 @@ export function setOpenRecursive(tree: VTree, id: string, open: boolean) {
 	}
 	recurse(node.child, 1)
 
-	let i = 0;
+	let i = 0
 	while (true) {
 		const updates = updatesByDepth[i]
 		if (!updates) { break }
@@ -82,7 +82,7 @@ export function filterTree(tree: VTree, ids: Set<string>) {
 	const shown: Record<string, boolean> = {}
 	const update: Record<string, boolean> = {}
 	for (const node of records as Iterable<NodeRecord<NodePublicState>>) {
-		const id = node.public.data.id;
+		const id = node.public.data.id
 		if (ids.has(id)) {
 			let parent: NodeRecord<NodePublicState> | null = node
 			while (parent) {
@@ -154,9 +154,9 @@ export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: 
 
 	const opened: Record<string, boolean> = {}
 
-	const oldChildren = new Set<string>();
+	const oldChildren = new Set<string>()
 	for (const [parentId, children] of Object.entries(updates)) {
-		let parent = tree.state.records.get(parentId)
+		const parent = tree.state.records.get(parentId)
 		if (!parent) { return }
 
 		// record existing children
@@ -171,7 +171,7 @@ export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: 
 		}
 
 		let last = parent
-		let first = true;
+		let first = true
 		for (const childData of children) {
 			const record = createRecord(tree, childData, parent)
 			oldChildren.delete(childData.id)

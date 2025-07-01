@@ -2,20 +2,20 @@ import { Slice } from '@reduxjs/toolkit'
 export function posmod(n: number, d: number) { return ((n % d) + d) % d }
 
 export function* enumerate<T>(iterable: Iterable<T>) {
-	let i = 0;
+	let i = 0
 	for (const x of iterable) {
-		yield [x, i++] as [T, number];
+		yield [x, i++] as [T, number]
 	}
 }
 
-const None = Symbol('None');
+const None = Symbol('None')
 export function assertUnreachable(a: never, obj: any = None): never {
 	const msg = `Deliberately unreachable case occurred: ${a}`
 	if (obj !== None) {
 		console.error(`${msg}, Relevant object:`, obj)
-		throw new Error(`${msg}, Relevant object: ${JSON.stringify(obj, null, 4)}`);
+		throw new Error(`${msg}, Relevant object: ${JSON.stringify(obj, null, 4)}`)
 	} else {
-		throw new Error(msg);
+		throw new Error(msg)
 	}
 }
 
@@ -48,7 +48,7 @@ export function addRawReducers<S>(
 	const actionMap =
 		Object.fromEntries(
 			Object.entries(reducers)
-			.map(([name, fn]) => [name.includes('/') ? name : `${slice.name}/${name}`, fn]))
+				.map(([name, fn]) => [name.includes('/') ? name : `${slice.name}/${name}`, fn]))
 
 	slice.reducer = (state: S | undefined, action: any) => {
 		const fn = actionMap[action.type]
@@ -60,7 +60,7 @@ export function addRawReducers<S>(
 
 export class MiniEvent<T = void> {
 	lastValue?: T
-	subscriptions = new Set<(e: T) => void>();
+	subscriptions = new Set<(e: T) => void>()
 	constructor(initialValue?: T) {
 		this.lastValue = initialValue
 	}
@@ -74,7 +74,7 @@ export class MiniEvent<T = void> {
 	fire(e: T) {
 		this.lastValue = e
 		for (const fn of this.subscriptions) {
-			fn(e);
+			fn(e)
 		}
 	}
 }
@@ -173,8 +173,8 @@ export function objectShallowEqual(a?: object | null, b?: object | null) {
 }
 
 export function svgToDataUri(svg: string | SVGElement) {
-	const xml = typeof svg === 'string' ? svg : (new XMLSerializer).serializeToString(svg);
-	return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(xml);
+	const xml = typeof svg === 'string' ? svg : (new XMLSerializer).serializeToString(svg)
+	return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(xml)
 }
 
 export function triggerTransition(el?: HTMLElement | null, className?: string) {
@@ -185,12 +185,12 @@ export function triggerTransition(el?: HTMLElement | null, className?: string) {
 	}, 0)
 }
 
-export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
+export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>
 
 interface Flavoring<FlavorT> {
 	_type?: FlavorT;
 }
-export type Flavor<T, FlavorT> = T & Flavoring<FlavorT>;
+export type Flavor<T, FlavorT> = T & Flavoring<FlavorT>
 
 declare module "@towermod" {
 	export type int = Flavor<number, 'int'>

@@ -1,5 +1,5 @@
-/* eslint-disable max-depth */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+ 
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
 	FixedSizeNodeData,
 	FixedSizeNodePublicState as NodePublicState,
@@ -8,31 +8,31 @@ import {
 	NodeComponentProps,
 	FixedSizeTree,
 	NodeRecord,
-} from 'react-vtree';
-import { useImperativeHandle, useRerender, useStateRef } from '@/util/hooks';
-import { actions, dispatch, useAppSelector } from '@/redux';
-import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util/util';
-import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil';
-import { TreeComponent } from './Tree';
+} from 'react-vtree'
+import { useImperativeHandle, useRerender, useStateRef } from '@/util/hooks'
+import { actions, dispatch, useAppSelector } from '@/redux'
+import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util/util'
+import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil'
+import { TreeComponent } from './Tree'
 import Style from './Outliner.module.scss'
-import { UniqueObjectLookup, UniqueTowermodObject, LookupForType, towermodObjectIdsEqual } from '@/util';
+import { UniqueObjectLookup, UniqueTowermodObject, LookupForType, towermodObjectIdsEqual } from '@/util'
 import { Animation, ObjectType } from '@/towermod'
-import { QueryScopeFn, fetchRtk, getObjectDisplayName, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil';
-import IconButton from '@/components/IconButton';
-import arrowDownImg from '@/icons/arrowDown.svg';
-import arrowRightImg from '@/icons/arrowRight.svg';
-import plusImg from '@/icons/plus.svg';
-import { api } from '@/api';
-import { LineEdit } from '@/components/LineEdit';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { createSelector } from '@reduxjs/toolkit';
-import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu';
-import { Image } from '@/components/Image/Image';
-import { Button } from '@/components/Button';
-import clsx from 'clsx';
-import { debounce } from 'lodash-es';
-import { awaitRtk } from '@/api/helpers';
-import { spin } from '@/app/GlobalSpinner';
+import { QueryScopeFn, fetchRtk, getObjectDisplayName, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil'
+import IconButton from '@/components/IconButton'
+import arrowDownImg from '@/icons/arrowDown.svg'
+import arrowRightImg from '@/icons/arrowRight.svg'
+import plusImg from '@/icons/plus.svg'
+import { api } from '@/api'
+import { LineEdit } from '@/components/LineEdit'
+import { skipToken } from '@reduxjs/toolkit/query'
+import { createSelector } from '@reduxjs/toolkit'
+import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu'
+import { Image } from '@/components/Image/Image'
+import { Button } from '@/components/Button'
+import clsx from 'clsx'
+import { debounce } from 'lodash-es'
+import { awaitRtk } from '@/api/helpers'
+import { spin } from '@/app/GlobalSpinner'
 
 
 
@@ -58,7 +58,7 @@ type OutlinerNodeData = FixedSizeNodeData &
 		obj: OutlinerTowermodObject | null;
 		children?: OutlinerTowermodObject[];
 		idx: number | null,
-	};
+	}
 
 type RootContainerName = 'Layouts' | 'Animations' | 'Behaviors' | 'Containers' | 'Families' | 'Object Types' | 'Traits'
 
@@ -84,7 +84,7 @@ const getNodeData = (
 	_tree: FixedSizeTree<OutlinerNodeData> | null,
 	query: QueryScopeFn | null = null,
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
-	const id: string | number = getTreeItemId(obj);
+	const id: string | number = getTreeItemId(obj)
 
 	const children = getObjChildren(obj, query)
 
@@ -101,15 +101,15 @@ const getNodeData = (
 		data,
 		nestingLevel,
 	}
-};
+}
 
 
-const defaultTextStyle = {marginLeft: 10};
-const defaultButtonStyle = {fontFamily: 'Courier New'};
+const defaultTextStyle = {marginLeft: 10}
+const defaultButtonStyle = {fontFamily: 'Courier New'}
 
 type OutlinerNodeMeta = Readonly<{
 	nestingLevel: number;
-}>;
+}>
 
 
 
@@ -133,7 +133,7 @@ function useOutlinerObjectData(lookup: OutlinerTowermodObject | null, idx: numbe
 				;({ data: iconsPageData } = query(api.endpoints.getOutlinerObjectTypeIcons, { page, pageSize }, 'getIcons'))
 				bulkQueryImplemented.forObj = true
 				bulkQueryImplemented.forIcon = true
-			break; case 'Animation':
+				break; case 'Animation':
 				bulkQueryImplemented.forObj = true
 				hasIcon = true
 				children = lookup.subAnimations
@@ -184,11 +184,11 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {name: nameOverride, nestingLevel, obj, idx, id}, isOpen, style, setOpen} = props
 	const context = useContext(OutlinerContext)
 	const { tree } = context
-	const selectable = !!obj;
+	const selectable = !!obj
 
 	const { obj: objData, hasIcon, iconUrl, displayName, children } = useOutlinerObjectData(obj, idx)
 
-	let name = nameOverride ?? displayName
+	const name = nameOverride ?? displayName
 	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
 
 	useEffect(() => {
@@ -202,7 +202,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 
 	const addChild = getAddChildImplementation(objData)
 
-	let nodeContent = <>
+	const nodeContent = <>
 		<Image noReflow={hasIcon} src={iconUrl} />
 		<div className="text" style={defaultTextStyle}>{name}</div>
 	</>
@@ -263,9 +263,9 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 					'group-hover:opacity-100 transition-opacity ease-[cubic-bezier(0,0.1,0,1)]',
 				)}
 			/>
-		: null }
+			: null }
 	</div>
-};
+}
 
 export interface OutlinerHandle {
 	tree: FixedSizeTree<OutlinerNodeData>
@@ -276,7 +276,7 @@ export interface OutlinerHandle {
 	setTreeItemChildren(items: OutlinerTowermodObject[], parentId: string): void
 }
 
-export const OutlinerContext = createContext<OutlinerHandle>(null!);
+export const OutlinerContext = createContext<OutlinerHandle>(null!)
 
 export interface OutlinerProps {
 	handleRef?: React.Ref<OutlinerHandle>,
@@ -298,7 +298,7 @@ export const Outliner = (props: OutlinerProps) => {
 	const lookup = useAppSelector(s => s.app.outlinerValue)
 	const rerender = useRerender()
 
-	let queuedTreeItemUpdates = useRef<Record<string, OutlinerNodeData[]>>({})
+	const queuedTreeItemUpdates = useRef<Record<string, OutlinerNodeData[]>>({})
 	const _dispatchTreeItemUpdates = useMemo(() =>
 		debounce((tree: FixedSizeTree<OutlinerNodeData>) => {
 			batchSetTreeItemChildren(tree, queuedTreeItemUpdates.current)
@@ -366,7 +366,7 @@ export const Outliner = (props: OutlinerProps) => {
 		if (appBlock) { yield getNodeData(appBlock, 0, 0, tree) }
 
 		while (true) {
-			const parentMeta = yield;
+			const parentMeta = yield
 			for (const [child, i] of enumerate(parentMeta.data.children ?? [])) {
 				yield getNodeData(child, i, parentMeta.nestingLevel + 1, tree, query)
 			}
@@ -394,11 +394,11 @@ export const Outliner = (props: OutlinerProps) => {
 
 function OutlinerSearch() {
 	const handle = useContext(OutlinerContext)
-	const [caseSensitive, setCaseSensitive] = useState(false);
-	const [searchObjectTypes, setSearchObjectTypes] = useState(true);
-	const [searchObjectInstances, setSearchObjectInstances] = useState(false);
-	const [searchLayoutLayers, setSearchLayoutLayers] = useState(false);
-	const [searchContainers, setSearchContainers] = useState(false);
+	const [caseSensitive, setCaseSensitive] = useState(false)
+	const [searchObjectTypes, setSearchObjectTypes] = useState(true)
+	const [searchObjectInstances, setSearchObjectInstances] = useState(false)
+	const [searchLayoutLayers, setSearchLayoutLayers] = useState(false)
+	const [searchContainers, setSearchContainers] = useState(false)
 	const [search, setSearch, matchIdx, matchCount, nextMatch] = useOutlinerSearch(handle, {
 		caseSensitive,
 		searchObjectTypes,
@@ -418,7 +418,7 @@ function OutlinerSearch() {
 				matchCount !== 0
 					? matchIdx === -1 ? null : <div>{`${matchIdx+1}/${matchCount}`}</div>
 					: <div className="text-(--color-error)">0/0</div>
-			: null }
+				: null }
 		</LineEdit>
 		<DropdownMenu label="Filter">
 			<ToggleMenuItem value={caseSensitive} onChange={setCaseSensitive}>Case sensitive</ToggleMenuItem>
@@ -452,7 +452,7 @@ function OutlinerHistoryButtons() {
 	</>
 }
 
-const emptyArray = [] as const;
+const emptyArray = [] as const
 
 function useOutlinerSearch(handle: OutlinerHandle, options: {
 	caseSensitive: boolean,
@@ -468,10 +468,10 @@ function useOutlinerSearch(handle: OutlinerHandle, options: {
 		text: caseSensitive ? search : search.toLowerCase(),
 		caseSensitive
 	} : undefined
-	let matchedObjectTypes = api.useSearchObjectTypesQuery((searchObjectTypes && searchOptions) || skipToken).currentData || emptyArray
-	let matchedLayoutLayers = api.useSearchLayoutLayersQuery((searchLayoutLayers && searchOptions) || skipToken).currentData || emptyArray
-	let matchedObjectInstances = api.useSearchObjectInstancesQuery((searchObjectInstances && searchOptions) || skipToken).currentData || emptyArray
-	let matchedContainers = api.useSearchContainersQuery((searchContainers && searchOptions) || skipToken).currentData || emptyArray
+	const matchedObjectTypes = api.useSearchObjectTypesQuery((searchObjectTypes && searchOptions) || skipToken).currentData || emptyArray
+	const matchedLayoutLayers = api.useSearchLayoutLayersQuery((searchLayoutLayers && searchOptions) || skipToken).currentData || emptyArray
+	const matchedObjectInstances = api.useSearchObjectInstancesQuery((searchObjectInstances && searchOptions) || skipToken).currentData || emptyArray
+	const matchedContainers = api.useSearchContainersQuery((searchContainers && searchOptions) || skipToken).currentData || emptyArray
 
 
 	const [matched, matchedKeys] = useMemo(() => {
@@ -479,7 +479,7 @@ function useOutlinerSearch(handle: OutlinerHandle, options: {
 			return [{}, []]
 		}
 		const map: Record<string, UniqueObjectLookup> = {}
-		let count = 0;
+		let count = 0
 		for (const obj of matchedObjectTypes) {
 			map[getTreeItemId(obj)] = obj
 			++count

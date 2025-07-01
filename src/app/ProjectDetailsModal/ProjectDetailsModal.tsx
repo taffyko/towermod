@@ -1,16 +1,16 @@
-import { win32 as path } from "path";
-import { useState } from "react";
-import { api } from "@/api";
-import { ConfirmModal } from "../Modal";
-import { spin } from "@/app/GlobalSpinner";
-import { LineEdit } from "@/components/LineEdit";
-import FilePathEdit from "@/components/FilePathEdit";
-import Style from './ProjectDetailsModal.module.scss';
-import ImagePathEdit from "@/components/ImagePathEdit/ImagePathEdit";
-import { TextEdit } from "@/components/TextEdit";
+import { win32 as path } from "path"
+import { useState } from "react"
+import { api } from "@/api"
+import { ConfirmModal } from "../Modal"
+import { spin } from "@/app/GlobalSpinner"
+import { LineEdit } from "@/components/LineEdit"
+import FilePathEdit from "@/components/FilePathEdit"
+import Style from './ProjectDetailsModal.module.scss'
+import ImagePathEdit from "@/components/ImagePathEdit/ImagePathEdit"
+import { TextEdit } from "@/components/TextEdit"
 import Text from '@/components/Text'
-import { Project } from "@towermod";
-import { getUniqueName } from "@/util";
+import { Project } from "@towermod"
+import { getUniqueName } from "@/util"
 
 export interface ProjectDetailsFormData {
 	author: string,
@@ -31,7 +31,7 @@ function StatusLabel(props: {
 	warning?: boolean | React.ReactNode,
 	children?: React.ReactNode
 }) {
-	const { error, warning, children } = props;
+	const { error, warning, children } = props
 	let color = ''
 	if (warning) { color = 'var(--color-warn)' }
 	if (error) { color = 'var(--color-error)' }
@@ -68,25 +68,25 @@ function processModName(name: string) {
 }
 
 export function ProjectDetailsModal(props: { project?: Project, newProject?: boolean, confirmText?: string, onConfirm?: (data: ProjectDetailsFormData) => void }) {
-	const { project: originalProject } = props;
+	const { project: originalProject } = props
 
-	const { data: mods } = api.useGetInstalledModsQuery();
+	const { data: mods } = api.useGetInstalledModsQuery()
 
-	const [author, setAuthor] = useState(originalProject?.author ?? "");
-	const [name, setName] = useState(originalProject?.name ?? "");
-	const [displayName, setDisplayName] = useState(originalProject?.displayName ?? "");
-	const [version, setVersion] = useState(originalProject?.version ?? "0.0.1");
-	const [dirPath, setDirPath] = useState(originalProject?.dirPath ?? "");
+	const [author, setAuthor] = useState(originalProject?.author ?? "")
+	const [name, setName] = useState(originalProject?.name ?? "")
+	const [displayName, setDisplayName] = useState(originalProject?.displayName ?? "")
+	const [version, setVersion] = useState(originalProject?.version ?? "0.0.1")
+	const [dirPath, setDirPath] = useState(originalProject?.dirPath ?? "")
 	const [coverPath, setCoverPath] = useState(originalProject?.dirPath ? path.join(originalProject.dirPath, "cover.png") : "")
 	const [iconPath, setIconPath] = useState(originalProject?.dirPath ? path.join(originalProject.dirPath, "icon.png") : "")
-	const [description, setDescription] = useState(originalProject?.description ?? "");
+	const [description, setDescription] = useState(originalProject?.description ?? "")
 
 	const versionValid = /[0-9]+\.[0-9]+\.[0-9]+/.test(version)
 	const valid = !!(dirPath && versionValid && name && displayName)
 
 	let versionWarning: React.ReactNode = null
 	if (versionValid && mods) {
-		const uniqueName = getUniqueName(author, name);
+		const uniqueName = getUniqueName(author, name)
 		for (const mod of mods) {
 			if (uniqueName === mod.uniqueName && compareVersions(version, mod.version) <= 0) {
 				versionWarning = <div>A mod with ID <code>{uniqueName}.{version}</code> or newer already exists.<br/>Be sure to increment the version number before publishing a new version.</div>
@@ -102,11 +102,11 @@ export function ProjectDetailsModal(props: { project?: Project, newProject?: boo
 			<LineEdit placeholder="your-mod" value={name} onChange={e => setName(processModName(e.target.value))} />
 			<StatusLabel error={!displayName}>Name</StatusLabel>
 			<LineEdit placeholder="Your Mod" value={displayName} onChange={e => setDisplayName(e.target.value)} />
-		{ props.newProject ? <>
-			<StatusLabel error={!dirPath}>Save to location</StatusLabel>
-			<FilePathEdit folder value={dirPath} onChange={setDirPath} />
-		</> : null}
-		{ !props.newProject ? <>
+			{ props.newProject ? <>
+				<StatusLabel error={!dirPath}>Save to location</StatusLabel>
+				<FilePathEdit folder value={dirPath} onChange={setDirPath} />
+			</> : null}
+			{ !props.newProject ? <>
 				<StatusLabel error={!versionValid} warning={!!versionWarning}>Version</StatusLabel>
 				<div className="vbox gap">
 					<LineEdit placeholder="0.1.0" value={version} onChange={e => setVersion(e.target.value)} />
@@ -118,12 +118,12 @@ export function ProjectDetailsModal(props: { project?: Project, newProject?: boo
 				<ImagePathEdit width="240" height="160" value={coverPath} onChange={setCoverPath} />
 				<Text>Icon</Text>
 				<ImagePathEdit width="64" height="64" value={iconPath} onChange={setIconPath} />
-		</> : null }
+			</> : null }
 		</div>
 	</ConfirmModal>
 
 	function onConfirm() {
 		const data = { author, name, displayName, version, dirPath, coverPath, iconPath, description }
-		props.onConfirm?.(data);
+		props.onConfirm?.(data)
 	}
 }

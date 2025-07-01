@@ -1,23 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { skipToken } from '@reduxjs/toolkit/query/react'
-import { ModInfo } from '@towermod';
+import { ModInfo } from '@towermod'
 import Style from './Mods.module.scss'
 import Text from '@/components/Text'
-import { api } from "@/api";
-import { win32 as path } from 'path';
-import { toast } from '@/app/Toast';
-import { openFolder, getModsDirPath, waitUntilProcessExits } from '@/util/rpc';
-import { Button } from '@/components/Button';
-import { LoadContainer } from '@/components/LoadContainer';
-import { ErrorMsg } from '@/components/Error';
-import { assert, posmod, triggerTransition } from '@/util/util';
-import { useImperativeHandle, useObjectUrl, useStateRef } from '@/util/hooks';
-import { spin } from '../GlobalSpinner';
-import { Select } from '@/components/Select';
-import { State, actions, dispatch, useAppSelector } from '@/redux';
-import { createSelector } from '@reduxjs/toolkit';
-import { useSelector } from 'react-redux';
-import { awaitRtk } from '@/api/helpers';
+import { api } from "@/api"
+import { win32 as path } from 'path'
+import { toast } from '@/app/Toast'
+import { openFolder, getModsDirPath, waitUntilProcessExits } from '@/util/rpc'
+import { Button } from '@/components/Button'
+import { LoadContainer } from '@/components/LoadContainer'
+import { ErrorMsg } from '@/components/Error'
+import { assert, posmod, triggerTransition } from '@/util/util'
+import { useImperativeHandle, useObjectUrl, useStateRef } from '@/util/hooks'
+import { spin } from '../GlobalSpinner'
+import { Select } from '@/components/Select'
+import { State, actions, dispatch, useAppSelector } from '@/redux'
+import { createSelector } from '@reduxjs/toolkit'
+import { useSelector } from 'react-redux'
+import { awaitRtk } from '@/api/helpers'
 
 const selectIsModRunning = createSelector((s: State) => s.app.runningMods, (_, modId: string) => modId, (runningMods, modId) => {
 	return runningMods.includes(modId)
@@ -50,24 +50,24 @@ export const ModListItem = (props: {
 	selected: boolean,
 	mod: ModInfo,
 } & React.ComponentProps<'div'>) => {
-	const { selected, mod, ...htmlProps } = props;
+	const { selected, mod, ...htmlProps } = props
 
 	const iconImg = useObjectUrl(mod.icon, { type: 'image/png' })
 
-	const fileName = path.basename(mod.filePath ?? "");
+	const fileName = path.basename(mod.filePath ?? "")
 	return <div
 		className={`${Style.modListItem} ${selected ? Style.selected : ""}`}
 		{...htmlProps}
 	>
-			<>
-				{iconImg ? <img className={Style.icon} src={iconImg} /> : <div className={Style.icon} /> }
-				{ mod.error ? <span className={Style.error}>{fileName}</span> : <Text>{mod.displayName}</Text> }
-			</>
+		<>
+			{iconImg ? <img className={Style.icon} src={iconImg} /> : <div className={Style.icon} /> }
+			{ mod.error ? <span className={Style.error}>{fileName}</span> : <Text>{mod.displayName}</Text> }
+		</>
 	</div>
 }
 
 export function ModList() {
-	const { data: allMods, isFetching, error } = api.useGetInstalledModsQuery();
+	const { data: allMods, isFetching, error } = api.useGetInstalledModsQuery()
 
 	const selectedModId = useAppSelector(s => s.app.selectedModId)
 	const selectedMod = useSelector(() => selectMod(allMods, selectedModId))
@@ -83,11 +83,11 @@ export function ModList() {
 
 	function nextMod(offset: number) {
 		if (!mods?.length) { return }
-		let modIdx = mods.findIndex(m => m.id === selectedMod?.id);
+		let modIdx = mods.findIndex(m => m.id === selectedMod?.id)
 		if (modIdx === -1) {
 			modIdx = 0
 		} else {
-			modIdx = posmod(modIdx + offset, mods.length);
+			modIdx = posmod(modIdx + offset, mods.length)
 		}
 		dispatch(actions.selectMod(mods[modIdx].id))
 	}
@@ -108,9 +108,9 @@ export function ModList() {
 	>
 		{noMods ?
 			<i>No mods installed</i>
-		:
+			:
 			mods?.map((mod, i) => {
-				const key = mod.error ? i : mod.id;
+				const key = mod.error ? i : mod.id
 				return <ModListItem
 					key={key}
 					mod={mod}
@@ -125,9 +125,9 @@ export function ModList() {
 }
 
 function ModDetails() {
-	const [playMod] = api.usePlayModMutation();
+	const [playMod] = api.usePlayModMutation()
 
-	const { data: allMods } = api.useGetInstalledModsQuery();
+	const { data: allMods } = api.useGetInstalledModsQuery()
 	const modsGroupedByVersion = useSelector(() => selectModsGroupedByVersion(allMods))
 
 	const modId = useAppSelector(s => s.app.selectedModId)
@@ -135,10 +135,10 @@ function ModDetails() {
 	const modIsRunning = useAppSelector(s => selectIsModRunning(s, mod?.id ?? ""))
 	const versions = mod && modsGroupedByVersion?.[mod.uniqueName]
 
-	const { data: modCacheExists } = api.useModCacheExistsQuery(mod ?? skipToken);
-	const [clearModCache] = api.useClearModCacheMutation();
+	const { data: modCacheExists } = api.useModCacheExistsQuery(mod ?? skipToken)
+	const [clearModCache] = api.useClearModCacheMutation()
 
-	const [el, setEl] = useStateRef<HTMLDivElement>();
+	const [el, setEl] = useStateRef<HTMLDivElement>()
 
 	useEffect(() => {
 		triggerTransition(el, Style.init)
@@ -175,7 +175,7 @@ function ModDetails() {
 			<div className="grow" />
 			<div className="hbox gap">
 				<Button disabled={modIsRunning} className="grow" onClick={async () => {
-					const pid = await awaitRtk(spin(playMod(mod.filePath!)));
+					const pid = await awaitRtk(spin(playMod(mod.filePath!)))
 					assert(pid)
 					toast(`Started "${mod.displayName}"`)
 
@@ -193,7 +193,7 @@ function ModDetails() {
 					}}>
 						Clear cache
 					</Button>
-				: null }
+					: null }
 			</div>
 		</div>
 	}
@@ -201,8 +201,8 @@ function ModDetails() {
 
 
 export default function Mods() {
-	const modsList = api.useGetInstalledModsQuery();
-	const [playUnmodified] = api.usePlayVanillaMutation();
+	const modsList = api.useGetInstalledModsQuery()
+	const [playUnmodified] = api.usePlayVanillaMutation()
 
 	return <div className="vbox gap grow isolation overflow-hidden">
 		<div className="hbox gap">

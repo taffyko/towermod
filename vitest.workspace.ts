@@ -1,14 +1,14 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 
-import { defineWorkspace } from "vitest/config";
+import { defineWorkspace } from "vitest/config"
 
-import { storybookTest } from "@storybook/experimental-addon-test/vitest-plugin";
+import { storybookTest } from "@storybook/experimental-addon-test/vitest-plugin"
 
 const dirname =
 	typeof __dirname !== "undefined"
 		? __dirname
-		: path.dirname(fileURLToPath(import.meta.url));
+		: path.dirname(fileURLToPath(import.meta.url))
 
 // More info at: https://storybook.js.org/docs/writing-tests/test-addon
 export default defineWorkspace([
@@ -31,4 +31,4 @@ export default defineWorkspace([
 			setupFiles: [".storybook/vitest.setup.ts"],
 		},
 	},
-]);
+])

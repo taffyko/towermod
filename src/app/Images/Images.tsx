@@ -1,35 +1,35 @@
-import { api } from "@/api";
-import { Button } from "@/components/Button";
-import { useEffect, useMemo, useState } from "react";
-import { InspectorObject } from "../Data/Inspector";
-import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useSize, useStateRef, useTwoWaySubmitBinding } from "@/util";
-import { toast } from "../Toast";
-import { spin } from "../GlobalSpinner";
-import { awaitRtk } from "@/api/helpers";
-import { actions, dispatch, useAppSelector } from "@/redux";
-import { SpinBox } from "@/components/SpinBox";
-import { Toggle } from "@/components/Toggle";
-import { win32 as path } from "path";
-import { ConfirmModal, openModal } from "../Modal";
+import { api } from "@/api"
+import { Button } from "@/components/Button"
+import { useEffect, useMemo, useState } from "react"
+import { InspectorObject } from "../Data/Inspector"
+import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useSize, useStateRef, useTwoWaySubmitBinding } from "@/util"
+import { toast } from "../Toast"
+import { spin } from "../GlobalSpinner"
+import { awaitRtk } from "@/api/helpers"
+import { actions, dispatch, useAppSelector } from "@/redux"
+import { SpinBox } from "@/components/SpinBox"
+import { Toggle } from "@/components/Toggle"
+import { win32 as path } from "path"
+import { ConfirmModal, openModal } from "../Modal"
 import Style from './Images.module.scss'
-import IconButton from "@/components/IconButton";
+import IconButton from "@/components/IconButton"
 import { revealItemInDir } from '@tauri-apps/plugin-opener'
 
 import folderOpenImg from '@/icons/folderOpen.svg'
 import uploadImg from '@/icons/upload.svg'
 import closeImg from '@/icons/close.svg'
 import refreshImg from '@/icons/refresh.svg'
-import { ImageMetadata } from "@towermod";
-import { save } from "@tauri-apps/plugin-dialog";
-import { exists, writeFile } from "@tauri-apps/plugin-fs";
-import { invoke } from "@tauri-apps/api/core";
-import { fetchRtk } from "@/appUtil";
+import { ImageMetadata } from "@towermod"
+import { save } from "@tauri-apps/plugin-dialog"
+import { exists, writeFile } from "@tauri-apps/plugin-fs"
+import { invoke } from "@tauri-apps/api/core"
+import { fetchRtk } from "@/appUtil"
 
 export default function Images() {
-	const [dumpImages] = api.useDumpImagesMutation();
-	const { data: imageDumpDir } = api.useImageDumpDirPathQuery();
-	const { data: project } = api.useGetProjectQuery();
-	const { data: isDataLoaded } = api.useIsDataLoadedQuery();
+	const [dumpImages] = api.useDumpImagesMutation()
+	const { data: imageDumpDir } = api.useImageDumpDirPathQuery()
+	const { data: project } = api.useGetProjectQuery()
+	const { data: isDataLoaded } = api.useIsDataLoadedQuery()
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
 
 	return <div className="vbox gap grow">
@@ -40,12 +40,12 @@ export default function Images() {
 		</div>
 		{isDataLoaded ?
 			<ImageEditing />
-		:
+			:
 			<div className="subtle">Create/load a Towermod project to see image data</div>
 		}
 	</div>
 	async function onClickDumpImages() {
-		await awaitRtk(spin(dumpImages()));
+		await awaitRtk(spin(dumpImages()))
 		toast("Dumped images")
 	}
 
@@ -64,12 +64,12 @@ export default function Images() {
 
 function ImageEditing() {
 	const imageId = useAppSelector(s => s.app.imageId)
-	const { currentData: img } = api.useGetGameImageUrlQuery(imageId);
+	const { currentData: img } = api.useGetGameImageUrlQuery(imageId)
 	const { currentData: savedMetadata } = api.useGetImageMetadataQuery({ id: imageId })
 	const { currentData: isOverridden } = api.useIsImageOverriddenQuery(imageId)
-	const [setImageMetadata] = api.useSetImageMetadataMutation();
-	const { currentData: project } = api.useGetProjectQuery();
-	const { currentData: imageDumpDir } = api.useImageDumpDirPathQuery();
+	const [setImageMetadata] = api.useSetImageMetadataMutation()
+	const { currentData: project } = api.useGetProjectQuery()
+	const { currentData: imageDumpDir } = api.useImageDumpDirPathQuery()
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
 
 	const [metadata, setMetadata, isMetadataDirty, submitMetadata] = useTwoWaySubmitBinding(savedMetadata, (m) => m && setImageMetadata(m))
@@ -78,10 +78,10 @@ function ImageEditing() {
 	return <>
 		{!imageDumpDir ?
 			<div className="text-(--color-warn)">Game images not yet dumped, unable to display.</div>
-		: null}
+			: null}
 		{!project ?
 			<div className="subtle">Save your project to enable adding/overriding images</div>
-		: null}
+			: null}
 		<div className="hbox gap">
 			<Button disabled={!project} onClick={onClickNewImage}>New image</Button>
 			<Toggle value={showCollision} onChange={(v) => dispatch(actions.setShowImageCollisionPreview(v))}>
@@ -127,7 +127,7 @@ function ImageEditing() {
 		if (!metadata) { return }
 		const filePath = await filePicker({ filters: [{ name: 'PNG Image', extensions: ['png'] }] })
 		if (!filePath) { return }
-		const newMetadata = await applyMaskFromImagePath(metadata, filePath);
+		const newMetadata = await applyMaskFromImagePath(metadata, filePath)
 		setImageMetadata(newMetadata)
 	}
 
@@ -139,7 +139,7 @@ function ImageEditing() {
 		}), true)
 		if (!filePath) { return }
 		const img = await imageFromCollisionMask(new Uint8Array(metadata.collisionMask), metadata.collisionPitch, metadata.collisionWidth, metadata.collisionHeight)
-		const res = await fetch(img.src);
+		const res = await fetch(img.src)
 		const blob = await res.blob()
 		const bytes = new Uint8Array(await blob.arrayBuffer())
 		await writeFile(filePath, bytes)
@@ -147,7 +147,7 @@ function ImageEditing() {
 	}
 
 	async function onClickClearImage() {
-		let confirmed = false;
+		let confirmed = false
 		await openModal(<ConfirmModal confirmText="Delete" onConfirm={() => { confirmed = true }}>
 			<span>Are you sure you want to <b>delete</b> this custom image?</span>
 		</ConfirmModal>)
@@ -207,8 +207,8 @@ function ImageEditing() {
 				collisionPitch: 0,
 				collisionMask: [],
 			}
-			newMetadata = await applyMaskFromImagePath(newMetadata, imgPath);
-			submitMetadata(newMetadata);
+			newMetadata = await applyMaskFromImagePath(newMetadata, imgPath)
+			submitMetadata(newMetadata)
 		}
 		toast(`Updated image ${imageId}`)
 		return imgPath
@@ -224,29 +224,29 @@ function ImagePreview(props: {
 	showCollision: boolean,
 	metadata?: ImageMetadata,
 }) {
-	const { imageId, metadata, showCollision } = props;
-	const { currentData: imgDataObj, isFetching } = api.useGetGameImageUrlQuery(imageId);
+	const { imageId, metadata, showCollision } = props
+	const { currentData: imgDataObj, isFetching } = api.useGetGameImageUrlQuery(imageId)
 	const imgUrl = imgDataObj?.url ?? undefined
 
-	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>();
-	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined);
+	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>()
+	const [naturalWidth, setNaturalWidth] = useState<number | undefined>(undefined)
 
 	const [containerEl, setContainerEl] = useStateRef<HTMLDivElement>()
 	const size = useSize(containerEl)
-	const width = Math.min(notNaN(naturalWidth) ? naturalWidth * 5 : 100, size?.width || Infinity);
+	const width = Math.min(notNaN(naturalWidth) ? naturalWidth * 5 : 100, size?.width || Infinity)
 	let heightOverWidth = 1
 	if (notNaN(imgEl?.naturalHeight) && notNaN(imgEl?.naturalWidth) && imgEl.naturalWidth !== 0) {
 		heightOverWidth = imgEl.naturalHeight / imgEl.naturalWidth
 	}
 
-	const height = Math.round(heightOverWidth * width);
+	const height = Math.round(heightOverWidth * width)
 
 	const collisionImg = useMemoAsync(async () => {
 		if (!metadata) { return }
 		return await imageFromCollisionMask(new Uint8Array(metadata.collisionMask), metadata.collisionPitch, metadata.collisionWidth, metadata.collisionHeight)
 	}, [metadata])
 
-	const [canvasEl, setCanvasEl] = useStateRef<HTMLCanvasElement>();
+	const [canvasEl, setCanvasEl] = useStateRef<HTMLCanvasElement>()
 	if (canvasEl) {
 		canvasEl.width = metadata?.collisionWidth ?? width
 		canvasEl.height = metadata?.collisionHeight ?? height
@@ -269,7 +269,7 @@ function ImagePreview(props: {
 		<img onLoad={onImageLoad} width={width} height={height} ref={setImgEl} className={Style.preview} src={imgUrl} />
 		{ metadata && showCollision ?
 			<canvas style={{ width, height }} ref={setCanvasEl} className={Style.collision} />
-		: null}
+			: null}
 		<ImagePoints naturalWidth={naturalWidth} width={width} height={height} metadata={metadata} />
 	</div>
 
@@ -285,13 +285,13 @@ function ImagePoints(props: {
 	naturalWidth?: number,
 	metadata?: ImageMetadata,
 }) {
-	const { width, height, naturalWidth, metadata } = props;
+	const { width, height, naturalWidth, metadata } = props
 
 	if (!metadata || !naturalWidth) { return null }
 
 	const coords = useMemo(() => {
 		const arr: Array<[number, number]> = []
-		const fac = width / naturalWidth;
+		const fac = width / naturalWidth
 		arr.push([metadata.hotspotX * fac, metadata.hotspotY * fac])
 		for (const apoint of metadata.apoints) {
 			arr.push([apoint.x * fac, apoint.y * fac])

@@ -1,28 +1,28 @@
-import { actions, dispatch } from "@/redux";
-import { useObjectDisplayName, useObjectIcon } from "@/appUtil";
-import { UniqueObjectLookup, int } from "@/util";
-import { Button } from "@/components/Button";
-import { SpinBox } from "@/components/SpinBox";
-import { api } from "@/api";
-import { useState } from "react";
-import { skipToken } from "@reduxjs/toolkit/query";
-import { ComboboxButton } from "@/components/Combobox";
-import { Image, ImageButton } from "@/components/Image/Image";
+import { actions, dispatch } from "@/redux"
+import { useObjectDisplayName, useObjectIcon } from "@/appUtil"
+import { UniqueObjectLookup, int } from "@/util"
+import { Button } from "@/components/Button"
+import { SpinBox } from "@/components/SpinBox"
+import { api } from "@/api"
+import { useState } from "react"
+import { skipToken } from "@reduxjs/toolkit/query"
+import { ComboboxButton } from "@/components/Combobox"
+import { Image, ImageButton } from "@/components/Image/Image"
 
 export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
-	const { lookup, onChange } = props;
+	const { lookup, onChange } = props
 	const displayName = useObjectDisplayName(lookup)
 	const { data: url, hasIcon } = useObjectIcon(lookup)
 
 	return <div className="hbox gap">
 		{ onChange ?
 			<LookupEdit name={displayName} icon={url} lookup={lookup} onChange={onChange} />
-		:
+			:
 			<Button
 				onClick={() => { dispatch(actions.setOutlinerValue(lookup)) }}
 				icon={<Image src={url} noReflow={hasIcon} className="w-[32px] h-[32px]"/>}
 			>
-				 {displayName}
+				{displayName}
 			</Button>
 		}
 	</div>
@@ -30,7 +30,7 @@ export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: Uniqu
 
 
 function LookupEdit(props: { name?: string, icon?: string, lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
-	const { name, icon, lookup, onChange } = props;
+	const { name, icon, lookup, onChange } = props
 	switch (lookup._type) {
 		case 'ObjectType':
 			return <ObjectTypeEdit value={lookup.id} onChange={(v) => onChange?.({ ...lookup, id: v })} />
@@ -59,12 +59,12 @@ function ImageEdit(props: { src: string | undefined, value: int, onChange: (v: i
 }
 
 function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
-	const { value: selectedId, onChange } = props;
+	const { value: selectedId, onChange } = props
 	const [query, setQuery] = useState('')
 	const { data: objectTypes } = api.useSearchObjectTypesQuery({ text: query } || skipToken)
 	const name = objectTypes?.find((ot) => ot.id === selectedId)?.name
 	const value = api.useGetObjectTypeQuery({ id: selectedId }).data || { name: name || '...', id: selectedId }
-	const { data: icon } = useObjectIcon(value ? { _type: 'ObjectType', id: value.id } : undefined);
+	const { data: icon } = useObjectIcon(value ? { _type: 'ObjectType', id: value.id } : undefined)
 
 	return <ComboboxButton<{ name: string, id: int }>
 		value={value}

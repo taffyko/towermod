@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { DropdownMenu, MenuItem, ToggleMenuItem } from "@/components/DropdownMenu";
+import type { Meta, StoryObj } from "@storybook/react"
+import { DropdownMenu, MenuItem, ToggleMenuItem } from "@/components/DropdownMenu"
 
 function Story(props: React.ComponentProps<typeof DropdownMenu>) {
 	return <DropdownMenu {...props}>
@@ -22,9 +22,9 @@ const meta = {
 	args: {
 		disabled: false,
 	}
-} satisfies Meta<typeof Story>;
+} satisfies Meta<typeof Story>
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+export default meta
+type Story = StoryObj<typeof meta>
 
-export const MainStory: Story = { name: 'DropdownMenu' };
+export const MainStory: Story = { name: 'DropdownMenu' }

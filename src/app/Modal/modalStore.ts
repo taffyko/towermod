@@ -1,5 +1,5 @@
-import { useMiniEventValue } from "@/util/hooks";
-import { MiniEvent } from "@/util/util";
+import { useMiniEventValue } from "@/util/hooks"
+import { MiniEvent } from "@/util/util"
 import React, { useMemo } from "react"
 
 export function openModal(content: React.ReactNode) {
@@ -8,8 +8,8 @@ export function openModal(content: React.ReactNode) {
 	modals.push({
 		content,
 		id,
-	});
-	modalsUpdated.fire(modals);
+	})
+	modalsUpdated.fire(modals)
 
 	// resolve when modal is closed
 	return new Promise<void>((resolve) => {
@@ -24,17 +24,17 @@ export function openModal(content: React.ReactNode) {
 }
 
 export function closeModal(id: string) {
-	const idx = modals.findIndex(t => t.id === id);
-	if (idx === -1) return;
+	const idx = modals.findIndex(t => t.id === id)
+	if (idx === -1) return
 	modals = [...modals]
-	modals.splice(idx, 1);
-	modalsUpdated.fire(modals);
+	modals.splice(idx, 1)
+	modalsUpdated.fire(modals)
 }
 
 export function useModalContext() {
-	const modals = useMiniEventValue(modalsUpdated);
-	const { id, parent } = React.useContext(thisModalContext);
-	const activeModalId = modals[modals.length - 1]?.id;
+	const modals = useMiniEventValue(modalsUpdated)
+	const { id, parent } = React.useContext(thisModalContext)
+	const activeModalId = modals[modals.length - 1]?.id
 	if (!id) { throw new Error("Called useModalContext outside of a modal") };
 	return useMemo(() => ({
 		id,
@@ -52,7 +52,7 @@ export function useIsModalOpen() {
 export const thisModalContext = React.createContext<{
 	id: string | null
 	parent: HTMLDivElement | null,
-}>({ id: null, parent: null });
+}>({ id: null, parent: null })
 
 /** @internal */
 export interface ModalData {
@@ -61,6 +61,6 @@ export interface ModalData {
 }
 
 /** @internal */
-export let modals: ModalData[] = [];
+export let modals: ModalData[] = []
 /** @internal */
-export const modalsUpdated = new MiniEvent(modals);
+export const modalsUpdated = new MiniEvent(modals)

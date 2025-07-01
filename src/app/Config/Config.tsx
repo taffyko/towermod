@@ -1,22 +1,22 @@
-import { api } from "@/api";
-import { useContext, useEffect, useState } from "react";
-import { toast } from "@/app/Toast";
-import { Button } from "@/components/Button";
-import { LineEdit } from "@/components/LineEdit";
-import Text from "@/components/Text";
-import { ConfirmModal } from "../Modal";
-import { openModal } from "@/app/Modal";
-import { win32 as path } from "path";
-import FilePathEdit from "@/components/FilePathEdit";
-import { spin, useSpinQuery } from "../GlobalSpinner";
-import { renderError, showError } from "@/components/Error";
-import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc";
-import { assert } from "@/util";
-import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal";
-import { Project } from "@towermod";
-import { actions, dispatch, store } from "@/redux";
-import { awaitRtk } from "@/api/helpers";
-import { saveProject } from "@/appUtil";
+import { api } from "@/api"
+import { useContext, useEffect, useState } from "react"
+import { toast } from "@/app/Toast"
+import { Button } from "@/components/Button"
+import { LineEdit } from "@/components/LineEdit"
+import Text from "@/components/Text"
+import { ConfirmModal } from "../Modal"
+import { openModal } from "@/app/Modal"
+import { win32 as path } from "path"
+import FilePathEdit from "@/components/FilePathEdit"
+import { spin, useSpinQuery } from "../GlobalSpinner"
+import { renderError, showError } from "@/components/Error"
+import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc"
+import { assert } from "@/util"
+import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
+import { Project } from "@towermod"
+import { actions, dispatch, store } from "@/redux"
+import { awaitRtk } from "@/api/helpers"
+import { saveProject } from "@/appUtil"
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -24,11 +24,11 @@ function SetGameModal(props: {
 	const [setGame] = api.useSetGameMutation()
 	const [gamePath, setGamePath] = useState(props.initialValue)
 	return <ConfirmModal title="Set game path" onConfirm={async () => {
-		await spin(setGame(gamePath));
+		await spin(setGame(gamePath))
 		if (gamePath) {
-			toast("Game path set");
+			toast("Game path set")
 		} else {
-			toast("No game set...", { type: 'warning' });
+			toast("No game set...", { type: 'warning' })
 		}
 	}} confirmText="Set path">
 		Any unsaved project changes will be lost.
@@ -127,11 +127,11 @@ export const Config = () => {
 	async function applyProjectDetailsForm(project: Project, form: ProjectDetailsFormData): Promise<Project> {
 		const { coverPath, iconPath, ...rest } = form
 		if (form.coverPath) {
-			const coverDest = path.join(form.dirPath, 'cover.png');
+			const coverDest = path.join(form.dirPath, 'cover.png')
 			await copyFile(form.coverPath, coverDest)
 		}
 		if (form.iconPath) {
-			const iconDest = path.join(form.dirPath, 'icon.png');
+			const iconDest = path.join(form.dirPath, 'icon.png')
 			await copyFile(form.iconPath, iconDest)
 		}
 
@@ -140,12 +140,12 @@ export const Config = () => {
 	}
 
 	async function updateProjectDetails(project: Project, confirmText = "Save"): Promise<boolean> {
-		let confirmed = false;
+		let confirmed = false
 		await openModal(
 			<ProjectDetailsModal project={project} confirmText={confirmText} onConfirm={spin(async (form: ProjectDetailsFormData) => {
-				form = form;
+				form = form
 				confirmed = true
-				const newProject = await spin(applyProjectDetailsForm(project, form));
+				const newProject = await spin(applyProjectDetailsForm(project, form))
 				await awaitRtk(editProjectInfo(newProject))
 			})} />
 		)
@@ -154,45 +154,45 @@ export const Config = () => {
 
 	async function onClickExportProject() {
 		if (!project) { return }
-		const confirmed = await updateProjectDetails(project, "Export");
+		const confirmed = await updateProjectDetails(project, "Export")
 		if (!confirmed) { return }
 		await awaitRtk(spin(exportProject('BinaryPatch')))
 		toast("Project exported")
-		dispatch(actions.setCurrentTab('Mods'));
+		dispatch(actions.setCurrentTab('Mods'))
 	}
 
 	async function onClickExportLegacy() {
-		const patchPath = await filePicker({ filters: [{ name: "TCRepainter patch", extensions: ["json", "zip"] }] });
+		const patchPath = await filePicker({ filters: [{ name: "TCRepainter patch", extensions: ["json", "zip"] }] })
 		if (!patchPath) { return }
-		const manifestPath = path.join(path.dirname(patchPath), 'manifest.toml');
+		const manifestPath = path.join(path.dirname(patchPath), 'manifest.toml')
 		const project = await awaitRtk(spin(loadManifest({ manifestPath, projectType: 'Legacy' })))
 		await openModal(<ProjectDetailsModal confirmText="Export" project={project} onConfirm={async (form) => {
 			assert(project)
 			const newProject = await spin(applyProjectDetailsForm(project, form))
 			await awaitRtk(spin(exportFromLegacy({ patchPath, project: newProject })))
 			toast("Project exported")
-			dispatch(actions.setCurrentTab('Mods'));
+			dispatch(actions.setCurrentTab('Mods'))
 		}} />)
 	}
 
 	async function onClickExportFilesOnly() {
-		const dirPath = await folderPicker();
+		const dirPath = await folderPicker()
 		if (!dirPath) { return }
-		const manifestPath = path.join(dirPath, 'manifest.toml');
+		const manifestPath = path.join(dirPath, 'manifest.toml')
 		const project = await awaitRtk(spin(loadManifest({ manifestPath, projectType: 'FilesOnly' })))
 		await openModal(<ProjectDetailsModal confirmText="Export" project={project} onConfirm={async (form) => {
 			assert(project)
 			const newProject = await spin(applyProjectDetailsForm(project, form))
 			await awaitRtk(spin(exportFromFiles(newProject)))
 			toast("Project exported")
-			dispatch(actions.setCurrentTab('Mods'));
+			dispatch(actions.setCurrentTab('Mods'))
 		}} />)
 
 
 	}
 
 	async function onClickSaveProject() {
-		await saveProject();
+		await saveProject()
 	}
 
 	async function onClickBrowseProject() {
@@ -203,7 +203,7 @@ export const Config = () => {
 	}
 
 	async function onClickBrowseCache() {
-		const cachePath = await awaitRtk(getCachePath());
+		const cachePath = await awaitRtk(getCachePath())
 		assert(cachePath)
 		await openFolder(cachePath)
 		toast("Cache folder opened")
@@ -242,11 +242,11 @@ export const Config = () => {
 	}
 
 	async function onClickLoadProject() {
-		const projectsPath = await awaitRtk(getProjectsPath());
+		const projectsPath = await awaitRtk(getProjectsPath())
 		const manifestPath = await filePicker({
 			filters: [{ name: "Towermod Project (manifest.toml)", extensions: ["toml"] }],
 			startingDirectory: projectsPath,
-		});
+		})
 		if (!manifestPath) { return }
 
 		const warningMsg = await awaitRtk(loadProjectPreflight(manifestPath))
@@ -270,7 +270,7 @@ export const Config = () => {
 		const { Webview } = await import('@tauri-apps/api/webview')
 
 		// TODO: figure out how to get multiple webviews working
-		const tracingWindow = new Window('tracing', { title: "Tracing" });
+		const tracingWindow = new Window('tracing', { title: "Tracing" })
 		tracingWindow.once('tauri://created', function () {
 			toast("Tracing window opened")
 			const tracingWebview = new Webview(tracingWindow, 'tracing', { x: 0, y: 0, width: 600, height: 600, url: 'edge://tracing' })

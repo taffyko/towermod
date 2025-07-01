@@ -1,7 +1,7 @@
-import type { Preview } from "@storybook/react";
-import "@/css/main.css";
-import { DecoratorFunction } from "storybook/internal/types";
-import React from "react";
+import type { Preview } from "@storybook/react"
+import "@/css/main.css"
+import { DecoratorFunction } from "storybook/internal/types"
+import React from "react"
 import { Provider } from 'react-redux'
 import { store } from '../src/redux'
 
@@ -27,6 +27,6 @@ const preview: Preview = {
 			default: 'Dark',
 		}
 	},
-};
+}
 
-export default preview;
+export default preview
