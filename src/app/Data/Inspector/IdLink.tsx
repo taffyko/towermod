@@ -1,13 +1,12 @@
-import { actions, dispatch } from "@/redux"
-import { useObjectDisplayName, useObjectIcon } from "@/appUtil"
-import { UniqueObjectLookup, int } from "@/util"
-import { Button } from "@/components/Button"
-import { SpinBox } from "@/components/SpinBox"
 import { api } from "@/api"
-import { useState } from "react"
-import { skipToken } from "@reduxjs/toolkit/query"
+import { useObjectDisplayName, useObjectIcon } from "@/appUtil"
+import { Button } from "@/components/Button"
 import { ComboboxButton } from "@/components/Combobox"
 import { Image, ImageButton } from "@/components/Image/Image"
+import { SpinBox } from "@/components/SpinBox"
+import { actions, dispatch } from "@/redux"
+import { UniqueObjectLookup, int } from "@/util"
+import { useState } from "react"
 
 export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
 	const { lookup, onChange } = props
@@ -61,7 +60,7 @@ function ImageEdit(props: { src: string | undefined, value: int, onChange: (v: i
 function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
 	const { value: selectedId, onChange } = props
 	const [query, setQuery] = useState('')
-	const { data: objectTypes } = api.useSearchObjectTypesQuery({ text: query } || skipToken)
+	const { data: objectTypes } = api.useSearchObjectTypesQuery({ text: query })
 	const name = objectTypes?.find((ot) => ot.id === selectedId)?.name
 	const value = api.useGetObjectTypeQuery({ id: selectedId }).data || { name: name || '...', id: selectedId }
 	const { data: icon } = useObjectIcon(value ? { _type: 'ObjectType', id: value.id } : undefined)
@@ -69,7 +68,7 @@ function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
 	return <ComboboxButton<{ name: string, id: int }>
 		value={value}
 		onChange={(value) => {
-			onChange(value.id)
+			value && onChange(value.id)
 		}}
 		onClick={() => {
 			dispatch(actions.setOutlinerValue({ id: selectedId, _type: 'ObjectType' }))

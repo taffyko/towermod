@@ -7,6 +7,7 @@ export type CustomBaseQueryArgs = FetchArgs | Promise<any>
 export type CustomBaseQueryError = FetchBaseQueryError
 export type CustomBaseQueryMeta = FetchBaseQueryMeta
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export const customBaseQuery: BaseQueryFn<string | CustomBaseQueryArgs, unknown, CustomBaseQueryError, {}, CustomBaseQueryMeta> =
 async (args, api, extraOptions) => {
 	if (args instanceof Promise) {

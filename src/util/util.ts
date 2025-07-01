@@ -179,6 +179,7 @@ export function svgToDataUri(svg: string | SVGElement) {
 
 export function triggerTransition(el?: HTMLElement | null, className?: string) {
 	className && el?.classList.add(className)
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	el?.offsetTop
 	setTimeout(() => {
 		className && el?.classList.remove(className)

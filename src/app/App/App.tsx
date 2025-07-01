@@ -41,7 +41,7 @@ const App = () => {
 			'Data': <Data />,
 			'Events': <Events />
 		}
-	), [dataIsLoaded, game])
+	), [])
 
 	useMountEffect(() => {
 		awaitRtk(spin(init()))

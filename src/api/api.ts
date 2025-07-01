@@ -271,9 +271,9 @@ async function _getFileBlob(path: string): Promise<Blob | null> {
 		const fileExtension = path!.split('.').pop()?.toLowerCase()
 		let options: BlobPropertyBag | undefined
 		switch (fileExtension) {
-			case '.jpg': case '.jpeg':
+			case '.jpg': case '.jpeg': {
 				options = { type: 'image/jpeg' }
-				break; case '.png':
+			} break; case '.png':
 				options = { type: 'image/png' }
 		}
 		blob = new Blob([arrayBuffer], options)

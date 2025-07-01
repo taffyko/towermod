@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { MiniEvent, assert, createObjectUrl, revokeObjectUrl } from './util'
 import { useIsSpinning } from '@/app/GlobalSpinner'
@@ -32,7 +34,6 @@ export function useEventListener<K extends keyof HTMLElementEventMap, E extends 
 export function useEventListener(el: any, type: string, listener: EventListener, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions) {
 	let cb = listener
 	if (deps) {
-		 
 		cb = useCallback(listener, deps)
 	}
 	useEffect(() => {
@@ -40,7 +41,7 @@ export function useEventListener(el: any, type: string, listener: EventListener,
 		return () => {
 			el?.removeEventListener(type, cb, options)
 		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+
 	}, [el, cb])
 }
 
@@ -83,7 +84,7 @@ export function useMemoAsyncWithCleanup<T>(factory: () => [Promise<T> | undefine
 	useEffect(() => {
 		if (!resultRef.current) { return }
 		const [promise, ] = resultRef.current
-		;(async () => {
+		void (async () => {
 			const result = await promise
 			// only use result if the promise hasn't been invalidated
 			if (promise === resultRef.current?.[0]) {
@@ -160,7 +161,7 @@ export function useMountEffect(effect: React.EffectCallback): void {
 }
 
 export function useMiniEvent<T>(event: MiniEvent<T> | null | undefined, cb: (e: T) => void, deps: React.DependencyList) {
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+
 	const fn = useCallback(cb, deps)
 	useEffect(() => {
 		event?.subscribe(fn)

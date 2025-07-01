@@ -1,22 +1,22 @@
 import { api } from "@/api"
-import { useContext, useEffect, useState } from "react"
+import { awaitRtk } from "@/api/helpers"
+import { openModal } from "@/app/Modal"
+import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
 import { toast } from "@/app/Toast"
+import { saveProject } from "@/appUtil"
 import { Button } from "@/components/Button"
+import { showError } from "@/components/Error"
+import FilePathEdit from "@/components/FilePathEdit"
 import { LineEdit } from "@/components/LineEdit"
 import Text from "@/components/Text"
-import { ConfirmModal } from "../Modal"
-import { openModal } from "@/app/Modal"
-import { win32 as path } from "path"
-import FilePathEdit from "@/components/FilePathEdit"
-import { spin, useSpinQuery } from "../GlobalSpinner"
-import { renderError, showError } from "@/components/Error"
-import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc"
+import { actions, dispatch } from "@/redux"
 import { assert } from "@/util"
-import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
+import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc"
 import { Project } from "@towermod"
-import { actions, dispatch, store } from "@/redux"
-import { awaitRtk } from "@/api/helpers"
-import { saveProject } from "@/appUtil"
+import { win32 as path } from "path"
+import { useEffect, useState } from "react"
+import { spin, useSpinQuery } from "../GlobalSpinner"
+import { ConfirmModal } from "../Modal"
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -143,7 +143,6 @@ export const Config = () => {
 		let confirmed = false
 		await openModal(
 			<ProjectDetailsModal project={project} confirmText={confirmText} onConfirm={spin(async (form: ProjectDetailsFormData) => {
-				form = form
 				confirmed = true
 				const newProject = await spin(applyProjectDetailsForm(project, form))
 				await awaitRtk(editProjectInfo(newProject))

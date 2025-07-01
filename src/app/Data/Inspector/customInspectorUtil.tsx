@@ -65,12 +65,12 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 		const obj = objPinfo.value as InspectorObjectValue
 		const type = obj._type
 		switch (type) {
-			case 'AnimationFrame':
+			case 'AnimationFrame': {
 				switch (key) {
 					case 'imageId':
 						return <IdLink lookup={{ _type: 'ImageMetadata', id: pinfo.value as any }} onChange={(lookup: any) => onChange(lookup.id)} />
 				}
-				break; case 'ObjectInstance':
+			} break; case 'ObjectInstance': {
 				switch (key) {
 					case 'objectTypeId':
 						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
@@ -79,33 +79,33 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 							return <EditAnimations objectInstance={obj as ObjectInstance<SpriteObjectData>} />
 						}
 				}
-				break; case 'ObjectType':
+			} break; case 'ObjectType': {
 				switch (key) {
 					case 'instances':
 						return <Suspense fallback={<SpinBox />}>
 							<ObjectInstances objectType={obj} />
 						</Suspense>
 				}
-				break; case 'Behavior':
+			} break; case 'Behavior': {
 				switch (key) {
 					case 'objectTypeId':
 						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
 				}
-				break; case 'Family':
+			} break; case 'Family': {
 				switch (key) {
 					case 'objectTypeIds':
 						if (collectionElement) {
 							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
 						}
 				}
-				break; case 'ObjectTrait':
+			} break; case 'ObjectTrait': {
 				switch (key) {
 					case 'objectTypeIds':
 						if (collectionElement) {
 							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} onChange={(lookup: any) => onChange(lookup.id)} />
 						}
 				}
-				break; case 'Container':
+			} break; case 'Container': {
 				switch (key) {
 					case 'id':
 						return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} />
@@ -114,6 +114,7 @@ export function getCustomComponent(pinfo: AnyPropertyInfo, onChange: (v: any) =>
 							return <IdLink lookup={{ _type: 'ObjectType', id: pinfo.value as any }} onChange={(lookup: any) => onChange(lookup.id)} />
 						}
 				}
+			}
 		}
 	}
 
@@ -140,7 +141,7 @@ export function defaultValueForType(type: InspectorTypeName): (() => any) | unde
 export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo, key: InspectorKeyTypes) {
 	const type = obj['_type']
 	switch (type) {
-		case 'Animation':
+		case 'Animation': {
 			override(type, {
 				id: { type: 'int', readonly: true },
 				frames: { valueTypes: ['AnimationFrame'], uncollapsedByDefault: true },
@@ -166,12 +167,12 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 					frames: { hidden: true },
 				})
 			}
-			break; case 'AnimationFrame':
+		} break; case 'AnimationFrame': {
 			override(type, {
 				imageId: { type: 'int' },
 				duration: { type: 'float' },
 			})
-			break; case 'Layout':
+		} break; case 'Layout': {
 			override(type, {
 				name: { readonly: true },
 				color: { type: 'RgbColor' },
@@ -181,7 +182,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				width: { type: 'int' },
 				height: { type: 'int' },
 			})
-			break; case 'LayoutLayer':
+		} break; case 'LayoutLayer': {
 			override(type, {
 				layerType: { type: 'LayerType' },
 				sampler: { type: 'LayerSamplerMode' },
@@ -189,7 +190,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				filterColor: { type: 'RgbColor' },
 				backgroundColor: { type: 'int' },
 			})
-			break; case 'ObjectInstance':
+		} break; case 'ObjectInstance': {
 			let dataPinfo: Partial<AnyPropertyInfo> = { hidden: true }
 			if (!(obj.data instanceof Array)){
 				dataPinfo = { type: obj.data._type }
@@ -206,11 +207,11 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				filter: { type: 'RgbColor' },
 				key: { type: 'int' },
 			})
-			break; case 'SpriteObjectData':
+		} break; case 'SpriteObjectData': {
 			override(type, {
 				animation: { hidden: true }
 			})
-			break; case 'ObjectType':
+		} break; case 'ObjectType': {
 			override(type, {
 				id: { type: 'int', readonly: true },
 				pluginId: { hidden: true },
@@ -219,7 +220,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				privateVariables: { valueTypes: ['VariableType'], uncollapsedByDefault: true, readonly: true },
 				destroyWhen: { type: 'DisableShaderWhen' }
 			})
-			break; case 'Behavior':
+		} break; case 'Behavior': {
 			override(type, {
 				objectTypeId: { readonly: true },
 				newIndex: { type: 'int', readonly: true },
@@ -227,23 +228,23 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				data: { hidden: true },
 				descriptors: { hidden: true, }
 			})
-			break; case 'BehaviorControl':
+		} break; case 'BehaviorControl': {
 			override(type, {
 				vk: { type: 'int' },
 				player: { type: 'int' },
 			})
-			break; case 'Container':
+		} break; case 'Container': {
 			override(type, {
 				id: { readonly: true, type: 'int' },
 				objectIds: { valueTypes: ['int'], uncollapsedByDefault: true }
 			})
-			break; case 'Family':
+		} break; case 'Family': {
 			override(type, {
 				name: { readonly: true },
 				objectTypeIds: { valueTypes: ['int'], readonly: true, uncollapsedByDefault: true },
 				privateVariables: { valueTypes: ['VariableType'], readonly: true, uncollapsedByDefault: true },
 			})
-			break; case 'ImageMetadata':
+		} break; case 'ImageMetadata': {
 			override(type, {
 				id: { readonly: true },
 				collisionMask: { hidden: true },
@@ -252,17 +253,17 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				collisionHeight: { readonly: true },
 				apoints: { valueTypes: ['ActionPoint'], uncollapsedByDefault: true },
 			})
-			break; case 'ActionPoint':
+		} break; case 'ActionPoint': {
 			override(type, {
 				x: { type: 'int' },
 				y: { type: 'int' },
 			})
-			break; case 'ObjectTrait':
+		} break; case 'ObjectTrait': {
 			override(type, {
 				name: { readonly: true },
 				objectTypeIds: { valueTypes: ['int'], uncollapsedByDefault: true },
 			})
-			break; case 'AppBlock':
+		} break; case 'AppBlock': {
 			override(type, {
 				dataKeys: { valueTypes: ['string', 'int'], fixed: true },
 				behaviorControls: { valueTypes: ['BehaviorControl'] },
@@ -281,6 +282,7 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				layoutIndex: { type: 'int' },
 				multisamples: { type: 'int' },
 			})
+		}
 	}
 
 	function override<T extends InspectorObjectValue['_type']>(_type: T, overrides: Partial<Record<keyof TypeNameToValue[T], Partial<AnyPropertyInfo>>>) {

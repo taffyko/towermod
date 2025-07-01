@@ -6,11 +6,12 @@ import IconButton from '../IconButton'
 import editImg from '@/icons/edit.svg'
 import clsx from 'clsx'
 import { Button } from '../Button'
+import React from 'react'
 
 export function Combobox<TValue extends { name: string }>(props: {
 	value?: TValue,
 	options: TValue[],
-	onChange?: (value: TValue) => void,
+	onChange?: (value: TValue | null) => void,
 	setQuery?: (text: string) => void,
 	/** allow value to be cleared by completely backspacing the input field */
 	allowClear?: boolean,
@@ -60,7 +61,7 @@ export function ComboboxButton<TValue extends { name: string }>(props: {
 	value: TValue | undefined,
 	icon?: React.ReactNode,
 	options: TValue[],
-	onChange?: (value: TValue) => void,
+	onChange?: (value: TValue | null) => void,
 	query?: string,
 	setQuery?: (text: string) => void,
 	onClick?: () => void,

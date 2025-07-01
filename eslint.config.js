@@ -1,3 +1,4 @@
+import 'eslint-plugin-only-warn'
 import js from '@eslint/js'
 import stylistic from '@stylistic/eslint-plugin'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -8,7 +9,7 @@ import tseslint from 'typescript-eslint'
 export default tseslint.config(
 	{ ignores: ['dist'] },
 	{
-		extends: [js.configs.recommended, ...tseslint.configs.recommended],
+		extends: [js.configs.recommended, tseslint.configs.recommended],
 		files: ['**/*.{ts,tsx}'],
 		languageOptions: {
 			ecmaVersion: 2020,
@@ -22,9 +23,10 @@ export default tseslint.config(
 		rules: {
 			...reactHooks.configs.recommended.rules,
 			'@typescript-eslint/no-explicit-any': 'off',
-			'@typescript-eslint/no-unused-vars': ['warn', {
-				'argsIgnorePattern': '^_',
-			}],
+			'@typescript-eslint/ban-ts-comment': 'off',
+			'@typescript-eslint/no-unused-vars': 'off',
+			'@typescript-eslint/triple-slash-reference': 'off',
+			'@typescript-eslint/no-unused-expressions': ['warn', { allowShortCircuit: true, allowTernary: true }],
 			'react-refresh/only-export-components': [
 				'warn',
 				{ allowConstantExport: true },

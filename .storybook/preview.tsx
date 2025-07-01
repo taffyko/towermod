@@ -5,6 +5,7 @@ import React from "react"
 import { Provider } from 'react-redux'
 import { store } from '../src/redux'
 
+// eslint-disable-next-line react-refresh/only-export-components
 const ReduxDecorator: DecoratorFunction = (Story, _storyContext) => {
 	return <Provider store={store}>
 		<Story />

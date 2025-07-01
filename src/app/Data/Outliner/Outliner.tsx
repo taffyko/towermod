@@ -1,38 +1,35 @@
- 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import {
-	FixedSizeNodeData,
-	FixedSizeNodePublicState as NodePublicState,
-	TreeWalker,
-	TreeWalkerValue,
-	NodeComponentProps,
-	FixedSizeTree,
-	NodeRecord,
-} from 'react-vtree'
-import { useImperativeHandle, useRerender, useStateRef } from '@/util/hooks'
-import { actions, dispatch, useAppSelector } from '@/redux'
-import { assertUnreachable, enumerate, objectShallowEqual, posmod } from '@/util/util'
-import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive, TreeContext } from './treeUtil'
-import { TreeComponent } from './Tree'
-import Style from './Outliner.module.scss'
-import { UniqueObjectLookup, UniqueTowermodObject, LookupForType, towermodObjectIdsEqual } from '@/util'
-import { Animation, ObjectType } from '@/towermod'
-import { QueryScopeFn, fetchRtk, getObjectDisplayName, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil'
+
+import { api } from '@/api'
+import { spin } from '@/app/GlobalSpinner'
+import { fetchRtk, getObjectDisplayName, QueryScopeFn, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil'
+import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu'
 import IconButton from '@/components/IconButton'
+import { Image } from '@/components/Image/Image'
+import { LineEdit } from '@/components/LineEdit'
 import arrowDownImg from '@/icons/arrowDown.svg'
 import arrowRightImg from '@/icons/arrowRight.svg'
 import plusImg from '@/icons/plus.svg'
-import { api } from '@/api'
-import { LineEdit } from '@/components/LineEdit'
-import { skipToken } from '@reduxjs/toolkit/query'
+import { actions, dispatch, useAppSelector } from '@/redux'
+import { Animation } from '@/towermod'
+import { LookupForType, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
+import { useImperativeHandle, useRerender, useStateRef } from '@/util/hooks'
+import { enumerate, posmod } from '@/util/util'
 import { createSelector } from '@reduxjs/toolkit'
-import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu'
-import { Image } from '@/components/Image/Image'
-import { Button } from '@/components/Button'
+import { skipToken } from '@reduxjs/toolkit/query'
 import clsx from 'clsx'
 import { debounce } from 'lodash-es'
-import { awaitRtk } from '@/api/helpers'
-import { spin } from '@/app/GlobalSpinner'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import {
+	FixedSizeNodeData,
+	FixedSizeTree,
+	NodeComponentProps,
+	FixedSizeNodePublicState as NodePublicState,
+	TreeWalker,
+	TreeWalkerValue
+} from 'react-vtree'
+import Style from './Outliner.module.scss'
+import { TreeComponent } from './Tree'
+import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive } from './treeUtil'
 
 
 
@@ -128,12 +125,12 @@ function useOutlinerObjectData(lookup: OutlinerTowermodObject | null, idx: numbe
 		let pageData: undefined | any[]
 		let iconsPageData: undefined | { url?: string }[]
 		switch (lookup?._type) {
-			case 'ObjectType':
-				;({ data: pageData } = query(api.endpoints.getOutlinerObjectTypes, { page, pageSize }, 'getObjects'))
-				;({ data: iconsPageData } = query(api.endpoints.getOutlinerObjectTypeIcons, { page, pageSize }, 'getIcons'))
+			case 'ObjectType': {
+				void ({ data: pageData } = query(api.endpoints.getOutlinerObjectTypes, { page, pageSize }, 'getObjects'))
+				void ({ data: iconsPageData } = query(api.endpoints.getOutlinerObjectTypeIcons, { page, pageSize }, 'getIcons'))
 				bulkQueryImplemented.forObj = true
 				bulkQueryImplemented.forIcon = true
-				break; case 'Animation':
+			} break; case 'Animation':
 				bulkQueryImplemented.forObj = true
 				hasIcon = true
 				children = lookup.subAnimations
@@ -147,11 +144,12 @@ function useOutlinerObjectData(lookup: OutlinerTowermodObject | null, idx: numbe
 				iconUrl = iconsPageData?.[idxInPage].url
 			}
 			switch (obj?._type) {
-				case 'ObjectType':
+				case 'ObjectType': {
 					const isSprite = obj.pluginName === 'Sprite'
 					hasIcon ||= isSprite
 					children = (obj as { animation?: Animation }).animation?.subAnimations
 					displayName = getObjectDisplayName(obj)
+				}
 			}
 		}
 	}

@@ -185,7 +185,8 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 					<Text>{pinfo.key}:</Text>
 					{dictPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />}
 				</>} />
-			}), [dictPinfo.value])
+			})
+	, [dictPinfo.value])
 
 	// adding properties
 	let canAddProperties = !dictPinfo.fixed

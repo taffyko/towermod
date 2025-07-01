@@ -1,5 +1,5 @@
-import { ModInfo, Animation, Layout, ObjectInstance, Behavior, Container, Family, ObjectType, ObjectTrait, AppBlock, LayoutLayer, ImageMetadata, CstcData, TextObjectData, SpriteObjectData, AnimationFrame, ActionPoint, BehaviorControl, GlobalVariable } from "@towermod"
-import { assert, assertUnreachable } from "./util"
+import { ActionPoint, Animation, AnimationFrame, AppBlock, Behavior, BehaviorControl, Container, Family, GlobalVariable, ImageMetadata, Layout, LayoutLayer, ModInfo, ObjectInstance, ObjectTrait, ObjectType, SpriteObjectData, TextObjectData } from "@towermod"
+import { assertUnreachable } from "./util"
 
 export type TowermodObject = Layout | LayoutLayer | ObjectInstance | Animation | Behavior | Container | Family | ObjectType | ObjectTrait | AppBlock | AnimationFrame | ImageMetadata | ActionPoint | BehaviorControl | GlobalVariable
 	| TextObjectData | SpriteObjectData
@@ -156,17 +156,18 @@ export const getObjectStringId = (obj: UniqueObjectLookup) => {
 		case 'Animation':
 		case 'ImageMetadata':
 		case 'ObjectType':
-		case 'Container':
+		case 'Container': {
 			id = obj.id
-			break; case 'Layout':
+		} break
+		case 'Layout':
 		case 'Family':
-		case 'ObjectTrait':
+		case 'ObjectTrait': {
 			id = obj.name
-			break; case 'Behavior':
+		} break; case 'Behavior': {
 			id = `${obj.objectTypeId}-${obj.movIndex}`
-			break; case 'AppBlock':
+		} break; case 'AppBlock': {
 			id = ''
-			break; default:
+		} break; default:
 			assertUnreachable(objType, obj)
 	}
 	return `${obj._type}-${id}`

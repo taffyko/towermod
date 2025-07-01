@@ -94,14 +94,15 @@ export function inferPropertyInfoFromArrayValue(element: AnyInspectorValue, pare
 function speciateType(type: keyof TypeNameToValue, types: Array<keyof TypeNameToValue>): keyof TypeNameToValue {
 	if (types.length === 1) { return types[0] }
 	switch (type) {
-		case 'number':
+		case 'number': {
 			for (const subtype of numericSubtypeNames) {
 				if (types.includes(subtype)) { return subtype }
 			}
-			break; case 'string':
+		} break; case 'string': {
 			for (const subtype of stringSubtypeNames) {
 				if (types.includes(subtype)) { return subtype }
 			}
+		}
 	}
 	if (!types.includes(type)) {
 		console.warn(`speciateType error: '${type}' is not one of these types: [${types.join(', ')}]`)

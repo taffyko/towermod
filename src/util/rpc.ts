@@ -1,12 +1,10 @@
 import { spin } from '@/app/GlobalSpinner'
-import { InvokeArgs, InvokeOptions, invoke } from '@tauri-apps/api/core'
+import { Decoder, Encoder } from '@msgpack/msgpack'
+import { InvokeOptions, invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { FileDialogOptions } from '@towermod'
 import { DependencyList, useEffect } from 'react'
-import { listen } from '@tauri-apps/api/event'
-import { Encoder, Decoder } from '@msgpack/msgpack'
-import { getCurrentWindow } from '@tauri-apps/api/window'
-import { save } from '@tauri-apps/plugin-dialog'
-import { writeFile } from '@tauri-apps/plugin-fs'
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -73,6 +71,7 @@ export function useTauriEvent<T extends keyof EventTypeMap>(type: T, handler: Ev
 	useEffect(() => {
 		const unlisten = listen(type, handler)
 		return () => { unlisten.then(fn => fn()) }
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, deps ? [type, ...deps] : undefined)
 }
 

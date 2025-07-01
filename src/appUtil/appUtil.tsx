@@ -1,14 +1,13 @@
-import { spin } from "@/app/GlobalSpinner"
-import { dispatch, store } from "@/redux"
 import { api } from '@/api'
+import { awaitRtk } from "@/api/helpers"
+import { spin } from "@/app/GlobalSpinner"
 import { openModal } from "@/app/Modal"
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
-import { awaitRtk } from "@/api/helpers"
 import { toast } from "@/app/Toast"
-import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, useMountEffect, useObjectUrl, useRerender } from "@/util"
-import { assertUnreachable } from "@/util"
+import { dispatch, store } from "@/redux"
+import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, assertUnreachable, useMountEffect, useObjectUrl } from "@/util"
 import { ApiEndpointMutation, ApiEndpointQuery, MutationDefinition, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query"
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
+import { useCallback, useRef, useState, useSyncExternalStore } from "react"
 
 export async function saveProject() {
 	const saveProject = (dirPath: string) => awaitRtk(dispatch(api.endpoints.saveProject.initiate(dirPath)))
@@ -180,24 +179,25 @@ export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined):
 	let hasIcon = null
 	let imageIdLoading = false
 	switch (obj?._type) {
-		case 'ObjectType':
+		case 'ObjectType': {
 			hasIcon = obj.pluginName === 'Sprite'
-			;({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id, queryName))
-			break; case 'Container':
+			void ({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id, queryName))
+		} break; case 'Container': {
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.id, queryName))
-			break; case 'Behavior':
+		} break; case 'Behavior': {
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectTypeImageId, obj.objectTypeId, queryName))
-			break; case 'ObjectInstance':
+		} break; case 'ObjectInstance': {
 			({ data: imageId, isLoading: imageIdLoading } = query(api.endpoints.getObjectInstanceImageId, obj.id, queryName))
-			break; case 'ImageMetadata':
+		} break; case 'ImageMetadata': {
 			imageId = obj.id
-			break; case 'Animation':
+		} break; case 'Animation': {
 			const { data: animation, isLoading } = query(api.endpoints.getAnimation, { id: obj.id }, queryName)
 			imageIdLoading = isLoading
 			if (animation) {
 				const a = animation.isAngle ? animation : animation.subAnimations[0]
 				imageId = a.frames[0]?.imageId
 			}
+		}
 	}
 	hasIcon = hasIcon || imageId != null
 	const { currentData: img, isFetching: urlLoading } = api.useGetGameImageUrlQuery(imageId ?? skipToken)
