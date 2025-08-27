@@ -26,5 +26,11 @@ dist-ssr
 *.sln
 *.sw?
 
+# yarn
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+.pnp.*
+
 rust/target
 *storybook.log

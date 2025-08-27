@@ -12,7 +12,8 @@ rustup install nightly-i686-pc-windows-msvc
 
 Install NodeJS dependencies
 ```powershell
-npm install
+corepack enable
+yarn install
 ```
 
 Build the 32-bit `dllreader` binary (used to read Construct Classic plugin DLLs from a 64-bit process)
@@ -23,5 +24,5 @@ cargo build -p towermod-dllreader --target i686-pc-windows-msvc
 
 Start the Tauri dev server
 ```powershell
-npm run tauri-dev
+yarn tauri-dev
 ```
