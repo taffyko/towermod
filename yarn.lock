@@ -1914,6 +1914,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/query-core@npm:5.85.5":
+  version: 5.85.5
+  resolution: "@tanstack/query-core@npm:5.85.5"
+  checksum: 10c0/344670ac117bc4775a9e812fc91e27befc9ef4f681e341d8f76af3cd075eecdcc5aa058a9544a6b56cccb8e07f22ef5c9e0c852331d428bcce5e1223deef14bd
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^5.85.5":
+  version: 5.85.5
+  resolution: "@tanstack/react-query@npm:5.85.5"
+  dependencies:
+    "@tanstack/query-core": "npm:5.85.5"
+  peerDependencies:
+    react: ^18 || ^19
+  checksum: 10c0/7518cd624f9fe7c258b460192a73021a1e7fe0e0ea4173de69ca0a69cf60cc812bdb59b13c7f9acdbf45f4f0e82e8efb1e739528cf26e334e4a80606d7c7050d
+  languageName: node
+  linkType: hard
+
 "@tanstack/react-virtual@npm:^3.13.9":
   version: 3.13.12
   resolution: "@tanstack/react-virtual@npm:3.13.12"
@@ -6896,6 +6914,7 @@ __metadata:
     "@storybook/test": "npm:^8.6.14"
     "@stylistic/eslint-plugin": "npm:^5.1.0"
     "@tailwindcss/postcss": "npm:^4.1.11"
+    "@tanstack/react-query": "npm:^5.85.5"
     "@tauri-apps/api": "npm:^2.6.2"
     "@tauri-apps/cli": "npm:^2"
     "@tauri-apps/plugin-dialog": "npm:^2.3.0"

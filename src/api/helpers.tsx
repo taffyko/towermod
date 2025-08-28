@@ -1,3 +1,4 @@
+import { DefaultError, QueryCache, QueryClient, QueryFunctionContext, QueryKey, UseMutationOptions, UseQueryOptions, useMutation, useQuery } from '@tanstack/react-query'
 import { MaybePromise } from "./baseApiUtil"
 import { renderError } from '@/components/Error'
 import { toast } from '@/app/Toast'
@@ -22,5 +23,91 @@ export async function toastResult(info: MaybePromise<QueryErrorInfo>, successMsg
 		toast(renderError(error), { type: 'error' })
 	} else if (successMsg) {
 		toast(successMsg)
+	}
+}
+
+
+export const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: Infinity
+		}
+	}
+})
+
+export function createQuery<
+	TQueryFnData = unknown,
+	TError = DefaultError,
+	TData = TQueryFnData,
+	TQueryKey extends QueryKey = QueryKey,
+	TArg = void
+>(
+	baseOptions: CreateQueryOptions<TQueryFnData, TError, TData, TQueryKey, TArg>
+) {
+	function getOptions(arg: TArg): UseQueryOptions<TQueryFnData, TError, TData, TQueryKey> {
+		if (typeof baseOptions === 'function') {
+			return baseOptions(arg)
+		} else {
+			return {
+				...baseOptions,
+				queryFn: baseOptions.queryFn.bind(null, arg),
+				queryKey: typeof baseOptions.queryKey === 'function' ? baseOptions.queryKey(arg) : baseOptions.queryKey
+			}
+		}
+	}
+
+	function useQueryHook(arg: TArg, optionsOverrides?: Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryFn' | 'queryKey'>) {
+		const options = { ...getOptions(arg), ...optionsOverrides }
+		return useQuery(options)
+	}
+	function fetchQuery(arg: TArg, optionsOverrides?: { staleTime?: 10000 }): Promise<TData> {
+		const options = getOptions(arg)
+		return queryClient.fetchQuery({
+			queryKey: options.queryKey,
+			queryFn: options.queryFn,
+			...optionsOverrides
+		})
+	}
+	return [fetchQuery, useQueryHook] as const
+}
+
+/** Spinoff of UseQueryOptions where either:
+ 1. `queryFn` and `queryKey` are functions that take the query arg as a parameter.
+ 2. Options are instead a function that takes a query arg and returns an options object.
+ */
+type CreateQueryOptions<
+	TQueryFnData = unknown, TError = DefaultError, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey, TArg = void
+> =
+	(
+		Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryFn' | 'queryKey'>
+		& {
+			queryFn: (arg: TArg, context: QueryFunctionContext<TQueryKey, never>) => TQueryFnData | Promise<TQueryFnData>
+			queryKey: TQueryKey | ((arg: TArg) => TQueryKey)
+		}
+	)
+	| ((arg: TArg) => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>)
+
+export function createMutation<
+	TData = unknown,
+	TError = DefaultError,
+	TVariables = void,
+	TContext = unknown,
+>(
+	options: UseMutationOptions<TData, TError, TVariables, TContext>
+) {
+	function useMutationHook(optionsOverrides?: Omit<UseMutationOptions<TData, TError, TVariables, TContext>, 'queryFn'>) {
+		return useMutation({ ...options, ...optionsOverrides })
+	}
+	function fetchMutation(arg: TVariables) {
+		const mutation = queryClient.getMutationCache().build(queryClient, options)
+		return mutation.execute(arg)
+	}
+	return [fetchMutation, useMutationHook] as const
+
+}
+
+export function invalidate(...keys: QueryKey[]) {
+	for (const key of keys) {
+		queryClient.invalidateQueries({ queryKey: key })
 	}
 }

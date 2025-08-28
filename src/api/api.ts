@@ -27,15 +27,6 @@ export const baseApi = createApi({
 			// should discard data from the cache almost immediately after use, as files on-disk can always change
 			keepUnusedDataFor: 1,
 		}),
-		getFileUrl: builder.query<string | null, string | null | undefined>({
-			query: async (path) => {
-				const blob = path ? await _getFileBlob(path) : null
-				return blob
-			},
-			// should discard data from the cache almost immediately after use, as files on-disk can always change
-			keepUnusedDataFor: 1,
-		}),
-
 
 		getGame: builder.query<Game | null, void>({
 			query: async () => {
@@ -121,9 +112,6 @@ export const baseApi = createApi({
 			query: async () => {
 				return await invoke('play_vanilla')
 			},
-		}),
-		getText: builder.query<string, string>({
-			query: (arg) => ({ url: arg, responseHandler: 'text' })
 		}),
 		getPixelatedSvg: builder.query<string | null, string>({
 			query: async (href) => {
