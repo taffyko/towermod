@@ -1,7 +1,9 @@
-import { DefaultError, QueryCache, QueryClient, QueryFunctionContext, QueryKey, UseMutationOptions, UseQueryOptions, useMutation, useQuery } from '@tanstack/react-query'
+import { DefaultError, Query, QueryCache, QueryClient, QueryFunctionContext, QueryKey, UseMutationOptions, UseQueryOptions, useMutation, useQuery } from '@tanstack/react-query'
 import { MaybePromise } from "./baseApiUtil"
 import { renderError } from '@/components/Error'
 import { toast } from '@/app/Toast'
+import { MiniEvent } from '@/util'
+import { capitalize, isEqual } from 'lodash-es'
 
 export interface QueryErrorInfo {
 	isError?: boolean,
@@ -35,13 +37,33 @@ export const queryClient = new QueryClient({
 	}
 })
 
+queryClient.getQueryCache().subscribe((e) => {
+	if (e.type === 'removed') {
+		queryEvicted.fire(e.query)
+	}
+})
+export const queryEvicted = new MiniEvent<Query<any, any, any, any>>()
+
+export function whenQueryEvicted(queryKey: QueryKey) {
+	return new Promise<void>((resolve) => {
+		const unsub = queryEvicted.subscribe((query) => {
+			if (isEqual(query.queryKey, queryKey)) {
+				unsub()
+				resolve()
+			}
+		})
+	})
+}
+
 export function createQuery<
+	// TName extends string,
 	TQueryFnData = unknown,
 	TError = DefaultError,
 	TData = TQueryFnData,
 	TQueryKey extends QueryKey = QueryKey,
 	TArg = void
 >(
+	// name: TName,
 	baseOptions: CreateQueryOptions<TQueryFnData, TError, TData, TQueryKey, TArg>
 ) {
 	function getOptions(arg: TArg): UseQueryOptions<TQueryFnData, TError, TData, TQueryKey> {
@@ -69,6 +91,8 @@ export function createQuery<
 		})
 	}
 	return [fetchQuery, useQueryHook] as const
+	// const hookName = `use${capitalize(name)}` as `use${Capitalize<TName>}`
+	// return { [name]: fetchQuery, [hookName]: useQueryHook } as const
 }
 
 /** Spinoff of UseQueryOptions where either:
@@ -102,8 +126,8 @@ export function createMutation<
 		const mutation = queryClient.getMutationCache().build(queryClient, options)
 		return mutation.execute(arg)
 	}
-	return [fetchMutation, useMutationHook] as const
 
+	return [fetchMutation, useMutationHook] as const
 }
 
 export function invalidate(...keys: QueryKey[]) {

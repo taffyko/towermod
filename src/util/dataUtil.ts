@@ -23,9 +23,28 @@ export type UniqueObjectLookup =
 	| Pick<ObjectTrait, '_type' | 'name'>
 	| Pick<ImageMetadata, '_type' | 'id'>
 	| Pick<AppBlock, '_type'>
-export type ObjectForType<T extends TowermodObject['_type']> = Extract<TowermodObject, { _type: T }>
-export type LookupForType<T extends UniqueObjectLookup['_type']> = Extract<UniqueObjectLookup, { _type: T }>
+export type ObjectForType<T extends UniqueObjectTypes> = Extract<TowermodObject, { _type: T }>
+export type LookupForType<T extends UniqueObjectTypes> = Extract<UniqueObjectLookup, { _type: T }>
 
+/** Remove unnecessary properties from a lookup object */
+export function purifyLookup<T extends UniqueTowermodObject['_type']>(lookup: LookupForType<T>): LookupForType<T>
+export function purifyLookup(lookup: UniqueObjectLookup): UniqueObjectLookup {
+	const _type = lookup._type
+	switch (_type) {
+		case 'Layout': return { _type, name: lookup.name }
+		case 'LayoutLayer': return { _type, id: lookup.id }
+		case 'ObjectInstance': return { _type, id: lookup.id }
+		case 'Animation': return { _type, id: lookup.id }
+		case 'Behavior': return { _type, movIndex: lookup.movIndex, objectTypeId: lookup.objectTypeId }
+		case 'Container': return { _type, id: lookup.id }
+		case 'Family': return { _type, name: lookup.name }
+		case 'ObjectType': return { _type, id: lookup.id }
+		case 'ObjectTrait': return { _type, name: lookup.name }
+		case 'ImageMetadata': return { _type, id: lookup.id }
+		case 'AppBlock': return { _type: 'AppBlock' }
+		default: assertUnreachable(_type)
+	}
+}
 
 export function towermodObjectIdsEqual(a: UniqueObjectLookup | null | undefined, b: UniqueObjectLookup | null | undefined): boolean {
 	if (a == null || b == null) { return false }
