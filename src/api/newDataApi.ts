@@ -44,452 +44,490 @@ const tags = {
 // 	},
 // }),
 
-export const [getGameImageUrl, useGetGameImageUrl] = createQuery({
-	queryFn: async (id: int) => {
-		const arrayBuffer = await _getGameImage(id)
-		let blob: Blob | null = null
-		if (arrayBuffer) {
-			blob = new Blob([arrayBuffer], { type: 'image/png' })
-		}
-		const url = blob && createObjectUrl(blob)
-		if (url) {
-			// FIXME
-			console.warn(`Creating object URL ${url} for image ${id}`)
-			whenQueryEvicted(tags.image.url(id))
-				.then(() => {
-					// FIXME
-					console.warn(`REVOKING object URL ${url} for image ${id}`)
-					revokeObjectUrl(url)
-				})
-		}
-		return { url, imageId: id }
-	},
-	queryKey: tags.image.url,
-})
-
-
-// getImageMetadata: builder.query<ImageMetadata | null, { id: number }>({
-// 	query: (arg) => invoke('get_image_metadata', arg),
-// 	transformResponse: (r: ImageMetadata) => enhanceImageMetadata(r),
-// 	providesTags: (_r, _e, arg) => [{ type: 'ImageMetadata', id: String(arg.id) }]
-// }),
-export const [getImageMetadata, useGetImageMetadata] = createQuery({
-	queryFn: async (arg: { id: int }) => {
-		const r: ImageMetadata = await invoke('get_image_metadata', arg)
-		return enhanceImageMetadata(r)
-	},
-	queryKey: ({ id }) => tags.imageMetadata.id(id),
-})
-
-// setImageMetadata: builder.mutation<void, ImageMetadata>({
-// 	query: (data) => invoke('set_image_metadata', { data }),
-// 	invalidatesTags: (_r, _e, arg) => [{ type: 'ImageMetadata', id: String(arg.id) }]
-// }),
-export const [setImageMetadata, useSetImageMetadata] = createMutation({
-	mutationFn: (data: ImageMetadata) => invoke('set_image_metadata', { data }),
-	onMutate: async (data) => {
-		const queryKey = tags.imageMetadata.id(data.id)
-		await queryClient.cancelQueries({ queryKey })
-		const previousData = queryClient.getQueryData(queryKey)
-		queryClient.setQueryData(queryKey, data)
-		return previousData
-	},
-	onError: (_err, data, previousData) => {
-		queryClient.setQueryData(tags.imageMetadata.id(data.id), previousData)
-	},
-	onSettled: (_r, _e, data) => invalidate(tags.imageMetadata.id(data.id))
-})
-
-// isImageOverridden: builder.query<boolean, number>({
-// 	query: (id) => invoke('is_image_overridden', { id }),
-// 	providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
-// }),
-export const [isImageOverridden, useIsImageOverridden] = createQuery({
-	queryFn: (id: int) => invoke('is_image_overridden', { id }),
-	queryKey: (id) => [...tags.image.id(id), 'isOverridden'],
-})
-
-// getEditorPlugin: builder.query<PluginData, number>({
-// 	query: (id) => invoke('get_editor_plugin', { id }),
-// 	providesTags: ['Data']
-// }),
-export const [getEditorPlugin, useGetEditorPlugin] = createQuery({
-	queryFn: (id: int) => invoke('get_editor_plugin', { id }),
-	queryKey: tags.data,
-})
-
-// getEditorPlugins: builder.query<Record<number, PluginData>, void>({
-// 	query: () => invoke('get_editor_plugins'),
-// 	providesTags: ['Data']
-// }),
-export const [getEditorPlugins, useGetEditorPlugins] = createQuery({
-	queryFn: () => invoke('get_editor_plugins'),
-	queryKey: tags.data,
-})
-
-// getObjectTypes: builder.query<Lookup<ObjectType>[], void>({
-// 	query: () => invoke('get_object_types'),
-// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectType' })),
-// 	providesTags: [{ type: 'ObjectType', id: 'LIST' }]
-// }),
-export const [getObjectTypes, useGetObjectTypes] = createQuery({
-	queryFn: async () => {
-		const r: number[] = await invoke('get_object_types')
-		return r.map(id => ({ id, _type: 'ObjectType' } as LookupForType<'ObjectType'>))
-	},
-	queryKey: tags.object.list('ObjectType'),
-})
-
-// searchObjectTypes: builder.query<{ _type: 'ObjectType', name: string, id: int }[], SearchOptions>({
-// 	query: (options) => invoke('search_object_types', { options }),
-// 	transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'ObjectType' })),
-// 	providesTags: [{ type: 'ObjectType', id: 'LIST' }]
-// }),
-export const [searchObjectTypes, useSearchObjectTypes] = createQuery({
-	queryFn: async (options: SearchOptions) => {
-		const r: [number, string][] = await invoke('search_object_types', { options })
-		return r.map(([id, name]) => ({ id, name, _type: 'ObjectType' } as LookupForType<'ObjectType'>))
-	},
-	queryKey: (options: SearchOptions) => tags.object.list('ObjectType', options),
-})
-
-// getObjectTypeImageId: builder.query<int | null, int>({
-// 	query: (id) => invoke('get_object_type_image_id', { id }),
-// 	providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
-// }),
-export const [getObjectTypeImageId, useGetObjectTypeImageId] = createQuery({
-	queryFn: (id: int) => invoke('get_object_type_image_id', { id }),
-	queryKey: (id: int) => [...tags.object.id({ _type: 'ObjectType', id }), 'imageId'],
-})
-
-// createObjectType: builder.mutation<int, { pluginId: int }>({
-// 	query: (pluginId) => invoke('create_object_type', { pluginId }),
-// 	invalidatesTags: (_r, _e, id) => [{ type: 'ObjectType', id: String(id) }, { type: 'ObjectType', id: 'LIST' }]
-// }),
-export const [createObjectType, useCreateObjectType] = createMutation({
-	mutationFn: (pluginId: int) => invoke('create_object_type', { pluginId }),
-	onSuccess: () => invalidate(tags.object.list('ObjectType'))
-})
-
-// deleteObjectType: builder.mutation<void, int>({
-// 	query: (id) => invoke('delete_object_type', { id }),
-// 	invalidatesTags: (_r, _e, id) => [{ type: 'ObjectType', id: String(id) }, { type: 'ObjectType', id: 'LIST' }]
-// }),
-export const [deleteObjectType, useDeleteObjectType] = createMutation({
-	mutationFn: (id: int) => invoke('delete_object_type', { id }),
-	onSuccess: () => invalidate(tags.object.list('ObjectType'))
-})
-
-// objectTypeAddVariable: builder.mutation<void, { id: int, name: string, value: number | string }>({
-// 	query: (args) => invoke('object_type_add_variable', args),
-// 	invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id) }]
-// }),
-export const [objectTypeAddVariable, useObjectTypeAddVariable] = createMutation({
-	mutationFn: (args: { id: int, name: string, value: number | string }) => invoke('object_type_add_variable', args),
-	onSettled: (_r, _e, arg) => invalidate(tags.object.id({ _type: 'ObjectType', id: arg.id }))
-})
-
-// objectTypeDeleteVariable: builder.mutation<void, { id: int, name: string }>({
-// 	query: (args) => invoke('object_type_delete_variable', args),
-// 	invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id) }]
-// }),
-export const [objectTypeDeleteVariable, useObjectTypeDeleteVariable] = createMutation({
-	mutationFn: (args: { id: int, name: string }) => invoke('object_type_delete_variable', args),
-	onSettled: (_r, _e, arg) => invalidate(tags.object.id({ _type: 'ObjectType', id: arg.id }))
-})
-
-// getObjectInstances: builder.query<Lookup<ObjectInstance>[], number>({
-// 	query: (layoutLayerId) => invoke('get_object_instances', { layoutLayerId }),
-// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectInstance' })),
-// 	providesTags: ['ObjectInstance']
-// }),
-export const [getObjectInstances, useGetObjectInstances] = createQuery({
-	queryFn: async (layoutLayerId: int) => {
-		const r: number[] = await invoke('get_object_instances', { layoutLayerId })
-		return r.map(id => ({ id, _type: 'ObjectInstance' } as LookupForType<'ObjectInstance'>))
-	},
-	queryKey: (layoutLayerId: int) => tags.object.list('ObjectInstance', { layoutLayerId }),
-})
-
-// searchObjectInstances: builder.query<{ _type: 'ObjectInstance', name: string, id: int }[], SearchOptions>({
-// 	query: (options) => invoke('search_object_instances', { options }),
-// 	transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'ObjectInstance' })),
-// 	providesTags: [{ type: 'ObjectType', id: 'LIST' }]
-// }),
-export const [searchObjectInstances, useSearchObjectInstances] = createQuery({
-	queryFn: async (options: SearchOptions) => {
-		const r: [number, string][] = await invoke('search_object_instances', { options })
-		return r.map(([id, name]) => ({ id, name, _type: 'ObjectInstance' } as LookupForType<'ObjectInstance'>))
-	},
-	queryKey: (options: SearchOptions) => tags.object.list('ObjectInstance', options),
-})
-
-// getObjectTypeInstances: builder.query<Lookup<ObjectInstance>[], number>({
-// 	query: (objectTypeId) => invoke('get_object_type_instances', { objectTypeId }),
-// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectInstance' })),
-// 	providesTags: ['ObjectInstance']
-// }),
-export const [getObjectTypeInstances, useGetObjectTypeInstances] = createQuery({
-	queryFn: async (objectTypeId: int) => {
-		const r: number[] = await invoke('get_object_type_instances', { objectTypeId })
-		return r.map(id => ({ id, _type: 'ObjectInstance' } as LookupForType<'ObjectInstance'>))
-	},
-	queryKey: (objectTypeId: int) => tags.object.list('ObjectInstance', { objectTypeId }),
-})
-
-// getObjectInstanceImageId: builder.query<int | null, int>({
-// 	query: (id) => invoke('get_object_instance_image_id', { id }),
-// 	providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
-// }),
-export const [getObjectInstanceImageId, useGetObjectInstanceImageId] = createQuery({
-	queryFn: (id: int) => invoke('get_object_instance_image_id', { id }),
-	queryKey: (id: int) => [...tags.object.id({ _type: 'ObjectInstance', id }), 'imageId'],
-})
-
-// getLayouts: builder.query<Lookup<Layout>[], void>({
-// 	query: () => invoke('get_layouts'),
-// 	transformResponse: (r: string[]) => r.map(name => ({ name, _type: 'Layout' })),
-// 	providesTags: ['Layout']
-// }),
-export const [getLayouts, useGetLayouts] = createQuery({
-	queryFn: async () => {
-		const r: string[] = await invoke('get_layouts')
-		return r.map(name => ({ name, _type: 'Layout' } as LookupForType<'Layout'>))
-	},
-	queryKey: tags.object.list('Layout'),
-})
-
-export const [getLayoutLayers, useGetLayoutLayers] = createQuery({
-	queryFn: async (layoutName: string) => {
-		const r: number[] = await invoke('get_layout_layers', { layoutName })
-		return r.map(id => ({ id, _type: 'LayoutLayer' } as LookupForType<'LayoutLayer'>))
-	},
-	queryKey: (layoutName: string) => tags.object.list('LayoutLayer', { layoutName }),
-})
-
-// searchLayoutLayers: builder.query<{ _type: 'LayoutLayer', name: string, id: int }[], SearchOptions>({
-// 	query: (options) => invoke('search_layout_layers', { options }),
-// 	transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'LayoutLayer' })),
-// 	providesTags: [{ type: 'LayoutLayer', id: 'LIST' }]
-// }),
-export const [searchLayoutLayers, useSearchLayoutLayers] = createQuery({
-	queryFn: async (options: SearchOptions) => {
-		const r: [number, string][] = await invoke('search_layout_layers', { options })
-		return r.map(([id, name]) => ({ id, name, _type: 'LayoutLayer' } as LookupForType<'LayoutLayer'>))
-	},
-	queryKey: (options: SearchOptions) => tags.object.list('LayoutLayer', options),
-})
-
-// getOutlinerObjectTypes: builder.query<Array<ObjectType & { animation?: Animation }>, { page: number, pageSize: number }>({
-// 	query: ({ page, pageSize }) => invoke('get_outliner_object_types', { skip: page * pageSize, take: pageSize}),
-// 	transformResponse: (r: [ObjectType, Animation | null][]) => r.map(([obj, anim]) => (
-// 		{ ...enhanceObjectType(obj), animation: enhanceAnimation(anim) ?? undefined }
-// 	)),
-// 	providesTags: (r) => r
-// 		? r.map((obj) => ({ type: 'ObjectType', id: String(obj.id) }))
-// 		: ['ObjectType']
-// }),
-export const [getOutlinerObjectTypes, useGetOutlinerObjectTypes] = createQuery({
-	queryFn: async ({ page, pageSize }: { page: number, pageSize: number }) => {
-		const r: [ObjectType, Animation | null][] = await invoke('get_outliner_object_types', { skip: page * pageSize, take: pageSize })
-		return r.map(([obj, anim]) => (
-			{ ...enhanceObjectType(obj), animation: enhanceAnimation(anim) ?? undefined }
-		))
-	},
-	queryKey: ({ page, pageSize }: { page: number, pageSize: number }) => [...tags.object.list('ObjectType'), 'getOutlinerObjectTypes', { page, pageSize }],
-})
-
-// getOutlinerObjectTypeIcons: builder.query<Array<{ url: undefined, imageId: undefined } | { url: string, imageId: int }>, { page: number, pageSize: number }>({
-// 	query: ({ page, pageSize }) => binaryInvoke('get_outliner_object_type_icons', [page * pageSize, pageSize]),
-// 	transformResponse: (r: Array<null | [int, Uint8Array]>) => {
-// 		return r.map((o) => {
-// 			if (!o) { return {} }
-// 			const [imageId, data] = o
-// 			const blob = new Blob([data], { type: 'image/png' })
-// 			return { url: createObjectUrl(blob), imageId }
-// 		})
-// 	},
-// 	providesTags: ['ObjectType', 'Image'],
-// 	onCacheEntryAdded: async (_arg, cacheApi) => {
-// 		const info = await cacheApi.cacheDataLoaded
-// 		if (!info.data) { return }
-// 		const { api } = await import('.')
-// 		for (const img of info.data) {
-// 			// share cache entries with getGameImageUrl
-// 			if (img.url) {
-// 				// let it know not to revoke the object URLs prematurely when it evicts the cache
-// 				const record = { url: img.url, _shared: true }
-// 				api.util.upsertQueryData('getGameImageUrl', img.imageId, record)
-// 			}
-// 		}
-// 		await cacheApi.cacheEntryRemoved
-
-// 		for (const { url } of info.data) {
-// 			if (url) {
-// 				revokeObjectUrl(url)
-// 			}
-// 		}
-// 	},
-// }),
-export const [getOutlinerObjectTypeIcons, useGetOutlinerObjectTypeIcons] = createQuery(
-	({ page, pageSize }: { page: number, pageSize: number }) => {
-		const queryKey = [...tags.object.list('ObjectType'), 'getOutlinerObjectTypeIcons', { page, pageSize }]
-		return {
-			queryFn: async () => {
-				const r: Array<null | [int, Uint8Array]> = await binaryInvoke('get_outliner_object_type_icons', [page * pageSize, pageSize])
-				const data = r.map((o) => {
-					if (!o) { return {} }
-					const [imageId, data] = o
-					const blob = new Blob([data], { type: 'image/png' })
-					const obj = { url: createObjectUrl(blob), imageId }
-					// FIXME: share cache entries with getGameImageUrl
-					// queryClient.setQueryData(tags.image.url(imageId), url)
-					// FIXME let it know not to revoke the object URLs prematurely when it evicts the cache
-					return obj
-				})
-				whenQueryEvicted(queryKey)
+export const api = {
+	...createQuery('getGameImageUrl', {
+		queryFn: async (id: int) => {
+			const arrayBuffer = await _getGameImage(id)
+			let blob: Blob | null = null
+			if (arrayBuffer) {
+				blob = new Blob([arrayBuffer], { type: 'image/png' })
+			}
+			const url = blob && createObjectUrl(blob)
+			if (url) {
+				// FIXME
+				console.warn(`Creating object URL ${url} for image ${id}`)
+				whenQueryEvicted(tags.image.url(id))
 					.then(() => {
-						for (const { url } of data) {
-							if (url) {
-								revokeObjectUrl(url)
-							}
-						}
+						// FIXME
+						console.warn(`REVOKING object URL ${url} for image ${id}`)
+						revokeObjectUrl(url)
 					})
-				return data
-			},
-			queryKey,
+			}
+			return { url, imageId: id }
+		},
+		queryKey: tags.image.url,
+	}),
+
+	// getImageMetadata: builder.query<ImageMetadata | null, { id: number }>({
+	// 	query: (arg) => invoke('get_image_metadata', arg),
+	// 	transformResponse: (r: ImageMetadata) => enhanceImageMetadata(r),
+	// 	providesTags: (_r, _e, arg) => [{ type: 'ImageMetadata', id: String(arg.id) }]
+	// }),
+	...createQuery('getImageMetadata', {
+		queryFn: async (arg: { id: int }) => {
+			const r: ImageMetadata = await invoke('get_image_metadata', arg)
+			return enhanceImageMetadata(r)
+		},
+		queryKey: ({ id }) => tags.imageMetadata.id(id),
+	}),
+
+	// setImageMetadata: builder.mutation<void, ImageMetadata>({
+	// 	query: (data) => invoke('set_image_metadata', { data }),
+	// 	invalidatesTags: (_r, _e, arg) => [{ type: 'ImageMetadata', id: String(arg.id) }]
+	// }),
+	...createMutation('setImageMetadata', {
+		mutationFn: (data: ImageMetadata) => invoke('set_image_metadata', { data }),
+		onMutate: async (data) => {
+			const queryKey = tags.imageMetadata.id(data.id)
+			await queryClient.cancelQueries({ queryKey })
+			const previousData = queryClient.getQueryData(queryKey)
+			queryClient.setQueryData(queryKey, data)
+			return previousData
+		},
+		onError: (_err, data, previousData) => {
+			queryClient.setQueryData(tags.imageMetadata.id(data.id), previousData)
+		},
+		onSettled: (_r, _e, data) => invalidate(tags.imageMetadata.id(data.id))
+	}),
+
+	// isImageOverridden: builder.query<boolean, number>({
+	// 	query: (id) => invoke('is_image_overridden', { id }),
+	// 	providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
+	// }),
+	...createQuery('isImageOverridden', {
+		queryFn: (id: int) => invoke('is_image_overridden', { id }),
+		queryKey: (id) => [...tags.image.id(id), 'isOverridden'],
+	}),
+
+	// getEditorPlugin: builder.query<PluginData, number>({
+	// 	query: (id) => invoke('get_editor_plugin', { id }),
+	// 	providesTags: ['Data']
+	// }),
+	...createQuery('getEditorPlugin', {
+		queryFn: (id: int) => invoke('get_editor_plugin', { id }),
+		queryKey: tags.data,
+	}),
+
+	// getEditorPlugins: builder.query<Record<number, PluginData>, void>({
+	// 	query: () => invoke('get_editor_plugins'),
+	// 	providesTags: ['Data']
+	// }),
+	...createQuery('getEditorPlugins', {
+		queryFn: () => invoke('get_editor_plugins'),
+		queryKey: tags.data,
+	}),
+
+	// getObjectTypes: builder.query<Lookup<ObjectType>[], void>({
+	// 	query: () => invoke('get_object_types'),
+	// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectType' })),
+	// 	providesTags: [{ type: 'ObjectType', id: 'LIST' }]
+	// }),
+	...createQuery('getObjectTypes', {
+		queryFn: async () => {
+			const r: number[] = await invoke('get_object_types')
+			return r.map(id => ({ id, _type: 'ObjectType' } as LookupForType<'ObjectType'>))
+		},
+		queryKey: tags.object.list('ObjectType'),
+	}),
+
+	// searchObjectTypes: builder.query<{ _type: 'ObjectType', name: string, id: int }[], SearchOptions>({
+	// 	query: (options) => invoke('search_object_types', { options }),
+	// 	transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'ObjectType' })),
+	// 	providesTags: [{ type: 'ObjectType', id: 'LIST' }]
+	// }),
+	...createQuery('searchObjectTypes', {
+		queryFn: async (options: SearchOptions) => {
+			const r: [number, string][] = await invoke('search_object_types', { options })
+			return r.map(([id, name]) => ({ id, name, _type: 'ObjectType' } as LookupForType<'ObjectType'>))
+		},
+		queryKey: (options: SearchOptions) => tags.object.list('ObjectType', options),
+	}),
+
+	// getObjectTypeImageId: builder.query<int | null, int>({
+	// 	query: (id) => invoke('get_object_type_image_id', { id }),
+	// 	providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
+	// }),
+	...createQuery('getObjectTypeImageId', {
+		queryFn: (id: int) => invoke('get_object_type_image_id', { id }),
+		queryKey: (id: int) => [...tags.object.id({ _type: 'ObjectType', id }), 'imageId'],
+	}),
+
+	// createObjectType: builder.mutation<int, { pluginId: int }>({
+	// 	query: (pluginId) => invoke('create_object_type', { pluginId }),
+	// 	invalidatesTags: (_r, _e, id) => [{ type: 'ObjectType', id: String(id) }, { type: 'ObjectType', id: 'LIST' }]
+	// }),
+	...createMutation('createObjectType', {
+		mutationFn: (pluginId: int) => invoke('create_object_type', { pluginId }),
+		onSuccess: () => invalidate(tags.object.list('ObjectType'))
+	}),
+
+	// deleteObjectType: builder.mutation<void, int>({
+	// 	query: (id) => invoke('delete_object_type', { id }),
+	// 	invalidatesTags: (_r, _e, id) => [{ type: 'ObjectType', id: String(id) }, { type: 'ObjectType', id: 'LIST' }]
+	// }),
+	...createMutation('deleteObjectType', {
+		mutationFn: (id: int) => invoke('delete_object_type', { id }),
+		onSuccess: () => invalidate(tags.object.list('ObjectType'))
+	}),
+
+	// objectTypeAddVariable: builder.mutation<void, { id: int, name: string, value: number | string }>({
+	// 	query: (args) => invoke('object_type_add_variable', args),
+	// 	invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id) }]
+	// }),
+	...createMutation('objectTypeAddVariable', {
+		mutationFn: (args: { id: int, name: string, value: number | string }) => invoke('object_type_add_variable', args),
+		onSettled: (_r, _e, arg) => invalidate(tags.object.id({ _type: 'ObjectType', id: arg.id }))
+	}),
+
+	// objectTypeDeleteVariable: builder.mutation<void, { id: int, name: string }>({
+	// 	query: (args) => invoke('object_type_delete_variable', args),
+	// 	invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id) }]
+	// }),
+	...createMutation('objectTypeDeleteVariable', {
+		mutationFn: (args: { id: int, name: string }) => invoke('object_type_delete_variable', args),
+		onSettled: (_r, _e, arg) => invalidate(tags.object.id({ _type: 'ObjectType', id: arg.id }))
+	}),
+
+	// getObjectInstances: builder.query<Lookup<ObjectInstance>[], number>({
+	// 	query: (layoutLayerId) => invoke('get_object_instances', { layoutLayerId }),
+	// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectInstance' })),
+	// 	providesTags: ['ObjectInstance']
+	// }),
+	...createQuery('getObjectInstances', {
+		queryFn: async (layoutLayerId: int) => {
+			const r: number[] = await invoke('get_object_instances', { layoutLayerId })
+			return r.map(id => ({ id, _type: 'ObjectInstance' } as LookupForType<'ObjectInstance'>))
+		},
+		queryKey: (layoutLayerId: int) => tags.object.list('ObjectInstance', { layoutLayerId }),
+	}),
+
+	// searchObjectInstances: builder.query<{ _type: 'ObjectInstance', name: string, id: int }[], SearchOptions>({
+	// 	query: (options) => invoke('search_object_instances', { options }),
+	// 	transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'ObjectInstance' })),
+	// 	providesTags: [{ type: 'ObjectType', id: 'LIST' }]
+	// }),
+	...createQuery('searchObjectInstances', {
+		queryFn: async (options: SearchOptions) => {
+			const r: [number, string][] = await invoke('search_object_instances', { options })
+			return r.map(([id, name]) => ({ id, name, _type: 'ObjectInstance' } as LookupForType<'ObjectInstance'>))
+		},
+		queryKey: (options: SearchOptions) => tags.object.list('ObjectInstance', options),
+	}),
+
+	// getObjectTypeInstances: builder.query<Lookup<ObjectInstance>[], number>({
+	// 	query: (objectTypeId) => invoke('get_object_type_instances', { objectTypeId }),
+	// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'ObjectInstance' })),
+	// 	providesTags: ['ObjectInstance']
+	// }),
+	...createQuery('getObjectTypeInstances', {
+		queryFn: async (objectTypeId: int) => {
+			const r: number[] = await invoke('get_object_type_instances', { objectTypeId })
+			return r.map(id => ({ id, _type: 'ObjectInstance' } as LookupForType<'ObjectInstance'>))
+		},
+		queryKey: (objectTypeId: int) => tags.object.list('ObjectInstance', { objectTypeId }),
+	}),
+
+	// getObjectInstanceImageId: builder.query<int | null, int>({
+	// 	query: (id) => invoke('get_object_instance_image_id', { id }),
+	// 	providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
+	// }),
+	...createQuery('getObjectInstanceImageId', {
+		queryFn: (id: int) => invoke('get_object_instance_image_id', { id }),
+		queryKey: (id: int) => [...tags.object.id({ _type: 'ObjectInstance', id }), 'imageId'],
+	}),
+
+	// getLayouts: builder.query<Lookup<Layout>[], void>({
+	// 	query: () => invoke('get_layouts'),
+	// 	transformResponse: (r: string[]) => r.map(name => ({ name, _type: 'Layout' })),
+	// 	providesTags: ['Layout']
+	// }),
+	...createQuery('getLayouts', {
+		queryFn: async () => {
+			const r: string[] = await invoke('get_layouts')
+			return r.map(name => ({ name, _type: 'Layout' } as LookupForType<'Layout'>))
+		},
+		queryKey: tags.object.list('Layout'),
+	}),
+
+	...createQuery('getLayoutLayers', {
+		queryFn: async (layoutName: string) => {
+			const r: number[] = await invoke('get_layout_layers', { layoutName })
+			return r.map(id => ({ id, _type: 'LayoutLayer' } as LookupForType<'LayoutLayer'>))
+		},
+		queryKey: (layoutName: string) => tags.object.list('LayoutLayer', { layoutName }),
+	}),
+
+	// searchLayoutLayers: builder.query<{ _type: 'LayoutLayer', name: string, id: int }[], SearchOptions>({
+	// 	query: (options) => invoke('search_layout_layers', { options }),
+	// 	transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'LayoutLayer' })),
+	// 	providesTags: [{ type: 'LayoutLayer', id: 'LIST' }]
+	// }),
+	...createQuery('searchLayoutLayers', {
+		queryFn: async (options: SearchOptions) => {
+			const r: [number, string][] = await invoke('search_layout_layers', { options })
+			return r.map(([id, name]) => ({ id, name, _type: 'LayoutLayer' } as LookupForType<'LayoutLayer'>))
+		},
+		queryKey: (options: SearchOptions) => tags.object.list('LayoutLayer', options),
+	}),
+
+	// getOutlinerObjectTypes: builder.query<Array<ObjectType & { animation?: Animation }>, { page: number, pageSize: number }>({
+	// 	query: ({ page, pageSize }) => invoke('get_outliner_object_types', { skip: page * pageSize, take: pageSize}),
+	// 	transformResponse: (r: [ObjectType, Animation | null][]) => r.map(([obj, anim]) => (
+	// 		{ ...enhanceObjectType(obj), animation: enhanceAnimation(anim) ?? undefined }
+	// 	)),
+	// 	providesTags: (r) => r
+	// 		? r.map((obj) => ({ type: 'ObjectType', id: String(obj.id) }))
+	// 		: ['ObjectType']
+	// }),
+	...createQuery('getOutlinerObjectTypes', {
+		queryFn: async ({ page, pageSize }: { page: number, pageSize: number }) => {
+			const r: [ObjectType, Animation | null][] = await invoke('get_outliner_object_types', { skip: page * pageSize, take: pageSize })
+			return r.map(([obj, anim]) => (
+				{ ...enhanceObjectType(obj), animation: enhanceAnimation(anim) ?? undefined }
+			))
+		},
+		queryKey: ({ page, pageSize }: { page: number, pageSize: number }) => [...tags.object.list('ObjectType'), 'getOutlinerObjectTypes', { page, pageSize }],
+	}),
+
+	// getOutlinerObjectTypeIcons: builder.query<Array<{ url: undefined, imageId: undefined } | { url: string, imageId: int }>, { page: number, pageSize: number }>({
+	// 	query: ({ page, pageSize }) => binaryInvoke('get_outliner_object_type_icons', [page * pageSize, pageSize]),
+	// 	transformResponse: (r: Array<null | [int, Uint8Array]>) => {
+	// 		return r.map((o) => {
+	// 			if (!o) { return {} }
+	// 			const [imageId, data] = o
+	// 			const blob = new Blob([data], { type: 'image/png' })
+	// 			return { url: createObjectUrl(blob), imageId }
+	// 		})
+	// 	},
+	// 	providesTags: ['ObjectType', 'Image'],
+	// 	onCacheEntryAdded: async (_arg, cacheApi) => {
+	// 		const info = await cacheApi.cacheDataLoaded
+	// 		if (!info.data) { return }
+	// 		const { api } = await import('.')
+	// 		for (const img of info.data) {
+	// 			// share cache entries with getGameImageUrl
+	// 			if (img.url) {
+	// 				// let it know not to revoke the object URLs prematurely when it evicts the cache
+	// 				const record = { url: img.url, _shared: true }
+	// 				api.util.upsertQueryData('getGameImageUrl', img.imageId, record)
+	// 			}
+	// 		}
+	// 		await cacheApi.cacheEntryRemoved
+
+	// 		for (const { url } of info.data) {
+	// 			if (url) {
+	// 				revokeObjectUrl(url)
+	// 			}
+	// 		}
+	// 	},
+	// }),
+	...createQuery(
+		'getOutlinerObjectTypeIcons',
+		({ page, pageSize }: { page: number, pageSize: number }) => {
+			const queryKey = [...tags.object.list('ObjectType'), 'getOutlinerObjectTypeIcons', { page, pageSize }]
+			return {
+				queryFn: async () => {
+					const r: Array<null | [int, Uint8Array]> = await binaryInvoke('get_outliner_object_type_icons', [page * pageSize, pageSize])
+					const data = r.map((o) => {
+						let obj = {} as { url?: string, imageId?: int }
+						if (!o) { return obj }
+						const [imageId, data] = o
+						const blob = new Blob([data], { type: 'image/png' })
+						obj = { url: createObjectUrl(blob), imageId }
+						// FIXME: share cache entries with getGameImageUrl
+						// queryClient.setQueryData(tags.image.url(imageId), url)
+						// FIXME let it know not to revoke the object URLs prematurely when it evicts the cache
+						return obj
+					})
+					whenQueryEvicted(queryKey)
+						.then(() => {
+							for (const { url } of data) {
+								if (url) {
+									revokeObjectUrl(url)
+								}
+							}
+						})
+					return data
+				},
+				queryKey,
+			}
 		}
-	}
-)
+	),
 
-// getObjectTypeAnimation: builder.query<Animation | null, LookupArg<ObjectType>>({
-// 	query: (args) => invoke('get_object_type_animation', args),
-// 	transformResponse: (r: Animation) => enhanceAnimation(r),
-// 	providesTags: (r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id)}, r && { type: 'Animation', id: String(r.id) }]
-// }),
+	// getObjectTypeAnimation: builder.query<Animation | null, LookupArg<ObjectType>>({
+	// 	query: (args) => invoke('get_object_type_animation', args),
+	// 	transformResponse: (r: Animation) => enhanceAnimation(r),
+	// 	providesTags: (r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id)}, r && { type: 'Animation', id: String(r.id) }]
+	// }),
 
-export const [getObjectTypeAnimation, useGetObjectTypeAnimation] = createQuery({
-	queryFn: async (arg: LookupForType<'ObjectType'>) => {
-		const r: Animation = await invoke('get_object_type_animation', arg)
-		return enhanceAnimation(r)
-	},
-	queryKey: (arg) => [...tags.object.id(arg), 'animation'],
-})
+	...createQuery('getObjectTypeAnimation', {
+		queryFn: async (arg: LookupForType<'ObjectType'>) => {
+			const r: Animation = await invoke('get_object_type_animation', arg)
+			return enhanceAnimation(r)
+		},
+		queryKey: (arg) => [...tags.object.id(arg), 'animation'],
+	}),
 
+	// getRootAnimations: builder.query<Lookup<Animation>[], void>({
+	// 	query: () => invoke('get_root_animations'),
+	// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'Animation' })),
+	// 	providesTags: ['Animation']
+	// }),
+	...createQuery('getRootAnimations', {
+		queryFn: async () => {
+			const r: number[] = await invoke('get_root_animations')
+			return r.map(id => ({ id, _type: 'Animation' } as LookupForType<'Animation'>))
+		},
+		queryKey: [...tags.object.list('Animation'), 'root'],
+	}),
 
+	// getAnimationChildren: builder.query<Lookup<Animation>[], number>({
+	// 	query: (id) => invoke('get_animation_children', { id }),
+	// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'Animation' })),
+	// 	providesTags: ['Animation']
+	// }),
+	...createQuery('getAnimationChildren', {
+		queryFn: async (id: int) => {
+			const r: number[] = await invoke('get_animation_children', { id })
+			return r.map(id => ({ id, _type: 'Animation' } as LookupForType<'Animation'>))
+		},
+		queryKey: (id: int) => [...tags.object.id({ _type: 'Animation', id }), 'children'],
+	}),
 
-// getRootAnimations: builder.query<Lookup<Animation>[], void>({
-// 	query: () => invoke('get_root_animations'),
-// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'Animation' })),
-// 	providesTags: ['Animation']
-// }),
-export const [getRootAnimations, useGetRootAnimations] = createQuery({
-	queryFn: async () => {
-		const r: number[] = await invoke('get_root_animations')
-		return r.map(id => ({ id, _type: 'Animation' } as LookupForType<'Animation'>))
-	},
-	queryKey: [...tags.object.list('Animation'), 'root'],
-})
+	// createAnimation: builder.mutation<int, { objectTypeId: int }>({
+	// 	query: (args) => invoke('create_animation', args),
+	// 	invalidatesTags: (r, _e, arg) => [{ type: 'ObjectType', id: String(arg.objectTypeId) }, r && { type: 'Animation', id: String(r) }]
+	// }),
+	...createMutation('createAnimation', {
+		mutationFn: (args: { objectTypeId: int }) => invoke('create_animation', args),
+		onSuccess: (r, arg) => invalidate([{ type: 'ObjectType', id: String(arg.objectTypeId) }, r && { type: 'Animation', id: String(r) }])
+	}),
 
-// getAnimationChildren: builder.query<Lookup<Animation>[], number>({
-// 	query: (id) => invoke('get_animation_children', { id }),
-// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'Animation' })),
-// 	providesTags: ['Animation']
-// }),
-export const [getAnimationChildren, useGetAnimationChildren] = createQuery({
-	queryFn: async (id: int) => {
-		const r: number[] = await invoke('get_animation_children', { id })
-		return r.map(id => ({ id, _type: 'Animation' } as LookupForType<'Animation'>))
-	},
-	queryKey: (id: int) => [...tags.object.id({ _type: 'Animation', id }), 'children'],
-})
+	// getBehaviors: builder.query<Lookup<Behavior>[], void>({
+	// 	query: () => invoke('get_behaviors'),
+	// 	transformResponse: (r: [number, number][]) => r.map(([objectTypeId, movIndex]) => ({ objectTypeId, movIndex, _type: 'Behavior' })),
+	// 	providesTags: ['Behavior']
+	// }),
+	...createQuery('getBehaviors', {
+		queryFn: async () => {
+			const r: [number, number][] = await invoke('get_behaviors')
+			return r.map(([objectTypeId, movIndex]) => ({ objectTypeId, movIndex, _type: 'Behavior' } as LookupForType<'Behavior'>))
+		},
+		queryKey: tags.object.list('Behavior'),
+	}),
 
-// createAnimation: builder.mutation<int, { objectTypeId: int }>({
-// 	query: (args) => invoke('create_animation', args),
-// 	invalidatesTags: (r, _e, arg) => [{ type: 'ObjectType', id: String(arg.objectTypeId) }, r && { type: 'Animation', id: String(r) }]
-// }),
-export const [createAnimation, useCreateAnimation] = createMutation({
-	mutationFn: (args: { objectTypeId: int }) => invoke('create_animation', args),
-	onSuccess: (r, arg) => invalidate([{ type: 'ObjectType', id: String(arg.objectTypeId) }, r && { type: 'Animation', id: String(r) }])
-})
+	// getContainers: builder.query<Lookup<Container>[], void>({
+	// 	query: () => invoke('get_containers'),
+	// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'Container' })),
+	// 	providesTags: ['Container']
+	// }),
+	...createQuery('getContainers', {
+		queryFn: async () => {
+			const r: number[] = await invoke('get_containers')
+			return r.map(id => ({ id, _type: 'Container' } as LookupForType<'Container'>))
+		},
+		queryKey: tags.object.list('Container'),
+	}),
 
-// getBehaviors: builder.query<Lookup<Behavior>[], void>({
-// 	query: () => invoke('get_behaviors'),
-// 	transformResponse: (r: [number, number][]) => r.map(([objectTypeId, movIndex]) => ({ objectTypeId, movIndex, _type: 'Behavior' })),
-// 	providesTags: ['Behavior']
-// }),
-export const [getBehaviors, useGetBehaviors] = createQuery({
-	queryFn: async () => {
-		const r: [number, number][] = await invoke('get_behaviors')
-		return r.map(([objectTypeId, movIndex]) => ({ objectTypeId, movIndex, _type: 'Behavior' } as LookupForType<'Behavior'>))
-	},
-	queryKey: tags.object.list('Behavior'),
-})
+	// searchContainers: builder.query<{ _type: 'Container', name: string, id: int }[], SearchOptions>({
+	// 	query: (options) => invoke('search_containers', { options }),
+	// 	transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'Container' })),
+	// 	providesTags: [{ type: 'Container', id: 'LIST' }]
+	// }),
+	...createQuery('searchContainers', {
+		queryFn: async (options: SearchOptions) => {
+			const r: [number, string][] = await invoke('search_containers', { options })
+			return r.map(([id, name]) => ({ id, name, _type: 'Container' } as LookupForType<'Container'>))
+		},
+		queryKey: (options: SearchOptions) => tags.object.list('Container', options),
+	}),
 
-// getContainers: builder.query<Lookup<Container>[], void>({
-// 	query: () => invoke('get_containers'),
-// 	transformResponse: (r: number[]) => r.map(id => ({ id, _type: 'Container' })),
-// 	providesTags: ['Container']
-// }),
-export const [getContainers, useGetContainers] = createQuery({
-	queryFn: async () => {
-		const r: number[] = await invoke('get_containers')
-		return r.map(id => ({ id, _type: 'Container' } as LookupForType<'Container'>))
-	},
-	queryKey: tags.object.list('Container'),
-})
+	// getFamilies: builder.query<Lookup<Family>[], void>({
+	// 	query: () => invoke('get_families'),
+	// 	transformResponse: (r: string[]) => r.map(name => ({ name, _type: 'Family' })),
+	// 	providesTags: ['Family']
+	// }),
+	...createQuery('getFamilies', {
+		queryFn: async () => {
+			const r: string[] = await invoke('get_families')
+			return r.map(name => ({ name, _type: 'Family' } as LookupForType<'Family'>))
+		},
+		queryKey: tags.object.list('Family'),
+	}),
 
-// searchContainers: builder.query<{ _type: 'Container', name: string, id: int }[], SearchOptions>({
-// 	query: (options) => invoke('search_containers', { options }),
-// 	transformResponse: (r: [number, string][]) => r.map(([id, name]) => ({ id, name, _type: 'Container' })),
-// 	providesTags: [{ type: 'Container', id: 'LIST' }]
-// }),
-export const [searchContainers, useSearchContainers] = createQuery({
-	queryFn: async (options: SearchOptions) => {
-		const r: [number, string][] = await invoke('search_containers', { options })
-		return r.map(([id, name]) => ({ id, name, _type: 'Container' } as LookupForType<'Container'>))
-	},
-	queryKey: (options: SearchOptions) => tags.object.list('Container', options),
-})
+	// familyAddObject: builder.mutation<void, { name: string, objectTypeId: int }>({
+	// 	query: (args) => invoke('family_add_object', args)
+	// }),
+	...createMutation('familyAddObject', {
+		mutationFn: (args: { name: string, objectTypeId: int }) => invoke('family_add_object', args),
+		onSuccess: (_r, args) => invalidate(tags.object.id({ _type: 'Family', name: args.name }))
+	}),
 
-// getFamilies: builder.query<Lookup<Family>[], void>({
-// 	query: () => invoke('get_families'),
-// 	transformResponse: (r: string[]) => r.map(name => ({ name, _type: 'Family' })),
-// 	providesTags: ['Family']
-// }),
+	// familyRemoveObject: builder.mutation<void, { name: string, objectTypeId: int }>({
+	// 	query: (args) => invoke('family_remove_object', args)
+	// }),
+	...createMutation('familyRemoveObject', {
+		mutationFn: (args: { name: string, objectTypeId: int }) => invoke('family_remove_object', args),
+		onSuccess: (_r, args) => invalidate(tags.object.id({ _type: 'Family', name: args.name }))
+	}),
 
-// familyAddObject: builder.mutation<void, { name: string, objectTypeId: int }>({
-// 	query: (args) => invoke('family_add_object', args)
-// }),
+	// familyAddVariable: builder.mutation<void, { name: string, varName: string, value: number | string }>({
+	// 	query: (args) => invoke('family_add_variable', args)
+	// }),
+	...createMutation('familyAddVariable', {
+		mutationFn: (args: { name: string, varName: string, value: number | string }) => invoke('family_add_variable', args),
+		onSuccess: (_r, args) => invalidate(tags.object.id({ _type: 'Family', name: args.name }))
+	}),
 
-// familyRemoveObject: builder.mutation<void, { name: string, objectTypeId: int }>({
-// 	query: (args) => invoke('family_remove_object', args)
-// }),
+	// familyDeleteVariable: builder.mutation<void, { name: string, varName: string }>({
+	// 	query: (args) => invoke('family_delete_variable', args),
+	// }),
+	...createMutation('familyDeleteVariable', {
+		mutationFn: (args: { name: string, varName: string }) => invoke('family_delete_variable', args),
+		onSuccess: (_r, args) => invalidate(tags.object.id({ _type: 'Family', name: args.name }))
+	}),
 
-// familyAddVariable: builder.mutation<void, { name: string, varName: string, value: number | string }>({
-// 	query: (args) => invoke('family_add_variable', args)
-// }),
+	// createFamily: builder.mutation<void, string>({
+	// 	query: (name) => invoke('create_family', { name }),
+	// 	invalidatesTags: (_r, _e, arg) => [{ type: 'Family', id: arg }]
+	// }),
+	...createMutation('createFamily', {
+		mutationFn: (name: string) => invoke('create_family', { name }),
+		onSuccess: (_r, arg) => invalidate(tags.object.id({ _type: 'Family', name: arg }))
+	}),
 
-// familyDeleteVariable: builder.mutation<void, { name: string, varName: string }>({
-// 	query: (args) => invoke('family_delete_variable', args),
-// }),
+	// getObjectTraits: builder.query<Lookup<ObjectTrait>[], void>({
+	// 	query: () => invoke('get_traits'),
+	// 	transformResponse: (r: string[]) => r.map(name => ({ name, _type: 'ObjectTrait' })),
+	// 	providesTags: ['ObjectTrait']
+	// }),
+	...createQuery('getObjectTraits', {
+		queryFn: async () => {
+			const r: string[] = await invoke('get_traits')
+			return r.map(name => ({ name, _type: 'ObjectTrait' } as LookupForType<'ObjectTrait'>))
+		},
+		queryKey: tags.object.list('ObjectTrait'),
+	}),
 
-// createFamily: builder.mutation<void, string>({
-// 	query: (name) => invoke('create_family', { name }),
-// 	invalidatesTags: (_r, _e, arg) => [{ type: 'Family', id: arg }]
-// }),
-
-// getObjectTraits: builder.query<Lookup<ObjectTrait>[], void>({
-// 	query: () => invoke('get_traits'),
-// 	transformResponse: (r: string[]) => r.map(name => ({ name, _type: 'ObjectTrait' })),
-// 	providesTags: ['ObjectTrait']
-// }),
-
-// createObjectTrait: builder.mutation<void, string>({
-// 	query: (name) => invoke('create_trait', { name }),
-// 	invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectTrait', id: arg }]
-// }),
-
+	// createObjectTrait: builder.mutation<void, string>({
+	// 	query: (name) => invoke('create_trait', { name }),
+	// 	invalidatesTags: (_r, _e, arg) => [{ type: 'ObjectTrait', id: arg }]
+	// }),
+	...createMutation('createObjectTrait', {
+		mutationFn: (name: string) => invoke('create_trait', { name }),
+		onSuccess: (_r, arg) => invalidate(tags.object.id({ _type: 'ObjectTrait', name: arg }))
+	}),
+}
 
 export async function _getTowermodObject(lookup: UniqueObjectLookup): Promise<UniqueTowermodObject | null> {
 	const type = lookup._type

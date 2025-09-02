@@ -56,14 +56,14 @@ export function whenQueryEvicted(queryKey: QueryKey) {
 }
 
 export function createQuery<
-	// TName extends string,
+	TName extends string,
 	TQueryFnData = unknown,
 	TError = DefaultError,
 	TData = TQueryFnData,
 	TQueryKey extends QueryKey = QueryKey,
 	TArg = void
 >(
-	// name: TName,
+	name: TName,
 	baseOptions: CreateQueryOptions<TQueryFnData, TError, TData, TQueryKey, TArg>
 ) {
 	function getOptions(arg: TArg): UseQueryOptions<TQueryFnData, TError, TData, TQueryKey> {
@@ -90,9 +90,8 @@ export function createQuery<
 			...optionsOverrides
 		})
 	}
-	return [fetchQuery, useQueryHook] as const
-	// const hookName = `use${capitalize(name)}` as `use${Capitalize<TName>}`
-	// return { [name]: fetchQuery, [hookName]: useQueryHook } as const
+	const hookName = `use${capitalize(name)}` as `use${Capitalize<TName>}`
+	return { [name]: fetchQuery, [hookName]: useQueryHook } as const
 }
 
 /** Spinoff of UseQueryOptions where either:
@@ -112,11 +111,13 @@ type CreateQueryOptions<
 	| ((arg: TArg) => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>)
 
 export function createMutation<
+	TName extends string,
 	TData = unknown,
 	TError = DefaultError,
 	TVariables = void,
 	TContext = unknown,
 >(
+	name: TName,
 	options: UseMutationOptions<TData, TError, TVariables, TContext>
 ) {
 	function useMutationHook(optionsOverrides?: Omit<UseMutationOptions<TData, TError, TVariables, TContext>, 'queryFn'>) {
@@ -127,7 +128,8 @@ export function createMutation<
 		return mutation.execute(arg)
 	}
 
-	return [fetchMutation, useMutationHook] as const
+	const hookName = `use${capitalize(name)}` as `use${Capitalize<TName>}`
+	return { [name]: fetchMutation, [hookName]: useMutationHook } as const
 }
 
 export function invalidate(...keys: QueryKey[]) {
