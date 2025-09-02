@@ -1,5 +1,5 @@
-import { api } from "@/api"
-import { awaitRtk } from "@/api/helpers"
+import { newApi as api } from "@/api"
+// import { awaitRtk } from "@/api/helpers"
 import { openModal } from "@/app/Modal"
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
 import { toast } from "@/app/Toast"
@@ -15,16 +15,15 @@ import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc"
 import { Project } from "@towermod"
 import { win32 as path } from "path"
 import { useEffect, useState } from "react"
-import { spin, useSpinQuery } from "../GlobalSpinner"
+import { spin } from "../GlobalSpinner"
 import { ConfirmModal } from "../Modal"
 
 function SetGameModal(props: {
 	initialValue: string,
 }) {
-	const [setGame] = api.useSetGameMutation()
 	const [gamePath, setGamePath] = useState(props.initialValue)
 	return <ConfirmModal title="Set game path" onConfirm={async () => {
-		await spin(setGame(gamePath))
+		await spin(api.setGame(gamePath))
 		if (gamePath) {
 			toast("Game path set")
 		} else {
@@ -41,22 +40,10 @@ function SetGameModal(props: {
 }
 
 export const Config = () => {
-	const { data: game } = useSpinQuery(api.useGetGameQuery())
-	const { data: isDataLoaded } = useSpinQuery(api.useIsDataLoadedQuery())
-	const { data: project } = useSpinQuery(api.useGetProjectQuery())
-	const [newProject] = api.useNewProjectMutation()
-	const [nukeCache] = api.useNukeCacheMutation()
-	const [clearGameCache] = api.useClearGameCacheMutation()
-	const [getCachePath] = api.useLazyCachePathQuery()
-	const [getProjectsPath] = api.useLazyProjectsPathQuery()
-	const [editProjectInfo] = api.useEditProjectInfoMutation()
-	const [loadProjectPreflight] = api.useLoadProjectPreflightMutation()
-	const [loadProject] = api.useLoadProjectMutation()
-	const [exportProject] = api.useExportModMutation()
-
-	const [loadManifest] = api.useLazyLoadManifestQuery()
-	const [exportFromLegacy] = api.useExportFromLegacyMutation()
-	const [exportFromFiles] = api.useExportFromFilesMutation()
+	// FIXME: use suspense query
+	const { data: game } = api.getGame.useQuery()
+	const { data: isDataLoaded } = api.isDataLoaded.useQuery()
+	const { data: project } = api.getProject.useQuery()
 
 	const [gamePath, setGamePath] = useState(game?.filePath || "")
 	useEffect(() => {
@@ -120,7 +107,7 @@ export const Config = () => {
 			)
 			if (!confirmed) { return }
 		}
-		await awaitRtk(spin(newProject()))
+		await spin(api.newProject())
 		toast("New project initialized")
 	}
 
@@ -145,7 +132,7 @@ export const Config = () => {
 			<ProjectDetailsModal project={project} confirmText={confirmText} onConfirm={spin(async (form: ProjectDetailsFormData) => {
 				confirmed = true
 				const newProject = await spin(applyProjectDetailsForm(project, form))
-				await awaitRtk(editProjectInfo(newProject))
+				await api.editProjectInfo(newProject)
 			})} />
 		)
 		return confirmed
@@ -155,7 +142,7 @@ export const Config = () => {
 		if (!project) { return }
 		const confirmed = await updateProjectDetails(project, "Export")
 		if (!confirmed) { return }
-		await awaitRtk(spin(exportProject('BinaryPatch')))
+		await spin(api.exportMod('BinaryPatch'))
 		toast("Project exported")
 		dispatch(actions.setCurrentTab('Mods'))
 	}
@@ -164,11 +151,11 @@ export const Config = () => {
 		const patchPath = await filePicker({ filters: [{ name: "TCRepainter patch", extensions: ["json", "zip"] }] })
 		if (!patchPath) { return }
 		const manifestPath = path.join(path.dirname(patchPath), 'manifest.toml')
-		const project = await awaitRtk(spin(loadManifest({ manifestPath, projectType: 'Legacy' })))
+		const project = await spin(api.loadManifest({ manifestPath, projectType: 'Legacy' }))
 		await openModal(<ProjectDetailsModal confirmText="Export" project={project} onConfirm={async (form) => {
 			assert(project)
 			const newProject = await spin(applyProjectDetailsForm(project, form))
-			await awaitRtk(spin(exportFromLegacy({ patchPath, project: newProject })))
+			await spin(api.exportFromLegacy({ patchPath, project: newProject }))
 			toast("Project exported")
 			dispatch(actions.setCurrentTab('Mods'))
 		}} />)
@@ -178,11 +165,11 @@ export const Config = () => {
 		const dirPath = await folderPicker()
 		if (!dirPath) { return }
 		const manifestPath = path.join(dirPath, 'manifest.toml')
-		const project = await awaitRtk(spin(loadManifest({ manifestPath, projectType: 'FilesOnly' })))
+		const project = await spin(api.loadManifest({ manifestPath, projectType: 'FilesOnly' }))
 		await openModal(<ProjectDetailsModal confirmText="Export" project={project} onConfirm={async (form) => {
 			assert(project)
 			const newProject = await spin(applyProjectDetailsForm(project, form))
-			await awaitRtk(spin(exportFromFiles(newProject)))
+			await spin(api.exportFromFiles(newProject))
 			toast("Project exported")
 			dispatch(actions.setCurrentTab('Mods'))
 		}} />)
@@ -202,7 +189,7 @@ export const Config = () => {
 	}
 
 	async function onClickBrowseCache() {
-		const cachePath = await awaitRtk(getCachePath())
+		const cachePath = await api.getCachePath()
 		assert(cachePath)
 		await openFolder(cachePath)
 		toast("Cache folder opened")
@@ -215,7 +202,7 @@ export const Config = () => {
 			</ConfirmModal>
 		)
 		async function onConfirm() {
-			await awaitRtk(clearGameCache())
+			await api.clearGameCache()
 			await new Promise((resolve) => {
 				toast("Game cache deleted. Reloading...")
 				window.onload = resolve
@@ -231,7 +218,7 @@ export const Config = () => {
 			</ConfirmModal>
 		)
 		async function onConfirm() {
-			await awaitRtk(nukeCache())
+			await api.nukeCache()
 			await new Promise((resolve) => {
 				toast("Cache nuked. Reloading...")
 				window.onload = resolve
@@ -241,14 +228,14 @@ export const Config = () => {
 	}
 
 	async function onClickLoadProject() {
-		const projectsPath = await awaitRtk(getProjectsPath())
+		const projectsPath = await api.getDefaultProjectDirPath()
 		const manifestPath = await filePicker({
 			filters: [{ name: "Towermod Project (manifest.toml)", extensions: ["toml"] }],
 			startingDirectory: projectsPath,
 		})
 		if (!manifestPath) { return }
 
-		const warningMsg = await awaitRtk(loadProjectPreflight(manifestPath))
+		const warningMsg = await api.loadProjectPreflight(manifestPath)
 		if (warningMsg) {
 			<ConfirmModal title="Warning" onConfirm={spin(onConfirm)}>
 				<pre>{warningMsg}</pre>
@@ -259,7 +246,7 @@ export const Config = () => {
 
 		async function onConfirm() {
 			assert(manifestPath)
-			await awaitRtk(loadProject(manifestPath))
+			await api.loadProject(manifestPath)
 			toast("Project loaded")
 		}
 	}
