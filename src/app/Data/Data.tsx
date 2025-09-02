@@ -5,12 +5,11 @@ import { useState } from 'react'
 import { UniqueTowermodObject } from '@/util'
 import { useOptimisticTwoWayBinding, useStateRef } from '@/util/hooks'
 import { useAppSelector } from '@/redux'
-import { api } from '@/api'
+import api from '@/api'
 import { Button } from '@/components/Button'
 import { spin } from '../GlobalSpinner'
 import { toast } from '../Toast'
 import { Toggle } from '@/components/Toggle'
-import { awaitRtk } from '@/api/helpers'
 import { saveProject, updateTowermodObject, useTowermodObject } from '@/appUtil'
 import { debounce } from 'lodash-es'
 
@@ -46,7 +45,6 @@ export function Data() {
 
 
 function PlayProject() {
-	const [playProject] = api.usePlayProjectMutation()
 	const [debug, setDebug] = useState(false)
 
 	return <div className="hbox gap">
@@ -56,7 +54,7 @@ function PlayProject() {
 	</div>
 
 	async function onClickPlayProject() {
-		await awaitRtk(spin(playProject(debug)))
+		await spin(api.playProject(debug))
 		toast("Project launched")
 	}
 

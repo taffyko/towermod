@@ -1,7 +1,7 @@
 import { toast } from '@/app/Toast'
 import { renderError } from '@/components/Error'
 import { MiniEvent } from '@/util'
-import { DefaultError, Query, QueryClient, QueryFunctionContext, QueryKey, StaleTime, UseMutationOptions, UseQueryOptions, useMutation, useQuery } from '@tanstack/react-query'
+import { DefaultError, Query, QueryClient, QueryFunctionContext, QueryKey, SkipToken, StaleTime, UseMutationOptions, UseQueryOptions, UseSuspenseQueryOptions, skipToken, useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { isEqual } from 'lodash-es'
 import { MaybePromise } from "./baseApiUtil"
 
@@ -64,8 +64,10 @@ export function createQuery<
 >(
 	baseOptions: CreateQueryOptions<TQueryFnData, TError, TData, TQueryKey, TArg>
 ) {
-	function getOptions(arg: TArg): UseQueryOptions<TQueryFnData, TError, TData, TQueryKey> {
-		if (typeof baseOptions === 'function') {
+	function getOptions(arg: TArg | SkipToken): UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey> {
+		if (arg === skipToken) {
+			return { queryFn: skipToken, queryKey: ['null'] } as any
+		} else if (typeof baseOptions === 'function') {
 			return baseOptions(arg)
 		} else {
 			return {
@@ -76,11 +78,15 @@ export function createQuery<
 		}
 	}
 
-	function useQueryHook(arg: TArg, optionsOverrides?: Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryFn' | 'queryKey'>) {
+	function useQueryHook(arg: TArg | SkipToken, optionsOverrides?: Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryFn' | 'queryKey'>) {
 		const options = { ...getOptions(arg), ...optionsOverrides }
 		return useQuery(options)
 	}
-	function fetchQuery(arg: TArg, optionsOverrides?: { staleTime?: StaleTime }): Promise<TData> {
+	function useSuspenseQueryHook(arg: TArg, optionsOverrides?: Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryFn' | 'queryKey'>) {
+		const options = { ...getOptions(arg), ...optionsOverrides }
+		return useSuspenseQuery(options)
+	}
+	function fetchQuery(arg: TArg | SkipToken, optionsOverrides?: { staleTime?: StaleTime }): Promise<TData> {
 		const options = getOptions(arg)
 		return queryClient.fetchQuery({
 			queryKey: options.queryKey,
@@ -89,6 +95,7 @@ export function createQuery<
 		})
 	}
 	fetchQuery.useQuery = useQueryHook
+	fetchQuery.useSuspenseQuery = useSuspenseQueryHook
 	return fetchQuery
 }
 
@@ -106,7 +113,7 @@ type CreateQueryOptions<
 			queryKey: TQueryKey | ((arg: TArg) => TQueryKey)
 		}
 	)
-	| ((arg: TArg) => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>)
+	| ((arg: TArg) => UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey>)
 
 export function createMutation<
 	TData = unknown,

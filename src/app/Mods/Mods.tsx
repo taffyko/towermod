@@ -1,5 +1,4 @@
-import { api } from "@/api"
-import { awaitRtk } from '@/api/helpers'
+import api from "@/api"
 import { toast } from '@/app/Toast'
 import { Button } from '@/components/Button'
 import { ErrorMsg } from '@/components/Error'
@@ -11,13 +10,13 @@ import { useObjectUrl, useStateRef } from '@/util/hooks'
 import { getModsDirPath, openFolder, waitUntilProcessExits } from '@/util/rpc'
 import { assert, posmod, triggerTransition } from '@/util/util'
 import { createSelector } from '@reduxjs/toolkit'
-import { skipToken } from '@reduxjs/toolkit/query/react'
 import { ModInfo } from '@towermod'
 import { win32 as path } from 'path'
 import { useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { spin } from '../GlobalSpinner'
 import Style from './Mods.module.scss'
+import { skipToken } from "@tanstack/react-query"
 
 const selectIsModRunning = createSelector((s: State) => s.app.runningMods, (_, modId: string) => modId, (runningMods, modId) => {
 	return runningMods.includes(modId)
@@ -67,7 +66,7 @@ export const ModListItem = (props: {
 }
 
 export function ModList() {
-	const { data: allMods, isFetching, error } = api.useGetInstalledModsQuery()
+	const { data: allMods, isFetching, error } = api.getInstalledMods.useQuery()
 
 	const selectedModId = useAppSelector(s => s.app.selectedModId)
 	const selectedMod = useSelector(() => selectMod(allMods, selectedModId))
@@ -125,9 +124,7 @@ export function ModList() {
 }
 
 function ModDetails() {
-	const [playMod] = api.usePlayModMutation()
-
-	const { data: allMods } = api.useGetInstalledModsQuery()
+	const { data: allMods } = api.getInstalledMods.useQuery()
 	const modsGroupedByVersion = useSelector(() => selectModsGroupedByVersion(allMods))
 
 	const modId = useAppSelector(s => s.app.selectedModId)
@@ -135,14 +132,13 @@ function ModDetails() {
 	const modIsRunning = useAppSelector(s => selectIsModRunning(s, mod?.id ?? ""))
 	const versions = mod && modsGroupedByVersion?.[mod.uniqueName]
 
-	const { data: modCacheExists } = api.useModCacheExistsQuery(mod ?? skipToken)
-	const [clearModCache] = api.useClearModCacheMutation()
+	const { data: modCacheExists } = api.modCacheExists.useQuery(mod ?? skipToken)
 
 	const [el, setEl] = useStateRef<HTMLDivElement>()
 
 	useEffect(() => {
 		triggerTransition(el, Style.init)
-	}, [mod])
+	}, [el, mod])
 
 	const icon = useObjectUrl(mod?.icon, { type: 'image/png' })
 	const logo = useObjectUrl(mod?.cover, { type: 'image/png' })
@@ -175,7 +171,7 @@ function ModDetails() {
 			<div className="grow" />
 			<div className="hbox gap">
 				<Button disabled={modIsRunning} className="grow" onClick={async () => {
-					const pid = await awaitRtk(spin(playMod(mod.filePath!)))
+					const pid = await spin(api.playMod(mod.filePath!))
 					assert(pid)
 					toast(`Started "${mod.displayName}"`)
 
@@ -188,7 +184,7 @@ function ModDetails() {
 				</Button>
 				{ modCacheExists ?
 					<Button disabled={modIsRunning} onClick={async () => {
-						await awaitRtk(spin(clearModCache(mod)))
+						await spin(api.clearModCache(mod))
 						toast(`Cleared cache for "${mod.displayName}"`)
 					}}>
 						Clear cache
@@ -201,13 +197,12 @@ function ModDetails() {
 
 
 export default function Mods() {
-	const modsList = api.useGetInstalledModsQuery()
-	const [playUnmodified] = api.usePlayVanillaMutation()
+	const modsList = api.getInstalledMods.useQuery()
 
 	return <div className="vbox gap grow isolation overflow-hidden">
 		<div className="hbox gap">
 			<Button onClick={async () => {
-				await awaitRtk(spin(playUnmodified()))
+				await spin(api.playVanilla())
 				toast("Game started")
 			}}>
 				Play unmodified
@@ -219,13 +214,14 @@ export default function Mods() {
 				Browse
 			</Button>
 			<Button disabled={modsList.isFetching} onClick={async () => {
-				await awaitRtk(modsList.refetch())
+				await modsList.refetch()
 				toast("Mods list reloaded")
 			}}>
 				Refresh
 			</Button>
 		</div>
 		<div className="hbox gap grow overflow-hidden">
+
 			<ModList />
 			<ModDetails />
 		</div>

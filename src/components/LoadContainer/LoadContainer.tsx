@@ -15,7 +15,7 @@ export function LoadContainer(props: React.ComponentProps<'div'> & {
 			{ render ? <div className="invisible hidden absolute">{children}</div> : null }
 		</>
 	}
-	if (error !== undefined) {
+	if (error != null) {
 		return <ErrorMsg {...htmlProps} error={error} />
 	}
 	return <div {...htmlProps}>

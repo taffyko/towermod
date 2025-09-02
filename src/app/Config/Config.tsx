@@ -1,5 +1,4 @@
 import { newApi as api } from "@/api"
-// import { awaitRtk } from "@/api/helpers"
 import { openModal } from "@/app/Modal"
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
 import { toast } from "@/app/Toast"
@@ -12,11 +11,13 @@ import Text from "@/components/Text"
 import { actions, dispatch } from "@/redux"
 import { assert } from "@/util"
 import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc"
-import { Project } from "@towermod"
+import { Game, Project } from "@towermod"
 import { win32 as path } from "path"
 import { useEffect, useState } from "react"
 import { spin } from "../GlobalSpinner"
 import { ConfirmModal } from "../Modal"
+import { useQuery } from "@tanstack/react-query"
+import { invoke } from "@tauri-apps/api/core"
 
 function SetGameModal(props: {
 	initialValue: string,

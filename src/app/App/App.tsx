@@ -1,30 +1,28 @@
-import Style from './App.module.scss'
-import Mods from '@/app/Mods'
-import { ErrorBoundary } from '@/app/ErrorBoundary'
-import { Tabs } from '@/app/Tabs'
-import { useEffect, useMemo } from 'react'
-import { TitleBar } from '@/app/TitleBar'
+import api from '@/api'
+import Config from '@/app/Config'
 import { Data } from '@/app/Data'
+import { ErrorBoundary } from '@/app/ErrorBoundary'
 import { Events } from '@/app/Events'
 import Images from '@/app/Images'
-import Config from '@/app/Config'
-import { useEventListener, useIsInert, useMountEffect, useStateRef } from '@/util/hooks'
 import { ModalParent } from '@/app/Modal'
-import { api } from '@/api'
+import Mods from '@/app/Mods'
+import { Tabs } from '@/app/Tabs'
+import { TitleBar } from '@/app/TitleBar'
 import { ToastContainer, toast } from '@/app/Toast'
-import { Portal } from '@/components/Portal'
-import { GlobalSpinner, spin } from '../GlobalSpinner'
-import { DragDropHandler } from '../DragDropHandler'
-import { useTauriEvent } from '@/util'
 import { installMods } from '@/appUtil'
-import { awaitRtk } from '@/api/helpers'
-import { actions, dispatch } from '@/redux'
 import { showError } from '@/components/Error'
+import { Portal } from '@/components/Portal'
+import { actions, dispatch } from '@/redux'
+import { useTauriEvent } from '@/util'
+import { useEventListener, useIsInert, useMountEffect, useStateRef } from '@/util/hooks'
+import { useEffect, useMemo } from 'react'
+import { DragDropHandler } from '../DragDropHandler'
+import { GlobalSpinner, spin } from '../GlobalSpinner'
+import Style from './App.module.scss'
 
 const App = () => {
-	const { data: dataIsLoaded } = api.useIsDataLoadedQuery()
-	const [init] = api.useInitMutation()
-	const { data: game } = api.useGetGameQuery()
+	const { data: dataIsLoaded } = api.isDataLoaded.useQuery()
+	const { data: game } = api.getGame.useQuery()
 
 	useEffect(() => {
 		dispatch(actions.setTabEnabled({ tab: 'Mods', enabled: !!game }))
@@ -44,7 +42,7 @@ const App = () => {
 	), [])
 
 	useMountEffect(() => {
-		awaitRtk(spin(init()))
+		spin(api.init())
 	})
 
 	const [titleRef, setTitleRef] = useStateRef<HTMLDivElement>()

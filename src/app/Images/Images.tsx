@@ -1,11 +1,10 @@
-import { api } from "@/api"
+import api from "@/api"
 import { Button } from "@/components/Button"
 import { useEffect, useMemo, useState } from "react"
 import { InspectorObject } from "../Data/Inspector"
 import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useSize, useStateRef, useTwoWaySubmitBinding } from "@/util"
 import { toast } from "../Toast"
 import { spin } from "../GlobalSpinner"
-import { awaitRtk } from "@/api/helpers"
 import { actions, dispatch, useAppSelector } from "@/redux"
 import { SpinBox } from "@/components/SpinBox"
 import { Toggle } from "@/components/Toggle"
@@ -24,12 +23,12 @@ import { save } from "@tauri-apps/plugin-dialog"
 import { exists, writeFile } from "@tauri-apps/plugin-fs"
 import { invoke } from "@tauri-apps/api/core"
 import { fetchRtk } from "@/appUtil"
+import { invalidate } from "@/api/helpers"
 
 export default function Images() {
-	const [dumpImages] = api.useDumpImagesMutation()
-	const { data: imageDumpDir } = api.useImageDumpDirPathQuery()
-	const { data: project } = api.useGetProjectQuery()
-	const { data: isDataLoaded } = api.useIsDataLoadedQuery()
+	const { data: imageDumpDir } = api.imageDumpDirPath.useQuery()
+	const { data: project } = api.getProject.useQuery()
+	const { data: isDataLoaded } = api.isDataLoaded.useQuery()
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
 
 	return <div className="vbox gap grow">
@@ -45,7 +44,7 @@ export default function Images() {
 		}
 	</div>
 	async function onClickDumpImages() {
-		await awaitRtk(spin(dumpImages()))
+		await spin(api.dumpImages())
 		toast("Dumped images")
 	}
 
@@ -64,15 +63,14 @@ export default function Images() {
 
 function ImageEditing() {
 	const imageId = useAppSelector(s => s.app.imageId)
-	const { currentData: img } = api.useGetGameImageUrlQuery(imageId)
-	const { currentData: savedMetadata } = api.useGetImageMetadataQuery({ id: imageId })
-	const { currentData: isOverridden } = api.useIsImageOverriddenQuery(imageId)
-	const [setImageMetadata] = api.useSetImageMetadataMutation()
-	const { currentData: project } = api.useGetProjectQuery()
-	const { currentData: imageDumpDir } = api.useImageDumpDirPathQuery()
+	const { data: img } = api.getGameImageUrl.useQuery(imageId)
+	const { data: savedMetadata } = api.getImageMetadata.useQuery({ id: imageId })
+	const { data: isOverridden } = api.isImageOverridden.useQuery(imageId)
+	const { data: project } = api.getProject.useQuery()
+	const { data: imageDumpDir } = api.imageDumpDirPath.useQuery()
 	const projectImagesDir = project ? path.join(project.dirPath, 'images') : undefined
 
-	const [metadata, setMetadata, isMetadataDirty, submitMetadata] = useTwoWaySubmitBinding(savedMetadata, (m) => m && setImageMetadata(m))
+	const [metadata, setMetadata, isMetadataDirty, submitMetadata] = useTwoWaySubmitBinding(savedMetadata, (m) => m && api.setImageMetadata(m))
 	const showCollision = useAppSelector(s => s.app.showImageCollisionPreview)
 
 	return <>
@@ -128,7 +126,7 @@ function ImageEditing() {
 		const filePath = await filePicker({ filters: [{ name: 'PNG Image', extensions: ['png'] }] })
 		if (!filePath) { return }
 		const newMetadata = await applyMaskFromImagePath(metadata, filePath)
-		setImageMetadata(newMetadata)
+		api.setImageMetadata(newMetadata)
 	}
 
 	async function onClickExportMask() {
@@ -155,7 +153,7 @@ function ImageEditing() {
 		assert(projectImagesDir, "Project not set")
 		const imgPath = path.join(projectImagesDir, `${imageId}.png`)
 		await deleteFile(imgPath)
-		await dispatch(api.util.invalidateTags([{ type: 'Image', id: String(imageId) }]))
+		invalidate(api.tags.image.id(imageId))
 		toast(`Deleted custom image '${imageId}'`)
 	}
 
@@ -174,7 +172,7 @@ function ImageEditing() {
 	async function onClickNewImage() {
 		assert(projectImagesDir, "Project not set")
 		const newImageId = await invoke<number>('get_new_image_id')
-		dispatch(api.util.invalidateTags([{ type: 'Image' }]))
+		invalidate(api.tags.image.all)
 		const imgPath = await filePicker({ title: "Select image", filters: [{ name: 'PNG Image', extensions: ['png'] }] })
 		if (!imgPath) { return }
 		dispatch(actions.setImageId(newImageId))
@@ -194,7 +192,7 @@ function ImageEditing() {
 			if (!imgPath) { return }
 			await spin(copyFile(imgPath, destImgPath))
 		}
-		dispatch(api.util.invalidateTags([{ type: 'Image', id: String(imageId) }]))
+		invalidate(api.tags.image.id(imageId))
 		if (!metadata) {
 			let newMetadata: ImageMetadata = {
 				_type: 'ImageMetadata',
@@ -214,7 +212,7 @@ function ImageEditing() {
 		return imgPath
 	}
 	async function onClickReloadAllImages() {
-		dispatch(api.util.invalidateTags(['Image']))
+		invalidate(api.tags.image.all)
 		toast("Reloaded images")
 	}
 }
@@ -225,7 +223,7 @@ function ImagePreview(props: {
 	metadata?: ImageMetadata,
 }) {
 	const { imageId, metadata, showCollision } = props
-	const { currentData: imgDataObj, isFetching } = api.useGetGameImageUrlQuery(imageId)
+	const { data: imgDataObj, isFetching } = api.getGameImageUrl.useQuery(imageId)
 	const imgUrl = imgDataObj?.url ?? undefined
 
 	const [imgEl, setImgEl] = useStateRef<HTMLImageElement>()

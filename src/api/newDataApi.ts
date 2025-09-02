@@ -6,7 +6,7 @@ import { createMutation, createQuery, invalidate, queryClient, whenQueryEvicted 
 
 
 const r = ['Game', 'Data']
-const tags = {
+export const tags = {
 	data: r,
 	image: {
 		all: [...r, 'Image'],

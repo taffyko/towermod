@@ -26,10 +26,12 @@ export const getFile = createQuery({
 export const getGame = createQuery({
 	queryFn: async () => {
 		const game: Game = await invoke('get_game')
+		console.log('get_game', game) // FIXME
 		return game ?? null
 	},
 	queryKey: tags.game,
 })
+
 export const getProject = createQuery({
 	queryFn: async () => {
 		const project: Project = await invoke('get_project')
@@ -67,7 +69,7 @@ export const newProject = createMutation({
 	mutationFn: async () => {
 		await invoke('new_project')
 	},
-	onSuccess: () => invalidate(tags.project),
+	onSuccess: () => invalidate(tags.project, tags.data),
 })
 export const exportMod = createMutation({
 	mutationFn: async (modType: ModType) => {
@@ -197,8 +199,7 @@ export const init = createMutation({
 		await invoke('init')
 	},
 	onSuccess: () => {
-		queryClient.getQueryCache().clear()
-		queryClient.getMutationCache().clear()
+		invalidate(tags.game, tags.modInfo)
 	}
 })
 

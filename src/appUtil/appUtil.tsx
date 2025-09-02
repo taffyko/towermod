@@ -1,5 +1,5 @@
-import { api } from '@/api'
-import { awaitRtk } from "@/api/helpers"
+import newApi, { api } from '@/api'
+import { awaitRtk } from '@/api/helpers'
 import { spin } from "@/app/GlobalSpinner"
 import { openModal } from "@/app/Modal"
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
@@ -10,9 +10,9 @@ import { ApiEndpointMutation, ApiEndpointQuery, MutationDefinition, QueryDefinit
 import { useCallback, useRef, useState, useSyncExternalStore } from "react"
 
 export async function saveProject() {
-	const saveProject = (dirPath: string) => awaitRtk(dispatch(api.endpoints.saveProject.initiate(dirPath)))
-	const saveNewProject = (form: ProjectDetailsFormData) => awaitRtk(dispatch(api.endpoints.saveNewProject.initiate(form)))
-	const project = await awaitRtk(spin(dispatch(api.endpoints.getProject.initiate())))
+	const saveProject = (dirPath: string) => newApi.saveProject(dirPath)
+	const saveNewProject = (form: ProjectDetailsFormData) => newApi.saveNewProject(form)
+	const project = await newApi.getProject()
 
 	if (project && project.dirPath) {
 		await spin(saveProject(project.dirPath))
@@ -30,7 +30,7 @@ export async function installMods(files: string[]) {
 	activateWindow()
 	const { dispatch, actions } = await import('@/redux')
 	for (const file of files) {
-		const modInfo = await awaitRtk(spin(dispatch(api.endpoints.installMod.initiate(file))))
+		const modInfo = await spin(newApi.installMod(file))
 		if (modInfo) {
 			toast(`Installed mod: "${modInfo.name}" (v${modInfo.version})`)
 			dispatch(actions.setCurrentTab('Mods'))
