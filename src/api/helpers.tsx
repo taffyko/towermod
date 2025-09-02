@@ -1,4 +1,4 @@
-import { DefaultError, Query, QueryCache, QueryClient, QueryFunctionContext, QueryKey, UseMutationOptions, UseQueryOptions, useMutation, useQuery } from '@tanstack/react-query'
+import { DefaultError, Query, QueryCache, QueryClient, QueryFunctionContext, QueryKey, StaleTime, UseMutationOptions, UseMutationResult, UseQueryOptions, UseQueryResult, useMutation, useQuery } from '@tanstack/react-query'
 import { MaybePromise } from "./baseApiUtil"
 import { renderError } from '@/components/Error'
 import { toast } from '@/app/Toast'
@@ -65,6 +65,12 @@ export function createQuery<
 >(
 	name: TName,
 	baseOptions: CreateQueryOptions<TQueryFnData, TError, TData, TQueryKey, TArg>
+): (
+	Record<TName, (arg: TArg, optionsOverrides?: { staleTime?: StaleTime }) => Promise<TData>>
+	& Record<
+		`use${Capitalize<TName>}`,
+		(arg: TArg, optionsOverrides?: Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryFn' | 'queryKey'>) => UseQueryResult<NoInfer<TData>, TError>
+	>
 ) {
 	function getOptions(arg: TArg): UseQueryOptions<TQueryFnData, TError, TData, TQueryKey> {
 		if (typeof baseOptions === 'function') {
@@ -82,7 +88,7 @@ export function createQuery<
 		const options = { ...getOptions(arg), ...optionsOverrides }
 		return useQuery(options)
 	}
-	function fetchQuery(arg: TArg, optionsOverrides?: { staleTime?: 10000 }): Promise<TData> {
+	function fetchQuery(arg: TArg, optionsOverrides?: { staleTime?: StaleTime }): Promise<TData> {
 		const options = getOptions(arg)
 		return queryClient.fetchQuery({
 			queryKey: options.queryKey,
@@ -90,8 +96,8 @@ export function createQuery<
 			...optionsOverrides
 		})
 	}
-	const hookName = `use${capitalize(name)}` as `use${Capitalize<TName>}`
-	return { [name]: fetchQuery, [hookName]: useQueryHook } as const
+	const hookName = `use${capitalize(name)}`
+	return { [name]: fetchQuery, [hookName]: useQueryHook } as any
 }
 
 /** Spinoff of UseQueryOptions where either:
@@ -119,6 +125,12 @@ export function createMutation<
 >(
 	name: TName,
 	options: UseMutationOptions<TData, TError, TVariables, TContext>
+): (
+	Record<TName, (arg: TVariables) => Promise<TData>>
+	& Record<
+		`use${Capitalize<TName>}`,
+		(optionsOverrides?: Omit<UseMutationOptions<TData, TError, TVariables, TContext>, "queryFn">) => UseMutationResult<TData, TError, TVariables, TContext>
+	>
 ) {
 	function useMutationHook(optionsOverrides?: Omit<UseMutationOptions<TData, TError, TVariables, TContext>, 'queryFn'>) {
 		return useMutation({ ...options, ...optionsOverrides })
@@ -128,8 +140,8 @@ export function createMutation<
 		return mutation.execute(arg)
 	}
 
-	const hookName = `use${capitalize(name)}` as `use${Capitalize<TName>}`
-	return { [name]: fetchMutation, [hookName]: useMutationHook } as const
+	const hookName = `use${capitalize(name)}`
+	return { [name]: fetchMutation, [hookName]: useMutationHook } as any
 }
 
 export function invalidate(...keys: QueryKey[]) {

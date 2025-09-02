@@ -1,8 +1,7 @@
-import { invoke } from "@tauri-apps/api/core"
-import { createMutation, createQuery, invalidate, queryClient } from "./helpers"
-import { Game, ImageMetadata, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod'
-import { useQuery } from "@tanstack/react-query"
 import { binaryInvoke, enhanceModInfo, svgToDataUri } from "@/util"
+import { invoke } from "@tauri-apps/api/core"
+import { Game, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod'
+import { createMutation, createQuery, invalidate, queryClient } from "./helpers"
 
 
 const tags = {
@@ -414,7 +413,7 @@ export const api = {
 			await invoke('nuke_cache')
 		},
 	})
-}
+} as const
 
 
 async function _getFile(path: string): Promise<Uint8Array | null> {

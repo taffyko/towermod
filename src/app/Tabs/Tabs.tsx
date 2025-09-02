@@ -1,4 +1,4 @@
-import React, { useCallback } from "react"
+import React, { Suspense, useCallback } from "react"
 import Style from './Tabs.module.scss'
 import { useEventListener, useIsInert } from "@/util/hooks"
 import Text from '@/components/Text'
@@ -49,17 +49,20 @@ export const Tabs = (props: {
 				)}
 			</div>
 		</div>
-		{tabs.map(tab => {
-			// render all tabs simultaneously so that tab state
-			const children = props.tabs[tab]
-			return <div
-				key={tab}
-				// @ts-ignore
-				inert={tab !== currentTab}
-				className={`${Style.tabContent} ${tab === currentTab ? '' : Style.hidden} stretchbox`}
-			>
-				{children}
-			</div>
-		})}
+		{/* FIXME: use global loading spinner */}
+		<Suspense fallback={<div>loading...</div>}>
+			{tabs.map(tab => {
+				// render all tabs simultaneously so that tab state
+				const children = props.tabs[tab]
+				return <div
+					key={tab}
+					// @ts-ignore
+					inert={tab !== currentTab}
+					className={`${Style.tabContent} ${tab === currentTab ? '' : Style.hidden} stretchbox`}
+				>
+					{children}
+				</div>
+			})}
+		</Suspense>
 	</div>
 }

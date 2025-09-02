@@ -527,7 +527,7 @@ export const api = {
 		mutationFn: (name: string) => invoke('create_trait', { name }),
 		onSuccess: (_r, arg) => invalidate(tags.object.id({ _type: 'ObjectTrait', name: arg }))
 	}),
-}
+} as const
 
 export async function _getTowermodObject(lookup: UniqueObjectLookup): Promise<UniqueTowermodObject | null> {
 	const type = lookup._type
