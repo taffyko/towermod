@@ -5,7 +5,7 @@ import { openModal } from "@/app/Modal"
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
 import { toast } from "@/app/Toast"
 import { dispatch, store } from "@/redux"
-import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, assertUnreachable, useMountEffect, useObjectUrl } from "@/util"
+import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, assertUnreachable, getObjectDisplayName, useMountEffect, useObjectUrl } from "@/util"
 import { ApiEndpointMutation, ApiEndpointQuery, MutationDefinition, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query"
 import { useCallback, useRef, useState, useSyncExternalStore } from "react"
 
@@ -202,46 +202,6 @@ export function useObjectIcon(objLookup: UniqueObjectLookup | null | undefined):
 	hasIcon = hasIcon || imageId != null
 	const { currentData: img, isFetching: urlLoading } = api.useGetGameImageUrlQuery(imageId ?? skipToken)
 	return { data: img?.url ?? undefined, hasIcon, isLoading: objIsLoading || imageIdLoading || urlLoading }
-}
-
-
-export function getObjectDisplayName(obj: UniqueTowermodObject) {
-	const typeName = obj._type
-	switch (typeName) {
-		case 'Layout':
-			return `Layout: ${obj.name}`
-		case 'LayoutLayer':
-			return `Layer ${obj.id}: ${obj.name}`
-		case 'ObjectInstance': {
-			// TODO: stamp type name and plugin name on instances from backend
-			return `Instance: ${obj.id}`
-		} case 'Animation':
-			if (obj.isAngle) {
-				return `Angle ${obj.angle}°`
-			}
-			return `Animation: ${obj.name}`
-		case 'Behavior':
-			return `Behavior: ${obj.name}`
-		case 'Container':
-			// TODO: stamp object type name on containers from backend
-			return `Container: ${obj.id}`
-		case 'Family':
-			return `Family: ${obj.name}`
-		case 'ObjectType': {
-			if (obj.pluginName === 'Sprite') {
-				return obj.name
-			} else {
-				return `${obj.name} (${obj.pluginName})`
-			}
-		} case 'ObjectTrait':
-			return `Trait: ${obj.name}`
-		case 'ImageMetadata':
-			return `Image: ${obj.id}`
-		case 'AppBlock':
-			return 'Project Settings'
-		default:
-			assertUnreachable(typeName)
-	}
 }
 
 // TODO: eliminate

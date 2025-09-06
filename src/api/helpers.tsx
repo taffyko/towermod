@@ -74,32 +74,46 @@ export function createQuery<
 		} else {
 			options = { ...baseOptions, queryFn: baseOptions.queryFn.bind(null, arg) }
 		}
-		const deps = typeof options.deps === 'function' ? options.deps(arg) : options.deps
+		const baseDeps = typeof options.deps === 'function' ? options.deps(arg) : options.deps
 		const queryFn = options.queryFn
 		options.queryKey = [queryName, arg]
-		options.meta = { deps }
-		options.queryFn = () => {
-			const data: TData = queryFn(arg)
+		options.meta = { deps: baseDeps }
+		options.queryFn = (baseContext: QueryFunctionContext<any, never>) => {
+			const context = { ...baseContext, depsContext: [] }
+			const data: TData = queryFn(arg, context)
+			const parentDeps = baseOptions.depsContext ?? []
+			let deps = baseDeps
 			if (typeof options.deps === 'function') {
 				// update deps using result
-				const deps = options.deps(arg, data)
-				const meta = queryClient.getQueryCache().find({ queryKey: options.queryKey })?.meta || {}
-				meta.deps = deps
+				deps = options.deps(arg, data)
 			}
+			deps.push(...context.depsContext)
+			const meta = queryClient.getQueryCache().find({ queryKey: options.queryKey })?.meta || {}
+			meta.deps = deps
+			parentDeps.push(...deps)
 			return data
 		}
 		return options
 	}
 
-	function useQueryHook(arg: TArg | SkipToken, optionsOverrides?: Omit<UseQueryOptions<TQueryFnData, TError, TData>, 'queryFn' | 'queryKey'>) {
+	type AdditionalOpts = {
+		staleTime?: StaleTime
+		/**
+		 * Used to help implement queries that call other queries.
+		 * In the parent query's queryFn, pass context.depsContext to the callee query via this option.
+		 * The deps from the callee query will be added to the parent query's deps.
+		 */
+		depsContext?: QueryDependency[]
+	}
+	function useQueryHook(arg: TArg | SkipToken, optionsOverrides?: Omit<UseQueryOptions<TQueryFnData, TError, TData>, 'queryFn' | 'queryKey'> & AdditionalOpts) {
 		const options = { ...getOptions(arg), ...optionsOverrides }
 		return useQuery(options)
 	}
-	function useSuspenseQueryHook(arg: TArg, optionsOverrides?: Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData>, 'queryFn' | 'queryKey'>) {
+	function useSuspenseQueryHook(arg: TArg, optionsOverrides?: Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData>, 'queryFn' | 'queryKey'> & AdditionalOpts) {
 		const options = { ...getOptions(arg), ...optionsOverrides }
 		return useSuspenseQuery(options)
 	}
-	function fetchQuery(arg: TArg | SkipToken, optionsOverrides?: { staleTime?: StaleTime }): Promise<TData> {
+	function fetchQuery(arg: TArg | SkipToken, optionsOverrides?: AdditionalOpts): Promise<TData> {
 		const options = getOptions(arg)
 		return queryClient.fetchQuery({
 			queryKey: options.queryKey,
@@ -129,11 +143,17 @@ type CreateQueryOptions<
 	(
 		Omit<UseQueryOptions<TQueryFnData, TError, TData, any>, 'queryFn' | 'queryKey'>
 		& {
-			queryFn: (arg: TArg, context: QueryFunctionContext<any, never>) => TQueryFnData | Promise<TQueryFnData>
+			queryFn: (arg: TArg, context: QueryFunctionContext<any, never> & CreateQueryContext) => TQueryFnData | Promise<TQueryFnData>
 			deps?: QueryDependency[] | ((arg: TArg, result?: TData) => QueryDependency[])
+			depsContext?: QueryDependency[]
 		}
 	)
-	| ((arg: TArg) => Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData, any>, 'queryKey'>) & { deps?: QueryDependency[] }
+	| ((arg: TArg) => Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData, any>, 'queryKey'>) & { deps?: QueryDependency[], depsContext?: QueryDependency[] }
+/** Special context object passed to queryFn of createQuery */
+type CreateQueryContext = {
+	/** Any deps pushed to this array by `queryFn` will be added to the query's `deps` */
+	readonly depsContext: QueryDependency[]
+}
 
 export function createMutation<
 	TData = unknown,

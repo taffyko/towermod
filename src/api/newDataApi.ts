@@ -1,8 +1,9 @@
 import type { LookupForType, UniqueObjectLookup, UniqueObjectTypes, UniqueTowermodObject } from '@/util'
 import { assertUnreachable, binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, purifyLookup, revokeObjectUrl } from "@/util"
 import { invoke } from "@tauri-apps/api/core"
-import { Animation, ImageMetadata, ObjectType, SearchOptions } from '@towermod'
+import { Animation, ImageMetadata, ObjectType, PluginData, SearchOptions } from '@towermod'
 import { createMutation, createQuery, invalidate, queryClient, QueryDependency, whenQueryEvicted } from "./helpers"
+import { getObjectDisplayName } from '@/util/dataUtil'
 
 
 const r = ['Game', 'Data']
@@ -113,7 +114,7 @@ export const isImageOverridden = createQuery({
 // 	providesTags: ['Data']
 // }),
 export const getEditorPlugin = createQuery({
-	queryFn: (id: int) => invoke('get_editor_plugin', { id }),
+	queryFn: (id: int) => invoke<PluginData>('get_editor_plugin', { id }),
 	deps: [{ type: 'Data', id: 'singleton' }],
 })
 
@@ -122,7 +123,7 @@ export const getEditorPlugin = createQuery({
 // 	providesTags: ['Data']
 // }),
 export const getEditorPlugins = createQuery({
-	queryFn: () => invoke('get_editor_plugins'),
+	queryFn: () => invoke<Record<number, PluginData>>('get_editor_plugins'),
 	deps: [{ type: 'Data', id: 'singleton' }],
 })
 
@@ -531,6 +532,25 @@ export const getTowermodObject = createQuery({
 		return await _getTowermodObject(lookup)
 	},
 	deps: (lookup) => [towermodObjectToDep(lookup)]
+})
+
+export const getTowermodObjectDisplayName = createQuery({
+	queryFn: async (lookup: UniqueObjectLookup, { depsContext }): Promise<string | null> => {
+		const obj = await getTowermodObject(lookup, { depsContext })
+		if (obj == null) { return null }
+		switch (obj._type) {
+			case 'ObjectInstance': {
+				const objType = await getTowermodObject({ _type: 'ObjectType', id: obj.objectTypeId }, { depsContext }) as ObjectType | null
+				const plugin = objType && await getEditorPlugin(objType.pluginId, { depsContext })
+				const pluginName = plugin?.stringTable?.name
+				return `Instance: ${pluginName} (${objType?.name}: ${obj.id})`
+			} case 'Container': {
+				const objType = await getTowermodObject({ _type: 'ObjectType', id: obj.id }, { depsContext }) as ObjectType | null
+				return `Container: ${objType?.name}`
+			}
+		}
+		return getObjectDisplayName(obj)
+	},
 })
 
 export const updateTowermodObject = createMutation({
