@@ -500,6 +500,6 @@ export interface FileDialogOptions {
 }
 
 export interface SearchOptions {
-	text: String,
+	text: string,
 	caseSensitive?: boolean,
 }

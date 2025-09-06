@@ -59,30 +59,43 @@ export function createQuery<
 	TQueryFnData = unknown,
 	TError = DefaultError,
 	TData = TQueryFnData,
-	TQueryKey extends QueryKey = QueryKey,
 	TArg = void
 >(
-	baseOptions: CreateQueryOptions<TQueryFnData, TError, TData, TQueryKey, TArg>
+	baseOptions: CreateQueryOptions<TQueryFnData, TError, TData, TArg>
 ) {
-	function getOptions(arg: TArg | SkipToken): UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey> {
+	const queryName: string = crypto.randomUUID()
+	function getOptions(arg: TArg | SkipToken): UseSuspenseQueryOptions<TQueryFnData, TError, TData> {
 		if (arg === skipToken) {
 			return { queryFn: skipToken, queryKey: ['null'] } as any
-		} else if (typeof baseOptions === 'function') {
-			return baseOptions(arg)
-		} else {
-			return {
-				...baseOptions,
-				queryFn: baseOptions.queryFn.bind(null, arg),
-				queryKey: typeof baseOptions.queryKey === 'function' ? baseOptions.queryKey(arg) : baseOptions.queryKey
-			}
 		}
+		let options: any
+		if (typeof baseOptions === 'function') {
+			options = baseOptions(arg)
+		} else {
+			options = { ...baseOptions, queryFn: baseOptions.queryFn.bind(null, arg) }
+		}
+		const deps = typeof options.deps === 'function' ? options.deps(arg) : options.deps
+		const queryFn = options.queryFn
+		options.queryKey = [queryName, arg]
+		options.meta = { deps }
+		options.queryFn = () => {
+			const data: TData = queryFn(arg)
+			if (typeof options.deps === 'function') {
+				// update deps using result
+				const deps = options.deps(arg, data)
+				const meta = queryClient.getQueryCache().find({ queryKey: options.queryKey })?.meta || {}
+				meta.deps = deps
+			}
+			return data
+		}
+		return options
 	}
 
-	function useQueryHook(arg: TArg | SkipToken, optionsOverrides?: Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryFn' | 'queryKey'>) {
+	function useQueryHook(arg: TArg | SkipToken, optionsOverrides?: Omit<UseQueryOptions<TQueryFnData, TError, TData>, 'queryFn' | 'queryKey'>) {
 		const options = { ...getOptions(arg), ...optionsOverrides }
 		return useQuery(options)
 	}
-	function useSuspenseQueryHook(arg: TArg, optionsOverrides?: Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryFn' | 'queryKey'>) {
+	function useSuspenseQueryHook(arg: TArg, optionsOverrides?: Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData>, 'queryFn' | 'queryKey'>) {
 		const options = { ...getOptions(arg), ...optionsOverrides }
 		return useSuspenseQuery(options)
 	}
@@ -96,24 +109,31 @@ export function createQuery<
 	}
 	fetchQuery.useQuery = useQueryHook
 	fetchQuery.useSuspenseQuery = useSuspenseQueryHook
+	fetchQuery.queryKey = (arg: TArg) => [queryName, arg] as QueryKey
 	return fetchQuery
 }
 
+export type QueryDependency =
+	{ type: string, id: unknown, with?: Record<string, boolean> } // item - (use { id: 'singleton' } for singleton types)
+	| { type: string, with?: Record<string, boolean>, filter?: Record<string, unknown> } // list
+
 /** Spinoff of UseQueryOptions where either:
- 1. `queryFn` and `queryKey` are functions that take the query arg as a parameter.
+ 1. `queryFn` and ~~`queryKey`~~ `deps` are functions that take the query arg as a parameter.
  2. Options are instead a function that takes a query arg and returns an options object.
+
+ The `deps` array refers to: "which models/records/resources on the server does this query's result depend on?"
  */
 type CreateQueryOptions<
-	TQueryFnData = unknown, TError = DefaultError, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey, TArg = void
+	TQueryFnData = unknown, TError = DefaultError, TData = TQueryFnData, TArg = void
 > =
 	(
-		Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryFn' | 'queryKey'>
+		Omit<UseQueryOptions<TQueryFnData, TError, TData, any>, 'queryFn' | 'queryKey'>
 		& {
-			queryFn: (arg: TArg, context: QueryFunctionContext<TQueryKey, never>) => TQueryFnData | Promise<TQueryFnData>
-			queryKey: TQueryKey | ((arg: TArg) => TQueryKey)
+			queryFn: (arg: TArg, context: QueryFunctionContext<any, never>) => TQueryFnData | Promise<TQueryFnData>
+			deps?: QueryDependency[] | ((arg: TArg, result?: TData) => QueryDependency[])
 		}
 	)
-	| ((arg: TArg) => UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey>)
+	| ((arg: TArg) => Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData, any>, 'queryKey'>) & { deps?: QueryDependency[] }
 
 export function createMutation<
 	TData = unknown,
@@ -134,8 +154,67 @@ export function createMutation<
 	return fetchMutation
 }
 
-export function invalidate(...keys: QueryKey[]) {
-	for (const key of keys) {
-		queryClient.invalidateQueries({ queryKey: key })
-	}
+const typeDependencyMap: Record<string, string[]> = {
+	'Data': ['Game'],
+	'Project': ['Game'],
+	'ImageDump': ['Game'],
+	'Layout': ['Data'],
+	'LayoutLayer': ['Data'],
+	'ObjectInstance': ['Data'],
+	'Animation': ['Data'],
+	'Behavior': ['Data'],
+	'Container': ['Data'],
+	'Family': ['Data'],
+	'ObjectType': ['Data'],
+	'ObjectTrait': ['Data'],
+	'ImageMetadata': ['Data'],
+	'AppBlock': ['Data'],
+}
+
+export function invalidate(type: string, id: unknown, options?: { with?: Record<string, boolean>, excludeFilters?: Record<string, unknown> }) {
+	const { with: targetPropertyGroups, excludeFilters } = options ?? {}
+	queryClient.invalidateQueries({ predicate: (query) => {
+		const deps = (query.meta?.deps ?? []) as QueryDependency[]
+		loop: for (const dep of deps) {
+			if (dep.type !== type) {
+				for (const parentType of typeDependencyMap[dep.type] ?? []) {
+					// If invalidating a parent type, always invalidate all child types
+					if (parentType === type) { return true }
+				}
+				continue loop
+			}
+			// If invalidating a specific item, ignore non-matching items
+			// But still invalidate lists (no id in dep)
+			if (id && 'id' in dep) {
+				if (id === 'all') {}
+				else if (id === 'new') {
+					// Invalidating with ID 'new' implies an item will be added with an ID that is not yet known.
+					// Accordingly: Invalidate lists, and invalidate all item queries that have a null/undefined response in the cache.
+					// (meaning that the item did not exist when the query was made, but might exist now)
+					if (query.state.data != null) { continue loop }
+				}
+				else if (!isEqual(id, dep.id)) { continue loop }
+			}
+			// If invalidating specific property groups of an object type,
+			// ignore items where those property groups are specifically not included
+			if (targetPropertyGroups && dep.with) {
+				for (const [key, value] of Object.entries(targetPropertyGroups)) {
+					if (!(key in dep.with) || dep.with[key] !== value) {
+						continue loop
+					}
+				}
+			}
+			// If excluding certain list filters, ignore lists that match those filters
+			if (excludeFilters && 'filter' in dep) {
+				for (const [key, value] of Object.entries(excludeFilters)) {
+					//@ts-ignore
+					if (key in dep.filter && isEqual(value, dep.filter[key])) {
+						continue loop
+					}
+				}
+			}
+			return true
+		}
+		return false
+	}})
 }
