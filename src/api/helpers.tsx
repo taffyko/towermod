@@ -140,8 +140,19 @@ export function createQuery<
 			...optionsOverrides
 		})
 	}
+	function requestCache(arg: TArg, requestOnMiss = true): TData | undefined {
+		const options = getOptions(arg)
+		const query = queryClient.getQueryCache().find<TData>({ queryKey: options.queryKey })
+		if (query?.state.data !== undefined) { 
+			return query.state.data
+		}
+		if (requestOnMiss) { void fetchQuery(arg) }
+		return undefined
+	}
+
 	fetchQuery.useQuery = useQueryHook
 	fetchQuery.useSuspenseQuery = useSuspenseQueryHook
+	fetchQuery.requestCache = requestCache
 	fetchQuery.queryKey = (arg: TArg) => [queryName, arg] as QueryKey
 	return fetchQuery
 }

@@ -2,7 +2,7 @@ import type { LookupForType, UniqueObjectLookup, UniqueObjectTypes, UniqueTowerm
 import { assertUnreachable, binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl } from "@/util"
 import { getObjectDisplayName, getObjectStringId } from '@/util/dataUtil'
 import { invoke } from "@tauri-apps/api/core"
-import { Animation, ImageMetadata, ObjectType, PluginData, SearchOptions } from '@towermod'
+import { Animation, AppBlock, ImageMetadata, ObjectType, PluginData, SearchOptions } from '@towermod'
 import { createMutation, createQuery, invalidate, queryClient, QueryDependency, whenQueryEvicted } from "./helpers"
 
 
@@ -44,6 +44,10 @@ export const tags = {
 // 		}
 // 	},
 // }),
+export const getAppBlock = createQuery({
+	queryFn: async () => enhanceAppBlock(await invoke<AppBlock>('get_app_block')),
+	deps: () => [{ type: 'AppBlock', id: 'singleton' }]
+})
 
 export const getGameImageUrl = createQuery({
 	queryFn: async (id: int) => {

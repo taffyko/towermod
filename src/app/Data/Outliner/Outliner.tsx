@@ -1,7 +1,7 @@
 
-import { api } from '@/api'
+import api from '@/api'
 import { spin } from '@/app/GlobalSpinner'
-import { fetchRtk, QueryScopeFn, useObjectDisplayName, useObjectIcon, useQueryScope } from '@/appUtil'
+import { useObjectDisplayName, useObjectIcon } from '@/appUtil'
 import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu'
 import IconButton from '@/components/IconButton'
 import { Image } from '@/components/Image/Image'
@@ -15,7 +15,7 @@ import { getObjectDisplayName, LookupForType, towermodObjectIdsEqual, UniqueObje
 import { useImperativeHandle, useRerender, useStateRef } from '@/util/hooks'
 import { enumerate, posmod } from '@/util/util'
 import { createSelector } from '@reduxjs/toolkit'
-import { skipToken } from '@reduxjs/toolkit/query'
+import { skipToken } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { debounce } from 'lodash-es'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
@@ -36,14 +36,12 @@ import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursi
 type OutlinerTowermodObject = Exclude<UniqueObjectLookup, LookupForType<'Animation'>>
 	| Animation
 
-function getObjChildren(obj: OutlinerTowermodObject, query: QueryScopeFn | null): undefined | OutlinerTowermodObject[] {
+function getObjChildren(obj: OutlinerTowermodObject): undefined | OutlinerTowermodObject[] {
 	switch (obj._type) {
 		case 'Layout': {
-			const queryName = `getObjChildren.${getTreeItemId(obj)}`
-			return query?.(api.endpoints.getLayoutLayers, obj.name, queryName).data ?? []
+			return api.getLayoutLayers.requestCache(obj.name) ?? []
 		} case 'LayoutLayer': {
-			const queryName = `getObjChildren.${getTreeItemId(obj)}`
-			return query?.(api.endpoints.getObjectInstances, obj.id, queryName).data ?? []
+			return api.getObjectInstances.requestCache(obj.id) ?? []
 		}
 	}
 }
@@ -79,11 +77,10 @@ const getNodeData = (
 	idx: number,
 	nestingLevel: number,
 	_tree: FixedSizeTree<OutlinerNodeData> | null,
-	query: QueryScopeFn | null = null,
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
 	const id: string | number = getTreeItemId(obj)
 
-	const children = getObjChildren(obj, query)
+	const children = getObjChildren(obj)
 
 	const data: OutlinerNodeData = {
 		id,
@@ -111,7 +108,6 @@ type OutlinerNodeMeta = Readonly<{
 
 
 function useOutlinerObjectData(lookup: OutlinerTowermodObject | null, idx: number | null): { obj?: UniqueTowermodObject, hasIcon: null | boolean, iconUrl?: string, displayName?: string, children?: OutlinerTowermodObject[] } {
-	const [query] = useQueryScope()
 	let obj: UniqueTowermodObject | undefined
 	let hasIcon: null | boolean = null
 	let iconUrl: string | undefined
@@ -126,8 +122,8 @@ function useOutlinerObjectData(lookup: OutlinerTowermodObject | null, idx: numbe
 		let iconsPageData: undefined | { url?: string }[]
 		switch (lookup?._type) {
 			case 'ObjectType': {
-				void ({ data: pageData } = query(api.endpoints.getOutlinerObjectTypes, { page, pageSize }, 'getObjects'))
-				void ({ data: iconsPageData } = query(api.endpoints.getOutlinerObjectTypeIcons, { page, pageSize }, 'getIcons'))
+				pageData = api.getOutlinerObjectTypes.requestCache({ page, pageSize })
+				iconsPageData = api.getOutlinerObjectTypeIcons.requestCache({ page, pageSize })
 				bulkQueryImplemented.forObj = true
 				bulkQueryImplemented.forIcon = true
 			} break; case 'Animation':
@@ -170,7 +166,7 @@ function getAddChildImplementation(obj?: UniqueTowermodObject): (() => Promise<v
 		case 'ObjectType':
 			if (obj.pluginName === 'Sprite') {
 				return async () => {
-					const id = await spin(fetchRtk('createAnimation', { objectTypeId: obj.id }))
+					const id = await spin(api.createAnimation({ objectTypeId: obj.id }))
 					dispatch(actions.setOutlinerValue({ _type: 'Animation', id }))
 				}
 			}
@@ -282,14 +278,13 @@ export interface OutlinerProps {
 
 
 export const Outliner = (props: OutlinerProps) => {
-	const [query] = useQueryScope()
-	const layouts = api.useGetLayoutsQuery().data || []
-	const behaviors = api.useGetBehaviorsQuery().data || []
-	const containers = api.useGetContainersQuery().data || []
-	const families = api.useGetFamiliesQuery().data || []
-	const objectTypes = api.useGetObjectTypesQuery().data || []
-	const traits = api.useGetObjectTraitsQuery().data || []
-	const appBlock = api.useGetAppBlockQuery().data
+	const layouts = api.getLayouts.useQuery().data || []
+	const behaviors = api.getBehaviors.useQuery().data || []
+	const containers = api.getContainers.useQuery().data || []
+	const families = api.getFamilies.useQuery().data || []
+	const objectTypes = api.getObjectTypes.useQuery().data || []
+	const traits = api.getObjectTraits.useQuery().data || []
+	const appBlock = api.getAppBlock.useQuery().data
 	const [tree, setTreeRef] = useStateRef<FixedSizeTree<OutlinerNodeData>>()
 	//@ts-ignore
 	window.tree = tree
@@ -366,10 +361,10 @@ export const Outliner = (props: OutlinerProps) => {
 		while (true) {
 			const parentMeta = yield
 			for (const [child, i] of enumerate(parentMeta.data.children ?? [])) {
-				yield getNodeData(child, i, parentMeta.nestingLevel + 1, tree, query)
+				yield getNodeData(child, i, parentMeta.nestingLevel + 1, tree)
 			}
 		}
-	}, [layouts, behaviors, containers, families, objectTypes, traits, query])
+	}, [layouts, behaviors, containers, families, objectTypes, traits])
 
 
 	return <div className="vbox grow">
@@ -466,10 +461,10 @@ function useOutlinerSearch(handle: OutlinerHandle, options: {
 		text: caseSensitive ? search : search.toLowerCase(),
 		caseSensitive
 	} : undefined
-	const matchedObjectTypes = api.useSearchObjectTypesQuery((searchObjectTypes && searchOptions) || skipToken).currentData || emptyArray
-	const matchedLayoutLayers = api.useSearchLayoutLayersQuery((searchLayoutLayers && searchOptions) || skipToken).currentData || emptyArray
-	const matchedObjectInstances = api.useSearchObjectInstancesQuery((searchObjectInstances && searchOptions) || skipToken).currentData || emptyArray
-	const matchedContainers = api.useSearchContainersQuery((searchContainers && searchOptions) || skipToken).currentData || emptyArray
+	const matchedObjectTypes = api.searchObjectTypes.useQuery((searchObjectTypes && searchOptions) || skipToken).data || emptyArray
+	const matchedLayoutLayers = api.searchLayoutLayers.useQuery((searchLayoutLayers && searchOptions) || skipToken).data || emptyArray
+	const matchedObjectInstances = api.searchObjectInstances.useQuery((searchObjectInstances && searchOptions) || skipToken).data || emptyArray
+	const matchedContainers = api.searchContainers.useQuery((searchContainers && searchOptions) || skipToken).data || emptyArray
 
 
 	const [matched, matchedKeys] = useMemo(() => {
