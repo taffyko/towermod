@@ -9,16 +9,16 @@ import IconButton from '@/components/IconButton'
 import iconImg from '@/icons/icon.png'
 import Text from '@/components/Text'
 import chime from '@/audio/chime.ogg'
-import { api } from '@/api'
+import api from '@/api'
 import { ConfirmModal, openModal } from '../Modal'
 import { getVersion, triggerTransition } from '@/util'
 
 const VERSION = await getVersion()
 
 export const TitleBar = () => {
-	const { data: project, isLoading: isLoading1 } = api.useGetProjectQuery()
-	const { data: isDataLoaded, isLoading: isLoading2 } = api.useIsDataLoadedQuery()
-	const { data: game, isLoading: isLoading3 } = api.useGetGameQuery()
+	const { data: project, isLoading: isLoading1 } = api.getProject.useQuery()
+	const { data: isDataLoaded, isLoading: isLoading2 } = api.isDataLoaded.useQuery()
+	const { data: game, isLoading: isLoading3 } = api.getGame.useQuery()
 	const isLoading = isLoading1 || isLoading2 || isLoading3
 
 	const [maximized, setMaximized] = useState(false)

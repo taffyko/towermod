@@ -275,7 +275,7 @@ function getValueComponent(pinfo: AnyPropertyInfo, onChange: (v: any) => void): 
 			return <InspectorArray pinfo={pinfo as any} onChange={onChange} />
 		case 'Dictionary':
 			return <InspectorDictionary pinfo={pinfo as any} onChange={onChange} />
-		case 'number': case 'int': case 'float': case 'RgbColor': /* FIXME: implement color picker */
+		case 'number': case 'int': case 'float': case 'RgbColor': /* TODO: implement color picker */
 			return <InspectorNumeric pinfo={pinfo as any} onChange={onChange} />
 		case 'string':
 			return <InspectorString pinfo={pinfo as any} onChange={onChange} />

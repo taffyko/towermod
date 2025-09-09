@@ -87,7 +87,7 @@ pub trait PeResource: Sized + Send {
 		}
 		panic!()
 	}
-	// FIXME: make async
+	// TODO: make async
 	fn write_to_pe(&self, pe_path: impl AsRef<Path>) -> Result<(), anyhow::Error> {
 		let bin = self.to_bin()?;
 		Self::write_bin(pe_path, &bin)

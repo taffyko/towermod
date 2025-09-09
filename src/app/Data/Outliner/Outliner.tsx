@@ -1,7 +1,6 @@
 
 import api from '@/api'
 import { spin } from '@/app/GlobalSpinner'
-import { useObjectDisplayName, useObjectIcon } from '@/appUtil'
 import { DropdownMenu, ToggleMenuItem } from '@/components/DropdownMenu'
 import IconButton from '@/components/IconButton'
 import { Image } from '@/components/Image/Image'
@@ -10,8 +9,7 @@ import arrowDownImg from '@/icons/arrowDown.svg'
 import arrowRightImg from '@/icons/arrowRight.svg'
 import plusImg from '@/icons/plus.svg'
 import { actions, dispatch, useAppSelector } from '@/redux'
-import { Animation } from '@/towermod'
-import { getObjectDisplayName, OutlinerTowermodObject, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
+import { OutlinerTowermodObject, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
 import { useImperativeHandle, useRerender, useStateRef } from '@/util/hooks'
 import { enumerate, posmod } from '@/util/util'
 import { createSelector } from '@reduxjs/toolkit'
@@ -233,13 +231,11 @@ export const Outliner = (props: OutlinerProps) => {
 	const rerender = useRerender()
 
 	const queuedTreeItemUpdates = useRef<Record<string, OutlinerNodeData[]>>({})
-	const _dispatchTreeItemUpdates = useMemo(() =>
-		debounce((tree: FixedSizeTree<OutlinerNodeData>) => {
-			batchSetTreeItemChildren(tree, queuedTreeItemUpdates.current)
-			queuedTreeItemUpdates.current = {}
-			rerender()
-		}, 5, { trailing: true })
-	, [tree, rerender])
+	const _dispatchTreeItemUpdates = debounce((tree: FixedSizeTree<OutlinerNodeData>) => {
+		batchSetTreeItemChildren(tree, queuedTreeItemUpdates.current)
+		queuedTreeItemUpdates.current = {}
+		rerender()
+	}, 5, { trailing: true })
 
 	const handle = useImperativeHandle(props.handleRef, () => {
 		return {
@@ -276,7 +272,7 @@ export const Outliner = (props: OutlinerProps) => {
 				_dispatchTreeItemUpdates(tree)
 			}
 		} as OutlinerHandle
-	}, [tree])
+	}, [tree, _dispatchTreeItemUpdates])
 
 	// const hasItem = useMemo(() => {
 	// 	return lookup ? handle.hasItem(lookup) : false
@@ -305,7 +301,7 @@ export const Outliner = (props: OutlinerProps) => {
 				yield getNodeData(child, i, parentMeta.nestingLevel + 1, tree)
 			}
 		}
-	}, [layouts, behaviors, containers, families, objectTypes, traits])
+	}, [layouts, behaviors, containers, families, objectTypes, traits, appBlock, tree])
 
 
 	return <div className="vbox grow">

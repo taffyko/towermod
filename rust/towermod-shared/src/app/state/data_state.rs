@@ -72,7 +72,7 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			}
 		},
 		Action::CreateObjectType { id, plugin_id } => {
-			// FIXME: create animation and first instance for sprites
+			// BUG: create animation and first instance for sprites
 			s.data.object_types.insert(id, EdObjectType {
 				id,
 				plugin_id,

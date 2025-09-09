@@ -49,7 +49,7 @@ export const Tabs = (props: {
 				)}
 			</div>
 		</div>
-		{/* FIXME: use global loading spinner */}
+		{/* BUG: use global loading spinner */}
 		<Suspense fallback={<div>loading...</div>}>
 			{tabs.map(tab => {
 				// render all tabs simultaneously so that tab state

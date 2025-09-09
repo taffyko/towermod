@@ -10,6 +10,7 @@ export default function ImagePathEdit(props: Omit<React.ComponentProps<'img'>, '
 
 	const [value, setValue] = useTwoWayBinding(externalValue, onChange, "")
 
+
 	const url = useFileUrl(value)
 	const [el, setEl] = useStateRef<HTMLDivElement>()
 	const isPressed = useIsPressed(el)

@@ -288,7 +288,7 @@ async fn run_patched_mod(mod_info: &ModInfo) -> Result<u32> {
 /// Remove events that hide the mouse cursor
 /// (useful because otherwise the mouse cursor will be invisible while using the debugger window)
 pub fn remove_mouse_cursor_hide_events(events: &mut cstc::EventBlock) {
-	// FIXME make this less brittle
+	// TODO make this less brittle
 	if let Some(cstc::SomeEvent::Event(e)) = events.layout_sheets[0].iter_mut().find(|e| match e {
 		cstc::SomeEvent::Event(e) if e.line_number == 14 => true,
 		_ => false,
@@ -299,7 +299,7 @@ pub fn remove_mouse_cursor_hide_events(events: &mut cstc::EventBlock) {
 
 #[instrument(skip(events))]
 pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_name: &str) -> Result<()> {
-	// FIXME make this less brittle
+	// TODO make this less brittle
 
 	let appdata_suffix = format!("{}{}{}", r"TowerClimb\Mods\", unique_name, r"\");
 

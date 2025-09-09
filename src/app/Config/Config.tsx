@@ -11,13 +11,11 @@ import Text from "@/components/Text"
 import { actions, dispatch } from "@/redux"
 import { assert } from "@/util"
 import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc"
-import { Game, Project } from "@towermod"
+import { Project } from "@towermod"
 import { win32 as path } from "path"
 import { useEffect, useState } from "react"
 import { spin } from "../GlobalSpinner"
 import { ConfirmModal } from "../Modal"
-import { useQuery } from "@tanstack/react-query"
-import { invoke } from "@tauri-apps/api/core"
 
 function SetGameModal(props: {
 	initialValue: string,
@@ -41,7 +39,7 @@ function SetGameModal(props: {
 }
 
 export const Config = () => {
-	// FIXME: use suspense query
+	// BUG: use suspense query to trigger global loading spinner
 	const { data: game } = api.getGame.useQuery()
 	const { data: isDataLoaded } = api.isDataLoaded.useQuery()
 	const { data: project } = api.getProject.useQuery()

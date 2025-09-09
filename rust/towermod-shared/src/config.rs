@@ -112,7 +112,7 @@ pub async fn first_time_setup() -> Result<()> {
 
 async fn link_towermod_to_stable_path() -> Result<()> {
 	// Hardlink Towermod to a stable path
-	// FIXME: Don't copy if the version has not changed
+	// TODO: Don't copy if the version has not changed
 	let exe_path = std::env::current_exe()?;
 	let dest_path = get_stable_exe_path();
 	if exe_path == dest_path { return Ok(()) }

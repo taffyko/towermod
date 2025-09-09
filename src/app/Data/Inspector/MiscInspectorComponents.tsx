@@ -1,10 +1,10 @@
 import { ObjectInstance, ObjectType, SpriteObjectData, int } from "@towermod"
 import { ArrayPropertyInfo } from "./base/inspectorUtil"
-import { api } from "@/api"
+import api from "@/api"
 import { lazy } from 'react'
-import { skipToken } from "@reduxjs/toolkit/query"
 import { IdLink } from "./IdLink"
 import { UniqueObjectLookup } from "@/util"
+import { skipToken } from "@tanstack/react-query"
 
 
 const InspectorArray = lazy(() => import('./base/Inspector').then(m => ({ default: m.InspectorArray })))
@@ -12,7 +12,7 @@ const InspectorObject = lazy(() => import('./base/Inspector').then(m => ({ defau
 
 export function ObjectInstances(props: { objectType: ObjectType }) {
 	const { objectType } = props
-	const { data: instances } = api.useGetObjectTypeInstancesQuery(objectType?.id ?? skipToken)
+	const { data: instances } = api.getObjectTypeInstances.useQuery(objectType?.id ?? skipToken)
 	return <IdLinkArray lookups={instances ?? []} />
 }
 
@@ -38,6 +38,6 @@ export function EditAnimations(props: {
 	objectInstance: ObjectInstance<SpriteObjectData>
 }) {
 	const { objectInstance } = props
-	const { data: anim } = api.useGetAnimationQuery({ id: objectInstance.data.animation })
+	const { data: anim } = api.getTowermodObject.useQuery({ _type: 'Animation', id: objectInstance.data.animation })
 	return anim ? <InspectorObject value={anim} onChange={() => {}} /> : null
 }

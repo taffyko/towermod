@@ -1,33 +1,7 @@
-import { toast } from '@/app/Toast'
-import { renderError, showError } from '@/components/Error'
+import { showError } from '@/components/Error'
 import { MiniEvent } from '@/util'
 import { DefaultError, Query, QueryClient, QueryFunctionContext, QueryKey, SkipToken, StaleTime, UseMutationOptions, UseQueryOptions, UseSuspenseQueryOptions, skipToken, useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { isEqual } from 'lodash-es'
-import { MaybePromise } from "./baseApiUtil"
-
-export interface QueryErrorInfo {
-	isError?: boolean,
-	error?: any,
-}
-
-export async function awaitRtk<T>(info: MaybePromise<QueryErrorInfo & { data?: T }> & { unsubscribe?: () => void }): Promise<T> {
-	const { isError, error, data } = await info
-	info.unsubscribe?.() // do not cause data from manual dispatch to be held in the cache forever
-	if (isError || (isError === undefined && error !== undefined)) {
-		throw error
-	}
-	return data as T
-}
-
-export async function toastResult(info: MaybePromise<QueryErrorInfo>, successMsg?: string) {
-	const { isError, error } = await info
-	if (isError || (isError === undefined && error !== undefined)) {
-		toast(renderError(error), { type: 'error' })
-	} else if (successMsg) {
-		toast(successMsg)
-	}
-}
-
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -143,7 +117,7 @@ export function createQuery<
 	function requestCache(arg: TArg, requestOnMiss = true): TData | undefined {
 		const options = getOptions(arg)
 		const query = queryClient.getQueryCache().find<TData>({ queryKey: options.queryKey })
-		if (query?.state.data !== undefined) { 
+		if (query?.state.data !== undefined) {
 			return query.state.data
 		}
 		if (requestOnMiss) { void fetchQuery(arg) }

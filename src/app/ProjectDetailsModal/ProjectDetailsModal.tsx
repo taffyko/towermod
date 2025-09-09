@@ -1,6 +1,6 @@
 import { win32 as path } from "path"
 import { useState } from "react"
-import { api } from "@/api"
+import api from "@/api"
 import { ConfirmModal } from "../Modal"
 import { spin } from "@/app/GlobalSpinner"
 import { LineEdit } from "@/components/LineEdit"
@@ -70,7 +70,7 @@ function processModName(name: string) {
 export function ProjectDetailsModal(props: { project?: Project, newProject?: boolean, confirmText?: string, onConfirm?: (data: ProjectDetailsFormData) => void }) {
 	const { project: originalProject } = props
 
-	const { data: mods } = api.useGetInstalledModsQuery()
+	const { data: mods } = api.getInstalledMods.useQuery()
 
 	const [author, setAuthor] = useState(originalProject?.author ?? "")
 	const [name, setName] = useState(originalProject?.name ?? "")

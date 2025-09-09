@@ -1,29 +1,28 @@
 import api from "@/api"
 import { Button } from "@/components/Button"
-import { useEffect, useMemo, useState } from "react"
-import { InspectorObject } from "../Data/Inspector"
-import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useSize, useStateRef, useTwoWaySubmitBinding } from "@/util"
-import { toast } from "../Toast"
-import { spin } from "../GlobalSpinner"
-import { actions, dispatch, useAppSelector } from "@/redux"
+import IconButton from "@/components/IconButton"
 import { SpinBox } from "@/components/SpinBox"
 import { Toggle } from "@/components/Toggle"
-import { win32 as path } from "path"
-import { ConfirmModal, openModal } from "../Modal"
-import Style from './Images.module.scss'
-import IconButton from "@/components/IconButton"
+import { actions, dispatch, useAppSelector } from "@/redux"
+import { assert, blobToImage, copyFile, createCollisionMask, deleteFile, filePicker, imageFromCollisionMask, notNaN, openFolder, triggerTransition, useMemoAsync, useSize, useStateRef, useTwoWaySubmitBinding } from "@/util"
 import { revealItemInDir } from '@tauri-apps/plugin-opener'
+import { win32 as path } from "path"
+import { useEffect, useState } from "react"
+import { InspectorObject } from "../Data/Inspector"
+import { spin } from "../GlobalSpinner"
+import { ConfirmModal, openModal } from "../Modal"
+import { toast } from "../Toast"
+import Style from './Images.module.scss'
 
-import folderOpenImg from '@/icons/folderOpen.svg'
-import uploadImg from '@/icons/upload.svg'
+import { invalidate } from "@/api/helpers"
 import closeImg from '@/icons/close.svg'
+import folderOpenImg from '@/icons/folderOpen.svg'
 import refreshImg from '@/icons/refresh.svg'
-import { ImageMetadata } from "@towermod"
+import uploadImg from '@/icons/upload.svg'
+import { invoke } from "@tauri-apps/api/core"
 import { save } from "@tauri-apps/plugin-dialog"
 import { exists, writeFile } from "@tauri-apps/plugin-fs"
-import { invoke } from "@tauri-apps/api/core"
-import { fetchRtk } from "@/appUtil"
-import { invalidate } from "@/api/helpers"
+import { ImageMetadata } from "@towermod"
 
 export default function Images() {
 	const { data: imageDumpDir } = api.imageDumpDirPath.useQuery()
@@ -110,7 +109,7 @@ function ImageEditing() {
 	</>
 
 	async function applyMaskFromImagePath(metadata: ImageMetadata, filePath: string): Promise<ImageMetadata> {
-		const blob = await spin(fetchRtk('getFile', filePath))
+		const blob = await spin(api.getFile(filePath))
 		if (!blob) { throw new Error("No data") }
 		const [free, img] = await blobToImage(blob)
 		try {
@@ -153,7 +152,7 @@ function ImageEditing() {
 		assert(projectImagesDir, "Project not set")
 		const imgPath = path.join(projectImagesDir, `${imageId}.png`)
 		await deleteFile(imgPath)
-		invalidate(api.tags.image.id(imageId))
+		invalidate('Image', imageId)
 		toast(`Deleted custom image '${imageId}'`)
 	}
 
@@ -172,7 +171,7 @@ function ImageEditing() {
 	async function onClickNewImage() {
 		assert(projectImagesDir, "Project not set")
 		const newImageId = await invoke<number>('get_new_image_id')
-		invalidate(api.tags.image.all)
+		invalidate('Image', 'all')
 		const imgPath = await filePicker({ title: "Select image", filters: [{ name: 'PNG Image', extensions: ['png'] }] })
 		if (!imgPath) { return }
 		dispatch(actions.setImageId(newImageId))
@@ -192,7 +191,7 @@ function ImageEditing() {
 			if (!imgPath) { return }
 			await spin(copyFile(imgPath, destImgPath))
 		}
-		invalidate(api.tags.image.id(imageId))
+		invalidate('Image', imageId)
 		if (!metadata) {
 			let newMetadata: ImageMetadata = {
 				_type: 'ImageMetadata',
@@ -212,7 +211,7 @@ function ImageEditing() {
 		return imgPath
 	}
 	async function onClickReloadAllImages() {
-		invalidate(api.tags.image.all)
+		invalidate('Image', 'all')
 		toast("Reloaded images")
 	}
 }
@@ -284,18 +283,14 @@ function ImagePoints(props: {
 	metadata?: ImageMetadata,
 }) {
 	const { width, height, naturalWidth, metadata } = props
-
 	if (!metadata || !naturalWidth) { return null }
 
-	const coords = useMemo(() => {
-		const arr: Array<[number, number]> = []
-		const fac = width / naturalWidth
-		arr.push([metadata.hotspotX * fac, metadata.hotspotY * fac])
-		for (const apoint of metadata.apoints) {
-			arr.push([apoint.x * fac, apoint.y * fac])
-		}
-		return arr
-	}, [width, height, metadata, naturalWidth])
+	const coords: Array<[number, number]> = []
+	const fac = width / naturalWidth
+	coords.push([metadata.hotspotX * fac, metadata.hotspotY * fac])
+	for (const apoint of metadata.apoints) {
+		coords.push([apoint.x * fac, apoint.y * fac])
+	}
 
 	return <div style={{ width, height }} className={Style.points}>
 		{ coords.map(([x, y], i) =>

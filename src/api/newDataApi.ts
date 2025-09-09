@@ -1,9 +1,10 @@
-import type { LookupForType, OutlinerTowermodObject, UniqueObjectLookup, UniqueObjectTypes, UniqueTowermodObject } from '@/util'
+import type { LookupForType, ObjectForType, OutlinerTowermodObject, UniqueObjectLookup, UniqueObjectTypes, UniqueTowermodObject } from '@/util'
 import { assertUnreachable, binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl } from "@/util"
 import { getObjectDisplayName, getObjectStringId } from '@/util/dataUtil'
 import { invoke } from "@tauri-apps/api/core"
 import { Animation, AppBlock, ImageMetadata, ObjectType, PluginData, SearchOptions } from '@towermod'
 import { createMutation, createQuery, invalidate, queryClient, QueryDependency, whenQueryEvicted } from "./helpers"
+import { SkipToken } from '@tanstack/react-query'
 
 
 const r = ['Game', 'Data']
@@ -58,11 +59,10 @@ export const getGameImageUrl = createQuery({
 		}
 		const url = blob && createObjectUrl(blob)
 		if (url) {
-			// FIXME
+			// BUG
 			console.warn(`Creating object URL ${url} for image ${id}`)
 			whenQueryEvicted(tags.image.url(id))
 				.then(() => {
-					// FIXME
 					console.warn(`REVOKING object URL ${url} for image ${id}`)
 					revokeObjectUrl(url)
 				})
@@ -303,38 +303,6 @@ export const getOutlinerObjectTypes = createQuery({
 	deps: [{ type: 'ObjectType' }]
 })
 
-// getOutlinerObjectTypeIcons: builder.query<Array<{ url: undefined, imageId: undefined } | { url: string, imageId: int }>, { page: number, pageSize: number }>({
-// 	query: ({ page, pageSize }) => binaryInvoke('get_outliner_object_type_icons', [page * pageSize, pageSize]),
-// 	transformResponse: (r: Array<null | [int, Uint8Array]>) => {
-// 		return r.map((o) => {
-// 			if (!o) { return {} }
-// 			const [imageId, data] = o
-// 			const blob = new Blob([data], { type: 'image/png' })
-// 			return { url: createObjectUrl(blob), imageId }
-// 		})
-// 	},
-// 	providesTags: ['ObjectType', 'Image'],
-// 	onCacheEntryAdded: async (_arg, cacheApi) => {
-// 		const info = await cacheApi.cacheDataLoaded
-// 		if (!info.data) { return }
-// 		const { api } = await import('.')
-// 		for (const img of info.data) {
-// 			// share cache entries with getGameImageUrl
-// 			if (img.url) {
-// 				// let it know not to revoke the object URLs prematurely when it evicts the cache
-// 				const record = { url: img.url, _shared: true }
-// 				api.util.upsertQueryData('getGameImageUrl', img.imageId, record)
-// 			}
-// 		}
-// 		await cacheApi.cacheEntryRemoved
-
-// 		for (const { url } of info.data) {
-// 			if (url) {
-// 				revokeObjectUrl(url)
-// 			}
-// 		}
-// 	},
-// }),
 export const getOutlinerObjectTypeIcons = createQuery({
 	queryFn: async ({ page, pageSize }: { page: number, pageSize: number }) => {
 		const r: Array<null | [int, Uint8Array]> = await binaryInvoke('get_outliner_object_type_icons', [page * pageSize, pageSize])
@@ -344,9 +312,9 @@ export const getOutlinerObjectTypeIcons = createQuery({
 			const [imageId, data] = o
 			const blob = new Blob([data], { type: 'image/png' })
 			obj = { url: createObjectUrl(blob), imageId }
-			// FIXME: share cache entries with getGameImageUrl
+			// BUG: share cache entries with getGameImageUrl
 			// queryClient.setQueryData(tags.image.url(imageId), url)
-			// FIXME let it know not to revoke the object URLs prematurely when it evicts the cache
+			// let it know not to revoke the object URLs prematurely when it evicts the cache
 			return obj
 		})
 		const queryKey = getOutlinerObjectTypeIcons.queryKey({ page, pageSize })
@@ -574,12 +542,20 @@ export const createObjectTrait = createMutation({
 	onSuccess: (_r, arg) => invalidateTowermodObject({ _type: 'ObjectTrait', name: arg })
 })
 
-export const getTowermodObject = createQuery({
+const _getTowermodObject = createQuery({
 	queryFn: async (lookup: UniqueObjectLookup): Promise<UniqueTowermodObject | null> => {
-		return await _getTowermodObject(lookup)
+		return await _getTowermodObject_impl(lookup)
 	},
 	deps: (lookup) => [towermodObjectToDep(lookup)]
 })
+// wrapper with nice generic typing
+export function getTowermodObject<T extends UniqueObjectTypes>(arg: LookupForType<T>, context?: any): Promise<ObjectForType<T> | null> {
+	return _getTowermodObject(arg, context) as any
+}
+getTowermodObject.useQuery = <T extends UniqueObjectTypes>(arg: LookupForType<T> | SkipToken): { data: ObjectForType<T> | null | undefined } => {
+	return _getTowermodObject.useQuery(arg) as any
+}
+
 
 export const getTowermodObjectDisplayName = createQuery({
 	queryFn: async (lookup: UniqueObjectLookup | null | undefined, { depsContext }): Promise<string | null> => {
@@ -587,12 +563,12 @@ export const getTowermodObjectDisplayName = createQuery({
 		if (obj == null) { return null }
 		switch (obj._type) {
 			case 'ObjectInstance': {
-				const objType = await getTowermodObject({ _type: 'ObjectType', id: obj.objectTypeId }, { depsContext }) as ObjectType | null
+				const objType = await getTowermodObject({ _type: 'ObjectType', id: obj.objectTypeId }, { depsContext })
 				const plugin = objType && await getEditorPlugin(objType.pluginId, { depsContext })
 				const pluginName = plugin?.stringTable?.name
 				return `Instance: ${pluginName} (${objType?.name}: ${obj.id})`
 			} case 'Container': {
-				const objType = await getTowermodObject({ _type: 'ObjectType', id: obj.id }, { depsContext }) as ObjectType | null
+				const objType = await getTowermodObject({ _type: 'ObjectType', id: obj.id }, { depsContext })
 				return `Container: ${objType?.name}`
 			}
 		}
@@ -617,7 +593,7 @@ export const getTowermodObjectIconUrl = createQuery({
 			} break; case 'ImageMetadata': {
 				imageId = obj.id
 			} break; case 'Animation': {
-				const animation = await getTowermodObject({ _type: 'Animation', id: obj.id }, { depsContext }) as Animation
+				const animation = await getTowermodObject({ _type: 'Animation', id: obj.id }, { depsContext })
 				if (animation) {
 					const a = animation.isAngle ? animation : animation.subAnimations[0]
 					imageId = a.frames[0]?.imageId
@@ -643,12 +619,12 @@ export const deleteTowermodObject = createMutation({
 function towermodObjectToDep(lookup: UniqueObjectLookup): QueryDependency & { id: unknown } {
 	return { type: lookup._type, id: getObjectStringId(lookup) }
 }
-function invalidateTowermodObject(lookup: UniqueObjectLookup) {
+export function invalidateTowermodObject(lookup: UniqueObjectLookup) {
 	const { type, id } = towermodObjectToDep(lookup)
 	invalidate(type, id)
 }
 
-async function _getTowermodObject(lookup: UniqueObjectLookup): Promise<UniqueTowermodObject | null> {
+async function _getTowermodObject_impl(lookup: UniqueObjectLookup): Promise<UniqueTowermodObject | null> {
 	const type = lookup._type
 	switch (type) {
 		case 'ObjectType': return enhanceObjectType(await invoke('get_object_type', lookup))
