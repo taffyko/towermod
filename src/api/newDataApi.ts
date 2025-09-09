@@ -1,4 +1,4 @@
-import type { LookupForType, UniqueObjectLookup, UniqueObjectTypes, UniqueTowermodObject } from '@/util'
+import type { LookupForType, OutlinerTowermodObject, UniqueObjectLookup, UniqueObjectTypes, UniqueTowermodObject } from '@/util'
 import { assertUnreachable, binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl } from "@/util"
 import { getObjectDisplayName, getObjectStringId } from '@/util/dataUtil'
 import { invoke } from "@tauri-apps/api/core"
@@ -363,6 +363,49 @@ export const getOutlinerObjectTypeIcons = createQuery({
 	deps: [{ type: 'ObjectType' }, { type: 'Image' }],
 })
 
+export const getOutlinerObjectData = createQuery({
+	queryFn: async (args: {lookup: OutlinerTowermodObject | null, idx: number | null}, { depsContext }) => {
+		const { lookup, idx } = args
+		const data: {
+			obj?: UniqueTowermodObject,
+			hasIcon?: boolean,
+			iconUrl?: string,
+			displayName?: string,
+			children?: OutlinerTowermodObject[],
+		} = {}
+
+		if (!lookup) { return data }
+		if (idx != null) {
+			const pageSize = 500
+			const page = Math.floor(idx / pageSize)
+			let pageData: any[] | undefined
+			let iconsPageData: { url?: string }[] | undefined
+			switch (lookup?._type) {
+				case 'ObjectType': {
+					pageData = await getOutlinerObjectTypes({ page, pageSize }, { depsContext })
+					iconsPageData = await getOutlinerObjectTypeIcons({ page, pageSize }, { depsContext })
+				} break; case 'Animation': {
+					data.obj = lookup
+					data.hasIcon = true
+					data.children = lookup.subAnimations
+					data.displayName = getObjectDisplayName(lookup)
+				}
+			}
+			const idxInPage = idx & pageSize
+			if (pageData) { data.obj = pageData?.[idxInPage] }
+			else { data.obj = await getTowermodObject(lookup, { depsContext }) ?? undefined }
+
+			if (iconsPageData) { data.iconUrl = iconsPageData?.[idxInPage]?.url }
+			else { data.iconUrl = await getTowermodObjectIconUrl(lookup, { depsContext }) ?? undefined }
+
+			if (!data.displayName) {
+				data.displayName = await getTowermodObjectDisplayName(data.obj, { depsContext }) ?? undefined
+			}
+		}
+
+		return data
+	}
+})
 // getObjectTypeAnimation: builder.query<Animation | null, LookupArg<ObjectType>>({
 // 	query: (args) => invoke('get_object_type_animation', args),
 // 	transformResponse: (r: Animation) => enhanceAnimation(r),

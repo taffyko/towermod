@@ -217,3 +217,5 @@ declare module "@towermod" {
 		id: string
 	}
 }
+
+export type OutlinerTowermodObject = Exclude<UniqueObjectLookup, LookupForType<'Animation'>> | Animation

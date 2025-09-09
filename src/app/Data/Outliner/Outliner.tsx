@@ -11,14 +11,14 @@ import arrowRightImg from '@/icons/arrowRight.svg'
 import plusImg from '@/icons/plus.svg'
 import { actions, dispatch, useAppSelector } from '@/redux'
 import { Animation } from '@/towermod'
-import { getObjectDisplayName, LookupForType, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
+import { getObjectDisplayName, OutlinerTowermodObject, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
 import { useImperativeHandle, useRerender, useStateRef } from '@/util/hooks'
 import { enumerate, posmod } from '@/util/util'
 import { createSelector } from '@reduxjs/toolkit'
 import { skipToken } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { debounce } from 'lodash-es'
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
 	FixedSizeNodeData,
 	FixedSizeTree,
@@ -31,10 +31,6 @@ import Style from './Outliner.module.scss'
 import { TreeComponent } from './Tree'
 import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive } from './treeUtil'
 
-
-
-type OutlinerTowermodObject = Exclude<UniqueObjectLookup, LookupForType<'Animation'>>
-	| Animation
 
 function getObjChildren(obj: OutlinerTowermodObject): undefined | OutlinerTowermodObject[] {
 	switch (obj._type) {
@@ -105,62 +101,6 @@ type OutlinerNodeMeta = Readonly<{
 	nestingLevel: number;
 }>
 
-
-
-function useOutlinerObjectData(lookup: OutlinerTowermodObject | null, idx: number | null): { obj?: UniqueTowermodObject, hasIcon: null | boolean, iconUrl?: string, displayName?: string, children?: OutlinerTowermodObject[] } {
-	let obj: UniqueTowermodObject | undefined
-	let hasIcon: null | boolean = null
-	let iconUrl: string | undefined
-	let displayName: string | undefined
-	let children: OutlinerTowermodObject[] | undefined
-
-	const bulkQueryImplemented = { forObj: false, forIcon: false }
-	if (idx != null) {
-		const pageSize = 500
-		const page = Math.floor(idx / pageSize)
-		let pageData: undefined | any[]
-		let iconsPageData: undefined | { url?: string }[]
-		switch (lookup?._type) {
-			case 'ObjectType': {
-				pageData = api.getOutlinerObjectTypes.requestCache({ page, pageSize })
-				iconsPageData = api.getOutlinerObjectTypeIcons.requestCache({ page, pageSize })
-				bulkQueryImplemented.forObj = true
-				bulkQueryImplemented.forIcon = true
-			} break; case 'Animation':
-				bulkQueryImplemented.forObj = true
-				hasIcon = true
-				children = lookup.subAnimations
-				displayName = getObjectDisplayName(lookup)
-		}
-
-		if (pageData) {
-			const idxInPage = idx % pageSize
-			obj = pageData?.[idxInPage]
-			if (bulkQueryImplemented.forIcon) {
-				iconUrl = iconsPageData?.[idxInPage].url
-			}
-			switch (obj?._type) {
-				case 'ObjectType': {
-					const isSprite = obj.pluginName === 'Sprite'
-					hasIcon ||= isSprite
-					children = (obj as { animation?: Animation }).animation?.subAnimations
-					displayName = getObjectDisplayName(obj)
-				}
-			}
-		}
-	}
-
-	// TODO: update queries for other outliner objects to also fetch in pages
-	const objectIconInfo = useObjectIcon(bulkQueryImplemented.forIcon ? null : lookup)
-	hasIcon ??= objectIconInfo.hasIcon
-	iconUrl ??= objectIconInfo.data
-	const displayName1 = useObjectDisplayName(bulkQueryImplemented.forObj ? null : lookup)
-	displayName ??= displayName1
-	hasIcon ||= !!iconUrl
-
-	return { obj, hasIcon, iconUrl, displayName, children }
-}
-
 function getAddChildImplementation(obj?: UniqueTowermodObject): (() => Promise<void>) | undefined {
 	switch (obj?._type) {
 		case 'ObjectType':
@@ -176,11 +116,12 @@ function getAddChildImplementation(obj?: UniqueTowermodObject): (() => Promise<v
 type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {name: nameOverride, nestingLevel, obj, idx, id}, isOpen, style, setOpen} = props
-	const context = useContext(OutlinerContext)
+	const context = use(OutlinerContext)
 	const { tree } = context
 	const selectable = !!obj
 
-	const { obj: objData, hasIcon, iconUrl, displayName, children } = useOutlinerObjectData(obj, idx)
+	const { data } = api.getOutlinerObjectData.useQuery({ lookup: obj, idx })
+	const { obj: objData, hasIcon, iconUrl, displayName, children } = data ?? {}
 
 	const name = nameOverride ?? displayName
 	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
@@ -386,7 +327,7 @@ export const Outliner = (props: OutlinerProps) => {
 }
 
 function OutlinerSearch() {
-	const handle = useContext(OutlinerContext)
+	const handle = use(OutlinerContext)
 	const [caseSensitive, setCaseSensitive] = useState(false)
 	const [searchObjectTypes, setSearchObjectTypes] = useState(true)
 	const [searchObjectInstances, setSearchObjectInstances] = useState(false)
