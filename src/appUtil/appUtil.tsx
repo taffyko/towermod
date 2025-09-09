@@ -5,7 +5,7 @@ import { openModal } from "@/app/Modal"
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
 import { toast } from "@/app/Toast"
 import { dispatch, store } from "@/redux"
-import { ObjectForType, UniqueObjectLookup, UniqueTowermodObject, activateWindow, assertUnreachable, getObjectDisplayName, useMountEffect, useObjectUrl } from "@/util"
+import { ObjectForType, UniqueObjectLookup, activateWindow, assertUnreachable, getObjectDisplayName, useMountEffect, useObjectUrl } from "@/util"
 import { ApiEndpointMutation, ApiEndpointQuery, MutationDefinition, QueryDefinition, defaultSerializeQueryArgs, skipToken } from "@reduxjs/toolkit/query"
 import { useCallback, useRef, useState, useSyncExternalStore } from "react"
 
@@ -116,25 +116,6 @@ export function useQueryScope(): [QueryScopeFn] {
 	})
 
 	return [query]
-}
-
-export async function updateTowermodObject<T extends UniqueTowermodObject>(obj: T) {
-	let endpoint: any
-	const type = obj._type
-	switch (type) {
-		case 'ObjectType': endpoint = api.endpoints.updateObjectType
-			break; case 'ObjectInstance': endpoint = api.endpoints.updateObjectInstance
-			break; case 'Container': endpoint = api.endpoints.updateContainer
-			break; case 'Animation': endpoint = api.endpoints.updateAnimation
-			break; case 'Behavior': endpoint = api.endpoints.updateBehavior
-			break; case 'ObjectTrait': endpoint = api.endpoints.updateObjectTrait
-			break; case 'AppBlock': endpoint = api.endpoints.updateAppBlock
-			break; case 'Layout': endpoint = api.endpoints.updateLayout
-			break; case 'LayoutLayer': endpoint = api.endpoints.updateLayoutLayer
-			break; default: endpoint = undefined
-	}
-	if (!endpoint) { return }
-	await awaitRtk(dispatch(endpoint.initiate(obj)))
 }
 
 export function useTowermodObject<T extends UniqueObjectLookup>(obj: T | undefined, scope?: { query: QueryScopeFn, queryName: string }): { data: ObjectForType<T['_type']> | undefined, isLoading: boolean } {

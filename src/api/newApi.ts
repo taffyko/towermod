@@ -26,7 +26,6 @@ export const getFile = createQuery({
 export const getGame = createQuery({
 	queryFn: async () => {
 		const game: Game = await invoke('get_game')
-		console.log('get_game', game) // FIXME
 		return game ?? null
 	},
 	deps: [{ type: 'Game', id: 'singleton' }],

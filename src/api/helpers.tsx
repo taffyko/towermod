@@ -1,5 +1,5 @@
 import { toast } from '@/app/Toast'
-import { renderError } from '@/components/Error'
+import { renderError, showError } from '@/components/Error'
 import { MiniEvent } from '@/util'
 import { DefaultError, Query, QueryClient, QueryFunctionContext, QueryKey, SkipToken, StaleTime, UseMutationOptions, UseQueryOptions, UseSuspenseQueryOptions, skipToken, useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { isEqual } from 'lodash-es'
@@ -32,7 +32,12 @@ export async function toastResult(info: MaybePromise<QueryErrorInfo>, successMsg
 export const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
-			staleTime: Infinity
+			staleTime: Infinity,
+			throwOnError: (err) => {
+				console.error(err)
+				window.setTimeout(() => showError(err), 0)
+				return false
+			},
 		}
 	}
 })
@@ -74,7 +79,7 @@ export function createQuery<
 		} else {
 			options = { ...baseOptions, queryFn: baseOptions.queryFn.bind(null, arg) }
 		}
-		const baseDeps = typeof options.deps === 'function' ? options.deps(arg) : options.deps
+		const baseDeps = (typeof options.deps === 'function' ? options.deps(arg) : options.deps) || []
 		const queryFn = options.queryFn
 		options.queryKey = [queryName, arg]
 		options.meta = { deps: baseDeps }
@@ -113,9 +118,23 @@ export function createQuery<
 		const options = { ...getOptions(arg), ...optionsOverrides }
 		return useSuspenseQuery(options)
 	}
-	function fetchQuery(arg: TArg | SkipToken, optionsOverrides?: AdditionalOpts): Promise<TData> {
+	async function fetchQuery(arg: TArg, optionsOverrides?: AdditionalOpts): Promise<TData> {
 		const options = getOptions(arg)
-		return queryClient.fetchQuery({
+		const query = queryClient.getQueryCache().find<TData>({ queryKey: options.queryKey })
+		if (query && query.promise) {
+			// If a request is already in progress, do not trigger another one
+			try {
+				return await query.promise
+			} catch {
+				// But if the existing request gets cancelled, start a new one
+				return await queryClient.fetchQuery({
+					queryKey: options.queryKey,
+					queryFn: options.queryFn,
+					...optionsOverrides
+				})
+			}
+		}
+		return await queryClient.fetchQuery({
 			queryKey: options.queryKey,
 			queryFn: options.queryFn,
 			...optionsOverrides

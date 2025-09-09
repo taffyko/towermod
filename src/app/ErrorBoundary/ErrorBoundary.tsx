@@ -2,6 +2,7 @@ import React from "react"
 import { ErrorInfo } from "react"
 import { showError, ErrorMsg } from "@/components/Error"
 import Style from '@/components/Error/Error.module.scss'
+import { CancelledError } from "@tanstack/react-query"
 
 export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 	state: { error: any } = {
@@ -9,6 +10,9 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren> {
 	}
 
 	private promiseRejectionHandler = (event: PromiseRejectionEvent) => {
+		if (event.reason instanceof CancelledError) {
+			return
+		}
 		showError(event.reason)
 	}
 

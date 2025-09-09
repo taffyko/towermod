@@ -1,4 +1,4 @@
-import { api } from "@/api"
+import api from "@/api"
 import { useObjectDisplayName, useObjectIcon } from "@/appUtil"
 import { Button } from "@/components/Button"
 import { ComboboxButton } from "@/components/Combobox"
@@ -6,7 +6,8 @@ import { Image, ImageButton } from "@/components/Image/Image"
 import { SpinBox } from "@/components/SpinBox"
 import { actions, dispatch } from "@/redux"
 import { UniqueObjectLookup, int } from "@/util"
-import { useState } from "react"
+import { ObjectType } from "@towermod"
+import { useEffect, useState } from "react"
 
 export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
 	const { lookup, onChange } = props
@@ -29,7 +30,7 @@ export function IdLink(props: { lookup: UniqueObjectLookup, onChange?: (v: Uniqu
 
 
 function LookupEdit(props: { name?: string, icon?: string, lookup: UniqueObjectLookup, onChange?: (v: UniqueObjectLookup) => void }) {
-	const { name, icon, lookup, onChange } = props
+	const { icon, lookup, onChange } = props
 	switch (lookup._type) {
 		case 'ObjectType':
 			return <ObjectTypeEdit value={lookup.id} onChange={(v) => onChange?.({ ...lookup, id: v })} />
@@ -60,10 +61,15 @@ function ImageEdit(props: { src: string | undefined, value: int, onChange: (v: i
 function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
 	const { value: selectedId, onChange } = props
 	const [query, setQuery] = useState('')
-	const { data: objectTypes } = api.useSearchObjectTypesQuery({ text: query })
+	const { data: objectTypes } = api.searchObjectTypes.useQuery({ text: query })
 	const name = objectTypes?.find((ot) => ot.id === selectedId)?.name
-	const value = api.useGetObjectTypeQuery({ id: selectedId }).data || { name: name || '...', id: selectedId }
-	const { data: icon } = useObjectIcon(value ? { _type: 'ObjectType', id: value.id } : undefined)
+	const value = api.getTowermodObject.useQuery({ _type: 'ObjectType', id: selectedId }).data as ObjectType || { name: name || '...', id: selectedId }
+	// FIXME
+	useEffect(() => {
+		api.getTowermodObject({ _type: 'ObjectType', id: selectedId })
+
+	}, [selectedId])
+	const { data: icon } = api.getTowermodObjectIconUrl.useQuery({ _type: 'ObjectType', id: selectedId })
 
 	return <ComboboxButton<{ name: string, id: int }>
 		value={value}
@@ -76,6 +82,6 @@ function ObjectTypeEdit(props: { value: int, onChange: (v: int) => void }) {
 		query={query}
 		setQuery={setQuery}
 		options={objectTypes ?? []}
-		icon={<Image src={icon} />}
+		icon={<Image src={icon ?? undefined} />}
 	/>
 }

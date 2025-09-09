@@ -1,9 +1,9 @@
 import type { LookupForType, UniqueObjectLookup, UniqueObjectTypes, UniqueTowermodObject } from '@/util'
-import { assertUnreachable, binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, purifyLookup, revokeObjectUrl } from "@/util"
+import { assertUnreachable, binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl } from "@/util"
+import { getObjectDisplayName, getObjectStringId } from '@/util/dataUtil'
 import { invoke } from "@tauri-apps/api/core"
 import { Animation, ImageMetadata, ObjectType, PluginData, SearchOptions } from '@towermod'
 import { createMutation, createQuery, invalidate, queryClient, QueryDependency, whenQueryEvicted } from "./helpers"
-import { getObjectDisplayName } from '@/util/dataUtil'
 
 
 const r = ['Game', 'Data']
@@ -146,9 +146,9 @@ export const getObjectTypes = createQuery({
 // 	providesTags: [{ type: 'ObjectType', id: 'LIST' }]
 // }),
 export const searchObjectTypes = createQuery({
-	queryFn: async (options: SearchOptions) => {
+	queryFn: async (options: SearchOptions): Promise<{ _type: 'ObjectType', name: string, id: int }[]> => {
 		const r: [number, string][] = await invoke('search_object_types', { options })
-		return r.map(([id, name]) => ({ id, name, _type: 'ObjectType' } as LookupForType<'ObjectType'>))
+		return r.map(([id, name]) => ({ id, name, _type: 'ObjectType' as const }))
 	},
 	deps: [{ type: 'ObjectType' }],
 })
@@ -158,7 +158,7 @@ export const searchObjectTypes = createQuery({
 // 	providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
 // }),
 export const getObjectTypeImageId = createQuery({
-	queryFn: (id: int) => invoke('get_object_type_image_id', { id }),
+	queryFn: (id: int) => invoke<int | null>('get_object_type_image_id', { id }),
 	deps: (id: int) => [towermodObjectToDep({ _type: 'ObjectType', id })]
 })
 
@@ -242,7 +242,7 @@ export const getObjectTypeInstances = createQuery({
 // 	providesTags: (_r, _e, arg) => [{ type: 'Image', id: String(arg) }]
 // }),
 export const getObjectInstanceImageId = createQuery({
-	queryFn: (id: int) => invoke('get_object_instance_image_id', { id }),
+	queryFn: (id: int) => invoke<int | null>('get_object_instance_image_id', { id }),
 	deps: (id) => [towermodObjectToDep({ _type: 'ObjectInstance', id })]
 })
 
@@ -535,8 +535,8 @@ export const getTowermodObject = createQuery({
 })
 
 export const getTowermodObjectDisplayName = createQuery({
-	queryFn: async (lookup: UniqueObjectLookup, { depsContext }): Promise<string | null> => {
-		const obj = await getTowermodObject(lookup, { depsContext })
+	queryFn: async (lookup: UniqueObjectLookup | null | undefined, { depsContext }): Promise<string | null> => {
+		const obj = lookup && await getTowermodObject(lookup, { depsContext })
 		if (obj == null) { return null }
 		switch (obj._type) {
 			case 'ObjectInstance': {
@@ -553,6 +553,36 @@ export const getTowermodObjectDisplayName = createQuery({
 	},
 })
 
+export const getTowermodObjectIconUrl = createQuery({
+	queryFn: async (lookup: UniqueObjectLookup, { depsContext }): Promise<string | null> => {
+		const obj = await getTowermodObject(lookup, { depsContext })
+		if (!obj) { return null }
+		let imageId: int | null = null
+		switch (obj._type) {
+			case 'ObjectType': {
+				imageId = await getObjectTypeImageId(obj.id, { depsContext })
+			} break; case 'Container': {
+				imageId = await getObjectTypeImageId(obj.id, { depsContext })
+			} break; case 'Behavior': {
+				imageId = await getObjectTypeImageId(obj.objectTypeId, { depsContext })
+			} break; case 'ObjectInstance': {
+				imageId = await getObjectTypeImageId(obj.objectTypeId, { depsContext })
+			} break; case 'ImageMetadata': {
+				imageId = obj.id
+			} break; case 'Animation': {
+				const animation = await getTowermodObject({ _type: 'Animation', id: obj.id }, { depsContext }) as Animation
+				if (animation) {
+					const a = animation.isAngle ? animation : animation.subAnimations[0]
+					imageId = a.frames[0]?.imageId
+				}
+			}
+		}
+		if (imageId == null) { return null }
+		const { url } = await getGameImageUrl(imageId, { depsContext })
+		return url
+	}
+})
+
 export const updateTowermodObject = createMutation({
 	mutationFn: (obj: UniqueTowermodObject) => _updateTowermodObject(obj),
 	onSuccess: (_r, obj) => invalidateTowermodObject(obj)
@@ -564,8 +594,7 @@ export const deleteTowermodObject = createMutation({
 })
 
 function towermodObjectToDep(lookup: UniqueObjectLookup): QueryDependency & { id: unknown } {
-	const { _type: type, ...id } = purifyLookup(lookup)
-	return { type, id }
+	return { type: lookup._type, id: getObjectStringId(lookup) }
 }
 function invalidateTowermodObject(lookup: UniqueObjectLookup) {
 	const { type, id } = towermodObjectToDep(lookup)
@@ -585,7 +614,7 @@ async function _getTowermodObject(lookup: UniqueObjectLookup): Promise<UniqueTow
 		case 'AppBlock': return enhanceAppBlock(await invoke('get_app_block'))
 		case 'Layout': return enhanceLayout(await invoke('get_layout', lookup))
 		case 'LayoutLayer': return enhanceLayoutLayer(await invoke('get_layout_layer', lookup))
-		case 'ImageMetadata': return enhanceImageMetadata(await invoke('get_image_metadata', lookup))
+		case 'ImageMetadata': return enhanceImageMetadata(await invoke('get_image_metadata', { id: lookup.id }))
 		default: assertUnreachable(type)
 	}
 }

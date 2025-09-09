@@ -10,15 +10,16 @@ import { Button } from '@/components/Button'
 import { spin } from '../GlobalSpinner'
 import { toast } from '../Toast'
 import { Toggle } from '@/components/Toggle'
-import { saveProject, updateTowermodObject, useTowermodObject } from '@/appUtil'
+import { saveProject } from '@/appUtil'
 import { debounce } from 'lodash-es'
+import { skipToken } from '@tanstack/react-query'
 
 
-const updateTowermodObjectDebounced = debounce(updateTowermodObject, 500, { leading: true  })
+const updateTowermodObjectDebounced = debounce(api.updateTowermodObject, 500, { leading: true  })
 
 export function Data() {
 	const searchValue = useAppSelector((s) => s.app.outlinerValue)
-	const { data: externalValue } = useTowermodObject(searchValue)
+	const { data: externalValue } = api.getTowermodObject.useQuery(searchValue ?? skipToken)
 
 	const [outlinerRef, setOutlinerRef] = useStateRef<OutlinerHandle>()
 
