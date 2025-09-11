@@ -1,4 +1,4 @@
-import { newApi as api } from "@/api"
+import api from "@/api"
 import { openModal } from "@/app/Modal"
 import { ProjectDetailsFormData, ProjectDetailsModal } from "@/app/ProjectDetailsModal"
 import { toast } from "@/app/Toast"
