@@ -186,6 +186,18 @@ export function triggerTransition(el?: HTMLElement | null, className?: string) {
 	}, 0)
 }
 
+export function isIterable(x: any): x is Iterable<unknown> {
+	return x && typeof x === 'object' && Symbol.iterator in x
+}
+
+export function iterWrap<T>(x: Iterable<T> | T): Iterable<T> {
+	return isIterable(x) ? x : [x]
+}
+
+export function arrWrap<T>(x: Iterable<T> | T): T[] {
+	return isIterable(x) ? [...x] : [x]
+}
+
 export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>
 
 interface Flavoring<FlavorT> {

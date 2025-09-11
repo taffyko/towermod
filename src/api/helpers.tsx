@@ -1,7 +1,24 @@
 import { showError } from '@/components/Error'
-import { MiniEvent } from '@/util'
+import { iterWrap, MiniEvent } from '@/util'
 import { DefaultError, Query, QueryClient, QueryFunctionContext, QueryKey, SkipToken, StaleTime, UseMutationOptions, UseQueryOptions, UseSuspenseQueryOptions, hashKey, notifyManager, skipToken, useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { isEqual } from 'lodash-es'
+
+const typeDependencyMap: Record<string, string[]> = {
+	'Data': ['Game'],
+	'Project': ['Game'],
+	'ImageDump': ['Game'],
+	'Layout': ['Data'],
+	'LayoutLayer': ['Data'],
+	'ObjectInstance': ['Data'],
+	'Animation': ['Data'],
+	'Behavior': ['Data'],
+	'Container': ['Data'],
+	'Family': ['Data'],
+	'ObjectType': ['Data'],
+	'ObjectTrait': ['Data'],
+	'ImageMetadata': ['Data'],
+	'AppBlock': ['Data'],
+}
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -64,15 +81,14 @@ export function createQuery<
 			const parents = options.meta.parents as Set<string>
 			parents.add(options.parent)
 		}
-		
+
 		options.queryFn = async (baseContext: QueryFunctionContext<any, never>) => {
-			// initialize this query's `depsContext` array and pass it along in the context passed to the `queryFn` implementation
-			const context = { ...baseContext, depsContext: [], hash: queryHash }
-			// fetch
+			const context = { ...baseContext, hash: queryHash }
+			// Fetch data
 			const data: TData = await queryFn(context)
 
 			if (typeof options.deps === 'function') {
-				// re-run deps function (now that we have result data) to get more refined deps
+				// Re-run deps function (now that we have result data) to get more refined deps
 				newDeps = options.deps(arg, data)
 			}
 
@@ -81,22 +97,8 @@ export function createQuery<
 				if (query.meta) {
 					// Update deps on this query's cache entry
 					query.meta.deps = newDeps
-
-					// Invalidate parents
-					const parents = query.meta.parents as Set<string>
-					if (parents.size) {
-						setTimeout(() => {
-							const cache = queryClient.getQueryCache()
-							if (query.meta?.parents) {
-								const parents = query.meta.parents as Set<string>
-								for (const parentHash of parents) {
-									const q = cache.get(parentHash)
-									if (!q) { parents.delete(parentHash) }
-									else { invalidateQuery(q) }
-								}
-							}
-						}, 0)
-					}
+					// Invalidate parent queries now the data has been fetched
+					setTimeout(() => invalidateParentQueries(query), 0)
 				} else {
 					console.error('`meta` missing on query', query)
 				}
@@ -106,14 +108,9 @@ export function createQuery<
 		return options
 	}
 
+	/** Extra query options that can be passed at call-time */
 	type AdditionalOpts = {
 		staleTime?: StaleTime
-		/**
-		 * Used to help implement queries that call other queries.
-		 * In the parent query's queryFn, pass context.depsContext to the callee query via this option.
-		 * The deps from the callee query will be added to the parent query's deps.
-		 */
-		depsContext?: QueryDependency[]
 		/** Hash of the parent query calling this query as a subquery */
 		parent?: string
 	}
@@ -164,11 +161,8 @@ export type QueryDependency =
 	{ type: string, id: unknown, with?: Record<string, boolean> } // item - (use { id: 'singleton' } for singleton types)
 	| { type: string, with?: Record<string, boolean>, filter?: Record<string, unknown> } // list
 
-/** Spinoff of UseQueryOptions where either:
- 1. `queryFn` and ~~`queryKey`~~ `deps` are functions that take the query arg as a parameter.
- 2. Options are instead a function that takes a query arg and returns an options object.
-
- The `deps` array refers to: "which models/records/resources on the server does this query's result depend on?"
+/**
+ * Spinoff of UseQueryOptions where `queryFn` and `deps` are functions that take the query arg as a parameter.
  */
 type CreateQueryOptions<
 	TQueryFnData = unknown, TError = DefaultError, TData = TQueryFnData, TArg = void
@@ -177,17 +171,14 @@ type CreateQueryOptions<
 		Omit<UseQueryOptions<TQueryFnData, TError, TData, any>, 'queryFn' | 'queryKey'>
 		& {
 			queryFn: (arg: TArg, context: QueryFunctionContext<any, never> & CreateQueryContext) => TQueryFnData | Promise<TQueryFnData>
+			/** The `deps` array refers to: "which models/records/resources on the server does this query's result depend on?" */
 			deps?: QueryDependency[] | ((arg: TArg, result?: TData) => QueryDependency[])
-			depsContext?: QueryDependency[]
-			parent?: string
+			/** Useful if you want to strip extra properties so that they don't affect how args are hashed to create the cache key */
 			argToKey?: (arg: TArg) => unknown
 		}
 	)
-	// | ((arg: TArg) => Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData, any>, 'queryKey'>) & { deps?: QueryDependency[], depsContext?: QueryDependency[] }
 /** Special context object passed to queryFn of createQuery */
 type CreateQueryContext = {
-	/** Any deps pushed to this array by `queryFn` will be added to the query's `deps` */
-	readonly depsContext: QueryDependency[]
 	readonly hash: string
 }
 
@@ -210,26 +201,9 @@ export function createMutation<
 	return fetchMutation
 }
 
-const typeDependencyMap: Record<string, string[]> = {
-	'Data': ['Game'],
-	'Project': ['Game'],
-	'ImageDump': ['Game'],
-	'Layout': ['Data'],
-	'LayoutLayer': ['Data'],
-	'ObjectInstance': ['Data'],
-	'Animation': ['Data'],
-	'Behavior': ['Data'],
-	'Container': ['Data'],
-	'Family': ['Data'],
-	'ObjectType': ['Data'],
-	'ObjectTrait': ['Data'],
-	'ImageMetadata': ['Data'],
-	'AppBlock': ['Data'],
-}
-
-export function invalidate(type: string, id: unknown, options?: { with?: Record<string, boolean>, excludeFilters?: Record<string, unknown> }) {
+export function invalidate(type: string, id: unknown | Iterable<unknown>, options?: { with?: Record<string, boolean>, excludeFilters?: Record<string, unknown> }) {
 	const { with: targetPropertyGroups, excludeFilters } = options ?? {}
-	const cache = queryClient.getQueryCache()
+	const ids = iterWrap(id)
 	const promises: Promise<unknown>[] = []
 	promises.push(queryClient.invalidateQueries({ predicate: (query) => {
 		const deps = (query.meta?.deps ?? []) as QueryDependency[]
@@ -243,15 +217,21 @@ export function invalidate(type: string, id: unknown, options?: { with?: Record<
 			}
 			// If invalidating a specific item, ignore non-matching items
 			// But still invalidate lists (no id in dep)
-			if (id && 'id' in dep) {
-				if (id === 'all') {}
-				else if (id === 'new') {
-					// Invalidating with ID 'new' implies an item will be added with an ID that is not yet known.
-					// Accordingly: Invalidate lists, and invalidate all item queries that have a null/undefined response in the cache.
-					// (meaning that the item did not exist when the query was made, but might exist now)
-					if (query.state.data != null) { continue loop }
+			if ('id' in dep) {
+				let idMatched = false
+				for (const id of ids) {
+					if (id === 'all') {}
+					else if (id === 'new') {
+						// Invalidating with ID 'new' implies an item will be added with an ID that is not yet known.
+						// Accordingly: Invalidate lists, and invalidate all item queries that have a null/undefined response in the cache.
+						// (meaning that the item did not exist when the query was made, but might exist now)
+						if (query.state.data != null) { continue }
+					}
+					else if (!isEqual(id, dep.id)) { continue }
+					idMatched = true
+					break
 				}
-				else if (!isEqual(id, dep.id)) { continue loop }
+				if (!idMatched) { continue loop }
 			}
 			// If invalidating specific property groups of an object type,
 			// ignore items where those property groups are specifically not included
@@ -272,16 +252,7 @@ export function invalidate(type: string, id: unknown, options?: { with?: Record<
 				}
 			}
 			// invalidate parent queries when child queries are invalidated
-			const parents = query.meta?.parents as Set<string>
-			if (parents.size) {
-				setTimeout(() => {
-					for (const parentHash of parents as Set<string>) {
-						const q = cache.get(parentHash)
-						if (!q) { parents.delete(parentHash) }
-						else { promises.push(invalidateQuery(q)) }
-					}
-				}, 0)
-			}
+			promises.push(invalidateParentQueries(query))
 			return true
 		}
 		return false
@@ -310,4 +281,18 @@ function invalidateQuery(query: Query) {
 		}
 		return Promise.resolve()
 	})
+}
+
+function invalidateParentQueries(query: Query) {
+	const parents = query.meta?.parents as Set<string>
+	const promises: Promise<unknown>[] = []
+	if (parents.size) {
+		const cache = queryClient.getQueryCache()
+		for (const parentHash of parents as Set<string>) {
+			const q = cache.get(parentHash)
+			if (!q) { parents.delete(parentHash) }
+			else { promises.push(invalidateQuery(q)) }
+		}
+	}
+	return Promise.all(promises)
 }

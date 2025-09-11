@@ -71,11 +71,6 @@ export const exportMod = createMutation({
 	onSuccess: () => invalidate('ModInfo', 'new'),
 })
 
-// loadManifest: builder.query<Project, { manifestPath: string, projectType: ProjectType }>({
-// 	query: async (arg) => {
-// 		return await invoke('load_manifest', arg)
-// 	},
-// }),
 export const loadManifest = createQuery({
 	queryFn: async (arg: { manifestPath: string, projectType: ProjectType }) => {
 		return await invoke<Project>('load_manifest', arg)
@@ -86,12 +81,6 @@ export const loadManifest = createQuery({
 	gcTime: 1000,
 })
 
-// exportFromFiles: builder.mutation<void, Project>({
-// 	query: async (project) => {
-// 		await invoke('export_from_files', { project })
-// 	},
-// 	invalidatesTags: ['ModInfo']
-// }),
 export const exportFromFiles = createMutation({
 	mutationFn: async (project: Project) => {
 		await invoke('export_from_files', { project })
@@ -99,12 +88,6 @@ export const exportFromFiles = createMutation({
 	onSuccess: () => invalidate('ModInfo', 'new'),
 })
 
-// exportFromLegacy: builder.mutation<void, { patchPath: string, project: Project }>({
-// 	query: async (arg) => {
-// 		await invoke('export_from_legacy', arg)
-// 	},
-// 	invalidatesTags: ['ModInfo']
-// }),
 export const exportFromLegacy = createMutation({
 	mutationFn: async (arg: { patchPath: string, project: Project }) => {
 		await invoke('export_from_legacy', arg)
@@ -112,12 +95,6 @@ export const exportFromLegacy = createMutation({
 	onSuccess: () => invalidate('ModInfo', 'new'),
 })
 
-// playMod: builder.mutation<number, string>({
-// 	query: async (zipPath) => {
-// 		return await invoke('play_mod', { zipPath })
-// 	},
-// 	invalidatesTags: ['ModCache']
-// }),
 export const playMod = createMutation({
 	mutationFn: async (zipPath: string) => {
 		return await invoke<number>('play_mod', { zipPath })
@@ -125,11 +102,6 @@ export const playMod = createMutation({
 	onSuccess: (_r, zipPath) => invalidate('ModCache', zipPath)
 })
 
-// playProject: builder.mutation<number, boolean>({
-// 	query: async (debug) => {
-// 		return await invoke('play_project', { debug })
-// 	},
-// }),
 export const playProject = createMutation({
 	mutationFn: async (debug: boolean) => {
 		return await invoke<number>('play_project', { debug })
@@ -137,32 +109,12 @@ export const playProject = createMutation({
 	onSuccess: () => invalidate('Project', 'singleton')
 })
 
-// playVanilla: builder.mutation<number, void>({
-// 	query: async () => {
-// 		return await invoke('play_vanilla')
-// 	},
-// }),
 export const playVanilla = createMutation({
 	mutationFn: async () => {
 		return await invoke<number>('play_vanilla')
 	},
 })
 
-// getPixelatedSvg: builder.query<string | null, string>({
-// 	query: async (href) => {
-// 		const data = await fetch(href).then(res => res.text())
-// 		if (!data) { return null }
-// 		const svgDoc = (new DOMParser).parseFromString(data, 'image/svg+xml')
-// 		const svg = svgDoc.querySelector('svg')
-// 		if (!svg) {
-// 			console.error("SVG not found in loaded content")
-// 			return null
-// 		}
-// 		svg.setAttribute('shape-rendering', 'crispEdges')
-// 		const url = svgToDataUri(svg)
-// 		return url
-// 	}
-// }),
 export const getPixelatedSvg = createQuery({
 	queryFn: async (href: string) => {
 		const data = await fetch(href).then(res => res.text())
@@ -181,12 +133,6 @@ export const getPixelatedSvg = createQuery({
 })
 
 
-// init: builder.mutation<void, void>({
-// 	query: async () => {
-// 		await invoke('init')
-// 	},
-// 	invalidatesTags: tagTypes
-// }),
 export const init = createMutation({
 	mutationFn: async () => {
 		await invoke('init')
@@ -198,24 +144,11 @@ export const init = createMutation({
 })
 
 
-// loadProjectPreflight: builder.mutation<string, string>({
-// 	query: async (manifestPath) => {
-// 		return await invoke('load_project_preflight', { manifestPath })
-// 	},
-// 	invalidatesTags: [],
-// }),
 export const loadProjectPreflight = createMutation({
 	mutationFn: async (manifestPath: string) => {
 		return await invoke<string>('load_project_preflight', { manifestPath })
 	},
 })
-
-// loadProject: builder.mutation<void, string>({
-// 	query: async (manifestPath) => {
-// 		return await invoke('load_project', { manifestPath })
-// 	},
-// 	invalidatesTags: ['Project', ...cstcObjectTagTypes],
-// }),
 
 export const loadProject = createMutation({
 	mutationFn: async (manifestPath: string) => {
@@ -227,25 +160,12 @@ export const loadProject = createMutation({
 	}
 })
 
-// editProjectInfo: builder.mutation<void, Project>({
-// 	query: async (project) => {
-// 		return await invoke('edit_project_info', { project })
-// 	},
-// 	invalidatesTags: ['Project'],
-// }),
 export const editProjectInfo = createMutation({
 	mutationFn: async (project: Project) => {
 		return await invoke('edit_project_info', { project })
 	},
 	onSuccess: () => invalidate('Project', 'singleton'),
 })
-
-// saveProject: builder.mutation<void, string>({
-// 	query: async (dirPath) => {
-// 		return await invoke('save_project', { dirPath })
-// 	},
-// 	invalidatesTags: ['Project'],
-// }),
 
 export const saveProject = createMutation({
 	mutationFn: async (dirPath: string) => {
@@ -254,21 +174,11 @@ export const saveProject = createMutation({
 	onSuccess: () => invalidate('Project', 'singleton'),
 })
 
-// saveNewProject: builder.mutation<void, { dirPath: string, author: string, name: string, displayName: string }>({
-// 	query: async (args) => await invoke('save_new_project', args),
-// 	invalidatesTags: ['Project'],
-// }),
 export const saveNewProject = createMutation({
 	mutationFn: async (args: { dirPath: string, author: string, name: string, displayName: string }) => await invoke('save_new_project', args),
 	onSuccess: () => invalidate('Project', 'singleton'),
 })
 
-// dumpImages: builder.mutation<void, void>({
-// 	query: async () => {
-// 		return await invoke('dump_images')
-// 	},
-// 	invalidatesTags: ['Game', 'Image']
-// }),
 export const dumpImages = createMutation({
 	mutationFn: async () => {
 		await invoke('dump_images')
@@ -276,12 +186,6 @@ export const dumpImages = createMutation({
 	onSuccess: () => invalidate('ImageDump', 'singleton')
 })
 
-// imageDumpDirPath: builder.query<string | null, void>({
-// 	query: async () => {
-// 		return await invoke('image_dump_dir_path') ?? null
-// 	},
-// 	providesTags: ['Game', { type: 'Image', id: 'DUMP' }]
-// }),
 export const imageDumpDirPath = createQuery({
 	queryFn: async () => {
 		return await invoke<string | undefined>('image_dump_dir_path') ?? null
@@ -289,24 +193,13 @@ export const imageDumpDirPath = createQuery({
 	deps: [{ type: 'ImageDump', id: 'singleton' }],
 })
 
-// modCacheExists: builder.query<boolean, ModInfo>({
-// 	query: async (modInfo) => {
-// 		return await invoke('mod_cache_exists', { modInfo })
-// 	},
-// 	providesTags: ['ModCache', 'ModInfo']
-// }),
 export const modCacheExists = createQuery({
 	queryFn: async (modInfo: ModInfo) => {
 		return await invoke<boolean>('mod_cache_exists', { modInfo })
 	},
 	deps: (modInfo) => [{ type: 'ModCache', id: modInfo.filePath }],
 })
-// clearModCache: builder.mutation<void, ModInfo>({
-// 	query: async (modInfo) => {
-// 		await invoke('clear_mod_cache', { modInfo })
-// 	},
-// 	invalidatesTags: ['ModCache']
-// }),
+
 export const clearModCache = createMutation({
 	mutationFn: async (modInfo: ModInfo) => {
 		await invoke('clear_mod_cache', { modInfo })
@@ -314,13 +207,6 @@ export const clearModCache = createMutation({
 	onSuccess: (_r, arg) => invalidate('ModInfo', arg.filePath),
 })
 
-// // config
-// getConfig: builder.query<TowermodConfig, void>({
-// 	query: async () => {
-// 		return await invoke('get_config')
-// 	},
-// 	providesTags: ['TowermodConfig']
-// }),
 export const getConfig = createQuery({
 	queryFn: async () => {
 		return await invoke<TowermodConfig>('get_config')
@@ -328,11 +214,6 @@ export const getConfig = createQuery({
 	deps: [{ type: 'TowermodConfig', id: 'singleton' }]
 })
 
-// saveConfig: builder.mutation<void, void>({
-// 	query: async () => {
-// 		await invoke('save_config')
-// 	},
-// }),
 export const saveConfig = createMutation({
 	mutationFn: async () => {
 		await invoke('save_config')
@@ -340,12 +221,6 @@ export const saveConfig = createMutation({
 	onSuccess: () => invalidate('TowermodConfig', 'singleton'),
 })
 
-// loadConfig: builder.mutation<void, void>({
-// 	query: async () => {
-// 		await invoke('load_config')
-// 	},
-// 	invalidatesTags: ['TowermodConfig'],
-// }),
 export const loadConfig = createMutation({
 	mutationFn: async () => {
 		await invoke('load_config')
@@ -353,56 +228,30 @@ export const loadConfig = createMutation({
 	onSuccess: () => invalidate('TowermodConfig', 'singleton'),
 })
 
-// cachePath: builder.query<string, void>({
-// 	query: async () => {
-// 		return await invoke('get_cache_dir_path')
-// 	},
-// }),
-
 export const getCachePath = createQuery({
 	queryFn: async () => {
 		return await invoke<string>('get_cache_dir_path')
 	},
 })
 
-// modsPath: builder.query<string, void>({
-// 	query: async () => {
-// 		return await invoke('get_mods_dir_path')
-// 	},
-// }),
 export const getModsPath = createQuery({
 	queryFn: async () => {
 		return await invoke<string>('get_mods_dir_path')
 	},
 })
 
-// projectsPath: builder.query<string, void>({
-// 	query: async () => {
-// 		return await invoke('get_default_project_dir_path')
-// 	},
-// }),
 export const getDefaultProjectDirPath = createQuery({
 	queryFn: async () => {
 		return await invoke<string>('get_default_project_dir_path')
 	},
 })
 
-// clearGameCache: builder.mutation<void, void>({
-// 	query: async () => {
-// 		await invoke('clear_game_cache')
-// 	},
-// }),
 export const clearGameCache = createMutation({
 	mutationFn: async () => {
 		await invoke('clear_game_cache')
 	},
 })
 
-// nukeCache: builder.mutation<void, void>({
-// 	query: async () => {
-// 		await invoke('nuke_cache')
-// 	},
-// }),
 export const nukeCache = createMutation({
 	mutationFn: async () => {
 		await invoke('nuke_cache')
