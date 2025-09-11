@@ -1,17 +1,7 @@
 import { binaryInvoke, enhanceModInfo, svgToDataUri } from "@/util"
 import { invoke } from "@tauri-apps/api/core"
 import { Game, ModInfo, ModType, Project, ProjectType, TowermodConfig } from '@towermod'
-import { createMutation, createQuery, invalidate, queryClient } from "./helpers"
-
-
-const tags2 = {
-	modInfo: ['ModInfo'],
-	modCache: ['ModInfo', 'Cache'],
-	game: ['Game'],
-	data: ['Game', 'Data'],
-	project: ['Game', 'Data', 'Project'],
-	image: ['Game', 'Data', 'Image'],
-}
+import { createMutation, createQuery, invalidate } from "./helpers"
 
 export const getFile = createQuery({
 	queryFn: async (path?: string | null) => {
@@ -64,6 +54,7 @@ export const setGame = createMutation({
 	},
 	onSuccess: () => invalidate('Game', 'singleton'),
 })
+// BUG: Data in outliner is not properly invalidated
 export const newProject = createMutation({
 	mutationFn: async () => {
 		await invoke('new_project')

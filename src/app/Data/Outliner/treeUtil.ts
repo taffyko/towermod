@@ -106,16 +106,19 @@ export function createRecord<TData extends FixedSizeNodeData>(tree: FixedSizeTre
 	if (existingRecord) {
 		//@ts-ignore
 		existingRecord.parent = parent
+		//@ts-ignore
+		existingRecord.public.data = data
 		return existingRecord
 	}
 
 	const pub: FixedSizeNodePublicState<TData> = {
 		data,
 		isOpen: data.isOpenByDefault,
-		setOpen: (state: any): Promise<void> =>
-			tree.recomputeTree({
+		setOpen: (state: any): Promise<void> => {
+			return tree.recomputeTree({
 				[data.id]: state,
 			})
+		}
 	}
 
 	return {

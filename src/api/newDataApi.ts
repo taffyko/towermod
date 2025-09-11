@@ -1,10 +1,10 @@
 import type { LookupForType, ObjectForType, OutlinerTowermodObject, UniqueObjectLookup, UniqueObjectTypes, UniqueTowermodObject } from '@/util'
 import { assertUnreachable, binaryInvoke, createObjectUrl, enhanceAnimation, enhanceAppBlock, enhanceBehavior, enhanceContainer, enhanceFamily, enhanceImageMetadata, enhanceLayout, enhanceLayoutLayer, enhanceObjectInstance, enhanceObjectTrait, enhanceObjectType, int, revokeObjectUrl } from "@/util"
 import { getObjectDisplayName, getObjectStringId } from '@/util/dataUtil'
+import { SkipToken } from '@tanstack/react-query'
 import { invoke } from "@tauri-apps/api/core"
 import { Animation, AppBlock, ImageMetadata, ObjectType, PluginData, SearchOptions } from '@towermod'
 import { createMutation, createQuery, invalidate, queryClient, QueryDependency, whenQueryEvicted } from "./helpers"
-import { SkipToken } from '@tanstack/react-query'
 
 
 const r = ['Game', 'Data']
@@ -300,7 +300,7 @@ export const getOutlinerObjectTypes = createQuery({
 			{ ...enhanceObjectType(obj), animation: enhanceAnimation(anim) ?? undefined }
 		))
 	},
-	deps: [{ type: 'ObjectType' }]
+	deps: [{ type: 'ObjectType' }, { type: 'Animation' }]
 })
 
 export const getOutlinerObjectTypeIcons = createQuery({
@@ -332,7 +332,8 @@ export const getOutlinerObjectTypeIcons = createQuery({
 })
 
 export const getOutlinerObjectData = createQuery({
-	queryFn: async (args: {lookup: OutlinerTowermodObject | null, idx: number | null}, { depsContext }) => {
+	queryFn: async (args: {lookup: OutlinerTowermodObject | null, idx: number | null}, { hash }) => {
+		const ctx = { parent: hash }
 		const { lookup, idx } = args
 		const data: {
 			obj?: UniqueTowermodObject,
@@ -343,43 +344,61 @@ export const getOutlinerObjectData = createQuery({
 		} = {}
 
 		if (!lookup) { return data }
+		// alternative fetch if possible
+		let pageData: any[] | undefined
+		let iconsPageData: { url?: string }[] | undefined
 		if (idx != null) {
 			const pageSize = 500
 			const page = Math.floor(idx / pageSize)
-			let pageData: any[] | undefined
-			let iconsPageData: { url?: string }[] | undefined
+			const idxInPage = idx % pageSize
 			switch (lookup?._type) {
 				case 'ObjectType': {
-					pageData = await getOutlinerObjectTypes({ page, pageSize }, { depsContext })
-					iconsPageData = await getOutlinerObjectTypeIcons({ page, pageSize }, { depsContext })
-				} break; case 'Animation': {
-					data.obj = lookup
-					data.hasIcon = true
-					data.children = lookup.subAnimations
-					data.displayName = getObjectDisplayName(lookup)
+					pageData = await getOutlinerObjectTypes({ page, pageSize }, ctx)
+					iconsPageData = await getOutlinerObjectTypeIcons({ page, pageSize }, ctx)
 				}
 			}
-			const idxInPage = idx & pageSize
 			if (pageData) { data.obj = pageData?.[idxInPage] }
-			else { data.obj = await getTowermodObject(lookup, { depsContext }) ?? undefined }
-
 			if (iconsPageData) { data.iconUrl = iconsPageData?.[idxInPage]?.url }
-			else { data.iconUrl = await getTowermodObjectIconUrl(lookup, { depsContext }) ?? undefined }
+		}
+		// fetch individual data generically if not handled above
+		if (!pageData && !data.obj) { data.obj = await getTowermodObject(lookup, ctx) ?? undefined }
+		if (!iconsPageData && !data.iconUrl) { data.iconUrl = await getTowermodObjectIconUrl(lookup, ctx) ?? undefined }
 
-			if (!data.displayName) {
-				data.displayName = await getTowermodObjectDisplayName(data.obj, { depsContext }) ?? undefined
+		// populate children/etc.
+		const obj = data.obj
+		switch (obj?._type) {
+			case 'Animation': {
+				data.hasIcon = true
+				data.displayName = getObjectDisplayName(obj)
+				data.children = obj.subAnimations
+			} break; case 'ObjectType': {
+				const isSprite = obj.pluginName === 'Sprite'
+				data.hasIcon ||= isSprite
+				data.displayName = getObjectDisplayName(obj)
+				if (isSprite) {
+					data.children = (obj as { animation?: Animation }).animation?.subAnimations
+				}
+			} break; case 'Layout': {
+				data.children = await getLayoutLayers(obj.name, ctx)
+			} break; case 'LayoutLayer': {
+				data.children = await getObjectInstances(obj.id, ctx)
 			}
 		}
 
+		if (!data.displayName) {
+			data.displayName = await getTowermodObjectDisplayName(data.obj, ctx) ?? undefined
+		}
+
 		return data
-	}
+	},
+	argToKey: ({ idx, lookup }) => ({ idx, lookup: lookup && getObjectStringId(lookup) })
 })
 // getObjectTypeAnimation: builder.query<Animation | null, LookupArg<ObjectType>>({
 // 	query: (args) => invoke('get_object_type_animation', args),
 // 	transformResponse: (r: Animation) => enhanceAnimation(r),
 // 	providesTags: (r, _e, arg) => [{ type: 'ObjectType', id: String(arg.id)}, r && { type: 'Animation', id: String(r.id) }]
 // }),
-
+//
 export const getObjectTypeAnimation = createQuery({
 	queryFn: async (arg: LookupForType<'ObjectType'>) => {
 		const r: Animation = await invoke('get_object_type_animation', arg)
@@ -421,9 +440,9 @@ export const getAnimationChildren = createQuery({
 export const createAnimation = createMutation({
 	mutationFn: (args: { objectTypeId: int }) => invoke<int>('create_animation', args),
 	// onSuccess: (r, arg) => invalidate([{ type: 'ObjectType', id: String(arg.objectTypeId) }, r && { type: 'Animation', id: String(r) }])
-	onSuccess: (animationId, arg) => {
-		invalidateTowermodObject({ _type: 'ObjectType', id: arg.objectTypeId })
-		invalidateTowermodObject({ _type: 'Animation', id: animationId })
+	onSuccess: async (animationId, arg) => {
+		await invalidateTowermodObject({ _type: 'ObjectType', id: arg.objectTypeId })
+		await invalidateTowermodObject({ _type: 'Animation', id: animationId })
 	}
 })
 
@@ -542,11 +561,12 @@ export const createObjectTrait = createMutation({
 	onSuccess: (_r, arg) => invalidateTowermodObject({ _type: 'ObjectTrait', name: arg })
 })
 
-const _getTowermodObject = createQuery({
+export const _getTowermodObject = createQuery({
 	queryFn: async (lookup: UniqueObjectLookup): Promise<UniqueTowermodObject | null> => {
 		return await _getTowermodObject_impl(lookup)
 	},
-	deps: (lookup) => [towermodObjectToDep(lookup)]
+	deps: (lookup) => [towermodObjectToDep(lookup)],
+	argToKey: (arg) => arg && getObjectStringId(arg)
 })
 // wrapper with nice generic typing
 export function getTowermodObject<T extends UniqueObjectTypes>(arg: LookupForType<T>, context?: any): Promise<ObjectForType<T> | null> {
@@ -574,6 +594,7 @@ export const getTowermodObjectDisplayName = createQuery({
 		}
 		return getObjectDisplayName(obj)
 	},
+	argToKey: (arg) => arg && getObjectStringId(arg)
 })
 
 export const getTowermodObjectIconUrl = createQuery({
@@ -603,7 +624,8 @@ export const getTowermodObjectIconUrl = createQuery({
 		if (imageId == null) { return null }
 		const { url } = await getGameImageUrl(imageId, { depsContext })
 		return url
-	}
+	},
+	argToKey: (arg) => getObjectStringId(arg)
 })
 
 export const updateTowermodObject = createMutation({
@@ -621,7 +643,7 @@ function towermodObjectToDep(lookup: UniqueObjectLookup): QueryDependency & { id
 }
 export function invalidateTowermodObject(lookup: UniqueObjectLookup) {
 	const { type, id } = towermodObjectToDep(lookup)
-	invalidate(type, id)
+	return invalidate(type, id)
 }
 
 async function _getTowermodObject_impl(lookup: UniqueObjectLookup): Promise<UniqueTowermodObject | null> {

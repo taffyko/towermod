@@ -1,12 +1,13 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+
+/* eslint-disable react-compiler/react-compiler */
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import { MiniEvent, assert, createObjectUrl, revokeObjectUrl } from './util'
+import { MiniEvent, assert, createObjectUrl, enumerate, revokeObjectUrl } from './util'
 import { useIsSpinning } from '@/app/GlobalSpinner'
 import { useIsModalOpen } from '@/app/Modal/modalStore'
 import useResizeObserver from '@react-hook/resize-observer'
 
-function setRef<T>(ref: React.Ref<T> | undefined, value: T) {
+export function setRef<T>(ref: React.Ref<T> | undefined, value: T) {
 	if (!ref) return
 	if (typeof ref === 'function') {
 		ref(value)
@@ -370,3 +371,14 @@ export function useSize(target?: HTMLElement | null) {
 	return size
 }
 
+/** Execute a callback when any of the values in the array change between renders */
+export function useWatchValue(callback: () => void, deps: DependencyList) {
+	const previousDeps = useRef<DependencyList>([])
+	for (const [dep, i] of enumerate(deps)) {
+		if (previousDeps.current[i] !== dep) {
+			queueMicrotask(callback)
+			break
+		}
+	}
+	previousDeps.current = deps
+}

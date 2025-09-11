@@ -25,6 +25,7 @@ export default tseslint.config(
 			...reactHooks.configs.recommended.rules,
 			// https://github.com/reactwg/react-compiler/discussions/18#discussioncomment-11009257
 			'react-hooks/exhaustive-deps': 'off',
+			'react-hooks/refs': 'off',
 			'@typescript-eslint/no-explicit-any': 'off',
 			'@typescript-eslint/ban-ts-comment': 'off',
 			'@typescript-eslint/no-unused-vars': 'off',
@@ -37,6 +38,7 @@ export default tseslint.config(
 			'@stylistic/semi': ['error', 'never', { "beforeStatementContinuationChars": "always" }],
 			'@stylistic/semi-style': ['warn', 'first'],
 			'@stylistic/indent': ['warn', 'tab'],
+			'no-empty': 'off',
 		},
 	},
 )

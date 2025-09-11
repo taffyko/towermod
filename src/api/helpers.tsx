@@ -1,6 +1,6 @@
 import { showError } from '@/components/Error'
 import { MiniEvent } from '@/util'
-import { DefaultError, Query, QueryClient, QueryFunctionContext, QueryKey, SkipToken, StaleTime, UseMutationOptions, UseQueryOptions, UseSuspenseQueryOptions, skipToken, useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { DefaultError, Query, QueryClient, QueryFunctionContext, QueryKey, SkipToken, StaleTime, UseMutationOptions, UseQueryOptions, UseSuspenseQueryOptions, hashKey, notifyManager, skipToken, useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { isEqual } from 'lodash-es'
 
 export const queryClient = new QueryClient({
@@ -42,34 +42,65 @@ export function createQuery<
 >(
 	baseOptions: CreateQueryOptions<TQueryFnData, TError, TData, TArg>
 ) {
-	const queryName: string = crypto.randomUUID()
-	function getOptions(arg: TArg | SkipToken): UseSuspenseQueryOptions<TQueryFnData, TError, TData> {
+	function getOptions(arg: TArg | SkipToken, additionalOpts?: AdditionalOpts): UseSuspenseQueryOptions<TQueryFnData, TError, TData> {
 		if (arg === skipToken) {
-			return { queryFn: skipToken, queryKey: ['null'] } as any
+			return { queryFn: skipToken, queryKey: ['null'], meta: {} } as any
 		}
-		let options: any
-		if (typeof baseOptions === 'function') {
-			options = baseOptions(arg)
-		} else {
-			options = { ...baseOptions, queryFn: baseOptions.queryFn.bind(null, arg) }
-		}
-		const baseDeps = (typeof options.deps === 'function' ? options.deps(arg) : options.deps) || []
+		const options: any = { ...baseOptions, queryFn: baseOptions.queryFn.bind(null, arg), ...additionalOpts }
 		const queryFn = options.queryFn
-		options.queryKey = [queryName, arg]
-		options.meta = { deps: baseDeps }
-		options.queryFn = (baseContext: QueryFunctionContext<any, never>) => {
-			const context = { ...baseContext, depsContext: [] }
-			const data: TData = queryFn(arg, context)
-			const parentDeps = baseOptions.depsContext ?? []
-			let deps = baseDeps
+		options.queryKey = fetchQuery.queryKey(arg)
+		const queryHash = hashKey(options.queryKey)
+		const cache = queryClient.getQueryCache()
+
+		// first, get initial deps (run deps function without the result data
+		let newDeps = (typeof options.deps === 'function' ? options.deps(arg) : options.deps) || []
+
+		// first-time initialization of meta
+		const query = cache.get(queryHash)
+		options.meta = query?.meta || { deps: newDeps, parents: new Set<string>() }
+
+		// if a parent query passed along its hash, add it to this query's parents set
+		if (options.parent) {
+			const parents = options.meta.parents as Set<string>
+			parents.add(options.parent)
+		}
+		
+		options.queryFn = async (baseContext: QueryFunctionContext<any, never>) => {
+			// initialize this query's `depsContext` array and pass it along in the context passed to the `queryFn` implementation
+			const context = { ...baseContext, depsContext: [], hash: queryHash }
+			// fetch
+			const data: TData = await queryFn(context)
+
 			if (typeof options.deps === 'function') {
-				// update deps using result
-				deps = options.deps(arg, data)
+				// re-run deps function (now that we have result data) to get more refined deps
+				newDeps = options.deps(arg, data)
 			}
-			deps.push(...context.depsContext)
-			const meta = queryClient.getQueryCache().find({ queryKey: options.queryKey })?.meta || {}
-			meta.deps = deps
-			parentDeps.push(...deps)
+
+			const query = cache.get(queryHash)
+			if (query) {
+				if (query.meta) {
+					// Update deps on this query's cache entry
+					query.meta.deps = newDeps
+
+					// Invalidate parents
+					const parents = query.meta.parents as Set<string>
+					if (parents.size) {
+						setTimeout(() => {
+							const cache = queryClient.getQueryCache()
+							if (query.meta?.parents) {
+								const parents = query.meta.parents as Set<string>
+								for (const parentHash of parents) {
+									const q = cache.get(parentHash)
+									if (!q) { parents.delete(parentHash) }
+									else { invalidateQuery(q) }
+								}
+							}
+						}, 0)
+					}
+				} else {
+					console.error('`meta` missing on query', query)
+				}
+			}
 			return data
 		}
 		return options
@@ -83,51 +114,49 @@ export function createQuery<
 		 * The deps from the callee query will be added to the parent query's deps.
 		 */
 		depsContext?: QueryDependency[]
+		/** Hash of the parent query calling this query as a subquery */
+		parent?: string
 	}
 	function useQueryHook(arg: TArg | SkipToken, optionsOverrides?: Omit<UseQueryOptions<TQueryFnData, TError, TData>, 'queryFn' | 'queryKey'> & AdditionalOpts) {
-		const options = { ...getOptions(arg), ...optionsOverrides }
+		const options = getOptions(arg, optionsOverrides)
 		return useQuery(options)
 	}
 	function useSuspenseQueryHook(arg: TArg, optionsOverrides?: Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData>, 'queryFn' | 'queryKey'> & AdditionalOpts) {
-		const options = { ...getOptions(arg), ...optionsOverrides }
+		const options = getOptions(arg, optionsOverrides)
 		return useSuspenseQuery(options)
 	}
 	async function fetchQuery(arg: TArg, optionsOverrides?: AdditionalOpts): Promise<TData> {
-		const options = getOptions(arg)
-		const query = queryClient.getQueryCache().find<TData>({ queryKey: options.queryKey })
-		if (query && query.promise) {
+		const options = getOptions(arg, optionsOverrides)
+		const query = getCacheEntry(arg)
+		if (query && query.promise && !(query.state.fetchStatus === 'idle' && query.state.isInvalidated)) {
 			// If a request is already in progress, do not trigger another one
 			try {
 				return await query.promise
 			} catch {
 				// But if the existing request gets cancelled, start a new one
-				return await queryClient.fetchQuery({
-					queryKey: options.queryKey,
-					queryFn: options.queryFn,
-					...optionsOverrides
-				})
+				return await queryClient.fetchQuery(options) as Promise<TData>
 			}
 		}
-		return await queryClient.fetchQuery({
-			queryKey: options.queryKey,
-			queryFn: options.queryFn,
-			...optionsOverrides
-		})
+		return await queryClient.fetchQuery(options) as Promise<TData>
 	}
 	function requestCache(arg: TArg, requestOnMiss = true): TData | undefined {
-		const options = getOptions(arg)
-		const query = queryClient.getQueryCache().find<TData>({ queryKey: options.queryKey })
+		const query = getCacheEntry(arg)
 		if (query?.state.data !== undefined) {
 			return query.state.data
 		}
 		if (requestOnMiss) { void fetchQuery(arg) }
 		return undefined
 	}
-
+	function getCacheEntry(arg: TArg) {
+		const queryHash = hashKey(fetchQuery.queryKey(arg))
+		return queryClient.getQueryCache().get<TQueryFnData, TError, TData, QueryKey>(queryHash)
+	}
+	fetchQuery.queryName = crypto.randomUUID() as string
 	fetchQuery.useQuery = useQueryHook
 	fetchQuery.useSuspenseQuery = useSuspenseQueryHook
 	fetchQuery.requestCache = requestCache
-	fetchQuery.queryKey = (arg: TArg) => [queryName, arg] as QueryKey
+	fetchQuery.getCacheEntry = getCacheEntry
+	fetchQuery.queryKey = (arg: TArg) => [fetchQuery.queryName, baseOptions.argToKey ? baseOptions.argToKey(arg) : arg] as QueryKey
 	return fetchQuery
 }
 
@@ -150,13 +179,16 @@ type CreateQueryOptions<
 			queryFn: (arg: TArg, context: QueryFunctionContext<any, never> & CreateQueryContext) => TQueryFnData | Promise<TQueryFnData>
 			deps?: QueryDependency[] | ((arg: TArg, result?: TData) => QueryDependency[])
 			depsContext?: QueryDependency[]
+			parent?: string
+			argToKey?: (arg: TArg) => unknown
 		}
 	)
-	| ((arg: TArg) => Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData, any>, 'queryKey'>) & { deps?: QueryDependency[], depsContext?: QueryDependency[] }
+	// | ((arg: TArg) => Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData, any>, 'queryKey'>) & { deps?: QueryDependency[], depsContext?: QueryDependency[] }
 /** Special context object passed to queryFn of createQuery */
 type CreateQueryContext = {
 	/** Any deps pushed to this array by `queryFn` will be added to the query's `deps` */
 	readonly depsContext: QueryDependency[]
+	readonly hash: string
 }
 
 export function createMutation<
@@ -197,7 +229,9 @@ const typeDependencyMap: Record<string, string[]> = {
 
 export function invalidate(type: string, id: unknown, options?: { with?: Record<string, boolean>, excludeFilters?: Record<string, unknown> }) {
 	const { with: targetPropertyGroups, excludeFilters } = options ?? {}
-	queryClient.invalidateQueries({ predicate: (query) => {
+	const cache = queryClient.getQueryCache()
+	const promises: Promise<unknown>[] = []
+	promises.push(queryClient.invalidateQueries({ predicate: (query) => {
 		const deps = (query.meta?.deps ?? []) as QueryDependency[]
 		loop: for (const dep of deps) {
 			if (dep.type !== type) {
@@ -237,8 +271,43 @@ export function invalidate(type: string, id: unknown, options?: { with?: Record<
 					}
 				}
 			}
+			// invalidate parent queries when child queries are invalidated
+			const parents = query.meta?.parents as Set<string>
+			if (parents.size) {
+				setTimeout(() => {
+					for (const parentHash of parents as Set<string>) {
+						const q = cache.get(parentHash)
+						if (!q) { parents.delete(parentHash) }
+						else { promises.push(invalidateQuery(q)) }
+					}
+				}, 0)
+			}
 			return true
 		}
 		return false
-	}})
+	}}))
+	return Promise.all(promises)
+}
+
+/** @internal set each query's `queryName` to its export name for better debugging */
+export function setQueryNamesOnModule(mod: any) {
+	for (const key in mod) {
+		const member = mod[key]
+		if (member && typeof member === 'function' && 'queryName' in member) {
+			member.queryName = key
+		}
+	}
+}
+
+function invalidateQuery(query: Query) {
+	return notifyManager.batch(() => {
+		query.invalidate()
+		if (!query.isDisabled() && !query.isStatic()) {
+			const promise = query.fetch(undefined)
+			return query.state.fetchStatus === 'paused'
+				? Promise.resolve()
+				: promise
+		}
+		return Promise.resolve()
+	})
 }

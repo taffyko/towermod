@@ -10,13 +10,13 @@ import arrowRightImg from '@/icons/arrowRight.svg'
 import plusImg from '@/icons/plus.svg'
 import { actions, dispatch, useAppSelector } from '@/redux'
 import { OutlinerTowermodObject, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
-import { useImperativeHandle, useRerender, useStateRef } from '@/util/hooks'
+import { setRef, useImperativeHandle, useRerender, useStateRef, useWatchValue } from '@/util/hooks'
 import { enumerate, posmod } from '@/util/util'
 import { createSelector } from '@reduxjs/toolkit'
 import { skipToken } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { debounce } from 'lodash-es'
-import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { use, useCallback, useEffect, useRef, useState } from 'react'
 import {
 	FixedSizeNodeData,
 	FixedSizeTree,
@@ -26,19 +26,35 @@ import {
 	TreeWalkerValue
 } from 'react-vtree'
 import Style from './Outliner.module.scss'
+import { OutlinerContext } from './OutlinerContext'
 import { TreeComponent } from './Tree'
 import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive } from './treeUtil'
 
-
-function getObjChildren(obj: OutlinerTowermodObject): undefined | OutlinerTowermodObject[] {
-	switch (obj._type) {
-		case 'Layout': {
-			return api.getLayoutLayers.requestCache(obj.name) ?? []
-		} case 'LayoutLayer': {
-			return api.getObjectInstances.requestCache(obj.id) ?? []
-		}
-	}
+export function Outliner(props: OutlinerProps) {
+	const [handle, setHandle] = useStateRef<OutlinerHandle>()
+	return <div className="vbox grow">
+		<OutlinerContext.Provider value={handle!}>
+			<div className="hbox gap">
+				<OutlinerSearch />
+				<div className="grow" />
+				<OutlinerHistoryButtons />
+			</div>
+			<OutlinerTree ref={(r) => { setRef(props.ref, r); setHandle(r) }} />
+		</OutlinerContext.Provider>
+	</div>
 }
+
+export default Outliner
+
+// function getObjChildren(obj: OutlinerTowermodObject): undefined | OutlinerTowermodObject[] {
+// 	switch (obj._type) {
+// 		case 'Layout': {
+// 			return api.getLayoutLayers.requestCache(obj.name) ?? []
+// 		} case 'LayoutLayer': {
+// 			return api.getObjectInstances.requestCache(obj.id) ?? []
+// 		}
+// 	}
+// }
 
 type OutlinerNodeData = FixedSizeNodeData &
 	{
@@ -74,11 +90,11 @@ const getNodeData = (
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
 	const id: string | number = getTreeItemId(obj)
 
-	const children = getObjChildren(obj)
+	// const children = getObjChildren(obj)
 
 	const data: OutlinerNodeData = {
 		id,
-		children,
+		// children,
 		isOpenByDefault: false,
 		nestingLevel,
 		obj,
@@ -115,7 +131,7 @@ type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicSta
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const {data: {name: nameOverride, nestingLevel, obj, idx, id}, isOpen, style, setOpen} = props
 	const context = use(OutlinerContext)
-	const { tree } = context
+	const tree = context?.tree
 	const selectable = !!obj
 
 	const { data } = api.getOutlinerObjectData.useQuery({ lookup: obj, idx })
@@ -126,11 +142,11 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 
 	useEffect(() => {
 		if (children && children.length) {
-			context.setTreeItemChildren(children, id)
+			context?.setTreeItemChildren(children, id)
 		}
 	}, [children])
 
-	const nodeRecord = tree.state.records.get(props.data.id)
+	const nodeRecord = tree?.state.records.get(props.data.id)
 	const isLeaf = !nodeRecord?.child
 
 	const addChild = getAddChildImplementation(objData)
@@ -209,14 +225,11 @@ export interface OutlinerHandle {
 	setTreeItemChildren(items: OutlinerTowermodObject[], parentId: string): void
 }
 
-export const OutlinerContext = createContext<OutlinerHandle>(null!)
-
 export interface OutlinerProps {
-	handleRef?: React.Ref<OutlinerHandle>,
+	ref?: React.Ref<OutlinerHandle>,
 }
 
-
-export const Outliner = (props: OutlinerProps) => {
+function OutlinerTree(props: OutlinerProps) {
 	const layouts = api.getLayouts.useQuery().data || []
 	const behaviors = api.getBehaviors.useQuery().data || []
 	const containers = api.getContainers.useQuery().data || []
@@ -237,7 +250,7 @@ export const Outliner = (props: OutlinerProps) => {
 		rerender()
 	}, 5, { trailing: true })
 
-	const handle = useImperativeHandle(props.handleRef, () => {
+	const handle = useImperativeHandle(props.ref, () => {
 		return {
 			tree: tree!,
 			jumpToItem(obj) {
@@ -279,12 +292,13 @@ export const Outliner = (props: OutlinerProps) => {
 	// }, [tree?.state.records.size])
 	const hasItem = lookup ? handle.hasItem(lookup) : false
 
-	useEffect(() => {
-		// jump to selected item
+	// BUGFIX: If the currently selected item is not loaded in the tree,
+	// find and load it and the necessary ancestors.
+	useWatchValue(() => {
 		if (lookup && hasItem) {
 			handle.jumpToItem(lookup)
 		}
-	}, [handle, lookup, hasItem])
+	}, [lookup, hasItem])
 
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
 		yield getRootContainerData('Layouts', layouts)
@@ -303,23 +317,13 @@ export const Outliner = (props: OutlinerProps) => {
 		}
 	}, [layouts, behaviors, containers, families, objectTypes, traits, appBlock, tree])
 
-
-	return <div className="vbox grow">
-		<OutlinerContext.Provider value={handle}>
-			<div className="hbox gap">
-				<OutlinerSearch />
-				<div className="grow" />
-				<OutlinerHistoryButtons />
-			</div>
-			<TreeComponent
-				treeWalker={treeWalker}
-				itemSize={25}
-				treeRef={setTreeRef}
-			>
-				{TreeNodeComponent}
-			</TreeComponent>
-		</OutlinerContext.Provider>
-	</div>
+	return <TreeComponent
+		treeWalker={treeWalker}
+		itemSize={25}
+		treeRef={setTreeRef}
+	>
+		{TreeNodeComponent}
+	</TreeComponent>
 }
 
 function OutlinerSearch() {
@@ -384,7 +388,7 @@ function OutlinerHistoryButtons() {
 
 const emptyArray = [] as const
 
-function useOutlinerSearch(handle: OutlinerHandle, options: {
+function useOutlinerSearch(handle: OutlinerHandle | null, options: {
 	caseSensitive: boolean,
 	searchObjectTypes: boolean,
 	searchObjectInstances: boolean,
@@ -404,11 +408,8 @@ function useOutlinerSearch(handle: OutlinerHandle, options: {
 	const matchedContainers = api.searchContainers.useQuery((searchContainers && searchOptions) || skipToken).data || emptyArray
 
 
-	const [matched, matchedKeys] = useMemo(() => {
-		if (!search) {
-			return [{}, []]
-		}
-		const map: Record<string, UniqueObjectLookup> = {}
+	const map: Record<string, UniqueObjectLookup> = {}
+	if (search) {
 		let count = 0
 		for (const obj of matchedObjectTypes) {
 			map[getTreeItemId(obj)] = obj
@@ -426,10 +427,11 @@ function useOutlinerSearch(handle: OutlinerHandle, options: {
 			map[getTreeItemId(obj)] = obj
 			++count
 		}
-		return [map, Object.keys(map)] as const
-	}, [search, matchedObjectTypes, matchedLayoutLayers, matchedObjectInstances, matchedContainers])
+	}
+	const matched = map
+	const matchedKeys = Object.keys(map)
 
-	const currentIdx = useMemo(() => lookup ? matchedKeys.indexOf(getTreeItemId(lookup)) : -1, [matchedKeys, lookup])
+	const currentIdx = lookup ? matchedKeys.indexOf(getTreeItemId(lookup)) : -1
 
 	function nextItem(offset: number) {
 		const idx = posmod(currentIdx + offset, matchedKeys.length)
@@ -438,15 +440,13 @@ function useOutlinerSearch(handle: OutlinerHandle, options: {
 	}
 
 	useEffect(() => {
-		if (handle.tree && search) {
+		if (handle?.tree && search) {
 			// select first matched item if current item not in search results
 			if (currentIdx === -1) {
 				nextItem(1)
 			}
 		}
-	}, [search, matched])
+	}, [search, matched, handle])
 
 	return [search, setSearch, currentIdx, matchedKeys.length, nextItem] as const
 }
-
-export default Outliner
