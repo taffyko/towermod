@@ -150,6 +150,17 @@ export function addItemToTree<TData extends FixedSizeNodeData>(tree: FixedSizeTr
 	})
 }
 
+export function getTreeItemChildren<TData extends FixedSizeNodeData>(tree: FixedSizeTree<TData>, parentId: string): TData[] {
+	const parent = tree.state.records.get(parentId)
+	const children: TData[] = []
+	let node = parent?.child
+	while (node) {
+		children.push(node.public.data)
+		node = node.sibling
+	}
+	return children
+}
+
 /** Update a tree item's children without having to completely recompute treeWalker */
 export function batchSetTreeItemChildren<TData extends FixedSizeNodeData>(tree: FixedSizeTree<TData>, updates: Record<string, TData[]>) {
 	// previous state isn't used anywhere and this is much faster than `new Map(records)`

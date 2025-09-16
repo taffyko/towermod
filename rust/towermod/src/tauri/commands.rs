@@ -341,8 +341,10 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_object_type_instances(object_type_id: i32) -> Vec<i32> {
 	select(selectors::select_object_type_instance_ids(object_type_id)).await
 }
-#[command] pub async fn get_object_instance(id: i32) -> Option<cstc_editing::EdObjectInstance> {
-	select!(selectors::select_object_instance(id), |r| r.cloned()).await
+#[command] pub async fn get_object_instance(id: i32) -> Option<serde_json::Value> {
+	select(move |s| {
+		selectors::select_object_instance(id)(s).map(|o| enhance_object_instance(s, o))
+	}).await
 }
 #[command] pub async fn search_object_instances(options: SearchOptions) -> Vec<(i32, String)> {
 	selectors::search_object_instances(options).await
@@ -378,12 +380,12 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_layout_layers(layout_name: String) -> Vec<i32> {
 	select(selectors::select_layout_layers(layout_name)).await
 }
-#[command] pub async fn get_layout_layer(id: i32) -> Option<cstc_editing::EdLayoutLayer> {
-	select!(selectors::select_layout_layer(id), |r| r.map(|l| {
-		let cstc_editing::EdLayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects: _ } = l;
-		cstc_editing::EdLayoutLayer { id: id.clone(), name: name.clone(), layer_type: layer_type.clone(), filter_color: filter_color.clone(), opacity: opacity.clone(), angle: angle.clone(), scroll_x_factor: scroll_x_factor.clone(), scroll_y_factor: scroll_y_factor.clone(), scroll_x: scroll_x.clone(), scroll_y: scroll_y.clone(), zoom_x_factor: zoom_x_factor.clone(), zoom_y_factor: zoom_y_factor.clone(), zoom_x: zoom_x.clone(), zoom_y: zoom_y.clone(), clear_background_color: clear_background_color.clone(), background_color: background_color.clone(), force_own_texture: force_own_texture.clone(), sampler: sampler.clone(), enable_3d: enable_3d.clone(), clear_depth_buffer: clear_depth_buffer.clone(), objects: Default::default() }
-	})).await
+#[command] pub async fn get_layout_layer(id: i32) -> Option<serde_json::Value> {
+	select(move |s| {
+		selectors::select_layout_layer(id)(s).map(|l| enhance_layout_layer(s, l))
+	}).await
 }
+
 #[command] pub async fn search_layout_layers(options: SearchOptions) -> Vec<(i32, String)> {
 	selectors::search_layout_layers(options).await
 }
@@ -397,8 +399,12 @@ pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
 #[command] pub async fn get_animation_children(id: i32) -> Vec<i32> {
 	select(selectors::select_animation_children(id)).await
 }
-#[command] pub async fn get_animation(id: i32) -> Option<towermod_cstc::Animation> {
-	select!(selectors::select_animation(id), |r| r.cloned()).await
+#[command] pub async fn get_animation(id: i32) -> Option<serde_json::Value> {
+	select(move |s| {
+		let (animation, parent_id) = selectors::select_animation_and_parent_id(id)(s);
+		let animation = animation?;
+		Some(enhance_animation(s, animation, parent_id))
+	}).await
 }
 #[command] pub async fn get_object_type_animation(id: i32) -> Option<towermod_cstc::Animation> {
 	select!(selectors::select_object_type_animation(id), |r| r.cloned()).await
@@ -412,6 +418,35 @@ fn enhance_object_type(s: &towermod_shared::app::State, object_type: cstc_editin
 	}.unwrap()
 }
 
+fn enhance_object_instance(s: &towermod_shared::app::State, object: &cstc_editing::EdObjectInstance) -> serde_json::Value {
+	let layout_layer = selectors::select_layout_layer_of_object(object.id)(s);
+	json_object! {
+		...object,
+		layoutLayerId: layout_layer.map(|l| l.id)
+	}.unwrap()
+}
+
+
+fn enhance_layout_layer(s: &towermod_shared::app::State, layout_layer: &cstc_editing::EdLayoutLayer) -> serde_json::Value {
+	// exclude `.objects` from layout layer
+	let cstc_editing::EdLayoutLayer { id, name, layer_type, filter_color, opacity, angle, scroll_x_factor, scroll_y_factor, scroll_x, scroll_y, zoom_x_factor, zoom_y_factor, zoom_x, zoom_y, clear_background_color, background_color, force_own_texture, sampler, enable_3d, clear_depth_buffer, objects: _ } = layout_layer;
+	let layer = cstc_editing::EdLayoutLayer { id: id.clone(), name: name.clone(), layer_type: layer_type.clone(), filter_color: filter_color.clone(), opacity: opacity.clone(), angle: angle.clone(), scroll_x_factor: scroll_x_factor.clone(), scroll_y_factor: scroll_y_factor.clone(), scroll_x: scroll_x.clone(), scroll_y: scroll_y.clone(), zoom_x_factor: zoom_x_factor.clone(), zoom_y_factor: zoom_y_factor.clone(), zoom_x: zoom_x.clone(), zoom_y: zoom_y.clone(), clear_background_color: clear_background_color.clone(), background_color: background_color.clone(), force_own_texture: force_own_texture.clone(), sampler: sampler.clone(), enable_3d: enable_3d.clone(), clear_depth_buffer: clear_depth_buffer.clone(), objects: Default::default() };
+	let layout_name = selectors::select_layout_of_layer(layout_layer.id)(s);
+	json_object! {
+		...layer,
+		layoutName: layout_name.cloned()
+	}.unwrap()
+}
+
+fn enhance_animation(s: &towermod_shared::app::State, animation: &towermod_cstc::Animation, parent_animation_id: Option<i32>) -> serde_json::Value {
+	let parent_object_type_id = if parent_animation_id.is_none() { None } else { Some(selectors::select_object_type_of_animation(animation.id)(s)).flatten() };
+	json_object! {
+		...animation,
+		parentAnimationId: parent_animation_id,
+		parentObjectTypeId: parent_object_type_id
+	}.unwrap()
+}
+
 #[command] pub async fn get_outliner_object_types(skip: usize, take: usize) -> Vec<(serde_json::Value, Option<towermod_cstc::Animation>)> {
 	select(move |s| {
 		selectors::select_outliner_object_types(skip, take)(s).into_iter()
@@ -419,8 +454,6 @@ fn enhance_object_type(s: &towermod_shared::app::State, object_type: cstc_editin
 			.collect()
 	}).await
 }
-
-
 
 binary_command! {
 	get_outliner_object_type_icons(skip: i64, take: i64) {

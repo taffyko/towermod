@@ -261,6 +261,33 @@ pub async fn search_layout_layers(options: SearchOptions) -> Vec<(i32, String)> 
 		.map(|(o)| (o.id, o.name.clone())).collect()
 	).await
 }
+pub fn select_layout_of_layer(layer_id: i32) -> impl Fn(&State) -> Option<&String> {
+	move |s| {
+		for layout in &s.data.layouts {
+			for layer in &layout.layers {
+				if layer.id == layer_id {
+					return Some(&layout.name)
+				}
+			}
+		}
+		None
+	}
+}
+pub fn select_layout_layer_of_object(object_instance_id: i32) -> impl Fn(&State) -> Option<&EdLayoutLayer> {
+	move |s| {
+		for layout in &s.data.layouts {
+			for layer in &layout.layers {
+				for obj in &layer.objects {
+					if obj.id == object_instance_id {
+						return Some(layer)
+					}
+				}
+			}
+		}
+		None
+	}
+}
+
 
 pub fn select_root_animations() -> impl Fn(&State) -> Vec<i32> {
 	move |s| s.data.animations.values().map(|a| a.id).collect()
@@ -281,6 +308,22 @@ pub fn select_animation(animation_id: i32) -> impl Fn(&State) -> Option<&Animati
 			None
 		}
 		search(s.data.animations.values(), animation_id)
+	}
+}
+pub fn select_animation_and_parent_id(animation_id: i32) -> impl Fn(&State) -> (Option<&Animation>, Option<i32>) {
+	move |s| {
+		fn search<'a>(animations: impl Iterator<Item = &'a Animation>, id: i32, parent_id: &mut Option<i32>) -> Option<&'a Animation> {
+			for a in animations {
+				if a.id == id { return Some(a) }
+				*parent_id = Some(a.id);
+				if let Some(child) = search(a.sub_animations.iter(), id, parent_id) { return Some(child) }
+			}
+			None
+		}
+		let mut parent_id = None;
+		let animation = search(s.data.animations.values(), animation_id, &mut parent_id);
+		(animation, parent_id)
+
 	}
 }
 pub fn select_animation_mut(animation_id: i32) -> impl Fn(&mut State) -> Option<&mut Animation> {
@@ -314,6 +357,17 @@ pub fn select_object_type_animation_mut(object_type_id: i32) -> impl Fn(&mut Sta
 			data.animation
 		};
 		s.data.animations.get_mut(&animation_id)
+	}
+}
+
+pub fn select_object_type_of_animation(animation_id: i32) -> impl Fn(&State) -> Option<i32> {
+	move |s| {
+		let object_instance = s.data.layouts.iter().flat_map(|l| l.layers.iter().flat_map(|l| l.objects.iter()))
+			.find(|o| {
+				let ObjectData::Sprite(data) = &o.data else { return false };
+				data.animation == animation_id
+			})?;
+		Some(object_instance.object_type_id)
 	}
 }
 

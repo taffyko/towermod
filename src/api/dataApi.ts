@@ -282,7 +282,31 @@ export const getOutlinerObjectData = createQuery({
 
 		return data
 	},
-	argToKey: ({ idx, lookup }) => ({ idx, lookup: lookup && getObjectStringId(lookup) })
+	argToKey: ({ idx, lookup }) => ({ idx, lookup: getObjectStringId(lookup) })
+})
+
+export const getOutlinerParentObject = createQuery({
+	queryFn: async (arg: UniqueObjectLookup, { hash }) => {
+		const ctx = { parent: hash }
+		const obj = await getTowermodObject(arg, ctx)
+		if (!obj) { return null }
+		switch (obj._type) {
+			case 'ObjectInstance': {
+				return await getTowermodObject({ _type: 'LayoutLayer', id: obj.layoutLayerId }, ctx)
+			} case 'LayoutLayer': {
+				return await getTowermodObject({ _type: 'Layout', name: obj.layoutName }, ctx)
+			} case 'Animation': {
+				if (obj.parentAnimationId != null) {
+					const parent = await getTowermodObject({ _type: 'Animation', id: obj.parentAnimationId }, ctx)
+					if (parent?.parentObjectTypeId) {
+						return await getTowermodObject({ _type: 'ObjectType', id: parent.parentObjectTypeId }, ctx)
+					} else { return parent }
+				}
+			}
+		}
+		return null
+	},
+	argToKey: (arg) => getObjectStringId(arg)
 })
 
 export const getObjectTypeAnimation = createQuery({

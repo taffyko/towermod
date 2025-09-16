@@ -66,21 +66,24 @@ export function enhanceModInfo(modInfo: ModInfo): ModInfo {
 	return modInfo
 }
 
-export function enhanceLayout(layout: Layout): Layout {
+export function enhanceLayout<T extends Layout | null>(layout: T): T {
+	if (!layout) { return layout }
 	layout._type = 'Layout'
 	// @ts-ignore
 	delete layout.layers
 	return layout
 }
 
-export function enhanceLayoutLayer(layer: LayoutLayer): LayoutLayer {
+export function enhanceLayoutLayer<T extends LayoutLayer | null>(layer: T): T {
+	if (!layer) { return layer }
 	layer._type = 'LayoutLayer'
 	// @ts-ignore
 	delete layer.objects
 	return layer
 }
 
-export function enhanceObjectInstance(obj: ObjectInstance): ObjectInstance {
+export function enhanceObjectInstance<T extends ObjectInstance | null>(obj: T): T {
+	if (!obj) { return obj }
 	obj._type = 'ObjectInstance'
 	if (!(obj.data instanceof Array)) {
 		if ('animation' in obj.data) { obj.data._type = 'SpriteObjectData' }
@@ -146,7 +149,8 @@ export function enhanceImageMetadata<T extends ImageMetadata>(imageMetadata: T):
 	return imageMetadata
 }
 
-export const getObjectStringId = (obj: UniqueObjectLookup) => {
+export const getObjectStringId = (obj: UniqueObjectLookup | null | undefined) => {
+	if (!obj) { return '' }
 	const objType = obj._type
 	let id: string | number
 	switch (objType) {

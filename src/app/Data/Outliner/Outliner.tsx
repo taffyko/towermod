@@ -9,7 +9,7 @@ import arrowDownImg from '@/icons/arrowDown.svg'
 import arrowRightImg from '@/icons/arrowRight.svg'
 import plusImg from '@/icons/plus.svg'
 import { actions, dispatch, useAppSelector } from '@/redux'
-import { OutlinerTowermodObject, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
+import { getObjectStringId, OutlinerTowermodObject, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
 import { setRef, useImperativeHandle, useRerender, useStateRef, useWatchValue } from '@/util/hooks'
 import { enumerate, posmod } from '@/util/util'
 import { createSelector } from '@reduxjs/toolkit'
@@ -22,13 +22,14 @@ import {
 	FixedSizeTree,
 	NodeComponentProps,
 	FixedSizeNodePublicState as NodePublicState,
+	NodeRecord,
 	TreeWalker,
 	TreeWalkerValue
 } from 'react-vtree'
 import Style from './Outliner.module.scss'
 import { OutlinerContext } from './OutlinerContext'
 import { TreeComponent } from './Tree'
-import { batchSetTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive } from './treeUtil'
+import { batchSetTreeItemChildren, getTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive } from './treeUtil'
 
 export function Outliner(props: OutlinerProps) {
 	const [handle, setHandle] = useStateRef<OutlinerHandle>()
@@ -222,7 +223,8 @@ export interface OutlinerHandle {
 	hasItem(obj: UniqueObjectLookup): boolean
 	setOpen(obj: UniqueObjectLookup, open: boolean): void
 	setOpenRecursive(obj: UniqueObjectLookup, open: boolean): void
-	setTreeItemChildren(items: OutlinerTowermodObject[], parentId: string): void
+	setTreeItemChildren(items: OutlinerTowermodObject[], parentId: string, merge?: boolean): Promise<void>
+	addToTree(item: UniqueObjectLookup): Promise<undefined | NodeRecord<NodePublicState<OutlinerNodeData>>>
 }
 
 export interface OutlinerProps {
@@ -244,9 +246,12 @@ function OutlinerTree(props: OutlinerProps) {
 	const rerender = useRerender()
 
 	const queuedTreeItemUpdates = useRef<Record<string, OutlinerNodeData[]>>({})
+	const _dispatchTreeItemUpdatesPromiseResolvers: (() => void)[] = []
 	const _dispatchTreeItemUpdates = debounce((tree: FixedSizeTree<OutlinerNodeData>) => {
 		batchSetTreeItemChildren(tree, queuedTreeItemUpdates.current)
 		queuedTreeItemUpdates.current = {}
+		for (const resolve of _dispatchTreeItemUpdatesPromiseResolvers) { resolve() }
+		_dispatchTreeItemUpdatesPromiseResolvers.splice(0)
 		rerender()
 	}, 5, { trailing: true })
 
@@ -274,15 +279,55 @@ function OutlinerTree(props: OutlinerProps) {
 				const treeItemId = getTreeItemId(obj)
 				setOpenRecursive(tree!, treeItemId, open)
 			},
-			setTreeItemChildren(items: OutlinerTowermodObject[], parentId: string) {
-				if (!tree) { return }
+			setTreeItemChildren(items: OutlinerTowermodObject[], parentId: string, merge = false): Promise<void> {
+				if (!tree) { return Promise.resolve() }
 				const parent = tree.state.records.get(parentId)
-				if (!parent) { return }
-				const children = items.map((item, idx) => (
+				if (!parent) { return Promise.resolve() }
+
+				const children: OutlinerNodeData[] = []
+				if (merge) {
+					children.push(...getTreeItemChildren(tree, parentId))
+				}
+				children.push(...items.map((item, idx) => (
 					getNodeData(item, idx, parent.public.data.nestingLevel + 1, tree).data
-				))
+				)))
 				queuedTreeItemUpdates.current[parentId] = children
+				const {promise, resolve} = Promise.withResolvers<void>()
+				_dispatchTreeItemUpdatesPromiseResolvers.push(resolve)
 				_dispatchTreeItemUpdates(tree)
+				return promise
+			},
+			async addToTree(item: OutlinerTowermodObject): Promise<undefined | NodeRecord<NodePublicState<OutlinerNodeData>>> {
+				const ancestors: { obj?: UniqueTowermodObject, children?: OutlinerTowermodObject[] }[] = []
+				ancestors.push(await api.getOutlinerObjectData({ lookup: item, idx: null }) as any)
+				while (true) {
+					// walk up ancestors until a root present within the tree is found
+					const obj1 = await api.getOutlinerParentObject(item)
+					const { obj, children } = await api.getOutlinerObjectData({ lookup: obj1!, idx: null })
+					if (!obj) {
+						console.error("Failed to find ancestor for", item)
+						return
+					}
+					ancestors.push({ obj, children })
+					if (handle.hasItem(obj)) {
+						break
+					}
+					item = obj
+				}
+
+				// set children at each layer starting from the root ancestor (ancestor already in the tree)
+				const rootAncestor = ancestors.pop()!
+				let parentId = getObjectStringId(rootAncestor.obj)
+				let children = rootAncestor.children
+				ancestors.reverse()
+				const promises = []
+				for (const ancestor of ancestors) {
+					promises.push(handle.setTreeItemChildren(children || [], parentId))
+					parentId = getObjectStringId(ancestor.obj)
+					children = ancestor.children
+				}
+				await Promise.all(promises)
+				return tree?.state.records.get(getObjectStringId(item))
 			}
 		} as OutlinerHandle
 	}, [tree, _dispatchTreeItemUpdates])
@@ -295,8 +340,15 @@ function OutlinerTree(props: OutlinerProps) {
 	// BUGFIX: If the currently selected item is not loaded in the tree,
 	// find and load it and the necessary ancestors.
 	useWatchValue(() => {
-		if (lookup && hasItem) {
-			handle.jumpToItem(lookup)
+		if (lookup) {
+			if (hasItem) {
+				handle.jumpToItem(lookup)
+			} else {
+				handle.addToTree(lookup).then((item) => {
+					console.log(item)
+					// handle.jumpToItem(lookup!)
+				})
+			}
 		}
 	}, [lookup, hasItem])
 
