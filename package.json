@@ -41,6 +41,7 @@
     "react-virtualized-auto-sizer": "^1.0.26",
     "react-vtree": "taffyko/react-18-vtree#dist",
     "react-window": "^1.8.11",
+    "rttist": "1.0.0-beta.7",
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
