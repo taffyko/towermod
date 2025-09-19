@@ -4,7 +4,7 @@
 import { Select } from "@/components/Select"
 import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
 import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo, inferPropertyInfoFromValue, enumSubtypes } from "./inspectorUtil"
-import React, { useCallback, useMemo, useState } from "react"
+import React, { Suspense, useCallback, useMemo, useState } from "react"
 import IconButton from "@/components/IconButton"
 import plusImg from '@/icons/plus.svg'
 import closeImg from '@/icons/close.svg'
@@ -60,9 +60,11 @@ export const InspectorObject = (props: {
 		return <KeyValuePair key={pinfo.key} label={<Text>{pinfo.key}</Text>} value={valueComponent} />
 	}), [objPinfo.value])
 
-	return <div className={`${Style.grid} ${root ? Style.root : ''}`}>
-		{propertyComponents}
-	</div>
+	return <Suspense fallback="Loading...">
+		<div className={`${Style.grid} ${root ? Style.root : ''}`}>
+			{propertyComponents}
+		</div>
+	</Suspense>
 }
 
 export const InspectorArray = <T extends AnyInspectorValue>(props: {

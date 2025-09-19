@@ -140,6 +140,7 @@ export function defaultValueForType(type: InspectorTypeName): (() => any) | unde
 /** Provides additional property type/metadata information for each type */
 export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: T, pinfo: AnyPropertyInfo, key: InspectorKeyTypes) {
 	const type = obj['_type']
+	// TODO: use RTTIST to get most of this info from towermod.d.ts
 	switch (type) {
 		case 'Animation': {
 			override(type, {
