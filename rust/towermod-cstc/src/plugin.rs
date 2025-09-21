@@ -3,7 +3,6 @@ use derivative::Derivative;
 use num_derive::FromPrimitive;
 use serde::{Serialize, Deserialize};
 use serde_alias::serde_alias;
-use windows::{Win32::{Foundation::HMODULE, UI::WindowsAndMessaging::LoadStringA}, core::PSTR};
 use anyhow::Result;
 
 
@@ -172,6 +171,9 @@ pub fn sort_categories(aces: &HashMap<i32, AcesEntry>) -> AceCategories {
 
 // FFI
 
+#[cfg(windows)]
+use windows::{Win32::{Foundation::HMODULE, UI::WindowsAndMessaging::LoadStringA}, core::PSTR};
+#[cfg(windows)]
 pub unsafe fn read_plugin_string_table(hmodule: HMODULE) -> Result<PluginStringTable> {
 	unsafe {
 		let mut buffer: [u8; 1024] = [0; 1024];

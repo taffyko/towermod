@@ -13,14 +13,16 @@ fn main() {
 				break 'bundle;
 			}
 		}
-		let mut command = Command::new("cargo");
+
+
+		let mut command = Command::new(if cfg!(windows) { "cargo" } else { "cross" });
 		command
 			.env_remove("CARGO_FEATURE_BUNDLED_DLLREADER")
 			.arg("build")
 			.args(["-Z", "unstable-options"])
 			.args(["--package", "towermod-dllreader"])
-			.args(["--target", "i686-pc-windows-msvc"])
-			// .args(["--target-dir", out_dir.join("dllreader-target").to_str().unwrap()]) // prevent file-locking issues from running cargo concurrently
+			.args(["--target", if cfg!(windows) { "i686-pc-windows-msvc" } else { "i686-pc-windows-gnu" }])
+			.args(["--target-dir", out_dir.join("dllreader-target").to_str().unwrap()]) // prevent file-locking issues from running cargo concurrently
 			.args(["--artifact-dir", out_dir.to_str().unwrap()]);
 		if profile == "release" {
 			command.arg("--release");

@@ -11,10 +11,12 @@ path = "src/lib.rs"
 default = ["bundled-dllreader"]
 bundled-dllreader = []
 
+[target.'cfg(windows)'.dependencies]
+towermod-win32.workspace = true
+windows.workspace = true
 
 [dependencies]
 towermod-util.workspace = true
-towermod-win32.workspace = true
 towermod-cstc.workspace = true
 anyhow.workspace = true
 scopeguard.workspace = true
@@ -34,7 +36,6 @@ zip.workspace = true
 toml.workspace = true
 serde_alias.workspace = true
 fs-err.workspace = true
-windows.workspace = true
 glob.workspace = true
 md5.workspace = true
 reqwest.workspace = true

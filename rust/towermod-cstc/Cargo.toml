@@ -7,6 +7,9 @@ authors.workspace = true
 [lib]
 path = "src/lib.rs"
 
+[target.'cfg(windows)'.dependencies]
+windows.workspace = true
+
 [dependencies]
 anyhow.workspace = true
 serde.workspace = true
@@ -14,8 +17,6 @@ num-traits.workspace = true
 num-derive.workspace = true
 derivative.workspace = true
 serde_alias.workspace = true
-windows.workspace = true
-
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

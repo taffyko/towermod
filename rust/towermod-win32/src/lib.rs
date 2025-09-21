@@ -1,3 +1,4 @@
+#![cfg(windows)]
 #![feature(try_blocks)]
 #![feature(never_type)]
 

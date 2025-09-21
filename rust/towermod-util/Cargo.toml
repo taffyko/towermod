@@ -20,6 +20,8 @@ walkdir.workspace = true
 async-walkdir.workspace = true
 zstd.workspace = true
 fs-err.workspace = true
+async-scoped.workspace = true
+tracing.workspace = true
 
 
 [build-dependencies]

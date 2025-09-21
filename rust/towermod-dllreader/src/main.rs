@@ -2,10 +2,10 @@
 #![allow(unused_parens)]
 #![allow(unused_import_braces)]
 
-#[cfg(target_arch="x86")]
+#[cfg(all(windows, target_arch="x86"))]
 mod plugin_ffi;
 
-#[cfg(target_arch="x86")]
+#[cfg(all(windows, target_arch="x86"))]
 fn main() {
 	use std::io::Write;
 	let action = std::env::args().nth(1).expect("Missing action argument");
@@ -28,7 +28,7 @@ fn main() {
 	}
 }
 
-#[cfg(not(target_arch="x86"))]
+#[cfg(any(not(windows), not(target_arch="x86")))]
 fn main() {
 	panic!("Unsupported architecture");
 }
