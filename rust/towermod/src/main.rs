@@ -2,9 +2,6 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use towermod_shared::{towermod_util, towermod_win32};
-use towermod_util::log_on_error;
-
 fn main() {
 	std::env::set_var("RUST_BACKTRACE", "1");
 
@@ -24,11 +21,13 @@ fn main() {
 
 	let _ = tracing_log::LogTracer::init();
 
+	// TODO: implement pipe communication on linux
+	#[cfg(windows)]
 	if towermod_win32::pipe::pipe_exists() {
 		let mut command_line = false;
 		for arg in std::env::args().skip(1) {
 			command_line = true;
-			log_on_error(towermod_win32::pipe::write_to_pipe(arg.as_bytes()));
+			towermod_util::log_on_error(towermod_win32::pipe::write_to_pipe(arg.as_bytes()));
 		}
 		if command_line {
 			std::process::exit(0);

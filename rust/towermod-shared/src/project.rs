@@ -5,7 +5,6 @@ use fs_err::tokio as fs;
 use serde::{Serialize, Deserialize};
 use anyhow::{anyhow, Result, Context};
 use serde_alias::serde_alias;
-use towermod_win32::pe_resource::{read_pe_file_resource, ResId};
 use crate::{convert_to_debug_build, convert_to_release_build, get_cache_dir_path, mod_cache_dir_path, PeResource};
 pub use towermod_cstc::{plugin::PluginData, AppBlock, EventBlock, ImageBlock, LevelBlock};
 
@@ -59,7 +58,12 @@ impl Game {
 	pub async fn from_path(path: PathBuf) -> Result<Self> {
 		let file_name = path.file_name().ok_or(anyhow!("Unable to get file name from path"))?.to_string_lossy().to_string();
 		let bytes = fs::read(&path).await?;
-		let _ = read_pe_file_resource(&path, &ResId::from("APPBLOCK"), &ResId::from(997))?;
+		#[cfg(windows)]
+		{
+			// TODO: implement validity check on other platforms
+			use towermod_win32::pe_resource::{read_pe_file_resource, ResId};
+			let _ = read_pe_file_resource(&path, &ResId::from("APPBLOCK"), &ResId::from(997))?;
+		}
 		let data_hash = Some(Self::get_data_hash(&path).await?);
 		let file_hash = format!("{:x?}", md5::compute(&bytes));
 		let mut game_type = GameType::Other;

@@ -16,6 +16,15 @@
       "preLaunchTask": "vite"
     },
     {
+      "name": "Tauri (built binary) (linux)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceRoot}/rust/target/debug/towermod",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "vite"
+    },
+    {
       "name": "Frontend (Attach)",
       "request": "attach",
       "type": "msedge",

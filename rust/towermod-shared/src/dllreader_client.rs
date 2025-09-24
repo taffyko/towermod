@@ -1,4 +1,4 @@
-use std::{path::{Path, PathBuf}};
+use std::{collections::HashMap, path::{Path, PathBuf}};
 use anyhow::Result;
 use tokio::process::Command;
 use fs_err::tokio as fs;
@@ -26,6 +26,13 @@ pub async fn extract_dllreader() -> Result<()> {
 	#[cfg(feature = "bundled-dllreader")]
 	{
 		fs::write(get_dllreader_path(), get_dllreader_exe_bytes()).await?;
+		#[cfg(unix)]
+		{
+			use std::os::unix::fs::PermissionsExt;
+			let mut perms = fs::metadata(get_dllreader_path()).await?.permissions();
+			perms.set_mode(0o755);
+			fs::set_permissions(get_dllreader_path(), perms).await?;
+		}
 		Ok(())
 	}
 	#[cfg(not(feature = "bundled-dllreader"))]
@@ -43,4 +50,17 @@ pub async fn remote_read_editor_plugin<T: AsRef<Path> + std::fmt::Debug>(path: T
 		anyhow::bail!("dllreader failed: {}", String::from_utf8_lossy(&output.stderr));
 	}
 	Ok(rmp_serde::from_slice(&output.stdout)?)
+}
+
+#[instrument]
+pub async fn remote_read_dllblock_names<T: AsRef<Path> + std::fmt::Debug>(path: T) -> Result<HashMap<i32, String>> {
+	let path = path.as_ref().to_owned();
+	let output = Command::new(get_dllreader_path())
+		.arg("read-dllblock-names")
+		.arg(path)
+		.output().await?;
+	if !output.status.success() {
+		anyhow::bail!("dllreader failed: {}", String::from_utf8_lossy(&output.stderr));
+	}
+	Ok(rmp_serde::from_slice::<HashMap<i32, String>>(&output.stdout)?)
 }

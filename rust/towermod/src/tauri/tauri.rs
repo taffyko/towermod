@@ -10,8 +10,8 @@ pub fn run() {
 			let window = tauri::window::WindowBuilder::new(app, "main")
 				.title("towermod")
 				.inner_size(800., 600.)
-				.transparent(true)
-				.decorations(false)
+				.transparent(cfg!(windows))
+				.decorations(cfg!(not(windows)))
 				.shadow(false)
 				.build()?;
 			let mut webview_builder = tauri::webview::WebviewBuilder::new("main", tauri::WebviewUrl::App("index.html".into()))

@@ -20,8 +20,8 @@
       "problemMatcher": [],
       "type": "shell",
       "isBackground": true,
-      "command": "npm",
-      "args": ["run", "tauri-dev"]
+      "command": "yarn",
+      "args": ["tauri-dev"]
     },
     {
       "label": "vite",
@@ -32,8 +32,8 @@
       // see https://code.visualstudio.com/docs/editor/tasks#_can-a-background-task-be-used-as-a-prelaunchtask-in-launchjson
       "isBackground": true,
       // change this to your `beforeDevCommand`:
-      "command": "npm",
-      "args": ["run", "dev"],
+      "command": "yarn",
+      "args": ["dev"],
     },
   ]
 }

@@ -67,7 +67,7 @@ pub async fn play_project(debug: bool) -> Result<u32> {
 	if let Some(project) = &project {
 		unique_name = project.unique_name();
 		if game.game_type == GameType::Towerclimb {
-			let towerclimb_savefiles_dir = PathBuf::from_iter([crate::get_appdata_dir_path(), PathBuf::from_iter(["TowerClimb/Mods", &*unique_name])]);
+			let towerclimb_savefiles_dir = PathBuf::from_iter([crate::get_towerclimb_appdata_dir_path(), PathBuf::from_iter(["TowerClimb/Mods", &*unique_name])]);
 			merge_copy_into(&project.savefiles_path()?, &towerclimb_savefiles_dir, false, false).await?;
 		}
 		runtime_dir = project.mod_runtime_dir_path();
@@ -79,7 +79,7 @@ pub async fn play_project(debug: bool) -> Result<u32> {
 		unique_name = String::from("unnamed project");
 		// for unnamed projects, delete and recreate a fresh save directory on every run
 		if game.game_type == GameType::Towerclimb {
-			let towerclimb_savefiles_dir = PathBuf::from_iter([crate::get_appdata_dir_path(), PathBuf::from_iter(["TowerClimb/Mods", &*unique_name])]);
+			let towerclimb_savefiles_dir = PathBuf::from_iter([crate::get_towerclimb_appdata_dir_path(), PathBuf::from_iter(["TowerClimb/Mods", &*unique_name])]);
 			towermod_util::remove_dir_if_exists(towerclimb_savefiles_dir).await?;
 		}
 		runtime_dir = crate::get_cache_dir_path();
@@ -112,6 +112,12 @@ pub async fn play_project(debug: bool) -> Result<u32> {
 }
 
 pub async fn wait_until_process_exits(pid: u32) -> Result<()> {
+	#[cfg(not(windows))]
+	{
+		// TODO: implement for linux
+		return Ok(());
+	}
+	#[cfg(windows)]
 	tokio::task::spawn_blocking(move || {
 		towermod_win32::process::wait_until_process_exits(pid)
 	}).await?

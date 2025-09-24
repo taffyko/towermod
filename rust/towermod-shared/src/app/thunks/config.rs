@@ -19,8 +19,16 @@ pub async fn save_config() -> Result<()> {
 
 pub async fn load_config() -> Result<()> {
 	let path = config_path();
-	let s = fs::read_to_string(path).await.context("Failed to read config")?;
-	let config = toml::from_str(&s).context("Failed to parse config")?;
-	STORE.dispatch(Action::SetConfig(config).into()).await;
-	Ok(())
+	match fs::read_to_string(path).await {
+		Ok(s) => {
+			let config = toml::from_str(&s).context("Failed to parse config")?;
+			STORE.dispatch(Action::SetConfig(config).into()).await;
+			Ok(())
+		}
+		Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+			// Initialize config file if none exists
+			save_config().await
+		},
+		Err(e) => Err(e).context("Failed to read config"),
+	}
 }

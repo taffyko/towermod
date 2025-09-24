@@ -1,9 +1,8 @@
-use std::{ffi::CStr, collections::{HashMap, HashSet}};
+use std::collections::{HashMap, HashSet};
 use derivative::Derivative;
 use num_derive::FromPrimitive;
 use serde::{Serialize, Deserialize};
 use serde_alias::serde_alias;
-use anyhow::Result;
 
 
 const OBJ_NAME: u32 = 1;
@@ -172,32 +171,75 @@ pub fn sort_categories(aces: &HashMap<i32, AcesEntry>) -> AceCategories {
 // FFI
 
 #[cfg(windows)]
-use windows::{Win32::{Foundation::HMODULE, UI::WindowsAndMessaging::LoadStringA}, core::PSTR};
-#[cfg(windows)]
-pub unsafe fn read_plugin_string_table(hmodule: HMODULE) -> Result<PluginStringTable> {
-	unsafe {
-		let mut buffer: [u8; 1024] = [0; 1024];
-		let ptr = PSTR(&mut buffer as *mut u8);
-		LoadStringA(hmodule, OBJ_NAME, ptr, 1023);
-		let name: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
-		LoadStringA(hmodule, OBJ_AUTHOR, ptr, 1023);
-		let author: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
-		LoadStringA(hmodule, OBJ_VERSION, ptr, 1023);
-		let version: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
-		LoadStringA(hmodule, OBJ_DESCRIPTION, ptr, 1023);
-		let desc: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
-		LoadStringA(hmodule, OBJ_CATEGORY, ptr, 1023);
-		let category: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
-		LoadStringA(hmodule, OBJ_WEB, ptr, 1023);
-		let web: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
+mod ffi {
+	use super::*;
+	use std::{ffi::CStr, path::Path};
+	use anyhow::Result;
+	use tokio::{fs, task::JoinSet};
+	use tracing::instrument;
+	use windows::{core::HSTRING, Win32::{Foundation::{FreeLibrary, HANDLE, HMODULE}, UI::WindowsAndMessaging::LoadStringA}, core::PSTR};
+	use windows::Win32::System::LibraryLoader::{LoadLibraryExW, LOAD_LIBRARY_AS_DATAFILE};
+	use towermod_util::{blocking, async_cleanup};
 
-		Ok(PluginStringTable {
-			name,
-			author,
-			version,
-			desc,
-			category,
-			web,
-		})
+	pub unsafe fn read_plugin_string_table(hmodule: HMODULE) -> Result<PluginStringTable> {
+		unsafe {
+			let mut buffer: [u8; 1024] = [0; 1024];
+			let ptr = PSTR(&mut buffer as *mut u8);
+			LoadStringA(hmodule, OBJ_NAME, ptr, 1023);
+			let name: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
+			LoadStringA(hmodule, OBJ_AUTHOR, ptr, 1023);
+			let author: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
+			LoadStringA(hmodule, OBJ_VERSION, ptr, 1023);
+			let version: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
+			LoadStringA(hmodule, OBJ_DESCRIPTION, ptr, 1023);
+			let desc: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
+			LoadStringA(hmodule, OBJ_CATEGORY, ptr, 1023);
+			let category: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
+			LoadStringA(hmodule, OBJ_WEB, ptr, 1023);
+			let web: String = CStr::from_bytes_until_nul(&buffer[..])?.to_string_lossy().into_owned();
+
+			Ok(PluginStringTable {
+				name,
+				author,
+				version,
+				desc,
+				category,
+				web,
+			})
+		}
+	}
+
+	pub async fn read_file_plugin_string_table(path: &Path) -> Result<PluginStringTable> {
+		unsafe {
+			let hmodule = blocking!(@(ref path) LoadLibraryExW(&HSTRING::from(path.as_os_str()), HANDLE::default(), LOAD_LIBRARY_AS_DATAFILE)).await??;
+			async_cleanup! {
+				do { blocking!(FreeLibrary(hmodule)).await?? }
+				let string_table = read_plugin_string_table(hmodule)?;
+				anyhow::Ok(string_table)
+			}
+		}
+	}
+
+	#[instrument]
+	pub async fn read_dllblock_names(exe_path: &Path) -> Result<HashMap<i32, String>> {
+		let datas = towermod_win32::pe_resource::read_dllblock_bins(exe_path).await?;
+		let mut names = HashMap::new();
+		let mut set = JoinSet::new();
+		for (plugin_idx, data) in datas.into_iter() {
+			set.spawn(async move {
+				let temp_file = tempfile::NamedTempFile::new()?;
+				fs::write(temp_file.path(), data).await?;
+				let string_table = read_file_plugin_string_table(temp_file.path()).await?;
+				anyhow::Ok((plugin_idx, string_table.name))
+			});
+		}
+		while let Some(result) = set.join_next().await {
+			let (i, name) = result??;
+			names.insert(i, name);
+		}
+		Ok(names)
 	}
 }
+
+#[cfg(windows)]
+pub use ffi::*;

@@ -58,6 +58,9 @@ static_assertions = "1.1.0"
 rfd = { version = "0.15.2", features = ["gtk3"], default-features = false }
 itertools = "0.14.0"
 indexmap = { version = "2.7", features = ["serde"] }
+lief = "0.17.0"
+tempfile = "3.22.0"
+directories = "6.0.0"
 
 [profile.dev]
 strip = false

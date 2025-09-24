@@ -45,8 +45,9 @@ lazy_static.workspace = true
 redux-rs.workspace = true
 itertools.workspace = true
 indexmap.workspace = true
-
-
+tempfile.workspace = true
+directories.workspace = true
+lief.workspace = true
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

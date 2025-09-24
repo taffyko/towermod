@@ -29,4 +29,3 @@ pub use filesystem::*;
 
 pub use towermod_util;
 pub use towermod_cstc;
-pub use towermod_win32;

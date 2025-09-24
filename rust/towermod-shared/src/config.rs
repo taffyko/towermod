@@ -2,40 +2,51 @@
 
 use fs_err::tokio as fs;
 use tracing::instrument;
-use windows::Win32::UI::Shell;
-use windows::Win32::Foundation::HANDLE;
 use anyhow::Result;
 use std::path::{Path, PathBuf};
 use towermod_util::log_on_error;
+use directories::{BaseDirs, UserDirs};
 
 use crate::dllreader_client;
 
 /// Directory where cached data is stored
 /// Anything here should be safe to delete without data loss
 pub fn get_cache_dir_path() -> PathBuf {
-	let localappdata_dir = unsafe { Shell::SHGetKnownFolderPath(&Shell::FOLDERID_LocalAppData, Shell::KNOWN_FOLDER_FLAG(0), HANDLE::default()).unwrap().to_string().unwrap() };
-	[&*localappdata_dir, "towermod", "cache"].iter().collect()
+	let base_dirs = BaseDirs::new().unwrap();
+	if cfg!(windows) {
+		return base_dirs.cache_dir().join("towermod/cache")
+	} else {
+		return base_dirs.cache_dir().join("towermod")
+	}
 }
 
 pub fn get_stable_exe_path() -> PathBuf {
-	let localappdata_dir = unsafe { Shell::SHGetKnownFolderPath(&Shell::FOLDERID_LocalAppData, Shell::KNOWN_FOLDER_FLAG(0), HANDLE::default()).unwrap().to_string().unwrap() };
-	[&*localappdata_dir, "towermod", "towermod.exe"].iter().collect()
+	let base_dirs = BaseDirs::new().unwrap();
+	base_dirs.data_local_dir().join("towermod/towermod.exe")
 }
 
 
-pub fn get_appdata_dir_path() -> PathBuf {
+/// Get the AppData directory where TowerClimb stores its savedata and settings
+pub fn get_towerclimb_appdata_dir_path() -> PathBuf {
+	#[cfg(windows)]
 	unsafe {
+		use windows::Win32::UI::Shell;
+		use windows::Win32::Foundation::HANDLE;
 		let appdata_dir = Shell::SHGetKnownFolderPath(&Shell::FOLDERID_RoamingAppData, Shell::KNOWN_FOLDER_FLAG(0), HANDLE::default()).unwrap().to_string().unwrap();
-		PathBuf::from(appdata_dir)
+		return PathBuf::from(appdata_dir);
+	}
+	#[cfg(not(windows))]
+	{
+		// BUG: make this customizable
+		let base_dirs = BaseDirs::new().unwrap();
+		return base_dirs.data_local_dir().join("Steam/steamapps/steamapps/compatdata/396640/pfx/drive_c/users/steamuser/AppData/Roaming");
 	}
 }
 
 /// Root directory for all towermod data & configuration
 pub fn get_towermod_dir_path() -> PathBuf {
-	unsafe {
-		let documents_dir = Shell::SHGetKnownFolderPath(&Shell::FOLDERID_Documents, Shell::KNOWN_FOLDER_FLAG(0), HANDLE::default()).unwrap().to_string().unwrap();
-		[&*documents_dir, "towermod"].iter().collect()
-	}
+	let user_dirs = UserDirs::new().unwrap();
+	user_dirs.document_dir().unwrap().join("towermod")
 }
 
 /// Root for all per-mod cache files
@@ -70,8 +81,17 @@ pub fn get_default_project_dir_path() -> PathBuf {
 
 /// Uses "dumb" heuristics to try to find the TowerClimb game executable, if it can
 pub fn try_find_towerclimb() -> Result<PathBuf> {
-	let program_files_x86 = unsafe { Shell::SHGetKnownFolderPath(&Shell::FOLDERID_ProgramFilesX86, Shell::KNOWN_FOLDER_FLAG(0), HANDLE::default())?.to_string()? };
-	let mut path: PathBuf = [&*program_files_x86, r"Steam\steamapps\common\TowerClimb"].iter().collect();
+	let mut path: PathBuf;
+	#[cfg(windows)]
+	{
+		let program_files_x86 = unsafe { Shell::SHGetKnownFolderPath(&Shell::FOLDERID_ProgramFilesX86, Shell::KNOWN_FOLDER_FLAG(0), HANDLE::default())?.to_string()? };
+		path = [&*program_files_x86, r"Steam\steamapps\common\TowerClimb"].iter().collect();
+	}
+	#[cfg(not(windows))]
+	{
+		let base_dirs = BaseDirs::new().unwrap();
+		path = base_dirs.data_local_dir().join("Steam/steamapps/common/TowerClimb");
+	}
 	// give up if installion dir doesn't exist
 	if !path.is_dir() {
 		// TODO: also search null/SteamLibrary on other drives
@@ -98,14 +118,18 @@ pub fn try_find_towerclimb() -> Result<PathBuf> {
 #[instrument]
 pub async fn first_time_setup() -> Result<()> {
 	link_towermod_to_stable_path().await?;
-
-	let stable_exe_path = crate::get_stable_exe_path();
-	let stable_exe_path = stable_exe_path.to_string_lossy();
-	towermod_win32::registry::initialize_registry_settings(&stable_exe_path)?;
-	log_on_error(dllreader_client::extract_dllreader().await);
-
 	fs::create_dir_all(get_mods_dir_path()).await?;
 	fs::create_dir_all(get_cache_dir_path()).await?;
+
+	#[cfg(windows)]
+	{
+		let stable_exe_path = crate::get_stable_exe_path();
+		let stable_exe_path = stable_exe_path.to_string_lossy();
+		towermod_win32::registry::initialize_registry_settings(&stable_exe_path)?;
+	}
+	// TODO: register URL handling and file associations on Linux as well
+
+	log_on_error(dllreader_client::extract_dllreader().await);
 
 	Ok(())
 }

@@ -5,7 +5,7 @@ use fs_err::tokio as fs;
 use towermod_cstc::ImageMetadata;
 use towermod_shared::{app::{selectors::SearchOptions, state::{dispatch, select, DataAction}}, cstc_editing, select, FileDialogOptions, ModInfo, ModType, PluginData, Project, ProjectType };
 use towermod_util::{json_object, log_on_error};
-use towermod_shared::{towermod_util, towermod_win32, towermod_cstc};
+use towermod_shared::{towermod_util, towermod_cstc};
 
 macro_rules! binary_command {
 	($name:ident($($arg:ident: $arg_type:ty),*) $body:block) => {
@@ -125,6 +125,8 @@ pub async fn init(app: AppHandle) -> Result<()> {
 		}
 
 		// Attempt to listen on pipe
+		// TODO: implement on linux
+		#[cfg(windows)]
 		std::thread::spawn(move || {
 			let app_handle = app;
 			log_on_error(towermod_win32::pipe::listen_pipe(move |msg| {

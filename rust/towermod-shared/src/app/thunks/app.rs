@@ -1,5 +1,5 @@
 use std::{collections::HashMap, io::{Cursor, Read, Write}, path::PathBuf, sync::Mutex};
-use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, convert_to_release_build, cstc_editing::CstcData, first_time_setup, get_appdata_dir_path, get_mods_dir_path, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType };
+use crate::{app::state::{AppAction, ConfigAction, DataAction, TowermodConfig, STORE}, convert_to_release_build, cstc_editing::CstcData, first_time_setup, get_towerclimb_appdata_dir_path, get_mods_dir_path, Game, GameType, ModInfo, ModType, PeResource, Project, ProjectType };
 use anyhow::Result;
 use async_scoped::TokioScope;
 use anyhow::{Context};
@@ -7,7 +7,6 @@ use fs_err::tokio as fs;
 use tokio::io::AsyncWriteExt;
 use towermod_cstc::{self as cstc, AppBlock, EventBlock, LevelBlock};
 use towermod_util::{async_cleanup, log_on_error, zip_merge_copy_into, TcrepainterPatch, ZipWriterExt};
-use towermod_win32::get_temp_file;
 use tracing::instrument;
 use itertools::Itertools;
 use crate::game_images as images;
@@ -41,7 +40,7 @@ pub async fn init() -> Result<()> {
 	}
 	// Otherwise, try to autodetect and load game path
 	if !game_path_valid {
-		if let Some(game_path) = log_on_error(crate::try_find_towerclimb().context("Failed to find TowerClimb executable")) {
+		if let Some(game_path) = crate::try_find_towerclimb().ok() {
 			log_on_error(thunks::set_game(Some(game_path.clone())).await.context("Failed to load game at detected path"));
 		}
 	}
@@ -152,7 +151,7 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<u32> {
 
 	zip_merge_copy_into(&mut zip, "files/", &runtime_dir, true).await?;
 	if is_towerclimb {
-		let towerclimb_savefiles_dir = PathBuf::from_iter([get_appdata_dir_path(), PathBuf::from_iter(["TowerClimb/Mods", &*mod_info.unique_name()])]);
+		let towerclimb_savefiles_dir = PathBuf::from_iter([get_towerclimb_appdata_dir_path(), PathBuf::from_iter(["TowerClimb/Mods", &*mod_info.unique_name()])]);
 		zip_merge_copy_into(&mut zip, "savefiles/", &towerclimb_savefiles_dir, true).await?;
 	}
 
@@ -184,14 +183,10 @@ pub async fn play_mod(zip_path: PathBuf) -> Result<u32> {
 		patch.patch(&images_by_id, std::io::Cursor::new(&mut bytes))?;
 		{
 			status("Writing data");
-			let temp_file = get_temp_file().await?;
-			async_cleanup! {
-				do { fs::remove_file(&temp_file).await? }
-				fs::write(&temp_file, &bytes).await?;
-				status("Converting executable");
-				convert_to_release_build(&temp_file, &output_exe_path).await?;
-				anyhow::Ok(())
-			}?
+			let temp_file = tempfile::NamedTempFile::new()?;
+			fs::write(&temp_file, &bytes).await?;
+			status("Converting executable");
+			convert_to_release_build(temp_file.path(), &output_exe_path).await?;
 		};
 	} else {
 		let image_block = cstc::ImageBlock::read_from_pe(&game_path).await?;
@@ -332,8 +327,8 @@ pub async fn rebase_towerclimb_save_path(events: &mut cstc::EventBlock, unique_n
 			}
 		}
 	}
-	let settings_dir_path = PathBuf::from_iter([crate::get_appdata_dir_path(), PathBuf::from(r"Towerclimb\Settings")]);
-	let settings_dir_dest_path = PathBuf::from_iter([crate::get_appdata_dir_path(), PathBuf::from_iter([&*appdata_suffix, "Settings"])]);
+	let settings_dir_path = PathBuf::from_iter([crate::get_towerclimb_appdata_dir_path(), PathBuf::from(r"Towerclimb\Settings")]);
+	let settings_dir_dest_path = PathBuf::from_iter([crate::get_towerclimb_appdata_dir_path(), PathBuf::from_iter([&*appdata_suffix, "Settings"])]);
 
 	// Copy settings from vanilla game if none exists for the mod
 	towermod_util::merge_copy_into(&settings_dir_path, &settings_dir_dest_path, false, false).await?;
