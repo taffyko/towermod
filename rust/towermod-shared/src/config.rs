@@ -84,7 +84,10 @@ pub fn try_find_towerclimb() -> Result<PathBuf> {
 	let mut path: PathBuf;
 	#[cfg(windows)]
 	{
-		let program_files_x86 = unsafe { Shell::SHGetKnownFolderPath(&Shell::FOLDERID_ProgramFilesX86, Shell::KNOWN_FOLDER_FLAG(0), HANDLE::default())?.to_string()? };
+		let program_files_x86 = unsafe {
+			use windows::Win32::{Foundation::HANDLE, UI::Shell};
+			Shell::SHGetKnownFolderPath(&Shell::FOLDERID_ProgramFilesX86, Shell::KNOWN_FOLDER_FLAG(0), HANDLE::default())?.to_string()?
+		};
 		path = [&*program_files_x86, r"Steam\steamapps\common\TowerClimb"].iter().collect();
 	}
 	#[cfg(not(windows))]

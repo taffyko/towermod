@@ -169,7 +169,7 @@ impl Game {
 			};
 		}
 
-		let mut plugin_names = crate::read_dllblock_names(self.game_path()?).await?;
+		let mut plugin_names = towermod_cstc::plugin::read_dllblock_names(self.game_path()?).await?;
 		plugin_names.insert(-1, String::from("System"));
 		let mut editor_plugins = crate::load_editor_plugins_by_name(&plugin_names).await?;
 		editor_plugins.insert(-1, towermod_cstc::get_system_plugin());
@@ -188,7 +188,7 @@ impl Game {
 			let result: (HashMap<i32, PluginData>, HashMap<i32, String>) = rmp_serde::from_slice(&data)?;
 			Ok(result)
 		} else {
-			let plugin_names = crate::read_dllblock_names(&self.game_path()?).await?;
+			let plugin_names = towermod_cstc::plugin::read_dllblock_names(&self.game_path()?).await?;
 			let editor_plugins = crate::load_editor_plugins_by_name(&plugin_names).await?;
 			let result = (editor_plugins, plugin_names);
 

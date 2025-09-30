@@ -280,9 +280,15 @@ function OutlinerTree(props: OutlinerProps) {
 				setOpenRecursive(tree!, treeItemId, open)
 			},
 			setTreeItemChildren(items: OutlinerTowermodObject[], parentId: string, merge = false): Promise<void> {
-				if (!tree) { return Promise.resolve() }
+				if (!tree) {
+					console.error('Called setTreeItemChildren without tree')
+					return Promise.resolve()
+				}
 				const parent = tree.state.records.get(parentId)
-				if (!parent) { return Promise.resolve() }
+				if (!parent) {
+					console.error('Called setTreeItemChildren with invalid parentId',)
+					return Promise.resolve()
+				}
 
 				const children: OutlinerNodeData[] = []
 				if (merge) {
@@ -320,13 +326,11 @@ function OutlinerTree(props: OutlinerProps) {
 				let parentId = getObjectStringId(rootAncestor.obj)
 				let children = rootAncestor.children
 				ancestors.reverse()
-				const promises = []
 				for (const ancestor of ancestors) {
-					promises.push(handle.setTreeItemChildren(children || [], parentId))
+					await handle.setTreeItemChildren(children || [], parentId)
 					parentId = getObjectStringId(ancestor.obj)
 					children = ancestor.children
 				}
-				await Promise.all(promises)
 				return tree?.state.records.get(getObjectStringId(item))
 			}
 		} as OutlinerHandle
@@ -344,10 +348,7 @@ function OutlinerTree(props: OutlinerProps) {
 			if (hasItem) {
 				handle.jumpToItem(lookup)
 			} else {
-				handle.addToTree(lookup).then((item) => {
-					console.log(item)
-					// handle.jumpToItem(lookup!)
-				})
+				handle.addToTree(lookup)
 			}
 		}
 	}, [lookup, hasItem])
@@ -379,13 +380,12 @@ function OutlinerTree(props: OutlinerProps) {
 }
 
 function OutlinerSearch() {
-	const handle = use(OutlinerContext)
 	const [caseSensitive, setCaseSensitive] = useState(false)
 	const [searchObjectTypes, setSearchObjectTypes] = useState(true)
 	const [searchObjectInstances, setSearchObjectInstances] = useState(false)
 	const [searchLayoutLayers, setSearchLayoutLayers] = useState(false)
 	const [searchContainers, setSearchContainers] = useState(false)
-	const [search, setSearch, matchIdx, matchCount, nextMatch] = useOutlinerSearch(handle, {
+	const [search, setSearch, matchIdx, matchCount, nextMatch] = useOutlinerSearch({
 		caseSensitive,
 		searchObjectTypes,
 		searchObjectInstances,
@@ -440,7 +440,7 @@ function OutlinerHistoryButtons() {
 
 const emptyArray = [] as const
 
-function useOutlinerSearch(handle: OutlinerHandle | null, options: {
+function useOutlinerSearch(options: {
 	caseSensitive: boolean,
 	searchObjectTypes: boolean,
 	searchObjectInstances: boolean,
@@ -449,7 +449,12 @@ function useOutlinerSearch(handle: OutlinerHandle | null, options: {
 }) {
 	const { caseSensitive, searchObjectTypes, searchObjectInstances, searchLayoutLayers, searchContainers } = options
 	const lookup = useAppSelector(s => s.app.outlinerValue)
-	const [search, setSearch] = useState("")
+	const [search, _setSearch] = useState("")
+	const shouldSelectFirstResult = useRef(false)
+	function setSearch(search: string) {
+		_setSearch(search)
+		shouldSelectFirstResult.current = true
+	}
 	const searchOptions = search ? {
 		text: caseSensitive ? search : search.toLowerCase(),
 		caseSensitive
@@ -492,13 +497,15 @@ function useOutlinerSearch(handle: OutlinerHandle | null, options: {
 	}
 
 	useEffect(() => {
-		if (handle?.tree && search) {
-			// select first matched item if current item not in search results
-			if (currentIdx === -1) {
-				nextItem(1)
-			}
+		if (!search) return
+		if (!shouldSelectFirstResult.current) return
+		if (matchedKeys.length === 0) return
+		// select first matched item if current item not in search results
+		if (currentIdx === -1) {
+			nextItem(1)
 		}
-	}, [search, matched, handle])
+		shouldSelectFirstResult.current = false
+	}, [search, matched, currentIdx])
 
 	return [search, setSearch, currentIdx, matchedKeys.length, nextItem] as const
 }

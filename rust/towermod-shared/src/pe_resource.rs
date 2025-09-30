@@ -53,15 +53,18 @@ pub trait PeResource: Sized + Send {
 	}
 }
 
-fn read_pe_file_resource(pe_path: impl AsRef<Path>, name: &str, id: u32) -> Result<Vec<u8>> {
+#[cfg(windows)]
+use towermod_win32::pe_resource::ResId;
+
+fn read_pe_file_resource(pe_path: impl AsRef<Path>, name: &str, id: u16) -> Result<Vec<u8>> {
 	#[cfg(windows)]
 	return {
-		towermod_win32::pe_resource::read_pe_file_resource(pe_path.as_ref(), &ResId::from(name), &ResId::from(id));
+		towermod_win32::pe_resource::read_pe_file_resource(pe_path.as_ref(), &ResId::from(name), &ResId::from(id))
 	};
 	#[cfg(not(windows))]
 	return {
 		use lief::pe::resources::{Node, NodeBase};
-		fn get_named_block(node: &Node, name: &str, id: u32) -> Option<Vec<u8>> {
+		fn get_named_block(node: &Node, name: &str, id: u16) -> Option<Vec<u8>> {
 			let section = node.children().find(|section| section.name().map_or(false, |n| n == name))?;
 			let child = section.children().find(|child| child.id() == id)?;
 			let data = child.children().next()?;
@@ -74,15 +77,15 @@ fn read_pe_file_resource(pe_path: impl AsRef<Path>, name: &str, id: u32) -> Resu
 	}
 }
 
-fn replace_pe_file_resource(pe_path: impl AsRef<Path>, name: &str, id: u32, bin: &[u8]) -> Result<()> {
+fn replace_pe_file_resource(pe_path: impl AsRef<Path>, name: &str, id: u16, bin: &[u8]) -> Result<()> {
 	#[cfg(windows)]
 	return {
-		towermod_win32::pe_resource::replace_pe_file_resource(pe_path.as_ref(), &ResId::from(name), &ResId::from(id), bin);
+		towermod_win32::pe_resource::replace_pe_file_resource(pe_path.as_ref(), &ResId::from(name), &ResId::from(id), bin)
 	};
 	#[cfg(not(windows))]
 	return {
 		use lief::pe::resources::{self as pe, Node, NodeBase};
-		fn set_named_block(node: &mut Node, name: &str, id: u32, bytes: &[u8]) {
+		fn set_named_block(node: &mut Node, name: &str, id: u16, bytes: &[u8]) {
 			let Some(section) = node.children().find(|section| section.name().map_or(false, |n| n == name)) else {
 				return
 			};
@@ -198,7 +201,7 @@ mod platform {
 	use super::{cstc_binary_dir};
 
 	pub async fn read_file_plugin_string_table(path: &Path) -> Result<PluginStringTable> {
-		towermod_cstc::read_file_plugin_string_table(path).await
+		towermod_cstc::plugin::read_file_plugin_string_table(path).await
 	}
 
 	/// Infer the original filename of a plugin
@@ -241,7 +244,7 @@ mod platform {
 					// Copy over all resources
 					for res_name in &res_names {
 						let bin = read_hmodule_resource(hmodule, res_type, res_name)?;
-						replace_pe_file_resource(&dest_exe, res_type, res_name, &bin)?;
+						towermod_win32::pe_resource::replace_pe_file_resource(&dest_exe, res_type, res_name, &bin)?;
 					}
 				}
 
@@ -308,7 +311,7 @@ mod platform {
 							for res_name in &res_names {
 								let bin = read_hmodule_resource(hmodule, res_type, res_name)?;
 
-								while let Err(_) = replace_pe_file_resource(&dest_exe, res_type, res_name, &bin) {
+								while let Err(_) = towermod_win32::pe_resource::replace_pe_file_resource(&dest_exe, res_type, res_name, &bin) {
 									println!("retry");
 								};
 							}
@@ -322,7 +325,7 @@ mod platform {
 			// Add the string table entries for preview-mode plugin loading
 			let res_type_string_table = ResId::from(RES_TYPE_STRING_TABLE);
 			for (i, data) in string_table_entries.iter().enumerate() {
-				while let Err(_) = replace_pe_file_resource(&dest_exe, &res_type_string_table, &ResId::from(1000 + i as u16), data) {
+				while let Err(_) = towermod_win32::pe_resource::replace_pe_file_resource(&dest_exe, &res_type_string_table, &ResId::from(1000 + i as u16), data) {
 					println!("retry");
 				};
 			}
