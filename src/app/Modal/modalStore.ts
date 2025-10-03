@@ -2,6 +2,7 @@ import { useMiniEventValue } from "@/util/hooks"
 import { MiniEvent } from "@/util/util"
 import React, { useMemo } from "react"
 
+/** API to open modals imperatively in async/await UI event logic. */
 export function openModal(content: React.ReactNode) {
 	const id = crypto.randomUUID()
 	modals = [...modals]
@@ -20,6 +21,13 @@ export function openModal(content: React.ReactNode) {
 				resolve()
 			}
 		}
+	})
+}
+type OnConfirmArg<T> = T extends { onConfirm?: (arg: infer U) => void } ? U : never
+export function openConfirmModal<P extends {}>(component: React.ComponentType<P>, props: NoInfer<Omit<P, 'onConfirm'>>): Promise<OnConfirmArg<P> | undefined> {
+	return new Promise<OnConfirmArg<P> | undefined>((resolve) => {
+		const node = React.createElement(component, { ...props, onConfirm: resolve } as any)
+		openModal(node).then(() => resolve(undefined))
 	})
 }
 

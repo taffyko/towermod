@@ -11,7 +11,7 @@ import plusImg from '@/icons/plus.svg'
 import { actions, dispatch, useAppSelector } from '@/redux'
 import { getObjectStringId, OutlinerTowermodObject, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
 import { setRef, useImperativeHandle, useRerender, useStateRef, useWatchValue } from '@/util/hooks'
-import { enumerate, posmod } from '@/util/util'
+import { assert, enumerate, posmod } from '@/util/util'
 import { createSelector } from '@reduxjs/toolkit'
 import { skipToken } from '@tanstack/react-query'
 import clsx from 'clsx'
@@ -30,6 +30,8 @@ import Style from './Outliner.module.scss'
 import { OutlinerContext } from './OutlinerContext'
 import { TreeComponent } from './Tree'
 import { batchSetTreeItemChildren, getTreeItemChildren, getTreeItemId, jumpToTreeItem, setOpenRecursive } from './treeUtil'
+import { ConfirmModal } from '@/app/Modal'
+import { getAddChildImplementation } from './addOutlinerObject'
 
 export function Outliner(props: OutlinerProps) {
 	const [handle, setHandle] = useStateRef<OutlinerHandle>()
@@ -47,21 +49,12 @@ export function Outliner(props: OutlinerProps) {
 
 export default Outliner
 
-// function getObjChildren(obj: OutlinerTowermodObject): undefined | OutlinerTowermodObject[] {
-// 	switch (obj._type) {
-// 		case 'Layout': {
-// 			return api.getLayoutLayers.requestCache(obj.name) ?? []
-// 		} case 'LayoutLayer': {
-// 			return api.getObjectInstances.requestCache(obj.id) ?? []
-// 		}
-// 	}
-// }
-
 type OutlinerNodeData = FixedSizeNodeData &
 	{
 		name?: string;
 		nestingLevel: number;
 		obj: OutlinerTowermodObject | null;
+		/** only used for the root nodes which provide children up-front */
 		children?: OutlinerTowermodObject[];
 		idx: number | null,
 	}
@@ -91,11 +84,8 @@ const getNodeData = (
 ): TreeWalkerValue<OutlinerNodeData, OutlinerNodeMeta> => {
 	const id: string | number = getTreeItemId(obj)
 
-	// const children = getObjChildren(obj)
-
 	const data: OutlinerNodeData = {
 		id,
-		// children,
 		isOpenByDefault: false,
 		nestingLevel,
 		obj,
@@ -108,7 +98,6 @@ const getNodeData = (
 	}
 }
 
-
 const defaultTextStyle = {marginLeft: 10}
 const defaultButtonStyle = {fontFamily: 'Courier New'}
 
@@ -116,17 +105,7 @@ type OutlinerNodeMeta = Readonly<{
 	nestingLevel: number;
 }>
 
-function getAddChildImplementation(obj?: UniqueTowermodObject): (() => Promise<void>) | undefined {
-	switch (obj?._type) {
-		case 'ObjectType':
-			if (obj.pluginName === 'Sprite') {
-				return async () => {
-					const id = await spin(api.createAnimation({ objectTypeId: obj.id }))
-					dispatch(actions.setOutlinerValue({ _type: 'Animation', id }))
-				}
-			}
-	}
-}
+
 
 type TreeNodeComponentProps = NodeComponentProps<OutlinerNodeData, NodePublicState<OutlinerNodeData>>
 const TreeNodeComponent = (props: TreeNodeComponentProps) => {
@@ -151,7 +130,7 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const nodeRecord = tree?.state.records.get(props.data.id)
 	const isLeaf = !nodeRecord?.child
 
-	const addChild = getAddChildImplementation(objData)
+	const addChild = getAddChildImplementation(name, objData)
 
 	const nodeContent = <>
 		<Image noReflow={hasIcon} src={iconUrl} />
@@ -260,15 +239,15 @@ function OutlinerTree(props: OutlinerProps) {
 		return {
 			tree: tree!,
 			jumpToItem(obj) {
+				// FIXME
+				console.log("JUMP TO ITEM:", obj)
 				const treeItemId = getTreeItemId(obj)
 				if (tree) { jumpToTreeItem(tree, treeItemId) }
 			},
 			hasItem(obj) {
 				if (tree) {
 					const treeItemId = getTreeItemId(obj)
-					if (tree.state.records.get(treeItemId)) {
-						return true
-					}
+					return tree.state.records.has(treeItemId)
 				}
 				return false
 			},
@@ -305,34 +284,62 @@ function OutlinerTree(props: OutlinerProps) {
 				return promise
 			},
 			async addToTree(item: OutlinerTowermodObject): Promise<undefined | NodeRecord<NodePublicState<OutlinerNodeData>>> {
-				const ancestors: { obj?: UniqueTowermodObject, children?: OutlinerTowermodObject[] }[] = []
-				ancestors.push(await api.getOutlinerObjectData({ lookup: item, idx: null }) as any)
+				// FIXME
+				console.log("ADD TO TREE", item)
+				// build list of ancestors from the bottom up, starting with the child being added
+				type Ancestor = { id: string, obj?: UniqueTowermodObject, children?: OutlinerTowermodObject[] }
+				const ancestors: Ancestor[] = []
+				const itemData = await api.getOutlinerObjectData({ lookup: item, idx: null })
+				ancestors.push({ id: getObjectStringId(itemData.obj), obj: itemData.obj, children: itemData.children } as any)
+
 				while (true) {
 					// walk up ancestors until a root present within the tree is found
-					const obj1 = await api.getOutlinerParentObject(item)
-					const { obj, children } = await api.getOutlinerObjectData({ lookup: obj1!, idx: null })
-					if (!obj) {
+					const ancestor = await getOutlinerParent(item)
+					if (!ancestor) {
 						console.error("Failed to find ancestor for", item)
 						return
 					}
-					ancestors.push({ obj, children })
-					if (handle.hasItem(obj)) {
+					ancestors.push(ancestor)
+					if (tree?.state.records.has(ancestor.id)) {
+						// we found a root
 						break
 					}
-					item = obj
+					if (!ancestor.obj) {
+						console.error("Failed to find ancestor for", item)
+						return
+					}
+					item = ancestor.obj
 				}
 
 				// set children at each layer starting from the root ancestor (ancestor already in the tree)
 				const rootAncestor = ancestors.pop()!
-				let parentId = getObjectStringId(rootAncestor.obj)
+				let parentId = rootAncestor.id
 				let children = rootAncestor.children
 				ancestors.reverse()
 				for (const ancestor of ancestors) {
 					await handle.setTreeItemChildren(children || [], parentId)
-					parentId = getObjectStringId(ancestor.obj)
+					parentId = ancestor.id
 					children = ancestor.children
 				}
 				return tree?.state.records.get(getObjectStringId(item))
+
+				async function getOutlinerParent(item: OutlinerTowermodObject): Promise<Ancestor | undefined> {
+					// handle objects which are direct children of root categories
+					if (item._type === 'Layout') { return { id: 'root-Layouts' } }
+					if (item._type === 'Animation') { return { id: 'root-Animations' } }
+					if (item._type === 'Behavior') { return { id: 'root-Behaviors' } }
+					if (item._type === 'Container') { return { id: 'root-Containers' } }
+					if (item._type === 'Family') { return { id: 'root-Families' } }
+					if (item._type === 'ObjectType') { return { id: 'root-Object Types' } }
+					if (item._type === 'ObjectTrait') { return { id: 'root-Traits' } }
+
+					const obj1 = await api.getOutlinerParentObject(item)
+					const { obj, children } = await api.getOutlinerObjectData({ lookup: obj1!, idx: null })
+					if (!obj) {
+						return undefined
+					}
+					return { id: getObjectStringId(obj), obj, children }
+				}
 			}
 		} as OutlinerHandle
 	}, [tree, _dispatchTreeItemUpdates])
@@ -341,6 +348,7 @@ function OutlinerTree(props: OutlinerProps) {
 	// 	return lookup ? handle.hasItem(lookup) : false
 	// }, [tree?.state.records.size])
 	const hasItem = lookup ? handle.hasItem(lookup) : false
+	console.log('hasItem', hasItem, lookup)
 
 	// BUGFIX: If the currently selected item is not loaded in the tree,
 	// find and load it and the necessary ancestors.
@@ -349,12 +357,14 @@ function OutlinerTree(props: OutlinerProps) {
 			if (hasItem) {
 				handle.jumpToItem(lookup)
 			} else {
-				handle.addToTree(lookup)
+				// handle.addToTree(lookup)
 			}
 		}
 	}, [lookup, hasItem])
 
+	// FIXME: figure out how to re-check `hasItem` AFTER treeWalker re-runs and tree state updates
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
+		console.log("TREEWALKER RE-RUN") // FIXME
 		yield getRootContainerData('Layouts', layouts)
 		yield getRootContainerData('Behaviors', behaviors)
 		yield getRootContainerData('Containers', containers)
@@ -372,6 +382,12 @@ function OutlinerTree(props: OutlinerProps) {
 	}, [layouts, behaviors, containers, families, objectTypes, traits, appBlock, tree])
 
 	return <TreeComponent
+		onItemsRendered={() => {
+			console.log("onItemsRendered")
+			if (lookup && hasItem) {
+				handle.jumpToItem(lookup)
+			}
+		}}
 		treeWalker={treeWalker}
 		itemSize={25}
 		treeRef={setTreeRef}

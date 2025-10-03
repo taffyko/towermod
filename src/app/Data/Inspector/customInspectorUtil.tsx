@@ -150,7 +150,8 @@ export function applyPropertyInfoOverrides<T extends InspectorObjectValue>(obj: 
 				tag: { type: 'int' },
 				repeatCount: { type: 'int' },
 				repeatTo: { type: 'int' },
-				parentObjectTypeId: { type: 'int', readonly: true},
+				parentObjectTypeId: { hidden: true },
+				parentAnimationId: { hidden: true },
 				isAngle: { hidden: true }
 			})
 			if (obj.isAngle) {

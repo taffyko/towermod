@@ -112,8 +112,15 @@ export const getObjectTypeImageId = createQuery({
 })
 
 export const createObjectType = createMutation({
-	mutationFn: (pluginId: int) => invoke('create_object_type', { pluginId }),
+	mutationFn: (pluginId: int) => invoke<int>('create_object_type', { pluginId }),
 	onSuccess: () => invalidate('ObjectType', 'new')
+})
+export const validateObjectTypeName = createQuery({
+	queryFn: (name: string) => {
+		// FIXME
+		return true
+	},
+	deps: [{ type: 'ObjectType' }],
 })
 
 export const deleteObjectType = createMutation({
@@ -377,6 +384,13 @@ export const getFamilies = createQuery({
 export const familyAddObject = createMutation({
 	mutationFn: (args: { name: string, objectTypeId: int }) => invoke('family_add_object', args),
 	onSuccess: (_r, args) => invalidateTowermodObject({ _type: 'Family', name: args.name })
+})
+export const validateFamilyName = createQuery({
+	queryFn: (name: string) => {
+		// FIXME
+		return true
+	},
+	deps: [{ type: 'Family'}],
 })
 
 export const familyRemoveObject = createMutation({

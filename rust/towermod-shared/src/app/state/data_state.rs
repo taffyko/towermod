@@ -5,6 +5,7 @@ use super::super::selectors;
 use crate::cstc_editing::{CstcData, EdAppBlock, EdContainer, EdFamily, EdLayout, EdLayoutLayer, EdObjectInstance, EdObjectType, VariableType, VariableValue};
 
 pub type State = CstcData;
+type RootState = super::app_state::State;
 
 pub enum Action {
 	SetData(CstcData),
@@ -52,7 +53,7 @@ impl From<Action> for super::app_state::Action {
 	}
 }
 
-pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_state::State {
+pub fn reducer(mut s: RootState, action: Action) -> RootState {
 
 	match (action) {
 		Action::SetData(new_state) => s.data = new_state,
@@ -72,7 +73,20 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			}
 		},
 		Action::CreateObjectType { id, plugin_id } => {
-			// BUG: create animation and first instance for sprites
+			if is_sprite_plugin(&s, plugin_id) {
+				// create animation and first instance for sprites
+				let object_instance_id = selectors::select_new_object_instance_id()(&s);
+				let root_animation_id = selectors::select_new_animation_id(&s);
+				s.data.animations.insert(root_animation_id, Animation { id: root_animation_id, ..Default::default() });
+				add_animation(&mut s, root_animation_id + 1, id);
+				if let Some(layout_layer_id) = s.data.layouts.first().and_then(|l| l.layers.first()).map(|ll| ll.id) {
+					if let Some(object_instance) = create_object_instance(&mut s, object_instance_id, plugin_id, layout_layer_id) {
+						if let towermod_cstc::ObjectData::Sprite(sprite_data) = &mut object_instance.data {
+							sprite_data.animation = root_animation_id;
+						}
+					}
+				}
+			}
 			s.data.object_types.insert(id, EdObjectType {
 				id,
 				plugin_id,
@@ -110,21 +124,7 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			}
 		},
 		Action::CreateObjectInstance { id, object_type_id, layout_layer_id } => {
-			let Some(plugin_name) = selectors::select_object_type_plugin_name(object_type_id)(&s).cloned() else { return s };
-
-			'outer: for layout in &mut s.data.layouts {
-				for layer in &mut layout.layers {
-					if layer.id == layout_layer_id {
-						layer.objects.push(EdObjectInstance {
-							id,
-							object_type_id,
-							data: towermod_cstc::ObjectData::new(&plugin_name),
-							..Default::default()
-						});
-						break 'outer;
-					}
-				}
-			}
+			create_object_instance(&mut s, id, object_type_id, layout_layer_id);
 		}
 		Action::DeleteObjectInstance(id) => {
 			for layout in &mut s.data.layouts {
@@ -155,19 +155,7 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 			}
 		},
 		Action::CreateAnimation { id, object_type_id } => {
-			if let Some(root_animation) = selectors::select_object_type_animation_mut(object_type_id)(&mut s) {
-				root_animation.sub_animations.push(Animation {
-					name: String::from("Default"),
-					id,
-					sub_animations: vec![Animation {
-						name: String::from("Animation"),
-						id: id + 1,
-						is_angle: true,
-						..Animation::default()
-					}],
-					..Animation::default()
-				});
-			}
+			add_animation(&mut s, id, object_type_id);
 		},
 
 		Action::UpdateBehavior(behavior) => {
@@ -247,8 +235,59 @@ pub fn reducer(mut s: super::app_state::State, action: Action) -> super::app_sta
 	s
 }
 
+fn create_object_instance(s: &mut RootState, id: i32, object_type_id: i32, layout_layer_id: i32) -> Option<&mut EdObjectInstance> {
+	let Some(plugin_name) = selectors::select_object_type_plugin_name(object_type_id)(&s).cloned() else { return None };
+	let root_animation_id = selectors::select_object_type_animation(object_type_id)(&s).map(|a| a.id);
 
-fn add_private_variable(mut s: &mut super::app_state::State, id: i32, name: String, value: VariableValue) {
+	for layout in &mut s.data.layouts {
+		for layer in &mut layout.layers {
+			if layer.id == layout_layer_id {
+				let mut obj = EdObjectInstance {
+					id,
+					object_type_id,
+					data: towermod_cstc::ObjectData::new(&plugin_name),
+					..Default::default()
+				};
+				// set animation ID for new sprite instances
+				if let towermod_cstc::ObjectData::Sprite(data) = &mut obj.data {
+					if let Some(root_animation_id) = root_animation_id {
+						data.animation = root_animation_id;
+					}
+				}
+				layer.objects.push(obj);
+				return layer.objects.last_mut();
+			}
+		}
+	}
+	None
+}
+
+fn add_animation(mut s: &mut RootState, id: i32, object_type_id: i32) {
+	if let Some(root_animation) = selectors::select_object_type_animation_mut(object_type_id)(&mut s) {
+		root_animation.sub_animations.push(Animation {
+			name: String::from("Default"),
+			id,
+			sub_animations: vec![Animation {
+				name: String::from("Animation"),
+				id: id + 1,
+				is_angle: true,
+				..Animation::default()
+			}],
+			..Animation::default()
+		});
+	}
+}
+
+fn is_sprite_plugin(s: &RootState, plugin_id: i32) -> bool {
+	if let Some(editor_plugin) = s.data.editor_plugins.get(&plugin_id) {
+		if editor_plugin.string_table.name == "Sprite" {
+			return true;
+		}
+	}
+	false
+}
+
+fn add_private_variable(mut s: &mut RootState, id: i32, name: String, value: VariableValue) {
 	let Some(original_obj) = selectors::select_object_type_mut(id)(&mut s) else { return };
 	if original_obj.private_variables.contains_key(&name) { return };
 	original_obj.private_variables.insert(name.clone(), (&value).into());

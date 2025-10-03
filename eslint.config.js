@@ -30,6 +30,7 @@ export default tseslint.config(
 			'@typescript-eslint/ban-ts-comment': 'off',
 			'@typescript-eslint/no-unused-vars': 'off',
 			'@typescript-eslint/triple-slash-reference': 'off',
+			'@typescript-eslint/no-empty-object-type': 'off',
 			'@typescript-eslint/no-unused-expressions': ['warn', { allowShortCircuit: true, allowTernary: true }],
 			'react-refresh/only-export-components': [
 				'warn',
