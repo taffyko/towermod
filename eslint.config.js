@@ -24,7 +24,7 @@ export default tseslint.config(
 		rules: {
 			...reactHooks.configs.recommended.rules,
 			// https://github.com/reactwg/react-compiler/discussions/18#discussioncomment-11009257
-			'react-hooks/exhaustive-deps': 'off',
+			// 'react-hooks/exhaustive-deps': 'off',
 			'react-hooks/refs': 'off',
 			'@typescript-eslint/no-explicit-any': 'off',
 			'@typescript-eslint/ban-ts-comment': 'off',

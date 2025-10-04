@@ -16,7 +16,7 @@ import { createSelector } from '@reduxjs/toolkit'
 import { skipToken } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { debounce } from 'lodash-es'
-import { use, useCallback, useEffect, useRef, useState } from 'react'
+import { use, useCallback, useEffect, experimental_useEffectEvent as useEffectEvent, useRef, useState } from 'react'
 import {
 	FixedSizeNodeData,
 	FixedSizeTree,
@@ -141,11 +141,12 @@ const TreeNodeComponent = (props: TreeNodeComponentProps) => {
 	const name = nameOverride ?? displayName
 	const selected = useAppSelector(s => towermodObjectIdsEqual(s.app.outlinerValue, obj))
 
+	// synchronize tree children with latest children from API
 	useEffect(() => {
 		if (children && children.length) {
 			context?.setTreeItemChildren(children, id)
 		}
-	}, [children])
+	}, [children, context, id])
 
 	const nodeRecord = tree?.state.records.get(props.data.id)
 	const isLeaf = !nodeRecord?.child
@@ -465,28 +466,27 @@ function useOutlinerSearch(options: {
 	const matchedContainers = api.searchContainers.useQuery((searchContainers && searchOptions) || skipToken).data || emptyArray
 
 
-	const map: Record<string, UniqueObjectLookup> = {}
+	const matched: Record<string, UniqueObjectLookup> = {}
 	if (search) {
 		let count = 0
 		for (const obj of matchedObjectTypes) {
-			map[getTreeItemId(obj)] = obj
+			matched[getTreeItemId(obj)] = obj
 			++count
 		}
 		for (const obj of matchedLayoutLayers) {
-			map[getTreeItemId(obj)] = obj
+			matched[getTreeItemId(obj)] = obj
 			++count
 		}
 		for (const obj of matchedObjectInstances) {
-			map[getTreeItemId(obj)] = obj
+			matched[getTreeItemId(obj)] = obj
 			++count
 		}
 		for (const obj of matchedContainers) {
-			map[getTreeItemId(obj)] = obj
+			matched[getTreeItemId(obj)] = obj
 			++count
 		}
 	}
-	const matched = map
-	const matchedKeys = Object.keys(map)
+	const matchedKeys = Object.keys(matched)
 
 	const currentIdx = lookup ? matchedKeys.indexOf(getTreeItemId(lookup)) : -1
 
@@ -496,16 +496,19 @@ function useOutlinerSearch(options: {
 		dispatch(actions.setOutlinerValue(matched[key]))
 	}
 
-	useEffect(() => {
+	// select first result if current item not in search results
+	const onMatchesUpdated = useEffectEvent((matchedKeys: string[]) => {
 		if (!search) return
 		if (!shouldSelectFirstResult.current) return
 		if (matchedKeys.length === 0) return
-		// select first matched item if current item not in search results
 		if (currentIdx === -1) {
 			nextItem(1)
 		}
 		shouldSelectFirstResult.current = false
-	}, [search, matched, currentIdx])
+	})
+	useEffect(() => {
+		onMatchesUpdated(matchedKeys)
+	}, [matchedKeys])
 
 	return [search, setSearch, currentIdx, matchedKeys.length, nextItem] as const
 }

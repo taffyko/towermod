@@ -24,6 +24,7 @@ const App = () => {
 	const { data: dataIsLoaded } = api.isDataLoaded.useQuery()
 	const { data: game } = api.getGame.useQuery()
 
+	// synchronize redux tab state with backend state
 	useEffect(() => {
 		dispatch(actions.setTabEnabled({ tab: 'Mods', enabled: !!game }))
 		dispatch(actions.setTabEnabled({ tab: 'Images', enabled: !!game }))

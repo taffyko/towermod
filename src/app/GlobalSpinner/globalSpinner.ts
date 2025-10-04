@@ -1,6 +1,5 @@
 import { useMiniEventValue } from "@/util/hooks"
 import { MiniEvent } from "@/util/util"
-import { useEffect, useRef } from "react"
 
 const timeout = 0
 /**
@@ -26,24 +25,6 @@ export function spin(promiseOrFn: any, noSpinner?: boolean): any {
 		// }, 60000)
 		return promise
 	}
-}
-
-/** Activate loading spinner while waiting for an RTK Query hook to fetch */
-export function useSpinQuery<T extends { isFetching: boolean }>(queryInfo: T): T {
-	const promiseRef = useRef<Promise<unknown>>(null!)
-	if (!promiseRef.current) {
-		promiseRef.current = new Promise<unknown>(() => {})
-	}
-	useEffect(() => {
-		if (queryInfo.isFetching) {
-			if (!spinnerPromisesUpdated.lastValue?.includes(promiseRef.current)) {
-				spin(promiseRef.current)
-			}
-		} else {
-			removePromise(promiseRef.current)
-		}
-	}, [queryInfo.isFetching])
-	return queryInfo
 }
 
 function removePromise(promise: Promise<unknown>) {

@@ -13,7 +13,7 @@ import { assert } from "@/util"
 import { copyFile, filePicker, folderPicker, openFolder } from "@/util/rpc"
 import { Project } from "@towermod"
 import { win32 as path } from "path"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { spin } from "../GlobalSpinner"
 import { ConfirmModal } from "../Modal"
 
@@ -44,10 +44,7 @@ export const Config = () => {
 	const { data: isDataLoaded } = api.isDataLoaded.useQuery()
 	const { data: project } = api.getProject.useQuery()
 
-	const [gamePath, setGamePath] = useState(game?.filePath || "")
-	useEffect(() => {
-		setGamePath(game?.filePath || "")
-	}, [game])
+	const gamePath = game?.filePath || ""
 
 	return <div className="vbox gap">
 		{/* <Button onClick={onClickOpenTracingWindow}>Open Tracing Window</Button> */}
