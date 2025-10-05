@@ -1,7 +1,7 @@
 
 /* eslint-disable react-compiler/react-compiler */
 /* eslint-disable react-hooks/rules-of-hooks */
-import React, { DependencyList, EffectCallback, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import React, { DependencyList, EffectCallback, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { MiniEvent, assert, createObjectUrl, enumerate, revokeObjectUrl } from './util'
 import { useIsSpinning } from '@/app/GlobalSpinner'
 import { useIsModalOpen } from '@/app/Modal/modalStore'
@@ -29,26 +29,23 @@ export function useForwardRef<T>(inputRef?: React.Ref<T>): React.RefObject<T> {
 	}, [inputRef, valueHolder])
 }
 
-export function useEventListener<K extends keyof WindowEventMap>(el: Window | null | undefined, type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void
-export function useEventListener<K extends keyof DocumentEventMap>(el: Document | null | undefined, type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void
-export function useEventListener<K extends keyof HTMLElementEventMap, E extends HTMLElement>(el: E | null | undefined, type: K, listener: (this: E, ev: HTMLElementEventMap[K]) => any, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions): void
-export function useEventListener(el: any, type: string, listener: EventListener, deps?: React.DependencyList, options?: boolean | AddEventListenerOptions) {
-	let cb = listener
-	if (deps) {
-		cb = useCallback(listener, deps)
-	}
+/** Intended for use with React Compiler */
+export function useEventListener<K extends keyof WindowEventMap>(el: Window | null | undefined, type: K, listener: (this: Window, ev: WindowEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void
+export function useEventListener<K extends keyof DocumentEventMap>(el: Document | null | undefined, type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void
+export function useEventListener<K extends keyof HTMLElementEventMap, E extends HTMLElement>(el: E | null | undefined, type: K, listener: (this: E, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void
+export function useEventListener(el: any, type: string, listener: EventListener, options?: boolean | AddEventListenerOptions) {
 	useEffect(() => {
-		el?.addEventListener(type, cb, options)
+		el?.addEventListener(type, listener, options)
 		return () => {
-			el?.removeEventListener(type, cb, options)
+			el?.removeEventListener(type, listener, options)
 		}
-
-	}, [el, cb])
+	}, [el, type, listener, options])
 }
 
 
 /** Returns the value created by `init` */
 export function useImperativeHandle<T, R extends T>(ref: React.Ref<T> | undefined, init: () => R, deps?: React.DependencyList): T {
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const handle = useMemo(init, deps ?? [])
 	React.useImperativeHandle(ref, () => handle, [handle])
 	return handle
@@ -161,13 +158,12 @@ export function useMountEffect(effect: React.EffectCallback): void {
 	}
 }
 
-export function useMiniEvent<T>(event: MiniEvent<T> | null | undefined, cb: (e: T) => void, deps: React.DependencyList) {
-
-	const fn = useCallback(cb, deps)
+/** Intended for use with React Compiler */
+export function useMiniEvent<T>(event: MiniEvent<T> | null | undefined, cb: (e: T) => void) {
 	useEffect(() => {
-		event?.subscribe(fn)
-		return () => event?.unsubscribe(fn)
-	}, [event, fn])
+		event?.subscribe(cb)
+		return () => event?.unsubscribe(cb)
+	}, [event, cb])
 }
 
 export function useMiniEventValue<T>(event: MiniEvent<T>): T
@@ -337,18 +333,23 @@ export function useOptimisticTwoWayBinding<T, TInternal = T>(options: {
 			}
 		}
 	})
-	useEffect(() => {
-		if (externalValue !== undefined) {
-			if (ignoreWhileEditing !== false && el) {
-				// do not overwrite the internal value while the element is focused
-				if (!el?.contains(document.activeElement)) {
-					setValue(transform(externalValue))
-				}
-			} else {
+
+	const onExternalValueChanged = useEffectEvent((externalValue: T) => {
+		if (ignoreWhileEditing !== false && el) {
+			// do not overwrite the internal value while the element is focused
+			if (!el?.contains(document.activeElement)) {
 				setValue(transform(externalValue))
 			}
+		} else {
+			setValue(transform(externalValue))
+		}
+	})
+	useEffect(() => {
+		if (externalValue !== undefined) {
+			onExternalValueChanged(externalValue)
 		}
 	}, [externalValue])
+
 	return [value, setValue] as const
 }
 
@@ -369,16 +370,4 @@ export function useSize(target?: HTMLElement | null) {
 
 	useResizeObserver(target ?? { current: null }, (entry) => setSize(entry.contentRect))
 	return size
-}
-
-/** Execute a callback when any of the values in the array change between renders */
-export function useWatchValue(callback: () => void, deps: DependencyList) {
-	const previousDeps = useRef<DependencyList>([])
-	for (const [dep, i] of enumerate(deps)) {
-		if (previousDeps.current[i] !== dep) {
-			queueMicrotask(callback)
-			break
-		}
-	}
-	previousDeps.current = deps
 }

@@ -40,7 +40,7 @@ export function DragDropHandler() {
 		} else {
 			setFailure(true)
 		}
-	}, [isValid, dragFiles])
+	})
 
 	return <div className={`
 		${Style.backdrop}

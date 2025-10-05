@@ -258,7 +258,7 @@ function ImagePreview(props: {
 	useEffect(() => {
 		setNaturalWidth(undefined)
 		imgEl?.parentElement?.classList.add(Style.loading)
-	}, [imgUrl])
+	}, [imgUrl, imgEl])
 
 	if (!imgUrl && !isFetching) { return <div className="centerbox grow">No image</div> }
 

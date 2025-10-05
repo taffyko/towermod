@@ -14,7 +14,7 @@ export function BaseModal(props: { children: React.ReactNode, title?: string, on
 			onCancel?.()
 			close()
 		}
-	}, [active])
+	})
 
 	// Dismiss when backdrop is clicked
 	// useEventListener(parent, 'click', (e) => {

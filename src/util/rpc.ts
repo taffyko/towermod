@@ -4,7 +4,7 @@ import { InvokeOptions, invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { FileDialogOptions } from '@towermod'
-import { DependencyList, useEffect } from 'react'
+import { useEffect } from 'react'
 
 export async function openFolder(dir: string) {
 	await invoke('open_folder', { dir })
@@ -67,12 +67,12 @@ interface EventTypeMap {
 	'towermod/toast': string,
 }
 
-export function useTauriEvent<T extends keyof EventTypeMap>(type: T, handler: EventCallback<EventTypeMap[T]>, deps: DependencyList = []): void {
+/** Intended for use with React Compiler */
+export function useTauriEvent<T extends keyof EventTypeMap>(type: T, handler: EventCallback<EventTypeMap[T]>): void {
 	useEffect(() => {
 		const unlisten = listen(type, handler)
 		return () => { unlisten.then(fn => fn()) }
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, deps ? [type, ...deps] : undefined)
+	}, [type, handler])
 }
 
 

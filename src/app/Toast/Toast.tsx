@@ -12,6 +12,7 @@ function Toast(props: ToastData & { idx: number }) {
 	const [el, setEl] = useStateRef<HTMLDivElement>()
 	const hovered = useIsHovered(el)
 
+	// Synchronize timer state with whether toast is active/hovered
 	useEffect(() => {
 		if (idx > 0 || hovered) {
 			timer.stop()
@@ -23,7 +24,7 @@ function Toast(props: ToastData & { idx: number }) {
 
 	useMiniEvent(timer.timeoutEvent, () => {
 		closeToast(id)
-	}, [closeToast, id])
+	})
 
 	return <div
 		ref={setEl}

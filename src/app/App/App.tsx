@@ -62,7 +62,7 @@ const App = () => {
 	useTauriEvent('towermod/request-install-mod', (e) => {
 		// give time for tabs to finish mounting
 		installMods([e.payload])
-	}, [])
+	})
 
 	useTauriEvent('towermod/error', (e) => {
 		showError(e.payload)

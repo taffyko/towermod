@@ -10,13 +10,13 @@ import arrowRightImg from '@/icons/arrowRight.svg'
 import plusImg from '@/icons/plus.svg'
 import { actions, dispatch, useAppSelector } from '@/redux'
 import { getObjectStringId, OutlinerTowermodObject, towermodObjectIdsEqual, UniqueObjectLookup, UniqueTowermodObject } from '@/util'
-import { setRef, useImperativeHandle, useRerender, useStateRef, useWatchValue } from '@/util/hooks'
-import { assert, enumerate, posmod } from '@/util/util'
+import { setRef, useImperativeHandle, useRerender, useStateRef } from '@/util/hooks'
+import { enumerate, posmod } from '@/util/util'
 import { createSelector } from '@reduxjs/toolkit'
 import { skipToken } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { debounce } from 'lodash-es'
-import { use, useCallback, useEffect, experimental_useEffectEvent as useEffectEvent, useRef, useState } from 'react'
+import { use, useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import {
 	FixedSizeNodeData,
 	FixedSizeTree,
@@ -239,8 +239,6 @@ function OutlinerTree(props: OutlinerProps) {
 		return {
 			tree: tree!,
 			jumpToItem(obj) {
-				// FIXME
-				console.log("JUMP TO ITEM:", obj)
 				const treeItemId = getTreeItemId(obj)
 				if (tree) { jumpToTreeItem(tree, treeItemId) }
 			},
@@ -284,8 +282,6 @@ function OutlinerTree(props: OutlinerProps) {
 				return promise
 			},
 			async addToTree(item: OutlinerTowermodObject): Promise<undefined | NodeRecord<NodePublicState<OutlinerNodeData>>> {
-				// FIXME
-				console.log("ADD TO TREE", item)
 				// build list of ancestors from the bottom up, starting with the child being added
 				type Ancestor = { id: string, obj?: UniqueTowermodObject, children?: OutlinerTowermodObject[] }
 				const ancestors: Ancestor[] = []
@@ -344,27 +340,23 @@ function OutlinerTree(props: OutlinerProps) {
 		} as OutlinerHandle
 	}, [tree, _dispatchTreeItemUpdates])
 
-	// const hasItem = useMemo(() => {
-	// 	return lookup ? handle.hasItem(lookup) : false
-	// }, [tree?.state.records.size])
 	const hasItem = lookup ? handle.hasItem(lookup) : false
-	console.log('hasItem', hasItem, lookup)
 
 	// BUGFIX: If the currently selected item is not loaded in the tree,
 	// find and load it and the necessary ancestors.
-	useWatchValue(() => {
+	const onSelectedItemChanged = useEffectEvent((lookup: UniqueObjectLookup | undefined, hasItem: boolean) => {
 		if (lookup) {
 			if (hasItem) {
 				handle.jumpToItem(lookup)
 			} else {
-				// handle.addToTree(lookup)
+				handle.addToTree(lookup)
 			}
 		}
-	}, [lookup, hasItem])
+	})
+	useEffect(() => onSelectedItemChanged(lookup, hasItem), [lookup, hasItem])
 
 	// FIXME: figure out how to re-check `hasItem` AFTER treeWalker re-runs and tree state updates
 	const treeWalker = useCallback(function*(): ReturnType<TreeWalker<OutlinerNodeData, OutlinerNodeMeta>> {
-		console.log("TREEWALKER RE-RUN") // FIXME
 		yield getRootContainerData('Layouts', layouts)
 		yield getRootContainerData('Behaviors', behaviors)
 		yield getRootContainerData('Containers', containers)
@@ -380,14 +372,11 @@ function OutlinerTree(props: OutlinerProps) {
 			}
 		}
 	}, [layouts, behaviors, containers, families, objectTypes, traits, appBlock, tree])
+	useEffect(() => {
+		rerender()
+	}, [treeWalker, rerender])
 
 	return <TreeComponent
-		onItemsRendered={() => {
-			console.log("onItemsRendered")
-			if (lookup && hasItem) {
-				handle.jumpToItem(lookup)
-			}
-		}}
 		treeWalker={treeWalker}
 		itemSize={25}
 		treeRef={setTreeRef}
@@ -512,11 +501,11 @@ function useOutlinerSearch(options: {
 		dispatch(actions.setOutlinerValue(matched[key]))
 	}
 
-	// select first result if current item not in search results
 	const onMatchesUpdated = useEffectEvent((matchedKeys: string[]) => {
 		if (!search) return
 		if (!shouldSelectFirstResult.current) return
 		if (matchedKeys.length === 0) return
+		// select first result if current item not in search results
 		if (currentIdx === -1) {
 			nextItem(1)
 		}

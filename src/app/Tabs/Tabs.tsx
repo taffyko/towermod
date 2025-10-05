@@ -1,8 +1,9 @@
-import React, { Suspense, useCallback } from "react"
+import React, { Suspense, useCallback, Activity } from "react"
 import Style from './Tabs.module.scss'
 import { useEventListener, useIsInert } from "@/util/hooks"
 import Text from '@/components/Text'
 import { actions, selectTabs, useAppDispatch, useAppSelector } from "@/redux"
+import clsx from "clsx"
 
 export const Tabs = (props: {
 	tabs: Record<string, React.ReactNode>,
@@ -12,20 +13,6 @@ export const Tabs = (props: {
 	const currentTab = useAppSelector(s => s.app.currentTab)
 
 	const isInert = useIsInert()
-	const onKeyDown = useCallback((e: KeyboardEvent | React.KeyboardEvent) => {
-		if (isInert) {
-			return
-		}
-
-		if (e.code === 'Tab' && e.ctrlKey) {
-			if (e.shiftKey) {
-				dispatch(actions.nextTab(-1))
-			} else {
-				dispatch(actions.nextTab(1))
-			}
-			e.stopPropagation()
-		}
-	}, [tabs, currentTab, isInert])
 
 	useEventListener(document.body, 'keydown', onKeyDown)
 
@@ -54,15 +41,25 @@ export const Tabs = (props: {
 			{tabs.map(tab => {
 				// render all tabs simultaneously so that tab state
 				const children = props.tabs[tab]
-				return <div
-					key={tab}
-					// @ts-ignore
-					inert={tab !== currentTab}
-					className={`${Style.tabContent} ${tab === currentTab ? '' : Style.hidden} stretchbox`}
-				>
-					{children}
-				</div>
+				return <Activity mode={tab === currentTab ? 'visible' : 'hidden'} key={tab}>
+					<div className={clsx(Style.tabContent, 'stretchbox')}>
+						{children}
+					</div>
+				</Activity>
 			})}
 		</Suspense>
 	</div>
+
+	function onKeyDown(e: KeyboardEvent | React.KeyboardEvent) {
+		if (isInert) return
+
+		if (e.code === 'Tab' && e.ctrlKey) {
+			if (e.shiftKey) {
+				dispatch(actions.nextTab(-1))
+			} else {
+				dispatch(actions.nextTab(1))
+			}
+			e.stopPropagation()
+		}
+	}
 }
