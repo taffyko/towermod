@@ -1,5 +1,15 @@
 @reference "#main.css";
 
+
+.container {
+	@apply p-1;
+	--color-scrollbar-thumb: var(--color-border-subtle);
+	background-color: #44324433;
+	max-height: 200px;
+	border: solid 1px var(--color-border-subtle);
+	border-radius: var(--border-radius);
+}
+
 .grid {
 	display: grid;
 	flex-basis: 0;

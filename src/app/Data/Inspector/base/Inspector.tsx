@@ -1,22 +1,23 @@
 /**
  * Contains implementations for base inspector components for types that are not application-specific
  */
-import { Select } from "@/components/Select"
-import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
-import { AnyInspectorValue, InspectorObjectValue, AnyPropertyInfo, objectPropertyInfos, InspectorDictionaryValue, InspectorArrayValue, SimplePropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorKeyTypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, ObjectPropertyInfo, inferPropertyInfoFromValue, enumSubtypes } from "./inspectorUtil"
-import React, { Suspense, useCallback, useMemo, useState } from "react"
 import IconButton from "@/components/IconButton"
-import plusImg from '@/icons/plus.svg'
-import closeImg from '@/icons/close.svg'
+import { LineEdit } from "@/components/LineEdit"
+import { Portal } from "@/components/Portal"
+import { Select } from "@/components/Select"
+import { SpinBox } from "@/components/SpinBox"
+import Text from '@/components/Text'
+import { Toggle } from "@/components/Toggle"
 import arrowDownImg from '@/icons/arrowDown.svg'
 import arrowRightImg from '@/icons/arrowRight.svg'
-import { LineEdit } from "@/components/LineEdit"
-import { SpinBox } from "@/components/SpinBox"
-import { Toggle } from "@/components/Toggle"
-import Style from '../Inspector.module.scss'
-import { Portal } from "@/components/Portal"
+import closeImg from '@/icons/close.svg'
+import plusImg from '@/icons/plus.svg'
 import { useStateRef } from "@/util"
-import Text from '@/components/Text'
+import React, { Suspense, useCallback, useMemo, useState } from "react"
+import { List, RowComponentProps } from "react-window"
+import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
+import Style from '../Inspector.module.scss'
+import { AnyInspectorValue, AnyPropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorArrayValue, InspectorDictionaryValue, InspectorKeyTypes, InspectorObjectValue, ObjectPropertyInfo, SimplePropertyInfo, enumSubtypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, inferPropertyInfoFromValue, objectPropertyInfos } from "./inspectorUtil"
 
 function KeyValuePair(props: { label: React.ReactNode, value: React.ReactNode }) {
 	const { label, value } = props
@@ -96,10 +97,9 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 	}
 
 	const valueComponents: React.ReactNode[] = useMemo(() => arrPinfo.value.map((val, i) => {
-		let valueComponent
 		const getValComponent = props.getValueComponent ?? getValueComponent
 		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo as ArrayPropertyInfo<AnyInspectorValue>, i)
-		valueComponent = getValComponent(pinfo as any, (v) => { onElementChange(pinfo.key, v) })
+		const valueComponent = getValComponent(pinfo as any, (v) => { onElementChange(pinfo.key, v) })
 
 		return <KeyValuePair key={i} value={valueComponent} label={<>
 			{arrPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeElement(i)} />} <Text>{i}</Text>
@@ -163,6 +163,30 @@ function useCollapsible(isOpenInitialValue?: boolean) {
 	return { ref: setEl, isOpen, ToggleCollapse }
 }
 
+function InspectorDictionaryRow(props: RowComponentProps<{
+	entries: AnyPropertyInfo<AnyInspectorValue, InspectorKeyTypes>[],
+	removeProperty?: (key: InspectorKeyTypes) => void,
+	onPropertyChange?: (key: InspectorKeyTypes, value: any) => void,
+}>) {
+	const { index, style, entries, removeProperty, onPropertyChange } = props
+	const pinfo = entries[index]
+	const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange?.(pinfo.key, v) })
+
+	return <div className="flex row px-1 gap-1" style={style}>
+		<div className="self-center flex row grow w-0">
+			<Text className="grow w-0 overflow-hidden overflow-ellipsis">{pinfo.key}:</Text>
+			{removeProperty &&
+				<IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />
+			}
+			<div className="labelPortal">
+			</div>
+		</div>
+		<div className="self-center flex row grow w-0">
+			{valueComponent}
+		</div>
+	</div>
+}
+
 export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyInspectorValue>, onChange: (v: InspectorDictionaryValue) => void }) => {
 	const { pinfo: dictPinfo, onChange } = props
 
@@ -177,16 +201,12 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		onChange(newObj)
 	}
 
-	const propertyComponents: React.ReactNode[] = useMemo(() =>
+	const entries = useMemo(() =>
 		Object.entries(dictPinfo.value)
 			.sort(([key1,], [key2,]) => key1 < key2 ? -1 : 1)
 			.map(([key, val]) => {
 				const pinfo = inferPropertyInfoFromDictionaryValue(val, dictPinfo, key)
-				const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
-				return <KeyValuePair key={pinfo.key} value={valueComponent} label={<>
-					<Text>{pinfo.key}:</Text>
-					{dictPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />}
-				</>} />
+				return pinfo
 			})
 	, [dictPinfo.value])
 
@@ -216,27 +236,32 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 
 	return <div ref={ref} className="vbox grow gap" key={dictPinfo.key}>
 		<ToggleCollapse />
-		{isOpen ? <>
-			{propertyComponents.length ? <div className={Style.grid}>
-				{propertyComponents}
-			</div> : null}
-			{addProperty ?
-				<div className="hbox gap">
-					<LineEdit
-						onKeyDown={e => e.code === 'Enter' && addProperty()}
-						placeholder="Add new entry..." value={newKeyText}
-						onChange={e => setNewKeyText(e.target.value)}
+		{!!entries.length && isOpen ? <>
+			<div className={Style.container}>
+				<List
+					rowComponent={InspectorDictionaryRow}
+					rowCount={entries.length}
+					rowHeight={30}
+					rowProps={{ entries, onPropertyChange, removeProperty }}
+				/>
+			</div>
+		</> : <div className="subtle">{entries.length} entries...</div>}
+		{isOpen && addProperty ?
+			<div className="hbox gap">
+				<LineEdit
+					onKeyDown={e => e.code === 'Enter' && addProperty()}
+					placeholder="Add new entry..." value={newKeyText}
+					onChange={e => setNewKeyText(e.target.value)}
+				/>
+				{dictPinfo.valueTypes.length > 1 ?
+					<Select
+						onChange={v => setNewValueType(v as any)}
+						options={dictPinfo.valueTypes}
 					/>
-					{dictPinfo.valueTypes.length > 1 ?
-						<Select
-							onChange={v => setNewValueType(v as any)}
-							options={dictPinfo.valueTypes}
-						/>
-						: null}
-					<IconButton src={plusImg} disabled={!newKeyText} onClick={() => addProperty()} />
-				</div>
-				: null}
-		</> : <div className="subtle">{propertyComponents.length} entries...</div>}
+					: null}
+				<IconButton src={plusImg} disabled={!newKeyText} onClick={() => addProperty()} />
+			</div>
+			: null}
 	</div>
 }
 

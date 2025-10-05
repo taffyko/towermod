@@ -99,7 +99,7 @@
 	}
 	::-webkit-scrollbar-thumb {
 		border: solid 1px var(--border-color);
-		background-color: var(--color-bg-alternate);
+		background-color: var(--color-scrollbar-thumb);
 		border-radius: 5px;
 	}
 
