@@ -373,8 +373,11 @@ function OutlinerTree(props: OutlinerProps) {
 		}
 	}, [layouts, behaviors, containers, families, objectTypes, traits, appBlock, tree])
 	useEffect(() => {
-		rerender()
-	}, [treeWalker, rerender])
+		const timeout = window.setTimeout(() => {
+			rerender()
+		}, 1000)
+		return () => window.clearTimeout(timeout)
+	}, [treeWalker])
 
 	return <TreeComponent
 		treeWalker={treeWalker}

@@ -4,7 +4,7 @@ import minimizeImg from '@/icons/minimize.svg'
 import maximizeImg from '@/icons/maximize.svg'
 import unmaximizeImg from '@/icons/unmaximize.svg'
 import closeImg from '@/icons/close.svg'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import IconButton from '@/components/IconButton'
 import iconImg from '@/icons/icon.png'
 import Text from '@/components/Text'
@@ -43,6 +43,7 @@ export const TitleBar = () => {
 			title = `${title} — (NO GAME SELECTED)`
 		}
 	}
+	const audio = useRef<HTMLAudioElement>(null!)
 
 	return <div className={Style.titleBarRoot}>
 		<div className={Style.titleBarContent}>
@@ -51,12 +52,12 @@ export const TitleBar = () => {
 				const el = e.currentTarget
 				triggerTransition(el, Style.active)
 
-				const audio = new Audio(chime)
-				audio.preservesPitch = false
-				audio.playbackRate = 1.0 + (Math.random() - 0.5)*0.1
-				audio.play()
+				audio.current.preservesPitch = false
+				audio.current.playbackRate = 1.0 + (Math.random() - 0.5)*0.1
+				audio.current.play()
+				audio.current = new Audio(chime)
 			}} />
-			<audio preload="auto" src={chime} />
+			<audio ref={audio} preload="auto" src={chime} />
 			<div className={Style.gap} />
 			<div className={Style.draggable}>
 				<Text className="centerbox">{title}</Text>

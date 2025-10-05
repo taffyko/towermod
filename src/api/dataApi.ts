@@ -226,7 +226,7 @@ export const getOutlinerObjectTypeIcons = createQuery({
 			})
 		return data
 	},
-	deps: [{ type: 'ObjectType' }, { type: 'Image' }],
+	deps: [{ type: 'ObjectType' }, { type: 'Image' }, { type: 'Animation' }],
 })
 
 export const getOutlinerObjectData = createQuery({
@@ -430,7 +430,21 @@ export const _getTowermodObject = createQuery({
 	queryFn: async (lookup: UniqueObjectLookup): Promise<UniqueTowermodObject | null> => {
 		return await _getTowermodObject_impl(lookup)
 	},
-	deps: (lookup) => [towermodObjectToDep(lookup)],
+	deps: (lookup, r) => {
+		const deps = [towermodObjectToDep(lookup)]
+		// invalidate when sub-animations change
+		if (r && r._type === 'Animation') {
+			function recurse(anim: Animation) {
+				deps.push(towermodObjectToDep({ _type: 'Animation', id: anim.id }))
+				for (const subAnimation of anim.subAnimations) {
+					deps.push(towermodObjectToDep(subAnimation))
+					recurse(subAnimation)
+				}
+			}
+			recurse(r)
+		}
+		return deps
+	},
 	argToKey: (arg) => arg && getObjectStringId(arg)
 })
 // wrapper with nice generic typing
