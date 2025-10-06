@@ -1,0 +1,26 @@
+@reference "#main.css";
+
+.treeItem {
+	@apply gap-2;
+	height: 25px;
+	display: flex;
+	flex-flow: row nowrap;
+	transition: opacity 0.5s;
+	align-items: center;
+	
+	&.leaf {
+		@apply pl-2;
+	}
+
+	&.selectable {
+		border: var(--color-border);
+
+		&:hover {
+			background-color: var(--color-bg-hover);
+		}
+
+		&:active, &.active {
+			background-color: var(--color-bg-active)
+		}
+	}
+}

@@ -14,6 +14,7 @@ import Inspector from './Inspector/base/Inspector'
 import { inferPropertyInfoFromValue } from './Inspector/base/inspectorUtil'
 import Outliner, { OutlinerHandle } from './Outliner/Outliner'
 import { OutlinerContext } from './Outliner/OutlinerContext'
+import { NewTree } from '../NewTree/NewTree'
 
 
 const updateTowermodObjectDebounced = debounce(api.updateTowermodObject, 500, { leading: true  })
@@ -36,9 +37,10 @@ export function Data() {
 			<div className="hbox gap grow">
 				<Outliner ref={setOutlinerRef} />
 				<div className="vbox grow" style={{ flexBasis: 0, overflow: 'hidden' }}>
-					{ value ?
+					<NewTree />
+					{/* { value ?
 						<Inspector pinfo={inferPropertyInfoFromValue(value, undefined, 'root') as any} onChange={onChange as any} />
-						: null }
+						: null } */}
 				</div>
 			</div>
 		</OutlinerContext.Provider>

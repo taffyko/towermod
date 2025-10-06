@@ -14,8 +14,8 @@ import closeImg from '@/icons/close.svg'
 import plusImg from '@/icons/plus.svg'
 import { useStateRef } from "@/util"
 import clsx from "clsx"
-import React, { Suspense, useCallback, useMemo, useState } from "react"
-import { List, RowComponentProps, useDynamicRowHeight } from "react-window"
+import React, { startTransition, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { List, ListImperativeAPI, RowComponentProps, useDynamicRowHeight } from "react-window"
 import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
 import Style from '../Inspector.module.scss'
 import { AnyInspectorValue, AnyPropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorArrayValue, InspectorDictionaryValue, InspectorKeyTypes, InspectorObjectValue, ObjectPropertyInfo, SimplePropertyInfo, enumSubtypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, inferPropertyInfoFromValue, objectPropertyInfos } from "./inspectorUtil"
@@ -258,9 +258,24 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 	const getDefaultValue = canAddProperties ? defaultValueForType(newValueType) : undefined
 	const addProperty = getDefaultValue ? () => {
 		const newObj = { ...dictPinfo.value, [newKeyText]: getDefaultValue() }
+		// set scroll to item intent
+		shouldScrollToItemRef.current = newKeyText
 		setNewKeyText("")
 		onChange(newObj as Record<InspectorKeyTypes, AnyInspectorValue>)
 	} : undefined
+
+	const listRef = useRef<ListImperativeAPI>(null)
+	const shouldScrollToItemRef = useRef<string | null>(null)
+	
+	// apply scroll-to-item intent
+	useEffect(() => {
+		if (!listRef.current || shouldScrollToItemRef.current == null) return
+		const index = entries.findIndex(e => e.key === shouldScrollToItemRef.current)
+		if (index !== -1) {
+			listRef.current.scrollToRow({ index })
+		}
+		shouldScrollToItemRef.current = null
+	}, [entries])
 
 	const { ref, isOpen, ToggleCollapse, contentsEl } = useCollapsible(dictPinfo.uncollapsedByDefault)
 
@@ -270,6 +285,7 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 			<Portal parent={contentsEl}>
 				<div className={Style.container}>
 					<List
+						listRef={listRef}
 						style={{ maxHeight: 300 }}
 						rowComponent={InspectorCollectionRow}
 						rowCount={entries.length}
