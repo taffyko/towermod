@@ -13,7 +13,6 @@ export function Image(props: {
 	const [el, setEl] = useStateRef<HTMLImageElement>()
 	const [loading, setLoading] = useState(true)
 
-
 	useEffect(() => {
 		if (el) {
 			el.src = src || ''

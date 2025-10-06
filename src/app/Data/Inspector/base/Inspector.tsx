@@ -13,22 +13,12 @@ import arrowRightImg from '@/icons/arrowRight.svg'
 import closeImg from '@/icons/close.svg'
 import plusImg from '@/icons/plus.svg'
 import { useStateRef } from "@/util"
+import clsx from "clsx"
 import React, { Suspense, useCallback, useMemo, useState } from "react"
-import { List, RowComponentProps } from "react-window"
+import { List, RowComponentProps, useDynamicRowHeight } from "react-window"
 import { defaultValueForType, getCustomComponent } from "../customInspectorUtil"
 import Style from '../Inspector.module.scss'
 import { AnyInspectorValue, AnyPropertyInfo, ArrayPropertyInfo, DictionaryPropertyInfo, InspectorArrayValue, InspectorDictionaryValue, InspectorKeyTypes, InspectorObjectValue, ObjectPropertyInfo, SimplePropertyInfo, enumSubtypes, inferPropertyInfoFromArrayValue, inferPropertyInfoFromDictionaryValue, inferPropertyInfoFromValue, objectPropertyInfos } from "./inspectorUtil"
-
-function KeyValuePair(props: { label: React.ReactNode, value: React.ReactNode }) {
-	const { label, value } = props
-	return <React.Fragment>
-		<div className="hbox items-center self-start justify-between">
-			{label}
-			<div className="labelPortal" />
-		</div>
-		<div className="hbox">{value}</div>
-	</React.Fragment>
-}
 
 export const InspectorObject = (props: {
 	pinfo?: ObjectPropertyInfo,
@@ -38,32 +28,44 @@ export const InspectorObject = (props: {
 }) => {
 	const { value: inputValue, pinfo, onChange } = props
 
-	let objPinfo: ObjectPropertyInfo
+	// BUGFIX: not actually using collapsiblity
+	const { ref, contentsEl } = useCollapsible()
+
+	let objPinfo: ObjectPropertyInfo | undefined
 	if (pinfo) {
 		objPinfo = pinfo
 	} else if (inputValue) {
 		objPinfo = inferPropertyInfoFromValue(inputValue, undefined, 'root') as any
-	} else {
-		return null
 	}
-	const root = !objPinfo.parent
+	const root = !objPinfo?.parent
 
 	const onPropertyChange = (key: InspectorKeyTypes, value: any) => {
+		if (!objPinfo) return
 		const newObj = { ...objPinfo.value, [key]: value }
 		onChange(newObj)
 	}
 
-	const propertyInfos = useMemo(() => objectPropertyInfos(objPinfo), [objPinfo.value])
-
-	const propertyComponents: React.ReactNode[] = useMemo(() => propertyInfos.map(pinfo => {
-		if (pinfo.hidden) { return null }
-		const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange(pinfo.key, v) })
-		return <KeyValuePair key={pinfo.key} label={<Text>{pinfo.key}</Text>} value={valueComponent} />
-	}), [objPinfo.value])
+	const propertyInfos = useMemo(() => 
+		objPinfo ? objectPropertyInfos(objPinfo).filter(p => !p.hidden) : []
+	, [objPinfo?.value])
+	
+	const list = propertyInfos.map((_, i) => {
+		return <InspectorRow ariaAttributes={{} as any} style={{}} index={i} entries={propertyInfos} onPropertyChange={onPropertyChange} />
+	})
 
 	return <Suspense fallback="Loading...">
-		<div className={`${Style.grid} ${root ? Style.root : ''}`}>
-			{propertyComponents}
+		<div ref={ref} className="contents">
+			{root ?
+				<div className={clsx(Style.container, Style.root)}>
+					{list}
+				</div>
+				:
+				<Portal parent={contentsEl}>
+					<div className={Style.container}>
+						{list}
+					</div>
+				</Portal>
+			}
 		</div>
 	</Suspense>
 }
@@ -96,16 +98,6 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 		onChange?.(newArr)
 	}
 
-	const valueComponents: React.ReactNode[] = useMemo(() => arrPinfo.value.map((val, i) => {
-		const getValComponent = props.getValueComponent ?? getValueComponent
-		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo as ArrayPropertyInfo<AnyInspectorValue>, i)
-		const valueComponent = getValComponent(pinfo as any, (v) => { onElementChange(pinfo.key, v) })
-
-		return <KeyValuePair key={i} value={valueComponent} label={<>
-			{arrPinfo.fixed ? undefined : <IconButton src={closeImg} onClick={() => removeElement(i)} />} <Text>{i}</Text>
-		</>} />
-	}), [arrPinfo.value])
-
 	// adding elements
 	let canAddElements = !arrPinfo.readonly
 	const [newValueType, setNewValueType] = useState(arrPinfo.valueTypes[0])
@@ -119,14 +111,31 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 		onChange?.(newArr)
 	} : undefined
 
-	const { ref, isOpen, ToggleCollapse } = useCollapsible(arrPinfo.uncollapsedByDefault)
+	const { ref, isOpen, ToggleCollapse, contentsEl } = useCollapsible(arrPinfo.uncollapsedByDefault)
+
+	const dynamicRowHeight = useDynamicRowHeight({
+		defaultRowHeight: 30,
+	})
+
+	const entries = arrPinfo.value.map((val, i) => {
+		const pinfo = inferPropertyInfoFromArrayValue(val, arrPinfo as ArrayPropertyInfo<AnyInspectorValue>, i)
+		return pinfo
+	})
 
 	return <div ref={ref} className="vbox grow gap">
 		<ToggleCollapse />
-		{isOpen ? <>
-			{valueComponents.length ? <div className={Style.grid}>
-				{valueComponents}
-			</div> : null}
+		{isOpen ? !!entries.length && <>
+			<Portal parent={contentsEl}>
+				<div className={Style.container}>
+					<List
+						style={{ maxHeight: 300 }}
+						rowComponent={InspectorCollectionRow}
+						rowCount={entries.length}
+						rowHeight={dynamicRowHeight}
+						rowProps={{ entries, onPropertyChange: onElementChange, removeProperty: arrPinfo.fixed ? undefined : removeElement, getValueComponent: props.getValueComponent }}
+					/>
+				</div>
+			</Portal>
 			{addElement ?
 				<div className="hbox">
 					{arrPinfo.valueTypes.length > 1 ?
@@ -138,7 +147,7 @@ export const InspectorArray = <T extends AnyInspectorValue>(props: {
 					<IconButton src={plusImg} onClick={() => addElement?.()} />
 				</div>
 				: null}
-		</> : <div className="subtle">{valueComponents.length} items...</div>}
+		</> : <div className="subtle">{entries.length} items...</div>}
 	</div>
 }
 
@@ -149,6 +158,11 @@ function useCollapsible(isOpenInitialValue?: boolean) {
 		if (!el) { return null }
 		return el.parentElement?.previousElementSibling?.querySelector('.labelPortal')
 	}, [el])
+	const contentsEl = useMemo(() => {
+		if (!el) { return null }
+		return el.parentElement?.parentElement?.parentElement?.querySelector('.contentsPortal')
+	}, [el])
+
 	const [isOpen, setIsOpen] = useState(isOpenInitialValue ?? false)
 
 	const ToggleCollapse = useCallback(() =>
@@ -160,31 +174,47 @@ function useCollapsible(isOpenInitialValue?: boolean) {
 		</Portal>
 	, [labelEl, isOpen, setIsOpen])
 
-	return { ref: setEl, isOpen, ToggleCollapse }
+	return { ref: setEl, isOpen, ToggleCollapse, contentsEl }
 }
 
-function InspectorDictionaryRow(props: RowComponentProps<{
+function InspectorRow(props: RowComponentProps<{
 	entries: AnyPropertyInfo<AnyInspectorValue, InspectorKeyTypes>[],
-	removeProperty?: (key: InspectorKeyTypes) => void,
 	onPropertyChange?: (key: InspectorKeyTypes, value: any) => void,
+	/** Override the component used for each value */
+	getValueComponent?: (pinfo: AnyPropertyInfo, onChange: (v: any) => void) => React.ReactNode,
+	buttons?: React.ReactNode,
 }>) {
-	const { index, style, entries, removeProperty, onPropertyChange } = props
+	const { index, style, entries, onPropertyChange } = props
 	const pinfo = entries[index]
-	const valueComponent = getValueComponent(pinfo, (v) => { onPropertyChange?.(pinfo.key, v) })
+	const getValComponent = props.getValueComponent ?? getValueComponent
+	const valueComponent = getValComponent(pinfo, (v: any) => { onPropertyChange?.(pinfo.key, v) })
 
-	return <div className="flex row px-1 gap-1" style={style}>
-		<div className="self-center flex row grow w-0">
-			<Text className="grow w-0 overflow-hidden overflow-ellipsis">{pinfo.key}:</Text>
-			{removeProperty &&
-				<IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />
-			}
-			<div className="labelPortal">
+	return <div className="flex flex-col flex-nowrap overflow-hidden px-1 gap-1" style={style}>
+		<div className="flex row min-h-[30px] gap-1">
+			<div className="self-center flex row grow w-0">
+				<Text className="grow w-0 overflow-hidden overflow-ellipsis">{pinfo.key}:</Text>
+				{props.buttons}
+				<div className="labelPortal" />
+			</div>
+			<div className="self-center flex row grow w-0">
+				{valueComponent}
 			</div>
 		</div>
-		<div className="self-center flex row grow w-0">
-			{valueComponent}
-		</div>
+		<div className="contentsPortal" />
 	</div>
+}
+
+
+function InspectorCollectionRow(props: React.ComponentProps<typeof InspectorRow> & {
+	removeProperty?: (key: InspectorKeyTypes) => void,
+}) {
+	const { removeProperty, ...rest } = props
+	const { index, entries } = props
+	const pinfo = entries[index]
+
+	return <InspectorRow {...rest} buttons={
+		removeProperty && <IconButton src={closeImg} onClick={() => removeProperty(pinfo.key)} />
+	} />
 }
 
 export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyInspectorValue>, onChange: (v: InspectorDictionaryValue) => void }) => {
@@ -232,19 +262,22 @@ export const InspectorDictionary = (props: { pinfo: DictionaryPropertyInfo<AnyIn
 		onChange(newObj as Record<InspectorKeyTypes, AnyInspectorValue>)
 	} : undefined
 
-	const { ref, isOpen, ToggleCollapse } = useCollapsible(dictPinfo.uncollapsedByDefault)
+	const { ref, isOpen, ToggleCollapse, contentsEl } = useCollapsible(dictPinfo.uncollapsedByDefault)
 
 	return <div ref={ref} className="vbox grow gap" key={dictPinfo.key}>
 		<ToggleCollapse />
-		{!!entries.length && isOpen ? <>
-			<div className={Style.container}>
-				<List
-					rowComponent={InspectorDictionaryRow}
-					rowCount={entries.length}
-					rowHeight={30}
-					rowProps={{ entries, onPropertyChange, removeProperty }}
-				/>
-			</div>
+		{isOpen ? !!entries.length && <>
+			<Portal parent={contentsEl}>
+				<div className={Style.container}>
+					<List
+						style={{ maxHeight: 300 }}
+						rowComponent={InspectorCollectionRow}
+						rowCount={entries.length}
+						rowHeight={30}
+						rowProps={{ entries, onPropertyChange, removeProperty: dictPinfo.fixed ? undefined : removeProperty }}
+					/>
+				</div>
+			</Portal>
 		</> : <div className="subtle">{entries.length} entries...</div>}
 		{isOpen && addProperty ?
 			<div className="hbox gap">
